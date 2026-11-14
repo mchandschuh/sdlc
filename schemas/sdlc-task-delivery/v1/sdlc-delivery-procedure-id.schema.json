@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/delivery-procedure-id/v1",
+  "title": "SDLC Delivery Procedure ID v1",
+  "description": "A stable identifier for a procedure declared by one delivery task.",
+  "type": "string",
+  "pattern": "^PROC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+  "examples": [
+    "PROC-001",
+    "PROC-VERIFY-PACKAGE"
+  ]
+}

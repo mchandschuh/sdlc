@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/acceptance-criterion/v1",
+  "title": "SDLC Acceptance Criterion v1",
+  "description": "A reusable acceptance criterion with repository-compatible AC identifier forms and optional traceability to objectives and findings.",
+  "$comment": "A local AC-* identifier is suitable for a task-owned criterion. A work-item-qualified WI- or GH- requirement criterion preserves an existing work-item acceptance-criterion identity. Host validation must resolve objectiveRefs and findingRefs and must verify that criterion IDs are unique within their declared scope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "description"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(?:AC-[A-Z0-9]+(?:-[A-Z0-9]+)*|[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,})$",
+      "description": "Stable acceptance-criterion identifier. It may be task-local or retain a canonical work-item requirement criterion identity.",
+      "examples": [
+        "AC-001",
+        "WI-0003_REQ_001_AC_001"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The observable condition that must be satisfied for the criterion to pass.",
+      "examples": [
+        "The corrected result includes current verification evidence for every required finding."
+      ]
+    },
+    "objectiveRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "sdlc-objective-reference.schema.json",
+        "description": "Objective advanced or satisfied by this criterion.",
+        "examples": [
+          "#objective/OBJ-001"
+        ]
+      },
+      "description": "Objectives that establish why this criterion is required.",
+      "examples": [
+        [
+          "#objective/OBJ-001"
+        ],
+        []
+      ]
+    },
+    "findingRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "sdlc-any-reference.schema.json",
+        "description": "Review finding that motivates or constrains this criterion.",
+        "examples": [
+          "WI-0003|19000000#finding/FIND-001"
+        ]
+      },
+      "description": "Findings that this criterion addresses or makes verifiable.",
+      "examples": [
+        [
+          "WI-0003|19000000#finding/FIND-001"
+        ],
+        []
+      ]
+    }
+  },
+  "examples": [
+    {
+      "id": "AC-001",
+      "description": "The corrected result includes current verification evidence for every required finding.",
+      "objectiveRefs": [
+        "#objective/OBJ-001"
+      ],
+      "findingRefs": [
+        "WI-0003|19000000#finding/FIND-001"
+      ]
+    }
+  ]
+}

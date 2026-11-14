@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/evidence-tier/v1",
+  "title": "SDLC Evidence Tier v1",
+  "description": "The shared evidence-tier vocabulary used by task evidence, validation, implementation verification, test strategies, and review inputs.",
+  "$comment": "These values classify the strongest evidence actually established by a source. A host may define ordering and policy-specific mappings, but a review or task result must not claim a tier higher than its underlying evidence. The repository filename is the resolver target; the public vocabulary is versioned by this stable schema identity.",
+  "type": "string",
+  "enum": [
+    "static",
+    "unit",
+    "component",
+    "cli-audit",
+    "integration",
+    "manual",
+    "inspection",
+    "provider",
+    "operational"
+  ],
+  "examples": [
+    "static",
+    "unit",
+    "cli-audit",
+    "operational"
+  ]
+}

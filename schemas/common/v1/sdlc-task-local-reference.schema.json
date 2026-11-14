@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
+  "title": "SDLC Task-Local Reference v1",
+  "description": "A reference to an addressable entity in the current task payload or result. The value has the form #<entity-kind>/<entity-id>; the identifier-prefix conventions below help agents and humans avoid naming collisions, while host validation resolves the reference against the current task.",
+  "$comment": "SdlcTaskLocalReference is intentionally local and does not identify a work item or task. Use #outcome/O-001, #element/E-001, or #artifact/ART-001 for entities in the current task. To refer to another task, use SdlcTaskQualifiedReference; to refer across repositories, use SdlcReference. The entity kind is lower-kebab-case. The entity ID begins with an ASCII letter and may contain letters, digits, dots, underscores, colons, and hyphens.",
+  "x-identifier-prefix-conventions": [
+    {
+      "entityKind": "requirement",
+      "identifierPrefix": "REQ-",
+      "examples": [
+        "REQ-001",
+        "WI-0003_REQ_001"
+      ],
+      "description": "A requirement considered by the task. Existing work-item requirement IDs may retain their work-item-qualified form."
+    },
+    {
+      "entityKind": "acceptance-criterion",
+      "identifierPrefix": "AC-",
+      "examples": [
+        "AC-001",
+        "WI-0003_REQ_001_AC_001"
+      ],
+      "description": "An acceptance criterion associated with a requirement."
+    },
+    {
+      "entityKind": "reference",
+      "identifierPrefix": "REF-",
+      "examples": [
+        "REF-001"
+      ],
+      "description": "A typed available-context reference."
+    },
+    {
+      "entityKind": "consideration",
+      "identifierPrefix": "C-",
+      "examples": [
+        "C-001"
+      ],
+      "description": "A semantic input evaluated by the task."
+    },
+    {
+      "entityKind": "activity",
+      "identifierPrefix": "ACT-",
+      "examples": [
+        "ACT-001"
+      ],
+      "description": "An embedded research, decision, analysis, modeling, or review activity."
+    },
+    {
+      "entityKind": "element",
+      "identifierPrefix": "E-",
+      "examples": [
+        "E-001"
+      ],
+      "description": "A generic typed element in a design model."
+    },
+    {
+      "entityKind": "relation",
+      "identifierPrefix": "REL-",
+      "examples": [
+        "REL-001"
+      ],
+      "description": "A relationship between modeled endpoints."
+    },
+    {
+      "entityKind": "view",
+      "identifierPrefix": "V-",
+      "examples": [
+        "V-001"
+      ],
+      "description": "A named projection of a design model."
+    },
+    {
+      "entityKind": "artifact",
+      "identifierPrefix": "ART-",
+      "examples": [
+        "ART-001"
+      ],
+      "description": "A durable design or delivery artifact. ART is the canonical artifact reference prefix."
+    },
+    {
+      "entityKind": "outcome",
+      "identifierPrefix": "O-",
+      "examples": [
+        "O-001"
+      ],
+      "description": "A task result, conclusion, or downstream handoff."
+    },
+    {
+      "entityKind": "question",
+      "identifierPrefix": "Q- or UQ-",
+      "examples": [
+        "Q-001",
+        "UQ-001"
+      ],
+      "description": "A question or unresolved question retained for follow-up."
+    },
+    {
+      "entityKind": "finding",
+      "identifierPrefix": "F-",
+      "examples": [
+        "F-001"
+      ],
+      "description": "A research finding or other evidence-backed observation."
+    },
+    {
+      "entityKind": "decision-question",
+      "identifierPrefix": "DQ-",
+      "examples": [
+        "DQ-001"
+      ],
+      "description": "A bounded decision question."
+    },
+    {
+      "entityKind": "alternative",
+      "identifierPrefix": "ALT-",
+      "examples": [
+        "ALT-001"
+      ],
+      "description": "An alternative evaluated by a decision task."
+    },
+    {
+      "entityKind": "criterion",
+      "identifierPrefix": "CRIT-",
+      "examples": [
+        "CRIT-001"
+      ],
+      "description": "A decision evaluation criterion."
+    },
+    {
+      "entityKind": "source",
+      "identifierPrefix": "SRC-",
+      "examples": [
+        "SRC-001"
+      ],
+      "description": "A research source."
+    },
+    {
+      "entityKind": "risk",
+      "identifierPrefix": "RISK-",
+      "examples": [
+        "RISK-001"
+      ],
+      "description": "A risk associated with a task result or decision."
+    }
+  ],
+  "type": "string",
+  "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+  "examples": [
+    "#outcome/O-001",
+    "#element/E-001",
+    "#relation/REL-001",
+    "#artifact/ART-001",
+    "#requirement/WI-0003_REQ_001",
+    "#question/UQ-001"
+  ]
+}

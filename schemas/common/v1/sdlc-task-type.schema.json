@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-type/v1",
+  "title": "SDLC Task Type v1",
+  "description": "The shared vocabulary of task kinds that may appear in an SDLC task envelope or in a relationship to an SDLC task.",
+  "$comment": "Task kind does not determine lifecycle status, parentage, or eligibility. The host may apply policy-specific restrictions to a relationship, but recursive decomposition remains available to every task kind unless a selected tree profile says otherwise.",
+  "type": "string",
+  "enum": [
+    "decomposition",
+    "research",
+    "decision",
+    "design",
+    "implementation",
+    "test-strategy",
+    "validation",
+    "review",
+    "rework",
+    "delivery"
+  ],
+  "examples": [
+    "implementation",
+    "review",
+    "rework"
+  ]
+}

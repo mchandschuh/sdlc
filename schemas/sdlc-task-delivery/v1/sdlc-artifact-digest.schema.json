@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/artifact-digest/v1",
+  "title": "SDLC Artifact Digest v1",
+  "description": "A SHA-256 digest recorded for a delivery artifact using the explicit sha256 algorithm prefix and exactly 64 hexadecimal characters.",
+  "type": "string",
+  "pattern": "^sha256:[0-9a-fA-F]{64}$",
+  "examples": [
+    "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  ]
+}

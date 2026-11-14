@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/work-item-requirements/v1",
+  "title": "SDLC Work Item Requirements v1",
+  "description": "The current normalized requirements and acceptance criteria for one work item, grouped by the globally qualified source object that established each requirement.",
+  "$comment": "The requirements map is the mutable current projection for a work item. Each key is the sole provenance identity for the requirements in its array. Host validation must enforce uniqueness of requirement and acceptance-criterion IDs across all arrays, verify that each acceptance-criterion ID belongs to its containing requirement, resolve source-object references, and prevent conflicting duplicate IDs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workItemId",
+    "requirements"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/work-item-requirements/v1",
+      "description": "The exact versioned contract used by this normalized work-item requirements record.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/work-item-requirements/v1"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "workItemId": {
+      "type": "string",
+      "description": "Stable identity of the work item whose current requirements are represented.",
+      "pattern": "^[A-Z]{1,10}-[0-9]+$",
+      "examples": [
+        "WI-0002",
+        "GH-0042"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "requirements": {
+      "type": "object",
+      "description": "Map from a globally qualified source-object reference to the requirements established by that source. The source key is the sole provenance field for the mapped requirements.",
+      "minProperties": 1,
+      "required": [],
+      "patternProperties": {
+        "^(?:sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*|sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*)$": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Requirements established by the globally qualified source object named by the containing property key.",
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "examples": [
+            [
+              {
+                "id": "WI-0002_REQ_001",
+                "name": "validate-llm-request",
+                "description": "The llm tool must accept a closed request configuration.",
+                "reason": "The CLI and library require a deterministic request contract.",
+                "acceptanceCriteria": [
+                  {
+                    "id": "WI-0002_REQ_001_AC_001",
+                    "description": "A valid request normalizes omitted optional defaults."
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "sdlc://repo/local%2Fskills/WI-0002%7C00000000#work-item/WI-0002": [
+            {
+              "id": "WI-0002_REQ_001",
+              "name": "validate-llm-request",
+              "description": "The llm tool must accept a closed request configuration.",
+              "reason": "The CLI and library require a deterministic request contract.",
+              "acceptanceCriteria": [
+                {
+                  "id": "WI-0002_REQ_001_AC_001",
+                  "description": "A valid request normalizes omitted optional defaults."
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "x-field-role": "authoritative"
+    }
+  },
+  "$defs": {
+    "Requirement": {
+      "type": "object",
+      "description": "One normalized work-item requirement and its required acceptance criteria.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "reason",
+        "acceptanceCriteria"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable requirement identifier scoped to the work item.",
+          "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}$",
+          "examples": [
+            "WI-0002_REQ_001"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Stable lowercase kebab-case name for the requirement.",
+          "pattern": "^[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "examples": [
+            "validate-llm-request"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "The obligation or desired behavior expressed by the normalized requirement.",
+          "minLength": 1,
+          "examples": [
+            "The llm tool must accept a closed request configuration."
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why the requirement matters to the work-item outcome.",
+          "minLength": 1,
+          "examples": [
+            "The CLI and library require a deterministic request contract."
+          ]
+        },
+        "acceptanceCriteria": {
+          "type": "array",
+          "description": "Observable conditions that must be satisfied for the requirement to pass. At least one criterion is required for every requirement.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/AcceptanceCriterion"
+          },
+          "examples": [
+            [
+              {
+                "id": "WI-0002_REQ_001_AC_001",
+                "description": "A valid request normalizes omitted optional defaults."
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "WI-0002_REQ_001",
+          "name": "validate-llm-request",
+          "description": "The llm tool must accept a closed request configuration.",
+          "reason": "The CLI and library require a deterministic request contract.",
+          "acceptanceCriteria": [
+            {
+              "id": "WI-0002_REQ_001_AC_001",
+              "description": "A valid request normalizes omitted optional defaults."
+            }
+          ]
+        }
+      ]
+    },
+    "AcceptanceCriterion": {
+      "type": "object",
+      "description": "One observable acceptance condition belonging to a normalized work-item requirement.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable acceptance-criterion identifier scoped to its parent requirement.",
+          "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,}$",
+          "examples": [
+            "WI-0002_REQ_001_AC_001"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "The observable condition that must be satisfied for the criterion to pass.",
+          "minLength": 1,
+          "examples": [
+            "A valid request normalizes omitted optional defaults."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "WI-0002_REQ_001_AC_001",
+          "description": "A valid request normalizes omitted optional defaults."
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/work-item-requirements/v1",
+      "workItemId": "WI-0002",
+      "requirements": {
+        "sdlc://repo/local%2Fskills/WI-0002%7C00000000#work-item/WI-0002": [
+          {
+            "id": "WI-0002_REQ_001",
+            "name": "validate-llm-request",
+            "description": "The llm tool must accept a closed request configuration.",
+            "reason": "The CLI and library require a deterministic request contract.",
+            "acceptanceCriteria": [
+              {
+                "id": "WI-0002_REQ_001_AC_001",
+                "description": "A valid request normalizes omitted optional defaults."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

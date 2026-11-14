@@ -1,0 +1,1170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-rework/v1",
+  "title": "SDLC Task Rework v1",
+  "description": "The task-specific payload for corrective work created from review findings. Intent identifies the source review, affected result, objectives, acceptance criteria, correction boundary, and mandatory subsequent review. Result records the corrective output and evidence. The payload deliberately has only the two high-level properties intent and result; task identity, processing state, routing, dependencies, and the common task wrapper remain owned by https://schemas.handschuh.dev/sdlc/task-envelope/v1.",
+  "$comment": "A rework action is a distinct post-work task and must not overwrite the source result or source review. Host validation must resolve the source review and affected result, verify both exact result digests, require the source review decision to be changes_requested, resolve every finding and objective/criterion reference, enforce correction paths and acceptance coverage, materialize a distinct subsequent https://schemas.handschuh.dev/sdlc/task-review/v1 action against the exact rework result, and allow rework completion only after that subsequent review is complete with decision accepted. The subsequent review is intentionally declared under intent rather than copied into result history; review approval of one exact result never transfers to a later result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ReworkIntent",
+      "description": "The declared corrective-work boundary and the review gate required after a new result is produced.",
+      "examples": [
+        {
+          "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
+          "sourceReview": {
+            "taskType": "review",
+            "taskRef": "WI-0003|19000000",
+            "result": {
+              "ref": "WI-0003|19000000#result/R-001",
+              "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+            },
+            "decision": "changes_requested",
+            "findingRefs": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          },
+          "affectedResult": {
+            "taskType": "implementation",
+            "taskRef": "WI-0003|06000000",
+            "result": {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          },
+          "objectives": [
+            {
+              "id": "OBJ-001",
+              "statement": "Correct the reviewed validation boundary.",
+              "sourceRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ]
+            }
+          ],
+          "acceptanceCriteria": [
+            {
+              "id": "AC-001",
+              "description": "The corrected result addresses FIND-001 and includes current verification evidence.",
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "findingRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ]
+            }
+          ],
+          "scope": {
+            "included": [
+              "Correct the validation boundary identified by the source review."
+            ],
+            "ownedPaths": [
+              "src/validation/"
+            ],
+            "excluded": [
+              "Do not change unrelated implementation behavior."
+            ]
+          },
+          "steps": [
+            "Implement the correction.",
+            "Run the required focused verification.",
+            "Open the subsequent review."
+          ],
+          "subsequentReview": {
+            "required": true,
+            "taskType": "review",
+            "gateId": "implementation-result",
+            "target": "this-result",
+            "mustOpenBeforeCompletion": true,
+            "requiredDecision": "accepted"
+          },
+          "nonGoals": [
+            "Do not overwrite the source result or source review.",
+            "Do not transfer approval from the source result to the corrected result."
+          ]
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/ReworkResult",
+      "description": "The retrospective correction output and evidence produced by this rework action.",
+      "examples": [
+        {
+          "status": "corrected",
+          "summary": "The reviewed validation boundary was corrected and focused verification passed.",
+          "corrections": [
+            {
+              "id": "CORR-001",
+              "summary": "Corrected validation before persistence.",
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "acceptanceCriterionRefs": [
+                "#acceptance-criterion/AC-001"
+              ],
+              "findingRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ],
+              "paths": [
+                "src/validation/service.ts"
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "id": "EVID-001",
+              "kind": "test",
+              "ref": "WI-0003|08000000#result/R-001",
+              "claim": "The focused regression test passed for the corrected validation boundary.",
+              "tier": "unit",
+              "source": "referenced-result"
+            }
+          ],
+          "limitations": [
+            "The correction does not establish provider-backed or production behavior."
+          ],
+          "nonClaims": [
+            "This result is not review approval.",
+            "The source review decision does not transfer to this result."
+          ]
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "ReworkIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "sourceReview",
+        "affectedResult",
+        "objectives",
+        "acceptanceCriteria",
+        "scope",
+        "steps",
+        "subsequentReview",
+        "nonGoals"
+      ],
+      "description": "The complete planned corrective-work boundary, including immutable source relationships and the mandatory follow-up review gate.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of the correction and the evidence boundary it must establish.",
+          "examples": [
+            "Correct the implementation findings and produce a result that can undergo a subsequent review."
+          ]
+        },
+        "sourceReview": {
+          "$ref": "#/$defs/SourceReview",
+          "description": "The exact review result that requested this corrective action.",
+          "examples": [
+            {
+              "taskType": "review",
+              "taskRef": "WI-0003|19000000",
+              "result": {
+                "ref": "WI-0003|19000000#result/R-001",
+                "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+              },
+              "decision": "changes_requested",
+              "findingRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ]
+            }
+          ]
+        },
+        "affectedResult": {
+          "$ref": "#/$defs/AffectedResult",
+          "description": "The exact prior task result whose findings are being corrected.",
+          "examples": [
+            {
+              "taskType": "implementation",
+              "taskRef": "WI-0003|06000000",
+              "result": {
+                "ref": "WI-0003|06000000#result/R-001",
+                "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+              }
+            }
+          ]
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Corrective objectives that connect source findings to the intended new result.",
+          "items": {
+            "$ref": "#/$defs/Objective",
+            "description": "One corrective objective.",
+            "examples": [
+              {
+                "id": "OBJ-001",
+                "statement": "Correct the reviewed validation boundary.",
+                "sourceRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "OBJ-001",
+                "statement": "Correct the reviewed validation boundary.",
+                "sourceRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ]
+              }
+            ]
+          ]
+        },
+        "acceptanceCriteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Observable conditions that the corrected result must satisfy before it can be submitted to the subsequent review.",
+          "items": {
+            "$ref": "../../common/v1/sdlc-acceptance-criterion.schema.json",
+            "description": "One corrective acceptance criterion.",
+            "examples": [
+              {
+                "id": "AC-001",
+                "description": "The corrected result addresses FIND-001 and includes current verification evidence.",
+                "objectiveRefs": [
+                  "#objective/OBJ-001"
+                ],
+                "findingRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "AC-001",
+                "description": "The corrected result addresses FIND-001 and includes current verification evidence.",
+                "objectiveRefs": [
+                  "#objective/OBJ-001"
+                ],
+                "findingRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ]
+              }
+            ]
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope",
+          "description": "The repository and behavioral boundary of the corrective action.",
+          "examples": [
+            {
+              "included": [
+                "Correct the validation boundary identified by the source review."
+              ],
+              "ownedPaths": [
+                "src/validation/"
+              ],
+              "excluded": [
+                "Do not change unrelated implementation behavior."
+              ]
+            }
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One ordered corrective action; a step is planning guidance, not execution evidence.",
+            "examples": [
+              "Run the required focused verification."
+            ]
+          },
+          "description": "Ordered guidance for producing and verifying the corrected result.",
+          "examples": [
+            [
+              "Implement the correction.",
+              "Run the required focused verification.",
+              "Open the subsequent review."
+            ]
+          ]
+        },
+        "subsequentReview": {
+          "$ref": "#/$defs/SubsequentReview",
+          "description": "The mandatory distinct review action that must inspect the exact new rework result before this rework action may complete.",
+          "examples": [
+            {
+              "required": true,
+              "taskType": "review",
+              "gateId": "implementation-result",
+              "target": "this-result",
+              "mustOpenBeforeCompletion": true,
+              "requiredDecision": "accepted"
+            }
+          ]
+        },
+        "nonGoals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One correction concern or lifecycle effect explicitly excluded from the action.",
+            "examples": [
+              "Do not overwrite the source result or source review."
+            ]
+          },
+          "description": "Explicit exclusions that prevent corrective work from expanding into unrelated changes or implicit approval.",
+          "examples": [
+            [
+              "Do not overwrite the source result or source review.",
+              "Do not transfer approval from the source result to the corrected result."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
+          "sourceReview": {
+            "taskType": "review",
+            "taskRef": "WI-0003|19000000",
+            "result": {
+              "ref": "WI-0003|19000000#result/R-001",
+              "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+            },
+            "decision": "changes_requested",
+            "findingRefs": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          },
+          "affectedResult": {
+            "taskType": "implementation",
+            "taskRef": "WI-0003|06000000",
+            "result": {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          },
+          "objectives": [
+            {
+              "id": "OBJ-001",
+              "statement": "Correct the reviewed validation boundary.",
+              "sourceRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ]
+            }
+          ],
+          "acceptanceCriteria": [
+            {
+              "id": "AC-001",
+              "description": "The corrected result addresses FIND-001 and includes current verification evidence.",
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "findingRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ]
+            }
+          ],
+          "scope": {
+            "included": [
+              "Correct the validation boundary identified by the source review."
+            ],
+            "ownedPaths": [
+              "src/validation/"
+            ],
+            "excluded": [
+              "Do not change unrelated implementation behavior."
+            ]
+          },
+          "steps": [
+            "Implement the correction.",
+            "Run the required focused verification.",
+            "Open the subsequent review."
+          ],
+          "subsequentReview": {
+            "required": true,
+            "taskType": "review",
+            "gateId": "implementation-result",
+            "target": "this-result",
+            "mustOpenBeforeCompletion": true,
+            "requiredDecision": "accepted"
+          },
+          "nonGoals": [
+            "Do not overwrite the source result or source review.",
+            "Do not transfer approval from the source result to the corrected result."
+          ]
+        }
+      ]
+    },
+    "SourceReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskType",
+        "taskRef",
+        "result",
+        "decision",
+        "findingRefs"
+      ],
+      "description": "The immutable review action and exact review result that caused this corrective action.",
+      "properties": {
+        "taskType": {
+          "const": "review",
+          "description": "The source action must be a review task.",
+          "examples": [
+            "review"
+          ]
+        },
+        "taskRef": {
+          "$ref": "../../common/v1/sdlc-task-identifier.schema.json",
+          "description": "The work-item-qualified identity of the source review task.",
+          "examples": [
+            "WI-0003|19000000"
+          ]
+        },
+        "result": {
+          "$ref": "../../common/v1/sdlc-task-result-reference.schema.json",
+          "description": "The exact source review result and digest.",
+          "examples": [
+            {
+              "ref": "WI-0003|19000000#result/R-001",
+              "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+            }
+          ]
+        },
+        "decision": {
+          "const": "changes_requested",
+          "description": "Only a review that requested changes can create this corrective action.",
+          "examples": [
+            "changes_requested"
+          ]
+        },
+        "findingRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-any-reference.schema.json",
+            "description": "Finding from the source review that this action must address.",
+            "examples": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          },
+          "description": "The source-review findings that establish the corrective-work boundary.",
+          "examples": [
+            [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "taskType": "review",
+          "taskRef": "WI-0003|19000000",
+          "result": {
+            "ref": "WI-0003|19000000#result/R-001",
+            "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          },
+          "decision": "changes_requested",
+          "findingRefs": [
+            "WI-0003|19000000#finding/FIND-001"
+          ]
+        }
+      ]
+    },
+    "AffectedResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskType",
+        "taskRef",
+        "result"
+      ],
+      "description": "The exact result whose review findings are being corrected.",
+      "properties": {
+        "taskType": {
+          "$ref": "../../common/v1/sdlc-task-type.schema.json",
+          "description": "The task kind that produced the affected result.",
+          "examples": [
+            "implementation"
+          ]
+        },
+        "taskRef": {
+          "$ref": "../../common/v1/sdlc-task-identifier.schema.json",
+          "description": "The work-item-qualified identity of the task that produced the affected result.",
+          "examples": [
+            "WI-0003|06000000"
+          ]
+        },
+        "result": {
+          "$ref": "../../common/v1/sdlc-task-result-reference.schema.json",
+          "description": "The exact affected result and digest; corrective work must produce a new result rather than replace it.",
+          "examples": [
+            {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "taskType": "implementation",
+          "taskRef": "WI-0003|06000000",
+          "result": {
+            "ref": "WI-0003|06000000#result/R-001",
+            "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        }
+      ]
+    },
+    "Objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "sourceRefs"
+      ],
+      "description": "One corrective objective derived from the source review findings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable objective identifier used by objective references in this rework payload.",
+          "examples": [
+            "OBJ-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The bounded corrective outcome this objective is intended to establish.",
+          "examples": [
+            "Correct the reviewed validation boundary and establish current evidence for the correction."
+          ]
+        },
+        "sourceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-any-reference.schema.json",
+            "description": "Source review, finding, affected result, or other authoritative reference motivating this objective.",
+            "examples": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          },
+          "description": "Authoritative inputs from which the corrective objective was derived.",
+          "examples": [
+            [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "OBJ-001",
+          "statement": "Correct the reviewed validation boundary.",
+          "sourceRefs": [
+            "WI-0003|19000000#finding/FIND-001"
+          ]
+        }
+      ]
+    },
+    "Scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "included",
+        "ownedPaths",
+        "excluded"
+      ],
+      "description": "The explicit behavioral, repository, and exclusion boundary for the corrective action.",
+      "properties": {
+        "included": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One correction concern included in the action.",
+            "examples": [
+              "Correct the validation boundary identified by the source review."
+            ]
+          },
+          "description": "Behavioral or artifact concerns that the action must address.",
+          "examples": [
+            [
+              "Correct the validation boundary identified by the source review."
+            ]
+          ]
+        },
+        "ownedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../sdlc-task-delivery/v1/sdlc-repository-relative-path.schema.json",
+            "description": "Repository-relative path or directory that the corrective action may modify.",
+            "examples": [
+              "src/validation/"
+            ]
+          },
+          "description": "Repository path boundary for corrective changes.",
+          "examples": [
+            [
+              "src/validation/"
+            ]
+          ]
+        },
+        "excluded": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One behavior, path, or lifecycle effect excluded from the correction.",
+            "examples": [
+              "Do not change unrelated implementation behavior."
+            ]
+          },
+          "description": "Explicit scope exclusions.",
+          "examples": [
+            [
+              "Do not change unrelated implementation behavior."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "included": [
+            "Correct the validation boundary identified by the source review."
+          ],
+          "ownedPaths": [
+            "src/validation/"
+          ],
+          "excluded": [
+            "Do not change unrelated implementation behavior."
+          ]
+        }
+      ]
+    },
+    "SubsequentReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "taskType",
+        "gateId",
+        "target",
+        "mustOpenBeforeCompletion",
+        "requiredDecision"
+      ],
+      "description": "The required distinct review gate for the exact result produced by this rework action.",
+      "properties": {
+        "required": {
+          "const": true,
+          "description": "The subsequent review is mandatory for rework completion.",
+          "examples": [
+            true
+          ]
+        },
+        "taskType": {
+          "const": "review",
+          "description": "The subsequent action must use the review task contract.",
+          "examples": [
+            "review"
+          ]
+        },
+        "gateId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Named approval or review gate whose decision governs rework completion.",
+          "examples": [
+            "implementation-result"
+          ]
+        },
+        "target": {
+          "const": "this-result",
+          "description": "The subsequent review must target the exact new result produced by this rework action, not the affected historical result.",
+          "examples": [
+            "this-result"
+          ]
+        },
+        "mustOpenBeforeCompletion": {
+          "const": true,
+          "description": "The subsequent review action must be opened before the rework action may complete.",
+          "examples": [
+            true
+          ]
+        },
+        "requiredDecision": {
+          "const": "accepted",
+          "description": "The subsequent review must produce an accepted decision before rework completion is eligible.",
+          "examples": [
+            "accepted"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "required": true,
+          "taskType": "review",
+          "gateId": "implementation-result",
+          "target": "this-result",
+          "mustOpenBeforeCompletion": true,
+          "requiredDecision": "accepted"
+        }
+      ]
+    },
+    "ReworkCorrection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "summary",
+        "objectiveRefs",
+        "acceptanceCriterionRefs",
+        "findingRefs",
+        "paths"
+      ],
+      "description": "One semantic corrective change recorded in the rework result and its traceability.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CORR-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable identifier for the correction within this rework result.",
+          "examples": [
+            "CORR-001"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise description of the corrective change actually produced.",
+          "examples": [
+            "Corrected validation before persistence."
+          ]
+        },
+        "objectiveRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-objective-reference.schema.json",
+            "description": "Corrective objective advanced by this change.",
+            "examples": [
+              "#objective/OBJ-001"
+            ]
+          },
+          "description": "Objectives realized or advanced by this correction.",
+          "examples": [
+            [
+              "#objective/OBJ-001"
+            ]
+          ]
+        },
+        "acceptanceCriterionRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-acceptance-criterion-reference.schema.json",
+            "description": "Acceptance criterion addressed by this correction.",
+            "examples": [
+              "#acceptance-criterion/AC-001"
+            ]
+          },
+          "description": "Acceptance criteria that this correction satisfies or advances.",
+          "examples": [
+            [
+              "#acceptance-criterion/AC-001"
+            ]
+          ]
+        },
+        "findingRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-any-reference.schema.json",
+            "description": "Source-review finding addressed by this correction.",
+            "examples": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          },
+          "description": "Findings that this correction addresses.",
+          "examples": [
+            [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          ]
+        },
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../sdlc-task-delivery/v1/sdlc-repository-relative-path.schema.json",
+            "description": "Repository-relative path materially changed by this correction.",
+            "examples": [
+              "src/validation/service.ts"
+            ]
+          },
+          "description": "Repository files or directories changed to produce this correction.",
+          "examples": [
+            [
+              "src/validation/service.ts"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "CORR-001",
+          "summary": "Corrected validation before persistence.",
+          "objectiveRefs": [
+            "#objective/OBJ-001"
+          ],
+          "acceptanceCriterionRefs": [
+            "#acceptance-criterion/AC-001"
+          ],
+          "findingRefs": [
+            "WI-0003|19000000#finding/FIND-001"
+          ],
+          "paths": [
+            "src/validation/service.ts"
+          ]
+        }
+      ]
+    },
+    "ReworkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "summary",
+        "corrections",
+        "evidence",
+        "limitations",
+        "nonClaims"
+      ],
+      "description": "The actual corrective output and bounded evidence; review acceptance and task completion remain separate host-controlled states.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "corrected",
+            "partially-corrected",
+            "blocked",
+            "failed"
+          ],
+          "description": "Observed outcome of the corrective action, independent of the subsequent review decision and task lifecycle.",
+          "examples": [
+            "corrected",
+            "partially-corrected"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise factual summary of the corrective result and its evidence boundary.",
+          "examples": [
+            "The reviewed validation boundary was corrected and focused verification passed."
+          ]
+        },
+        "corrections": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ReworkCorrection",
+            "description": "One actual semantic correction.",
+            "examples": [
+              {
+                "id": "CORR-001",
+                "summary": "Corrected validation before persistence.",
+                "objectiveRefs": [
+                  "#objective/OBJ-001"
+                ],
+                "acceptanceCriterionRefs": [
+                  "#acceptance-criterion/AC-001"
+                ],
+                "findingRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ],
+                "paths": [
+                  "src/validation/service.ts"
+                ]
+              }
+            ]
+          },
+          "description": "Semantic corrections produced by the action, each linked to findings, objectives, criteria, and changed paths.",
+          "examples": [
+            [
+              {
+                "id": "CORR-001",
+                "summary": "Corrected validation before persistence.",
+                "objectiveRefs": [
+                  "#objective/OBJ-001"
+                ],
+                "acceptanceCriterionRefs": [
+                  "#acceptance-criterion/AC-001"
+                ],
+                "findingRefs": [
+                  "WI-0003|19000000#finding/FIND-001"
+                ],
+                "paths": [
+                  "src/validation/service.ts"
+                ]
+              }
+            ]
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../../common/v1/sdlc-evidence.schema.json",
+            "description": "One bounded evidence item supporting the corrective result.",
+            "examples": [
+              {
+                "id": "EVID-001",
+                "kind": "test",
+                "ref": "WI-0003|08000000#result/R-001",
+                "claim": "The focused regression test passed for the corrected validation boundary.",
+                "tier": "unit",
+                "source": "referenced-result"
+              }
+            ]
+          },
+          "description": "Evidence actually produced or considered for the correction; this does not constitute subsequent review approval.",
+          "examples": [
+            [
+              {
+                "id": "EVID-001",
+                "kind": "test",
+                "ref": "WI-0003|08000000#result/R-001",
+                "claim": "The focused regression test passed for the corrected validation boundary.",
+                "tier": "unit",
+                "source": "referenced-result"
+              }
+            ]
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A known boundary on what the corrective result establishes.",
+            "examples": [
+              "The correction does not establish provider-backed or production behavior."
+            ]
+          },
+          "description": "Evidence or scope limitations that remain true for the corrective result.",
+          "examples": [
+            [
+              "The correction does not establish provider-backed or production behavior."
+            ]
+          ]
+        },
+        "nonClaims": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An explicit claim that the corrective result does not make.",
+            "examples": [
+              "This result is not review approval."
+            ]
+          },
+          "description": "Explicit non-claims preventing consumers from treating correction evidence as approval or production readiness.",
+          "examples": [
+            [
+              "This result is not review approval.",
+              "The source review decision does not transfer to this result."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "corrected",
+          "summary": "The reviewed validation boundary was corrected and focused verification passed.",
+          "corrections": [
+            {
+              "id": "CORR-001",
+              "summary": "Corrected validation before persistence.",
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "acceptanceCriterionRefs": [
+                "#acceptance-criterion/AC-001"
+              ],
+              "findingRefs": [
+                "WI-0003|19000000#finding/FIND-001"
+              ],
+              "paths": [
+                "src/validation/service.ts"
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "id": "EVID-001",
+              "kind": "test",
+              "ref": "WI-0003|08000000#result/R-001",
+              "claim": "The focused regression test passed for the corrected validation boundary.",
+              "tier": "unit",
+              "source": "referenced-result"
+            }
+          ],
+          "limitations": [
+            "The correction does not establish provider-backed or production behavior."
+          ],
+          "nonClaims": [
+            "This result is not review approval.",
+            "The source review decision does not transfer to this result."
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
+        "sourceReview": {
+          "taskType": "review",
+          "taskRef": "WI-0003|19000000",
+          "result": {
+            "ref": "WI-0003|19000000#result/R-001",
+            "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          },
+          "decision": "changes_requested",
+          "findingRefs": [
+            "WI-0003|19000000#finding/FIND-001"
+          ]
+        },
+        "affectedResult": {
+          "taskType": "implementation",
+          "taskRef": "WI-0003|06000000",
+          "result": {
+            "ref": "WI-0003|06000000#result/R-001",
+            "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        },
+        "objectives": [
+          {
+            "id": "OBJ-001",
+            "statement": "Correct the reviewed validation boundary.",
+            "sourceRefs": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          }
+        ],
+        "acceptanceCriteria": [
+          {
+            "id": "AC-001",
+            "description": "The corrected result addresses FIND-001 and includes current verification evidence.",
+            "objectiveRefs": [
+              "#objective/OBJ-001"
+            ],
+            "findingRefs": [
+              "WI-0003|19000000#finding/FIND-001"
+            ]
+          }
+        ],
+        "scope": {
+          "included": [
+            "Correct the validation boundary identified by the source review."
+          ],
+          "ownedPaths": [
+            "src/validation/"
+          ],
+          "excluded": [
+            "Do not change unrelated implementation behavior."
+          ]
+        },
+        "steps": [
+          "Implement the correction.",
+          "Run the required focused verification.",
+          "Open the subsequent review."
+        ],
+        "subsequentReview": {
+          "required": true,
+          "taskType": "review",
+          "gateId": "implementation-result",
+          "target": "this-result",
+          "mustOpenBeforeCompletion": true,
+          "requiredDecision": "accepted"
+        },
+        "nonGoals": [
+          "Do not overwrite the source result or source review.",
+          "Do not transfer approval from the source result to the corrected result."
+        ]
+      },
+      "result": {
+        "status": "corrected",
+        "summary": "The reviewed validation boundary was corrected and focused verification passed.",
+        "corrections": [
+          {
+            "id": "CORR-001",
+            "summary": "Corrected validation before persistence.",
+            "objectiveRefs": [
+              "#objective/OBJ-001"
+            ],
+            "acceptanceCriterionRefs": [
+              "#acceptance-criterion/AC-001"
+            ],
+            "findingRefs": [
+              "WI-0003|19000000#finding/FIND-001"
+            ],
+            "paths": [
+              "src/validation/service.ts"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "EVID-001",
+            "kind": "test",
+            "ref": "WI-0003|08000000#result/R-001",
+            "claim": "The focused regression test passed for the corrected validation boundary.",
+            "tier": "unit",
+            "source": "referenced-result"
+          }
+        ],
+        "limitations": [
+          "The correction does not establish provider-backed or production behavior."
+        ],
+        "nonClaims": [
+          "This result is not review approval.",
+          "The source review decision does not transfer to this result."
+        ]
+      }
+    }
+  ]
+}

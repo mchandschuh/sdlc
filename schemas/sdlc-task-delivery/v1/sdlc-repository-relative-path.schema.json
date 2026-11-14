@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/repository-relative-path/v1",
+  "title": "SDLC Repository-Relative Path v1",
+  "description": "A non-empty path relative to the repository root that cannot be absolute or escape the repository through parent traversal.",
+  "type": "string",
+  "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+  "examples": [
+    "dist/sdlc-release.tar.gz",
+    "dist/sdlc-release.manifest.json"
+  ]
+}

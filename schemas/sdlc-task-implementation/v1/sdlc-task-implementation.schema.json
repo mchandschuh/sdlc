@@ -1,0 +1,1386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-implementation/v1",
+  "title": "SDLC Task Implementation v1",
+  "description": "The task-specific payload for implementing a bounded change and recording implementation-owned verification evidence. Intent describes expected change surfaces, reason for change, authoritative inputs, objectives, owned paths, exclusions, and planned steps. Result records semantic changes, concrete test implementations, grouped verification executions, and limitations. Requirement, invariant, and acceptance-criterion coverage belongs to the governing test strategy and is not duplicated here.",
+  "$comment": "The common https://schemas.handschuh.dev/sdlc/task-envelope/v1 owns task identity, processing state, dependencies, routing, repository context, and the common task wrapper. Host validation must resolve relationships that JSON Schema cannot establish: inputRefs resolve to intent.inputs; objectiveRefs resolve to intent.objectives; change types are declared by intent.changeTypes; required inputs are available; a selected strategy input identifies a completed https://schemas.handschuh.dev/sdlc/task-test-strategy/v1 result; objective testCaseRefs resolve to strategy-defined or implementation-owned cases; testImplementations point to actual repository test artifacts; required strategy cases have successful executions before verification may be passed; changed paths remain inside ownedPaths; and verification does not claim evidence beyond the canonical https://schemas.handschuh.dev/sdlc/evidence/v1 tiers and strategy limitations. This payload intentionally does not repeat requirement, invariant, acceptance-criterion, or strategy coverage mappings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ImplementationIntent",
+      "description": "The prospective implementation contract and authoritative source boundary.",
+      "examples": [
+        {
+          "summary": "Implement validation before persistence according to the completed test strategy.",
+          "changeTypes": [
+            "production-code",
+            "test-code"
+          ],
+          "changeIntent": "bugfix",
+          "inputs": [],
+          "objectives": [],
+          "ownedPaths": [
+            "src/validation/",
+            "test/validation/"
+          ],
+          "nonGoals": [
+            "Do not deploy to production."
+          ],
+          "steps": [
+            "Implement validation handling.",
+            "Run the required test command."
+          ]
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/ImplementationResult",
+      "description": "The retrospective implementation output and actual verification evidence.",
+      "examples": [
+        {
+          "status": "implemented",
+          "implementation": {
+            "summary": "Validation was implemented.",
+            "changes": [],
+            "testImplementations": []
+          },
+          "verification": {
+            "status": "not-run",
+            "objectiveRefs": [],
+            "tests": []
+          },
+          "limitations": [
+            "Required verification was not run."
+          ]
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "ChangeType": {
+      "type": "string",
+      "enum": [
+        "production-code",
+        "test-code",
+        "configuration",
+        "schema",
+        "migration",
+        "infrastructure",
+        "dependency",
+        "documentation",
+        "generated-artifact"
+      ],
+      "description": "A category of meaningful implementation output. production-code is runtime or library code; test-code is automated test code or test infrastructure; configuration is application, runtime, repository, or tool configuration; schema is a machine-readable contract; migration transforms persisted state; infrastructure covers deployment, cloud, networking, CI/CD, container, or infrastructure-as-code material; dependency records an intentional dependency change; documentation is maintained explanatory or operational content; generated-artifact is an intentionally persisted generated output.",
+      "examples": [
+        "production-code",
+        "test-code",
+        "schema"
+      ]
+    },
+    "ChangeIntent": {
+      "type": "string",
+      "enum": [
+        "feature",
+        "bugfix",
+        "refactor",
+        "performance",
+        "security",
+        "compatibility",
+        "maintenance"
+      ],
+      "description": "The primary reason for performing the implementation. feature introduces or extends behavior; bugfix corrects behavior; refactor changes internal structure without intended observable change; performance improves resource use or responsiveness; security strengthens a security boundary; compatibility preserves interoperability; maintenance covers other implementation upkeep.",
+      "examples": [
+        "bugfix",
+        "feature"
+      ]
+    },
+    "InputKind": {
+      "type": "string",
+      "enum": [
+        "requirement",
+        "acceptanceCriterion",
+        "design",
+        "invariant",
+        "testStrategy",
+        "implementation",
+        "task",
+        "artifact",
+        "constraint"
+      ],
+      "description": "The semantic kind of an authoritative implementation input. testStrategy identifies a completed strategy result governing verification; task identifies another task or task result; design identifies a design result or model; the remaining values identify the corresponding source category.",
+      "examples": [
+        "requirement",
+        "testStrategy",
+        "design"
+      ]
+    },
+    "ImplementationResultStatus": {
+      "type": "string",
+      "enum": [
+        "implemented",
+        "partially-implemented",
+        "blocked",
+        "failed"
+      ],
+      "description": "The observed implementation outcome, independent of verification. implemented means intended work was completed; partially-implemented means a meaningful subset was completed; blocked means an unresolved dependency or external condition prevented progress; failed means the attempt did not produce a viable implementation.",
+      "examples": [
+        "implemented",
+        "partially-implemented",
+        "blocked"
+      ]
+    },
+    "VerificationStatus": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "partial",
+        "blocked",
+        "not-run"
+      ],
+      "description": "The aggregate observed verification result. passed means applicable required executions succeeded; failed means a required execution failed; partial means evidence exists but the required set is incomplete; blocked means execution could not complete; not-run means no execution was performed.",
+      "examples": [
+        "passed",
+        "partial",
+        "not-run"
+      ]
+    },
+    "TestType": {
+      "type": "string",
+      "enum": [
+        "static",
+        "unit",
+        "component",
+        "cli-audit",
+        "integration",
+        "manual",
+        "inspection",
+        "provider",
+        "operational"
+      ],
+      "description": "The highest evidence type actually exercised by one grouped verification execution. static is deterministic file or schema inspection; unit isolates a small unit; component exercises a bounded component; cli-audit checks a command boundary; integration exercises multiple real components; manual is human-performed; inspection is static examination; provider uses an external provider; operational exercises a deployed or running system.",
+      "examples": [
+        "unit",
+        "cli-audit",
+        "operational"
+      ]
+    },
+    "ExecutionStatus": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "blocked",
+        "inconclusive"
+      ],
+      "description": "The observed outcome of one grouped verification execution. passed means referenced cases met their pass criteria; failed means one or more did not; blocked means no observable result was reached; inconclusive means evidence was insufficient to classify the cases.",
+      "examples": [
+        "passed",
+        "blocked",
+        "inconclusive"
+      ]
+    },
+    "AnyReference": {
+      "type": "string",
+      "oneOf": [
+        {
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-local reference resolved against the selected work-item directory."
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-global reference resolved against a repository and work-item artifact."
+        }
+      ],
+      "description": "A task-local, task-qualified, or globally qualified SDLC reference resolved by the host.",
+      "examples": [
+        "#requirement/REQ-001",
+        "WI-0003|07000000#result/R-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C07000000#result/R-001"
+      ]
+    },
+    "TestCaseReference": {
+      "type": "string",
+      "oneOf": [
+        {
+          "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+        }
+      ],
+      "description": "A reference to a stable test-case ID defined by the governing strategy or owned by a small implementation without a strategy.",
+      "examples": [
+        "#test-case/TC-001",
+        "WI-0003|07000000#test-case/TC-001"
+      ]
+    },
+    "InputReference": {
+      "type": "string",
+      "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "description": "A task-local reference to an item in intent.inputs.",
+      "examples": [
+        "INPUT-REQ-001",
+        "INPUT-STRATEGY-001"
+      ]
+    },
+    "ObjectiveReference": {
+      "type": "string",
+      "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "description": "A task-local reference to an item in intent.objectives.",
+      "examples": [
+        "OBJ-001"
+      ]
+    },
+    "RepositoryPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+      "description": "A non-empty repository-relative file or directory path that does not escape through an absolute path or parent traversal.",
+      "examples": [
+        "src/validation/service.ts",
+        "test/validation/"
+      ]
+    },
+    "ImplementationIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "changeTypes",
+        "changeIntent",
+        "inputs",
+        "objectives",
+        "ownedPaths",
+        "nonGoals",
+        "steps"
+      ],
+      "description": "The prospective implementation contract. Strategy-defined requirement and invariant mappings are referenced through strategy inputs rather than copied into this object.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of the implementation work and bounded outcome.",
+          "examples": [
+            "Implement validation before persistence according to the completed test strategy."
+          ]
+        },
+        "changeTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "production-code",
+              "test-code",
+              "configuration",
+              "schema",
+              "migration",
+              "infrastructure",
+              "dependency",
+              "documentation",
+              "generated-artifact"
+            ],
+            "description": "An intended meaningful implementation output category.",
+            "examples": [
+              "production-code",
+              "test-code"
+            ]
+          },
+          "description": "Expected categories of meaningful implementation outputs, not every incidental file touched.",
+          "examples": [
+            [
+              "production-code",
+              "test-code"
+            ]
+          ]
+        },
+        "changeIntent": {
+          "type": "string",
+          "enum": [
+            "feature",
+            "bugfix",
+            "refactor",
+            "performance",
+            "security",
+            "compatibility",
+            "maintenance"
+          ],
+          "description": "The primary reason for performing this implementation.",
+          "examples": [
+            "bugfix"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "ref",
+              "purpose",
+              "required"
+            ],
+            "description": "One authoritative implementation input and its task-local alias.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable task-local identifier for the input.",
+                "examples": [
+                  "INPUT-REQ-001",
+                  "INPUT-STRATEGY-001"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "requirement",
+                  "acceptanceCriterion",
+                  "design",
+                  "invariant",
+                  "testStrategy",
+                  "implementation",
+                  "task",
+                  "artifact",
+                  "constraint"
+                ],
+                "description": "Semantic kind of the referenced authoritative input.",
+                "examples": [
+                  "requirement",
+                  "testStrategy",
+                  "design"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "oneOf": [
+                  {
+                    "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "description": "A work-item-local reference resolved against the selected work-item directory."
+                  },
+                  {
+                    "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "description": "A work-item-global reference resolved against a repository and work-item artifact."
+                  }
+                ],
+                "description": "Resolvable task-local, task-qualified, or globally qualified source reference.",
+                "examples": [
+                  "#requirement/REQ-001",
+                  "WI-0003|07000000#result/R-001"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this input is relevant to the implementation.",
+                "examples": [
+                  "Apply the completed strategy's required test-case set."
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether failure to resolve or consider this input should block successful implementation.",
+                "examples": [
+                  true,
+                  false
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "INPUT-STRATEGY-001",
+                "kind": "testStrategy",
+                "ref": "WI-0003|07000000#result/R-001",
+                "purpose": "Apply the completed strategy's required test-case set.",
+                "required": true
+              }
+            ]
+          },
+          "description": "Authoritative semantic inputs, including an optional governing test strategy.",
+          "examples": [
+            [
+              {
+                "id": "INPUT-REQ-001",
+                "kind": "requirement",
+                "ref": "#requirement/REQ-001",
+                "purpose": "Define rejection behavior before persistence.",
+                "required": true
+              },
+              {
+                "id": "INPUT-STRATEGY-001",
+                "kind": "testStrategy",
+                "ref": "WI-0003|07000000#result/R-001",
+                "purpose": "Apply the completed strategy's required test-case set.",
+                "required": true
+              }
+            ]
+          ]
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement",
+              "inputRefs",
+              "testCaseRefs"
+            ],
+            "description": "One bounded implementation objective. Requirement and invariant coverage is resolved through referenced strategy test cases.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable task-local identifier for the objective.",
+                "examples": [
+                  "OBJ-001"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The behavior, structure, or implementation result this objective is intended to establish.",
+                "examples": [
+                  "Validate events before persistence."
+                ]
+              },
+              "inputRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Input identifier that establishes or constrains this objective.",
+                  "examples": [
+                    "INPUT-REQ-001",
+                    "INPUT-STRATEGY-001"
+                  ]
+                },
+                "description": "Implementation inputs that establish or constrain this objective.",
+                "examples": [
+                  [
+                    "INPUT-REQ-001",
+                    "INPUT-STRATEGY-001"
+                  ]
+                ]
+              },
+              "testCaseRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                    },
+                    {
+                      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                    },
+                    {
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                    }
+                  ],
+                  "description": "Strategy-defined or implementation-owned test case expected to verify this objective.",
+                  "examples": [
+                    "#test-case/TC-001"
+                  ]
+                },
+                "description": "Test cases expected to verify this objective. The strategy supplies requirement, invariant, and acceptance mappings.",
+                "examples": [
+                  [
+                    "#test-case/TC-001"
+                  ]
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "OBJ-001",
+                "statement": "Validate events before persistence.",
+                "inputRefs": [
+                  "INPUT-REQ-001",
+                  "INPUT-STRATEGY-001"
+                ],
+                "testCaseRefs": [
+                  "#test-case/TC-001"
+                ]
+              }
+            ]
+          },
+          "description": "Addressable implementation objectives connecting requested work to authoritative inputs and strategy-defined test cases.",
+          "examples": [
+            [
+              {
+                "id": "OBJ-001",
+                "statement": "Validate events before persistence.",
+                "inputRefs": [
+                  "INPUT-REQ-001",
+                  "INPUT-STRATEGY-001"
+                ],
+                "testCaseRefs": [
+                  "#test-case/TC-001"
+                ]
+              }
+            ]
+          ]
+        },
+        "ownedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+            "description": "Repository-relative file or directory prefix this task may modify.",
+            "examples": [
+              "src/validation/",
+              "test/validation/"
+            ]
+          },
+          "description": "Repository paths this task owns or may modify.",
+          "examples": [
+            [
+              "src/validation/",
+              "test/validation/"
+            ]
+          ]
+        },
+        "nonGoals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An implementation concern explicitly excluded from this task.",
+            "examples": [
+              "Do not deploy to production."
+            ]
+          },
+          "description": "Explicitly excluded implementation work or behavior.",
+          "examples": [
+            [
+              "Do not deploy to production."
+            ],
+            []
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One ordered high-level implementation action.",
+            "examples": [
+              "Implement validation handling."
+            ]
+          },
+          "description": "Ordered implementation guidance, not execution evidence.",
+          "examples": [
+            [
+              "Implement validation handling.",
+              "Run the required test command."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Implement validation before persistence according to the completed test strategy.",
+          "changeTypes": [
+            "production-code",
+            "test-code"
+          ],
+          "changeIntent": "bugfix",
+          "inputs": [
+            {
+              "id": "INPUT-REQ-001",
+              "kind": "requirement",
+              "ref": "#requirement/REQ-001",
+              "purpose": "Define rejection behavior before persistence.",
+              "required": true
+            },
+            {
+              "id": "INPUT-STRATEGY-001",
+              "kind": "testStrategy",
+              "ref": "WI-0003|07000000#result/R-001",
+              "purpose": "Apply the completed strategy's required test-case set.",
+              "required": true
+            }
+          ],
+          "objectives": [
+            {
+              "id": "OBJ-001",
+              "statement": "Validate events before persistence.",
+              "inputRefs": [
+                "INPUT-REQ-001",
+                "INPUT-STRATEGY-001"
+              ],
+              "testCaseRefs": [
+                "#test-case/TC-001"
+              ]
+            }
+          ],
+          "ownedPaths": [
+            "src/validation/",
+            "test/validation/"
+          ],
+          "nonGoals": [
+            "Do not deploy to production."
+          ],
+          "steps": [
+            "Implement validation handling.",
+            "Run the required test command."
+          ]
+        }
+      ]
+    },
+    "ImplementationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "implementation",
+        "verification",
+        "limitations"
+      ],
+      "description": "Retrospective implementation work and actual verification evidence. Strategy coverage is intentionally not repeated.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "implemented",
+            "partially-implemented",
+            "blocked",
+            "failed"
+          ],
+          "description": "Observed implementation outcome independent of verification.",
+          "examples": [
+            "implemented",
+            "partially-implemented"
+          ]
+        },
+        "implementation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "summary",
+            "changes",
+            "testImplementations"
+          ],
+          "description": "Concrete implementation outputs produced by the task.",
+          "properties": {
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Concise description of what was implemented.",
+              "examples": [
+                "Validation and its focused regression test were implemented."
+              ]
+            },
+            "changes": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "type",
+                  "summary",
+                  "objectiveRefs",
+                  "paths"
+                ],
+                "description": "One semantically meaningful implementation change.",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^CHANGE-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                    "description": "Stable task-local identifier for the implementation change.",
+                    "examples": [
+                      "CHANGE-001"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "production-code",
+                      "test-code",
+                      "configuration",
+                      "schema",
+                      "migration",
+                      "infrastructure",
+                      "dependency",
+                      "documentation",
+                      "generated-artifact"
+                    ],
+                    "description": "Category of output represented by this change.",
+                    "examples": [
+                      "production-code",
+                      "test-code"
+                    ]
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Concise description of the semantic change.",
+                    "examples": [
+                      "Reject malformed events before persistence."
+                    ]
+                  },
+                  "objectiveRefs": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                      "description": "Objective realized or advanced by this change.",
+                      "examples": [
+                        "OBJ-001"
+                      ]
+                    },
+                    "description": "Implementation objectives realized or advanced by this change.",
+                    "examples": [
+                      [
+                        "OBJ-001"
+                      ]
+                    ]
+                  },
+                  "paths": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+                      "description": "Repository path materially changed by this semantic change.",
+                      "examples": [
+                        "src/validation/service.ts"
+                      ]
+                    },
+                    "description": "Repository files or directories materially changed to produce this result.",
+                    "examples": [
+                      [
+                        "src/validation/service.ts"
+                      ]
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "id": "CHANGE-001",
+                    "type": "production-code",
+                    "summary": "Reject malformed events before persistence.",
+                    "objectiveRefs": [
+                      "OBJ-001"
+                    ],
+                    "paths": [
+                      "src/validation/service.ts"
+                    ]
+                  }
+                ]
+              },
+              "description": "Meaningful implementation changes grouped semantically rather than as an unstructured file diff.",
+              "examples": [
+                [
+                  {
+                    "id": "CHANGE-001",
+                    "type": "production-code",
+                    "summary": "Reject malformed events before persistence.",
+                    "objectiveRefs": [
+                      "OBJ-001"
+                    ],
+                    "paths": [
+                      "src/validation/service.ts"
+                    ]
+                  }
+                ]
+              ]
+            },
+            "testImplementations": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "testCaseRef",
+                  "path"
+                ],
+                "description": "Repository location of executable test code corresponding to a strategy or implementation-owned test case.",
+                "properties": {
+                  "testCaseRef": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                      },
+                      {
+                        "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                      },
+                      {
+                        "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                      }
+                    ],
+                    "description": "Test case realized by this test source.",
+                    "examples": [
+                      "#test-case/TC-001"
+                    ]
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+                    "description": "Repository path containing the executable test implementation.",
+                    "examples": [
+                      "test/validation/service.test.ts"
+                    ]
+                  },
+                  "selector": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional test name, function, method, scenario, node ID, filter, or selector.",
+                    "examples": [
+                      "rejects invalid event before persistence"
+                    ]
+                  },
+                  "traceMarker": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional stable marker embedded in a test name, annotation, tag, or nearby source comment.",
+                    "examples": [
+                      "TC-001"
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "testCaseRef": "#test-case/TC-001",
+                    "path": "test/validation/service.test.ts",
+                    "selector": "rejects invalid event before persistence"
+                  }
+                ]
+              },
+              "description": "Concrete executable test implementations. Manual, inspection, provider, and operational cases normally appear only in verification tests.",
+              "examples": [
+                [
+                  {
+                    "testCaseRef": "#test-case/TC-001",
+                    "path": "test/validation/service.test.ts",
+                    "selector": "rejects invalid event before persistence"
+                  }
+                ],
+                []
+              ]
+            }
+          },
+          "examples": [
+            {
+              "summary": "Validation and its focused regression test were implemented.",
+              "changes": [
+                {
+                  "id": "CHANGE-001",
+                  "type": "production-code",
+                  "summary": "Reject malformed events before persistence.",
+                  "objectiveRefs": [
+                    "OBJ-001"
+                  ],
+                  "paths": [
+                    "src/validation/service.ts"
+                  ]
+                }
+              ],
+              "testImplementations": [
+                {
+                  "testCaseRef": "#test-case/TC-001",
+                  "path": "test/validation/service.test.ts",
+                  "selector": "rejects invalid event before persistence"
+                }
+              ]
+            }
+          ]
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "objectiveRefs",
+            "tests"
+          ],
+          "description": "Actual grouped verification evidence. Requirement and invariant traceability is obtained through strategy test cases, not repeated here.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "partial",
+                "blocked",
+                "not-run"
+              ],
+              "description": "Aggregate observed verification outcome.",
+              "examples": [
+                "passed",
+                "partial",
+                "not-run"
+              ]
+            },
+            "objectiveRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Implementation objective for which verification was attempted or established.",
+                "examples": [
+                  "OBJ-001"
+                ]
+              },
+              "description": "Implementation objectives addressed by verification executions.",
+              "examples": [
+                [
+                  "OBJ-001"
+                ],
+                []
+              ]
+            },
+            "tests": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "type",
+                  "testCaseRefs",
+                  "status",
+                  "result"
+                ],
+                "description": "One grouped verification execution. A single command or procedure may produce evidence for multiple test cases.",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                    "description": "Stable task-local identifier for the execution.",
+                    "examples": [
+                      "EXEC-001"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "static",
+                      "unit",
+                      "component",
+                      "cli-audit",
+                      "integration",
+                      "manual",
+                      "inspection",
+                      "provider",
+                      "operational"
+                    ],
+                    "description": "The shared SDLC evidence tier vocabulary defined by https://schemas.handschuh.dev/sdlc/evidence-tier/v1.",
+                    "examples": [
+                      "static",
+                      "unit",
+                      "cli-audit",
+                      "operational"
+                    ]
+                  },
+                  "testCaseRefs": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "oneOf": [
+                        {
+                          "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                        },
+                        {
+                          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                        },
+                        {
+                          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                        }
+                      ],
+                      "description": "Test case for which this execution produced evidence.",
+                      "examples": [
+                        "#test-case/TC-001"
+                      ]
+                    },
+                    "description": "Test cases covered by this execution.",
+                    "examples": [
+                      [
+                        "#test-case/TC-001"
+                      ]
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional concrete code boundary, environment, system, provider, artifact, or operational target.",
+                    "examples": [
+                      "Validation service unit boundary"
+                    ]
+                  },
+                  "command": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Exact command executed when this is an executable check.",
+                    "examples": [
+                      "npm test -- --runInBand test/validation/service.test.ts"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "passed",
+                      "failed",
+                      "blocked",
+                      "inconclusive"
+                    ],
+                    "description": "Observed outcome of this execution.",
+                    "examples": [
+                      "passed",
+                      "blocked",
+                      "inconclusive"
+                    ]
+                  },
+                  "result": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Concise factual record of what the execution produced, rather than the strategy's expected outcome.",
+                    "examples": [
+                      "The test process exited zero and all assertions passed."
+                    ]
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "unit",
+                            "component",
+                            "integration",
+                            "cli-audit"
+                          ],
+                          "description": "Test execution types that require an exact command in this execution record.",
+                          "examples": [
+                            "unit"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "description": "Condition identifying executable verification types.",
+                      "examples": [
+                        {
+                          "type": "unit"
+                        }
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "command"
+                      ]
+                    }
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "EXEC-001",
+                    "type": "unit",
+                    "testCaseRefs": [
+                      "#test-case/TC-001"
+                    ],
+                    "command": "npm test -- --runInBand test/validation/service.test.ts",
+                    "status": "passed",
+                    "result": "The test process exited zero and all assertions passed."
+                  }
+                ]
+              },
+              "description": "Observed executions or inspections against strategy-defined or implementation-owned test cases. These are actual evidence; the strategy remains planning input.",
+              "examples": [
+                [
+                  {
+                    "id": "EXEC-001",
+                    "type": "unit",
+                    "testCaseRefs": [
+                      "#test-case/TC-001"
+                    ],
+                    "command": "npm test -- --runInBand test/validation/service.test.ts",
+                    "status": "passed",
+                    "result": "The test process exited zero and all assertions passed."
+                  }
+                ],
+                []
+              ]
+            }
+          },
+          "examples": [
+            {
+              "status": "passed",
+              "objectiveRefs": [
+                "OBJ-001"
+              ],
+              "tests": [
+                {
+                  "id": "EXEC-001",
+                  "type": "unit",
+                  "testCaseRefs": [
+                    "#test-case/TC-001"
+                  ],
+                  "command": "npm test -- --runInBand test/validation/service.test.ts",
+                  "status": "passed",
+                  "result": "The test process exited zero and all assertions passed."
+                }
+              ]
+            }
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A known boundary on what was implemented or established by verification.",
+            "examples": [
+              "No provider-backed or production deployment behavior was established."
+            ]
+          },
+          "description": "Known limitations of the implementation result or its evidence.",
+          "examples": [
+            [
+              "No provider-backed or production deployment behavior was established."
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "implemented",
+          "implementation": {
+            "summary": "Validation and its focused regression test were implemented.",
+            "changes": [
+              {
+                "id": "CHANGE-001",
+                "type": "production-code",
+                "summary": "Reject malformed events before persistence.",
+                "objectiveRefs": [
+                  "OBJ-001"
+                ],
+                "paths": [
+                  "src/validation/service.ts"
+                ]
+              },
+              {
+                "id": "CHANGE-002",
+                "type": "test-code",
+                "summary": "Add the invalid-event regression test.",
+                "objectiveRefs": [
+                  "OBJ-001"
+                ],
+                "paths": [
+                  "test/validation/service.test.ts"
+                ]
+              }
+            ],
+            "testImplementations": [
+              {
+                "testCaseRef": "#test-case/TC-001",
+                "path": "test/validation/service.test.ts",
+                "selector": "rejects invalid event before persistence"
+              }
+            ]
+          },
+          "verification": {
+            "status": "passed",
+            "objectiveRefs": [
+              "OBJ-001"
+            ],
+            "tests": [
+              {
+                "id": "EXEC-001",
+                "type": "unit",
+                "testCaseRefs": [
+                  "#test-case/TC-001"
+                ],
+                "command": "npm test -- --runInBand test/validation/service.test.ts",
+                "status": "passed",
+                "result": "The test process exited zero and all assertions passed."
+              }
+            ]
+          },
+          "limitations": [
+            "No provider-backed or production deployment behavior was established."
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Implement validation before persistence according to the completed test strategy.",
+        "changeTypes": [
+          "production-code",
+          "test-code"
+        ],
+        "changeIntent": "bugfix",
+        "inputs": [
+          {
+            "id": "INPUT-REQ-001",
+            "kind": "requirement",
+            "ref": "#requirement/REQ-001",
+            "purpose": "Define rejection behavior before persistence.",
+            "required": true
+          },
+          {
+            "id": "INPUT-DESIGN-001",
+            "kind": "design",
+            "ref": "#design/DESIGN-001",
+            "purpose": "Define the validation and persistence boundary.",
+            "required": true
+          },
+          {
+            "id": "INPUT-STRATEGY-001",
+            "kind": "testStrategy",
+            "ref": "WI-0003|07000000#result/R-001",
+            "purpose": "Apply the completed strategy's required test-case set.",
+            "required": true
+          }
+        ],
+        "objectives": [
+          {
+            "id": "OBJ-001",
+            "statement": "Validate events before persistence.",
+            "inputRefs": [
+              "INPUT-REQ-001",
+              "INPUT-DESIGN-001",
+              "INPUT-STRATEGY-001"
+            ],
+            "testCaseRefs": [
+              "#test-case/TC-001"
+            ]
+          }
+        ],
+        "ownedPaths": [
+          "src/validation/",
+          "test/validation/"
+        ],
+        "nonGoals": [
+          "Do not deploy to production."
+        ],
+        "steps": [
+          "Implement validation handling.",
+          "Run the required test command."
+        ]
+      },
+      "result": {
+        "status": "implemented",
+        "implementation": {
+          "summary": "Validation and its focused regression test were implemented.",
+          "changes": [
+            {
+              "id": "CHANGE-001",
+              "type": "production-code",
+              "summary": "Reject malformed events before persistence.",
+              "objectiveRefs": [
+                "OBJ-001"
+              ],
+              "paths": [
+                "src/validation/service.ts"
+              ]
+            },
+            {
+              "id": "CHANGE-002",
+              "type": "test-code",
+              "summary": "Add the invalid-event regression test.",
+              "objectiveRefs": [
+                "OBJ-001"
+              ],
+              "paths": [
+                "test/validation/service.test.ts"
+              ]
+            }
+          ],
+          "testImplementations": [
+            {
+              "testCaseRef": "#test-case/TC-001",
+              "path": "test/validation/service.test.ts",
+              "selector": "rejects invalid event before persistence"
+            }
+          ]
+        },
+        "verification": {
+          "status": "passed",
+          "objectiveRefs": [
+            "OBJ-001"
+          ],
+          "tests": [
+            {
+              "id": "EXEC-001",
+              "type": "unit",
+              "testCaseRefs": [
+                "#test-case/TC-001"
+              ],
+              "command": "npm test -- --runInBand test/validation/service.test.ts",
+              "status": "passed",
+              "result": "The test process exited zero and all assertions passed."
+            }
+          ]
+        },
+        "limitations": [
+          "No provider-backed or production deployment behavior was established."
+        ]
+      }
+    }
+  ]
+}

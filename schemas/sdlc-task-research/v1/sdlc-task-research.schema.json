@@ -1,0 +1,1090 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-research/v1",
+  "title": "SDLC Task Research v1",
+  "description": "The task-specific payload for bounded research. It has exactly two root properties: intent defines the questions and sources to investigate, and result records findings, unresolved questions, recommendations, and evidence limitations. The common task envelope owns processing state, task workflow status, identity, routing, dependencies, and schema dispatch.",
+  "$comment": "Research results distinguish observations from unresolved uncertainty and recommendations. Impact and confidence are integer scores from 0 through 100. A research result does not silently apply a recommendation, change a parent task, or prove claims beyond its recorded sources and evidence limitations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ResearchIntent",
+      "description": "The prospective research boundary.",
+      "examples": [
+        {
+          "questions": [
+            {
+              "id": "Q-001",
+              "question": "Which fields belong in the common envelope rather than a task-specific payload?",
+              "reason": "Avoid duplicating routing and lifecycle concerns in each task schema.",
+              "impact": 85,
+              "confidence": 90,
+              "status": "answered",
+              "answer": "Identity, routing, references, dependencies, task type, task schema, title, objective, and payload dispatch belong in the envelope.",
+              "affectedRefs": [
+                "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+              ],
+              "evidenceRefs": [
+                "SRC-001"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "SRC-001",
+              "location": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+              "sourceType": "file",
+              "purpose": "Define the shared task envelope."
+            }
+          ]
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/ResearchResult",
+      "description": "The observed research output.",
+      "examples": [
+        {
+          "findings": [
+            {
+              "id": "F-001",
+              "kind": "constraint",
+              "statement": "Task-specific schemas must not redefine envelope-owned fields.",
+              "impact": 80,
+              "confidence": 95,
+              "evidenceRefs": [
+                "SRC-001"
+              ],
+              "affectedRefs": [
+                "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+              ]
+            }
+          ],
+          "unresolvedQuestions": [
+            {
+              "id": "Q-002",
+              "question": "Which research results must be completed before a design task may proceed?",
+              "reason": "Architecture and data-flow work may depend on unresolved domain facts.",
+              "impact": 90,
+              "confidence": 88,
+              "status": "open",
+              "suggestedTaskType": "decision",
+              "affectedRefs": [
+                ".docs/sdlc/8digit-code-tree-structure.draft.md"
+              ]
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "R-001",
+              "recommendation": "Keep research findings, unresolved questions, and recommendations as distinct result collections.",
+              "rationale": "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions.",
+              "impact": 75,
+              "confidence": 92,
+              "status": "proposed",
+              "suggestedTaskType": "design",
+              "basisRefs": [
+                "F-001",
+                "Q-002"
+              ]
+            }
+          ],
+          "evidenceLimitations": [
+            {
+              "id": "L-001",
+              "limitation": "This research does not establish provider, runtime, integration, or production behavior.",
+              "impact": 70,
+              "confidence": 98,
+              "affectedClaims": [
+                "R-001"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "questions": [
+          {
+            "id": "Q-001",
+            "question": "Which fields belong in the common envelope rather than a task-specific payload?",
+            "reason": "Avoid duplicating routing and lifecycle concerns in each task schema.",
+            "impact": 85,
+            "confidence": 90,
+            "status": "answered",
+            "answer": "Identity, routing, references, dependencies, task type, task schema, title, objective, and payload dispatch belong in the envelope.",
+            "affectedRefs": [
+              "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+            ],
+            "evidenceRefs": [
+              "SRC-001"
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "id": "SRC-001",
+            "location": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+            "sourceType": "file",
+            "purpose": "Define the shared task envelope."
+          }
+        ]
+      },
+      "result": {
+        "findings": [
+          {
+            "id": "F-001",
+            "kind": "constraint",
+            "statement": "Task-specific schemas must not redefine envelope-owned fields.",
+            "impact": 80,
+            "confidence": 95,
+            "evidenceRefs": [
+              "SRC-001"
+            ],
+            "affectedRefs": [
+              "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+            ]
+          }
+        ],
+        "unresolvedQuestions": [
+          {
+            "id": "Q-002",
+            "question": "Which research results must be completed before a design task may proceed?",
+            "reason": "Architecture and data-flow work may depend on unresolved domain facts.",
+            "impact": 90,
+            "confidence": 88,
+            "status": "open",
+            "suggestedTaskType": "decision",
+            "affectedRefs": [
+              ".docs/sdlc/8digit-code-tree-structure.draft.md"
+            ]
+          }
+        ],
+        "recommendations": [
+          {
+            "id": "R-001",
+            "recommendation": "Keep research findings, unresolved questions, and recommendations as distinct result collections.",
+            "rationale": "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions.",
+            "impact": 75,
+            "confidence": 92,
+            "status": "proposed",
+            "suggestedTaskType": "design",
+            "basisRefs": [
+              "F-001",
+              "Q-002"
+            ]
+          }
+        ],
+        "evidenceLimitations": [
+          {
+            "id": "L-001",
+            "limitation": "This research does not establish provider, runtime, integration, or production behavior.",
+            "impact": 70,
+            "confidence": 98,
+            "affectedClaims": [
+              "R-001"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "ResearchIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "questions",
+        "sources"
+      ],
+      "description": "The bounded research questions and authoritative sources that define the prospective research work.",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "description": "The bounded research questions investigated by this task. Questions may remain open when the available research does not resolve them.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "question",
+              "reason",
+              "impact",
+              "confidence",
+              "status"
+            ],
+            "description": "One research question and its current resolution state.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^Q-[0-9]{3,}$",
+                "description": "Stable identifier for the research question within this result.",
+                "examples": [
+                  "Q-001"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The precise question investigated by the research task.",
+                "examples": [
+                  "Which fields belong in the common envelope rather than a task-specific payload?"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why resolving this question matters to the work or to a downstream task.",
+                "examples": [
+                  "Avoid duplicating routing and lifecycle concerns in each task schema."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of leaving the question unresolved, scored from 0 to 100.",
+                "examples": [
+                  85
+                ],
+                "x-field-role": "authoritative"
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that the question has been stated and assessed accurately, scored from 0 to 100.",
+                "examples": [
+                  90
+                ],
+                "x-field-role": "authoritative"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "answered",
+                  "deferred",
+                  "notApplicable"
+                ],
+                "description": "Current research status of the question. Answered means this task produced a bounded answer; it does not mean the answer was approved.",
+                "examples": [
+                  "answered",
+                  "open"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "answer": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The bounded answer produced by research when status is answered.",
+                "examples": [
+                  "Identity, routing, references, dependencies, task type, processing state, title, objective, and the intent/result wrapper belong in the envelope."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "affectedRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Requirement, task, contract, or repository references affected by the question.",
+                "examples": [
+                  [
+                    "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+                  ],
+                  []
+                ],
+                "x-field-role": "authoritative"
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^SRC-[0-9]{3,}$"
+                },
+                "description": "Source identifiers that support the question's answer or current status.",
+                "examples": [
+                  [
+                    "SRC-001"
+                  ],
+                  []
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "Q-001",
+                "question": "Which fields belong in the common envelope rather than a task-specific payload?",
+                "reason": "Avoid duplicating routing and lifecycle concerns in each task schema.",
+                "impact": 85,
+                "confidence": 90,
+                "status": "answered",
+                "answer": "Identity, routing, references, dependencies, task type, task schema, title, objective, and payload dispatch belong in the envelope.",
+                "affectedRefs": [
+                  "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+                ],
+                "evidenceRefs": [
+                  "SRC-001"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "Q-001",
+                "question": "Which fields belong in the common envelope rather than a task-specific payload?",
+                "reason": "Avoid duplicating routing and lifecycle concerns in each task schema.",
+                "impact": 85,
+                "confidence": 90,
+                "status": "answered",
+                "answer": "Identity, routing, references, dependencies, task type, task schema, title, objective, and payload dispatch belong in the envelope.",
+                "affectedRefs": [],
+                "evidenceRefs": [
+                  "SRC-001"
+                ]
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "sources": {
+          "type": "array",
+          "description": "The durable sources consulted by the research task. Source identifiers are used by findings, questions, and recommendations to preserve provenance.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "location",
+              "sourceType",
+              "purpose"
+            ],
+            "description": "One source consulted during research.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^SRC-[0-9]{3,}$",
+                "description": "Stable identifier for the source within this result.",
+                "examples": [
+                  "SRC-001"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "location": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Repository path, URL, command reference, or other durable locator for the source.",
+                "examples": [
+                  "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "sourceType": {
+                "type": "string",
+                "enum": [
+                  "record",
+                  "file",
+                  "url",
+                  "command",
+                  "test",
+                  "conversation",
+                  "other"
+                ],
+                "description": "The kind of source identified by location.",
+                "examples": [
+                  "file",
+                  "record"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this source was consulted and what context it provides.",
+                "examples": [
+                  "Define the shared task envelope."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "excerpt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional bounded excerpt or summary of the relevant source content. Do not store secrets or unbounded logs.",
+                "examples": [
+                  "The envelope delegates intent and result validation to the selected task-contract schema references."
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "SRC-001",
+                "location": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+                "sourceType": "file",
+                "purpose": "Define the shared task envelope."
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "SRC-001",
+                "location": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+                "sourceType": "file",
+                "purpose": "Define the shared task envelope."
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "questions": [
+            {
+              "id": "Q-001",
+              "question": "Which fields belong in the common envelope rather than a task-specific payload?",
+              "reason": "Avoid duplicating routing and lifecycle concerns in each task schema.",
+              "impact": 85,
+              "confidence": 90,
+              "status": "answered",
+              "answer": "Identity, routing, references, dependencies, task type, task schema, title, objective, and payload dispatch belong in the envelope.",
+              "affectedRefs": [
+                "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+              ],
+              "evidenceRefs": [
+                "SRC-001"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "SRC-001",
+              "location": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+              "sourceType": "file",
+              "purpose": "Define the shared task envelope."
+            }
+          ]
+        }
+      ]
+    },
+    "ResearchResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findings",
+        "unresolvedQuestions",
+        "recommendations",
+        "evidenceLimitations"
+      ],
+      "description": "The observations, unresolved uncertainty, recommendations, and evidence limitations produced by research.",
+      "properties": {
+        "findings": {
+          "type": "array",
+          "description": "Supported observations, constraints, risks, or bounded conclusions produced by the research task.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "statement",
+              "impact",
+              "confidence",
+              "evidenceRefs"
+            ],
+            "description": "One research finding supported by one or more source references.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^F-[0-9]{3,}$",
+                "description": "Stable identifier for the finding within this result.",
+                "examples": [
+                  "F-001"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "fact",
+                  "observation",
+                  "constraint",
+                  "risk",
+                  "interpretation"
+                ],
+                "description": "The category of the finding. Facts and observations describe evidence; constraints and risks describe implications; interpretations state bounded reasoning.",
+                "examples": [
+                  "constraint",
+                  "risk"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The concise finding statement.",
+                "examples": [
+                  "Task-specific schemas must not redefine envelope-owned fields."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of this finding for the work, scored from 0 to 100.",
+                "examples": [
+                  80
+                ],
+                "x-field-role": "authoritative"
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that the finding is supported and correctly interpreted, scored from 0 to 100.",
+                "examples": [
+                  95
+                ],
+                "x-field-role": "authoritative"
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^SRC-[0-9]{3,}$"
+                },
+                "description": "Source identifiers that support this finding.",
+                "examples": [
+                  [
+                    "SRC-001"
+                  ]
+                ],
+                "x-field-role": "authoritative"
+              },
+              "affectedRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Requirements, tasks, contracts, or repository paths affected by this finding.",
+                "examples": [
+                  [
+                    "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+                  ],
+                  []
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "F-001",
+                "kind": "constraint",
+                "statement": "Task-specific schemas must not redefine envelope-owned fields.",
+                "impact": 80,
+                "confidence": 95,
+                "evidenceRefs": [
+                  "SRC-001"
+                ],
+                "affectedRefs": [
+                  "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "F-001",
+                "kind": "constraint",
+                "statement": "Task-specific schemas must not redefine envelope-owned fields.",
+                "impact": 80,
+                "confidence": 95,
+                "evidenceRefs": [
+                  "SRC-001"
+                ],
+                "affectedRefs": []
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "unresolvedQuestions": {
+          "type": "array",
+          "description": "Questions that remain unresolved after the research performed by this task and require future research, clarification, decision, design, or another bounded action.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "question",
+              "reason",
+              "impact",
+              "confidence",
+              "status"
+            ],
+            "description": "One unresolved question retained for downstream work.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^Q-[0-9]{3,}$",
+                "description": "Stable identifier for the unresolved question within this result.",
+                "examples": [
+                  "Q-002"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The unresolved question that requires a future action.",
+                "examples": [
+                  "Which research results must be completed before a design task may proceed?"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why the question remains important and was not resolved by this task.",
+                "examples": [
+                  "Architecture and data-flow work may depend on unresolved domain facts."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of leaving the question unresolved, scored from 0 to 100.",
+                "examples": [
+                  90
+                ],
+                "x-field-role": "authoritative"
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that the question is correctly stated as unresolved, scored from 0 to 100.",
+                "examples": [
+                  88
+                ],
+                "x-field-role": "authoritative"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "deferred"
+                ],
+                "description": "Whether the unresolved question is active for follow-up or intentionally deferred.",
+                "examples": [
+                  "open"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "suggestedTaskType": {
+                "type": "string",
+                "enum": [
+                  "decomposition",
+                  "research",
+                  "decision",
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation",
+                  "review",
+                  "rework",
+                  "delivery"
+                ],
+                "description": "The task type that may be useful for resolving the question. This is a recommendation, not an automatically created child task.",
+                "examples": [
+                  "decision",
+                  "design"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "affectedRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Requirements, tasks, contracts, or repository paths affected by the unresolved question.",
+                "examples": [
+                  [
+                    ".docs/sdlc/8digit-code-tree-structure.draft.md"
+                  ],
+                  []
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "Q-002",
+                "question": "Which research results must be completed before a design task may proceed?",
+                "reason": "Architecture and data-flow work may depend on unresolved domain facts.",
+                "impact": 90,
+                "confidence": 88,
+                "status": "open",
+                "suggestedTaskType": "decision",
+                "affectedRefs": [
+                  ".docs/sdlc/8digit-code-tree-structure.draft.md"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "Q-002",
+                "question": "Which research results must be completed before a design task may proceed?",
+                "reason": "Architecture and data-flow work may depend on unresolved domain facts.",
+                "impact": 90,
+                "confidence": 88,
+                "status": "open",
+                "suggestedTaskType": "decision",
+                "affectedRefs": []
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "Proposed next actions, decisions, or task types derived from the research. Recommendations do not apply themselves and do not change task or work-item state.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "recommendation",
+              "rationale",
+              "impact",
+              "confidence",
+              "status"
+            ],
+            "description": "One proposed recommendation retained for review or downstream planning.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^R-[0-9]{3,}$",
+                "description": "Stable identifier for the recommendation within this result.",
+                "examples": [
+                  "R-001"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "recommendation": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The proposed action, decision, or follow-up task.",
+                "examples": [
+                  "Keep research findings, unresolved questions, and recommendations as distinct result collections."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why the research supports this recommendation.",
+                "examples": [
+                  "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of adopting or ignoring this recommendation, scored from 0 to 100.",
+                "examples": [
+                  75
+                ],
+                "x-field-role": "authoritative"
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that this recommendation follows from the research, scored from 0 to 100.",
+                "examples": [
+                  92
+                ],
+                "x-field-role": "authoritative"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "proposed",
+                  "accepted",
+                  "rejected",
+                  "deferred"
+                ],
+                "description": "Disposition of the recommendation. Accepted means accepted as a recommendation, not that the recommended work has been performed.",
+                "examples": [
+                  "proposed"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "suggestedTaskType": {
+                "type": "string",
+                "enum": [
+                  "decomposition",
+                  "research",
+                  "decision",
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation",
+                  "review",
+                  "rework",
+                  "delivery"
+                ],
+                "description": "The task type that may carry the recommendation forward.",
+                "examples": [
+                  "design"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "basisRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:SRC|F|Q)-[0-9]{3,}$"
+                },
+                "description": "Finding, question, or source identifiers that form the basis of the recommendation.",
+                "examples": [
+                  [
+                    "F-001",
+                    "Q-002"
+                  ],
+                  []
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "R-001",
+                "recommendation": "Keep research findings, unresolved questions, and recommendations as distinct result collections.",
+                "rationale": "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions.",
+                "impact": 75,
+                "confidence": 92,
+                "status": "proposed",
+                "suggestedTaskType": "design",
+                "basisRefs": [
+                  "F-001",
+                  "Q-002"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "R-001",
+                "recommendation": "Keep research findings, unresolved questions, and recommendations as distinct result collections.",
+                "rationale": "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions.",
+                "impact": 75,
+                "confidence": 92,
+                "status": "proposed",
+                "suggestedTaskType": "design",
+                "basisRefs": []
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "evidenceLimitations": {
+          "type": "array",
+          "description": "Explicit statements about what the research does not establish or prove.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "limitation",
+              "impact",
+              "confidence",
+              "affectedClaims"
+            ],
+            "description": "One bounded limitation on the research evidence or conclusion.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^L-[0-9]{3,}$",
+                "description": "Stable identifier for the evidence limitation within this result.",
+                "examples": [
+                  "L-001"
+                ],
+                "x-field-role": "authoritative"
+              },
+              "limitation": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The evidence boundary or limitation that must not be overlooked.",
+                "examples": [
+                  "This research does not establish provider, runtime, integration, or production behavior."
+                ],
+                "x-field-role": "authoritative"
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of overlooking this limitation, scored from 0 to 100.",
+                "examples": [
+                  70
+                ],
+                "x-field-role": "authoritative"
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that this limitation accurately describes the evidence boundary, scored from 0 to 100.",
+                "examples": [
+                  98
+                ],
+                "x-field-role": "authoritative"
+              },
+              "affectedClaims": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Claim identifiers or claim descriptions whose interpretation is limited.",
+                "examples": [
+                  [
+                    "R-001"
+                  ]
+                ],
+                "x-field-role": "authoritative"
+              }
+            },
+            "examples": [
+              {
+                "id": "L-001",
+                "limitation": "This research does not establish provider, runtime, integration, or production behavior.",
+                "impact": 70,
+                "confidence": 98,
+                "affectedClaims": [
+                  "R-001"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "L-001",
+                "limitation": "This research does not establish provider, runtime, integration, or production behavior.",
+                "impact": 70,
+                "confidence": 98,
+                "affectedClaims": [
+                  "R-001"
+                ]
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "findings": [
+            {
+              "id": "F-001",
+              "kind": "constraint",
+              "statement": "Task-specific schemas must not redefine envelope-owned fields.",
+              "impact": 80,
+              "confidence": 95,
+              "evidenceRefs": [
+                "SRC-001"
+              ],
+              "affectedRefs": [
+                "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+              ]
+            }
+          ],
+          "unresolvedQuestions": [
+            {
+              "id": "Q-002",
+              "question": "Which research results must be completed before a design task may proceed?",
+              "reason": "Architecture and data-flow work may depend on unresolved domain facts.",
+              "impact": 90,
+              "confidence": 88,
+              "status": "open",
+              "suggestedTaskType": "decision",
+              "affectedRefs": [
+                ".docs/sdlc/8digit-code-tree-structure.draft.md"
+              ]
+            }
+          ],
+          "recommendations": [
+            {
+              "id": "R-001",
+              "recommendation": "Keep research findings, unresolved questions, and recommendations as distinct result collections.",
+              "rationale": "Findings record observations, questions record remaining uncertainty, and recommendations propose rather than apply future decisions.",
+              "impact": 75,
+              "confidence": 92,
+              "status": "proposed",
+              "suggestedTaskType": "design",
+              "basisRefs": [
+                "F-001",
+                "Q-002"
+              ]
+            }
+          ],
+          "evidenceLimitations": [
+            {
+              "id": "L-001",
+              "limitation": "This research does not establish provider, runtime, integration, or production behavior.",
+              "impact": 70,
+              "confidence": 98,
+              "affectedClaims": [
+                "R-001"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

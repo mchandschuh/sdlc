@@ -1,0 +1,758 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-decomposition/v1",
+  "title": "SDLC Task Decomposition v1",
+  "description": "The task-specific payload for one bounded decomposition action. It has exactly two root properties: intent defines the governed tree range and rules, and result records the observed child materialization outcome.",
+  "$comment": "JSON Schema validates the payload shape. The sdlc host must additionally enforce that start and end are valid eight-digit tree keys, ranges are ordered and contained, sibling ranges do not overlap, subrange maxDepth values do not exceed the parent allowance, created children stay within an applicable range, maxChildren is not exceeded, each task reference resolves to a materialized child task, each task type is the canonical type of that task, and each child type is allowed by its selected range. The host also verifies each named rule during decomposition.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/DecompositionIntent",
+      "description": "The prospective decomposition boundary.",
+      "examples": [
+        {
+          "range": {
+            "name": "task-contract-decomposition",
+            "description": "Decompose task-contract work into bounded child tasks.",
+            "start": "00000000",
+            "end": "99999999",
+            "maxDepth": 2,
+            "maxChildren": 11,
+            "allowableChildTypes": [
+              "decomposition",
+              "research",
+              "decision",
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation"
+            ],
+            "subranges": [
+              {
+                "name": "pre-work",
+                "description": "Research and decisions needed before the next contract boundary.",
+                "start": "00000000",
+                "end": "49999999",
+                "maxDepth": 1,
+                "maxChildren": 3,
+                "allowableChildTypes": [
+                  "research",
+                  "decision"
+                ]
+              },
+              {
+                "name": "core-work",
+                "description": "Concrete task-type contract work and its verification.",
+                "start": "50000000",
+                "end": "99999999",
+                "maxDepth": 1,
+                "maxChildren": 8,
+                "allowableChildTypes": [
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation"
+                ]
+              }
+            ]
+          },
+          "rules": {
+            "singleLevel": {
+              "instruction": "Produce children for one additional level only; do not create grandchildren in this action.",
+              "verification": "Confirm every created child is directly owned by this task and no grandchild was created."
+            },
+            "rangeCapacity": {
+              "instruction": "Do not create more children than the applicable range maxChildren value.",
+              "verification": "Count created children in each range and compare the count with maxChildren."
+            },
+            "rangeDepth": {
+              "instruction": "Do not create subrange work beyond the maximum decomposition depth declared by the containing range.",
+              "verification": "Validate each nested range depth against its parent maxDepth and the total decomposition range."
+            }
+          }
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/DecompositionResult",
+      "description": "The decomposition outcome and the qualified references and canonical task types of tasks materialized by the action.",
+      "examples": [
+        {
+          "status": "decomposed",
+          "tasks": [
+            {
+              "ref": "WI-0003|50000000#task/T-001",
+              "taskType": "implementation"
+            }
+          ],
+          "limitations": []
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "Range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "start",
+        "end",
+        "maxDepth",
+        "maxChildren",
+        "allowableChildTypes"
+      ],
+      "description": "Recursive implementation definition for a decomposition range. The definitions keyword is used only to keep the recursive helper out of field-level authoring example compilation; the public payload contract is the Range definition in $defs.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the range.",
+          "examples": [
+            "task-contracts",
+            "pre-work"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The scope and purpose of work assigned to this range.",
+          "examples": [
+            "Research and decisions needed before the next contract boundary."
+          ],
+          "x-field-role": "authoritative"
+        },
+        "start": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive eight-digit lower bound of this range. The sdlc host verifies that it is not greater than end and is contained by the parent range.",
+          "examples": [
+            "00000000",
+            "50000000"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive eight-digit upper bound of this range. The sdlc host verifies that it is not less than start and is contained by the parent range.",
+          "examples": [
+            "49999999",
+            "99999999"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum decomposition depth available within this range. A child subrange must consume depth from its parent; the sdlc host enforces the recursive relationship and rejects children beyond the allowance.",
+          "examples": [
+            0,
+            1,
+            2
+          ],
+          "x-field-role": "authoritative"
+        },
+        "maxChildren": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of child tasks that may be created directly within this range. If the available capacity is insufficient for a well-bounded result, further decomposition or prerequisite research is required instead of speculative child creation.",
+          "examples": [
+            0,
+            3,
+            11
+          ],
+          "x-field-role": "authoritative"
+        },
+        "allowableChildTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "decomposition",
+              "research",
+              "decision",
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation",
+              "review",
+              "rework",
+              "delivery"
+            ]
+          },
+          "description": "Task types that may be created directly in this range. Parent task type does not otherwise restrict child type; recursive decomposition is permitted when the range and rules allow it.",
+          "examples": [
+            [
+              "research",
+              "decision"
+            ],
+            [
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation"
+            ]
+          ],
+          "x-field-role": "authoritative"
+        },
+        "subranges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Range"
+          },
+          "description": "Optional child ranges providing finer-grained control. Omit this property when the range has no subranges. The sdlc host verifies containment, non-overlap, depth reduction, and child-capacity consistency.",
+          "examples": [
+            [
+              {
+                "name": "pre-work",
+                "description": "Research and decisions needed before the next contract boundary.",
+                "start": "00000000",
+                "end": "49999999",
+                "maxDepth": 1,
+                "maxChildren": 3,
+                "allowableChildTypes": [
+                  "research",
+                  "decision"
+                ]
+              }
+            ]
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "name": "pre-work",
+          "description": "Research and decisions needed before the next contract boundary.",
+          "start": "00000000",
+          "end": "49999999",
+          "maxDepth": 1,
+          "maxChildren": 3,
+          "allowableChildTypes": [
+            "research",
+            "decision"
+          ]
+        }
+      ]
+    },
+    "DecompositionIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "range",
+        "rules"
+      ],
+      "description": "The tree range and named rules governing one decomposition action.",
+      "properties": {
+        "range": {
+          "$ref": "#/$defs/Range",
+          "description": "The named inclusive address range governed by this decomposition action.",
+          "examples": [
+            {
+              "name": "task-contract-decomposition",
+              "description": "Decompose task-contract work into bounded child tasks.",
+              "start": "00000000",
+              "end": "99999999",
+              "maxDepth": 2,
+              "maxChildren": 11,
+              "allowableChildTypes": [
+                "decomposition",
+                "research",
+                "decision",
+                "design",
+                "implementation",
+                "test-strategy",
+                "validation"
+              ],
+              "subranges": [
+                {
+                  "name": "pre-work",
+                  "description": "Research and decisions needed before the next contract boundary.",
+                  "start": "00000000",
+                  "end": "49999999",
+                  "maxDepth": 1,
+                  "maxChildren": 3,
+                  "allowableChildTypes": [
+                    "research",
+                    "decision"
+                  ]
+                },
+                {
+                  "name": "core-work",
+                  "description": "Concrete task-type contract work and its verification.",
+                  "start": "50000000",
+                  "end": "99999999",
+                  "maxDepth": 1,
+                  "maxChildren": 8,
+                  "allowableChildTypes": [
+                    "design",
+                    "implementation",
+                    "test-strategy",
+                    "validation"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "rules": {
+          "type": "object",
+          "minProperties": 1,
+          "required": [],
+          "patternProperties": {
+            "^[a-z][A-Za-z0-9]*$": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "instruction",
+                "verification"
+              ],
+              "description": "A named decomposition rule. The key identifies the rule; the value states what the decomposition operation must do and how the host verifies compliance.",
+              "properties": {
+                "instruction": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The instruction the decomposition operation must follow for this rule.",
+                  "examples": [
+                    "Produce children for one additional level only; do not create grandchildren in this action."
+                  ],
+                  "x-field-role": "authoritative"
+                },
+                "verification": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The host-side inspection or validation required to verify that the instruction was followed.",
+                  "examples": [
+                    "Confirm every created child is directly owned by this task and no grandchild was created."
+                  ],
+                  "x-field-role": "authoritative"
+                }
+              },
+              "examples": [
+                {
+                  "instruction": "Produce children for one additional level only; do not create grandchildren in this action.",
+                  "verification": "Confirm every created child is directly owned by this task and no grandchild was created."
+                }
+              ],
+              "x-field-role": "authoritative"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Named decomposition rules keyed by stable lowerCamelCase rule names. Every rule contains an instruction and a host-verification description.",
+          "examples": [
+            {
+              "singleLevel": {
+                "instruction": "Produce children for one additional level only; do not create grandchildren in this action.",
+                "verification": "Confirm every created child is directly owned by this task and no grandchild was created."
+              },
+              "rangeCapacity": {
+                "instruction": "Do not create more children than the applicable range maxChildren value.",
+                "verification": "Count created children in each range and compare the count with maxChildren."
+              }
+            }
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "range": {
+            "name": "task-contract-decomposition",
+            "description": "Decompose task-contract work into bounded child tasks.",
+            "start": "00000000",
+            "end": "99999999",
+            "maxDepth": 2,
+            "maxChildren": 11,
+            "allowableChildTypes": [
+              "decomposition",
+              "research",
+              "decision",
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation"
+            ],
+            "subranges": [
+              {
+                "name": "pre-work",
+                "description": "Research and decisions needed before the next contract boundary.",
+                "start": "00000000",
+                "end": "49999999",
+                "maxDepth": 1,
+                "maxChildren": 3,
+                "allowableChildTypes": [
+                  "research",
+                  "decision"
+                ]
+              },
+              {
+                "name": "core-work",
+                "description": "Concrete task-type contract work and its verification.",
+                "start": "50000000",
+                "end": "99999999",
+                "maxDepth": 1,
+                "maxChildren": 8,
+                "allowableChildTypes": [
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation"
+                ]
+              }
+            ]
+          },
+          "rules": {
+            "singleLevel": {
+              "instruction": "Produce children for one additional level only; do not create grandchildren in this action.",
+              "verification": "Confirm every created child is directly owned by this task and no grandchild was created."
+            },
+            "rangeCapacity": {
+              "instruction": "Do not create more children than the applicable range maxChildren value.",
+              "verification": "Count created children in each range and compare the count with maxChildren."
+            },
+            "rangeDepth": {
+              "instruction": "Do not create subrange work beyond the maximum decomposition depth declared by the containing range.",
+              "verification": "Validate each nested range depth against its parent maxDepth and the total decomposition range."
+            }
+          }
+        }
+      ]
+    },
+    "DecompositionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "tasks",
+        "limitations"
+      ],
+      "description": "The observed outcome of the decomposition action. The host must verify each qualified task reference, its canonical task type, range, parentage, and capacity; an empty task list is valid when the decomposition action determines that no child is required.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "decomposed",
+            "no_children",
+            "blocked",
+            "failed"
+          ],
+          "description": "Outcome of the decomposition action.",
+          "examples": [
+            "decomposed"
+          ]
+        },
+        "tasks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ProducedTask"
+          },
+          "description": "Tasks materialized by this decomposition action. Each entry keeps the qualified task reference paired with the canonical task type returned for that task.",
+          "examples": [
+            [
+              {
+                "ref": "WI-0003|50000000#task/T-001",
+                "taskType": "implementation"
+              },
+              {
+                "ref": "WI-0003|60000000#task/T-002",
+                "taskType": "validation"
+              }
+            ],
+            []
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Known limitations or unproven host-level conditions.",
+          "examples": [
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "decomposed",
+          "tasks": [
+            {
+              "ref": "WI-0003|50000000#task/T-001",
+              "taskType": "implementation"
+            }
+          ],
+          "limitations": []
+        }
+      ]
+    },
+    "ProducedTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "taskType"
+      ],
+      "description": "One task materialized by the decomposition action, with its qualified task reference paired with the canonical task type.",
+      "properties": {
+        "ref": {
+          "$ref": "../../common/v1/sdlc-task-qualified-reference.schema.json",
+          "description": "The qualified reference to the materialized task. The host resolves this reference and verifies that it identifies the produced task.",
+          "examples": [
+            "WI-0003|50000000#task/T-001"
+          ]
+        },
+        "taskType": {
+          "$ref": "../../common/v1/sdlc-task-type.schema.json",
+          "description": "The canonical task type of the materialized task identified by ref.",
+          "examples": [
+            "implementation"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "ref": "WI-0003|50000000#task/T-001",
+          "taskType": "implementation"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "RangeCore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "start",
+        "end",
+        "maxDepth",
+        "maxChildren",
+        "allowableChildTypes"
+      ],
+      "description": "Recursive implementation definition for a decomposition range. The definitions keyword is used only to keep the recursive helper out of field-level authoring example compilation; the public payload contract is the Range definition in $defs.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the range.",
+          "examples": [
+            "task-contracts",
+            "pre-work"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The scope and purpose of work assigned to this range.",
+          "examples": [
+            "Research and decisions needed before the next contract boundary."
+          ],
+          "x-field-role": "authoritative"
+        },
+        "start": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive eight-digit lower bound of this range. The sdlc host verifies that it is not greater than end and is contained by the parent range.",
+          "examples": [
+            "00000000",
+            "50000000"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive eight-digit upper bound of this range. The sdlc host verifies that it is not less than start and is contained by the parent range.",
+          "examples": [
+            "49999999",
+            "99999999"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum decomposition depth available within this range. A child subrange must consume depth from its parent; the sdlc host enforces the recursive relationship and rejects children beyond the allowance.",
+          "examples": [
+            0,
+            1,
+            2
+          ],
+          "x-field-role": "authoritative"
+        },
+        "maxChildren": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of child tasks that may be created directly within this range. If the available capacity is insufficient for a well-bounded result, further decomposition or prerequisite research is required instead of speculative child creation.",
+          "examples": [
+            0,
+            3,
+            11
+          ],
+          "x-field-role": "authoritative"
+        },
+        "allowableChildTypes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "decomposition",
+              "research",
+              "decision",
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation",
+              "review",
+              "rework",
+              "delivery"
+            ]
+          },
+          "description": "Task types that may be created directly in this range. Parent task type does not otherwise restrict child type; recursive decomposition is permitted when the range and rules allow it.",
+          "examples": [
+            [
+              "research",
+              "decision"
+            ],
+            [
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation"
+            ]
+          ],
+          "x-field-role": "authoritative"
+        },
+        "subranges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/RangeCore"
+          },
+          "description": "Optional child ranges providing finer-grained control. Omit this property when the range has no subranges. The sdlc host verifies containment, non-overlap, depth reduction, and child-capacity consistency.",
+          "examples": [
+            [
+              {
+                "name": "pre-work",
+                "description": "Research and decisions needed before the next contract boundary.",
+                "start": "00000000",
+                "end": "49999999",
+                "maxDepth": 1,
+                "maxChildren": 3,
+                "allowableChildTypes": [
+                  "research",
+                  "decision"
+                ]
+              }
+            ]
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "name": "pre-work",
+          "description": "Research and decisions needed before the next contract boundary.",
+          "start": "00000000",
+          "end": "49999999",
+          "maxDepth": 1,
+          "maxChildren": 3,
+          "allowableChildTypes": [
+            "research",
+            "decision"
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "range": {
+          "name": "task-contract-decomposition",
+          "description": "Decompose task-contract work into bounded child tasks.",
+          "start": "00000000",
+          "end": "99999999",
+          "maxDepth": 2,
+          "maxChildren": 11,
+          "allowableChildTypes": [
+            "decomposition",
+            "research",
+            "decision",
+            "design",
+            "implementation",
+            "test-strategy",
+            "validation"
+          ],
+          "subranges": [
+            {
+              "name": "pre-work",
+              "description": "Research and decisions needed before the next contract boundary.",
+              "start": "00000000",
+              "end": "49999999",
+              "maxDepth": 1,
+              "maxChildren": 3,
+              "allowableChildTypes": [
+                "research",
+                "decision"
+              ]
+            },
+            {
+              "name": "core-work",
+              "description": "Concrete task-type contract work and its verification.",
+              "start": "50000000",
+              "end": "99999999",
+              "maxDepth": 1,
+              "maxChildren": 8,
+              "allowableChildTypes": [
+                "design",
+                "implementation",
+                "test-strategy",
+                "validation"
+              ]
+            }
+          ]
+        },
+        "rules": {
+          "singleLevel": {
+            "instruction": "Produce children for one additional level only; do not create grandchildren in this action.",
+            "verification": "Confirm every created child is directly owned by this task and no grandchild was created."
+          },
+          "rangeCapacity": {
+            "instruction": "Do not create more children than the applicable range maxChildren value.",
+            "verification": "Count created children in each range and compare the count with maxChildren."
+          },
+          "rangeDepth": {
+            "instruction": "Do not create subrange work beyond the maximum decomposition depth declared by the containing range.",
+            "verification": "Validate each nested range depth against its parent maxDepth and the total decomposition range."
+          }
+        }
+      },
+      "result": {
+        "status": "decomposed",
+        "tasks": [
+          {
+            "ref": "WI-0003|50000000#task/T-001",
+            "taskType": "implementation"
+          }
+        ],
+        "limitations": []
+      }
+    }
+  ]
+}

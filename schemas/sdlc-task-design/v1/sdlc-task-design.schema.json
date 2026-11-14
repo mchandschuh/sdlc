@@ -1,0 +1,5029 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-design/v1",
+  "title": "SDLC Task Design v1",
+  "description": "The task-specific payload for policy-governed architecture, data-flow, interface, data-model, deployment, or related design work. Intent selects the applicable design policy and references authoritative inputs; result records the design model, policy outputs, verification obligations, and unresolved questions.",
+  "$comment": "The common https://schemas.handschuh.dev/sdlc/task-envelope/v1 owns task identity, processing state, task routing, and the common task wrapper. This payload does not prescribe an architecture notation or fixed architecture collections. The design policy selected by intent determines which output categories and verification obligations are expected for the requested profile. JSON Schema validates local shape and reference syntax; the sdlc host must resolve global references, verify reference kinds and locators, check relation endpoints, verify view membership, and evaluate policy-derived coverage and semantic completeness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/DesignIntent",
+      "description": "The prospective design boundary.",
+      "examples": [
+        {
+          "summary": "Define the event-ingestion architecture and its durable data flow.",
+          "objectives": [
+            "Separate ingestion, validation, and persistence responsibilities."
+          ],
+          "inScope": [
+            "Service boundaries and message flow"
+          ],
+          "outOfScope": [
+            "Production deployment changes"
+          ],
+          "references": [
+            {
+              "id": "REF-001",
+              "type": "requirement",
+              "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+              "description": "The requirement for durable task-specific contracts."
+            },
+            {
+              "id": "REF-002",
+              "type": "repositoryPath",
+              "locator": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+              "description": "The common task envelope contract."
+            }
+          ],
+          "provenance": {
+            "referenceRefs": [
+              "REF-001",
+              "REF-002"
+            ],
+            "basis": "Requirements and the existing envelope contract were inspected before modeling the design boundary.",
+            "confidence": 92
+          },
+          "considerations": [
+            {
+              "id": "C-001",
+              "kind": "constraint",
+              "statement": "The task envelope must remain separate from task-specific design data.",
+              "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+              "referenceRefs": [
+                "REF-002"
+              ],
+              "status": "accepted",
+              "impact": 90,
+              "confidence": 98
+            }
+          ],
+          "activities": []
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/DesignResult",
+      "description": "The design output and unresolved follow-up.",
+      "examples": [
+        {
+          "summary": "A bounded ingestion model with an explicit validation and persistence flow.",
+          "model": {
+            "name": "event-ingestion",
+            "kind": "data-flow",
+            "description": "The elements and relationships describe how events move through the system.",
+            "notation": "custom"
+          },
+          "elements": [
+            {
+              "id": "E-001",
+              "type": "service",
+              "name": "ingestion-service",
+              "description": "Accepts incoming events.",
+              "provenance": {
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "basis": "The service boundary is required by the ingestion objective.",
+                "confidence": 88
+              }
+            }
+          ],
+          "relations": [],
+          "views": [],
+          "artifacts": [],
+          "outcomes": [
+            {
+              "id": "O-001",
+              "type": "implementationHandoff",
+              "statement": "Implement ingestion and validation as separate components.",
+              "status": "proposed",
+              "impact": 90,
+              "confidence": 86,
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "elementRefs": [
+                "E-001"
+              ],
+              "suggestedTaskType": "implementation"
+            }
+          ],
+          "unresolvedQuestions": []
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[0-9]{3,}$",
+      "description": "A stable, namespaced identifier for an item within the design payload.",
+      "examples": [
+        "REF-001",
+        "E-001",
+        "REL-001"
+      ]
+    },
+    "ReferenceId": {
+      "type": "string",
+      "pattern": "^REF-[0-9]{3,}$",
+      "description": "The identifier of a typed available-context reference declared in the references collection.",
+      "examples": [
+        "REF-001"
+      ]
+    },
+    "ElementId": {
+      "type": "string",
+      "pattern": "^E-[0-9]{3,}$",
+      "description": "The identifier of a modeled design element.",
+      "examples": [
+        "E-001"
+      ]
+    },
+    "RelationId": {
+      "type": "string",
+      "pattern": "^REL-[0-9]{3,}$",
+      "description": "The identifier of a modeled relationship.",
+      "examples": [
+        "REL-001"
+      ]
+    },
+    "ViewId": {
+      "type": "string",
+      "pattern": "^V-[0-9]{3,}$",
+      "description": "The identifier of a design view.",
+      "examples": [
+        "V-001"
+      ]
+    },
+    "ArtifactId": {
+      "type": "string",
+      "pattern": "^A-[0-9]{3,}$",
+      "description": "The identifier of a durable design artifact.",
+      "examples": [
+        "A-001"
+      ]
+    },
+    "ImpactScore": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "An estimated significance or consequence score from 0 through 100.",
+      "examples": [
+        0,
+        90,
+        100
+      ]
+    },
+    "ConfidenceScore": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "A confidence score from 0 through 100 for the associated statement, interpretation, or assessment.",
+      "examples": [
+        0,
+        88,
+        100
+      ]
+    },
+    "TaskType": {
+      "type": "string",
+      "enum": [
+        "decomposition",
+        "research",
+        "decision",
+        "design",
+        "implementation",
+        "test-strategy",
+        "validation",
+        "review",
+        "rework",
+        "delivery"
+      ],
+      "description": "A task kind that may be suggested for explicit downstream follow-up. The value does not create or schedule a task.",
+      "examples": [
+        "implementation",
+        "test-strategy"
+      ]
+    },
+    "Reference": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/GlobalReference"
+        },
+        {
+          "$ref": "#/$defs/RepositoryReference"
+        },
+        {
+          "$ref": "#/$defs/UrlReference"
+        },
+        {
+          "$ref": "#/$defs/OtherReference"
+        }
+      ],
+      "description": "A typed piece of context available to the design task. Cross-task SDLC entities require globally qualified locators; repository and CUE resources require repository-relative paths.",
+      "examples": [
+        {
+          "id": "REF-001",
+          "type": "requirement",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+          "description": "The requirement for durable task-specific contracts."
+        },
+        {
+          "id": "REF-002",
+          "type": "cue",
+          "locator": "sdlc/cue/task-design/v1/task-design.cue",
+          "description": "The CUE projection of the task-design contract."
+        }
+      ]
+    },
+    "ReferenceIdList": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "A set of identifiers for typed references declared in the payload.",
+      "items": {
+        "type": "string",
+        "pattern": "^REF-[0-9]{3,}$",
+        "description": "The identifier of a typed available-context reference declared in the references collection.",
+        "examples": [
+          "REF-001"
+        ]
+      },
+      "examples": [
+        [
+          "REF-001"
+        ],
+        []
+      ]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "referenceRefs",
+        "basis",
+        "confidence"
+      ],
+      "description": "The evidence lineage and derivation explanation for a design payload or modeled output. Empty referenceRefs is permitted for an explicitly reasoned design inference; basis must then explain the inference.",
+      "properties": {
+        "referenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Typed available-context references that contributed to the item or inference.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ],
+            []
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+          "examples": [
+            "The service boundary follows the stated separation objective."
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+          "examples": [
+            90
+          ]
+        }
+      },
+      "examples": [
+        {
+          "referenceRefs": [
+            "REF-001"
+          ],
+          "basis": "The element is derived from the requirement boundary.",
+          "confidence": 90
+        }
+      ]
+    },
+    "Intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "objectives",
+        "inScope",
+        "outOfScope"
+      ],
+      "description": "The bounded design intent and explicit scope boundary.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of the design problem or result being pursued.",
+          "examples": [
+            "Define the event-ingestion architecture and its durable data flow."
+          ]
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Observable design objectives that bound the intended result.",
+          "examples": [
+            [
+              "Separate ingestion, validation, and persistence responsibilities."
+            ]
+          ]
+        },
+        "inScope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Architecture, data, interface, operational, or other concerns included in this design task.",
+          "examples": [
+            [
+              "Service boundaries and message flow"
+            ],
+            []
+          ]
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Concerns intentionally excluded from this design task so that the result is not mistaken for implementation or delivery authorization.",
+          "examples": [
+            [
+              "Production deployment changes"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Define the event-ingestion architecture and its durable data flow.",
+          "objectives": [
+            "Separate ingestion, validation, and persistence responsibilities."
+          ],
+          "inScope": [
+            "Service boundaries and message flow"
+          ],
+          "outOfScope": [
+            "Production deployment changes"
+          ]
+        }
+      ]
+    },
+    "Consideration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "statement",
+        "evaluation",
+        "referenceRefs",
+        "status",
+        "impact",
+        "confidence"
+      ],
+      "description": "One semantic input actually evaluated by the design task, with its conclusion, provenance, and assessment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^C-[0-9]{3,}$",
+          "description": "Stable identifier for the evaluated consideration.",
+          "examples": [
+            "C-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "requirement",
+            "constraint",
+            "assumption",
+            "risk",
+            "researchFinding",
+            "decision",
+            "question",
+            "boundary",
+            "interface",
+            "other"
+          ],
+          "description": "The semantic category of the input that was evaluated.",
+          "examples": [
+            "constraint",
+            "researchFinding"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The requirement, fact, assumption, risk, question, or other input considered by the design.",
+          "examples": [
+            "The task envelope must remain separate from task-specific design data."
+          ]
+        },
+        "evaluation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the design task concluded or did with this input; this distinguishes evaluated semantics from merely available references.",
+          "examples": [
+            "Applied this constraint by keeping identity and lifecycle out of the design model."
+          ]
+        },
+        "referenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Available typed references that support or contextualize the evaluated input.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ]
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "rejected",
+            "deferred",
+            "notApplicable"
+          ],
+          "description": "The disposition reached for this consideration within the design result.",
+          "examples": [
+            "accepted",
+            "deferred"
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated significance of this consideration to the design, scored from 0 through 100.",
+          "examples": [
+            90
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence in the evaluation of this consideration, scored from 0 through 100.",
+          "examples": [
+            98
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "C-001",
+          "kind": "constraint",
+          "statement": "The task envelope must remain separate from task-specific design data.",
+          "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+          "referenceRefs": [
+            "REF-001"
+          ],
+          "status": "accepted",
+          "impact": 90,
+          "confidence": 98
+        }
+      ]
+    },
+    "Activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "summary",
+        "status",
+        "referenceRefs",
+        "provenance"
+      ],
+      "description": "A bounded activity performed within the design task, such as research or decision analysis. It records work without changing task workflow or review-gate state.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ACT-[0-9]{3,}$",
+          "description": "Stable identifier for the activity.",
+          "examples": [
+            "ACT-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "research",
+            "decision",
+            "analysis",
+            "modeling",
+            "review",
+            "other"
+          ],
+          "description": "The kind of design activity performed.",
+          "examples": [
+            "research",
+            "decision"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the activity investigated, compared, decided, modeled, or reviewed.",
+          "examples": [
+            "Compare synchronous and asynchronous ingestion boundaries."
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "active",
+            "completed",
+            "blocked",
+            "deferred"
+          ],
+          "description": "The status of this embedded activity within the design task; it is not the lifecycle status of the enclosing task.",
+          "examples": [
+            "completed",
+            "deferred"
+          ]
+        },
+        "referenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Available typed references inspected or intended for this activity.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ],
+            []
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "The evidence lineage and derivation basis for the activity record.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The requirement was compared with the modeled ingestion alternatives.",
+              "confidence": 84
+            }
+          ]
+        },
+        "outcomeRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^O-[0-9]{3,}$"
+          },
+          "description": "Optional outcomes informed or produced by this activity. The host verifies that each outcome exists.",
+          "examples": [
+            [
+              "O-001"
+            ],
+            []
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional bounded notes about the activity that are not themselves a conclusion or approval.",
+          "examples": [
+            "The comparison did not establish production latency."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "ACT-001",
+          "type": "research",
+          "summary": "Compare synchronous and asynchronous ingestion boundaries.",
+          "status": "completed",
+          "referenceRefs": [
+            "REF-001"
+          ],
+          "provenance": {
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "basis": "The requirement was compared with the modeled ingestion alternatives.",
+            "confidence": 84
+          }
+        }
+      ]
+    },
+    "Model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "description"
+      ],
+      "description": "A notation-neutral description of what the generic design model represents.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the design model.",
+          "examples": [
+            "event-ingestion",
+            "bounded-contexts"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "architecture",
+            "data-flow",
+            "data-model",
+            "interface",
+            "deployment",
+            "security",
+            "process",
+            "other"
+          ],
+          "description": "The broad subject represented by the model. The model may combine multiple concerns through typed elements and relationships.",
+          "examples": [
+            "architecture",
+            "data-flow"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the model represents and how its elements and relationships should be interpreted.",
+          "examples": [
+            "The elements and relationships describe how events move through the system."
+          ]
+        },
+        "notation": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Optional notation or modeling convention name. The design contract does not require or prescribe a particular notation.",
+          "examples": [
+            "custom",
+            "c4"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional version of the named notation or modeling convention.",
+          "examples": [
+            "1"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "name": "event-ingestion",
+          "kind": "data-flow",
+          "description": "The elements and relationships describe how events move through the system.",
+          "notation": "custom"
+        }
+      ]
+    },
+    "Attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value"
+      ],
+      "description": "A named scalar attribute that extends a generic model item without prescribing a fixed architecture vocabulary.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$",
+          "description": "LowerCamelCase name of the attribute.",
+          "examples": [
+            "protocol",
+            "retentionDays"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Scalar attribute value represented as text so the generic contract remains notation-neutral.",
+          "examples": [
+            "https",
+            "30"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "name": "protocol",
+          "value": "https"
+        }
+      ]
+    },
+    "Element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "name",
+        "description",
+        "provenance"
+      ],
+      "description": "A generic typed item in the design model, such as a service, data store, actor, interface, process, or domain object.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^E-[0-9]{3,}$",
+          "description": "Stable identifier for the modeled element.",
+          "examples": [
+            "E-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Extensible lower-kebab-case semantic type of the element; the schema intentionally does not restrict this to a fixed architecture collection.",
+          "examples": [
+            "service",
+            "data-store",
+            "external-system"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the element.",
+          "examples": [
+            "ingestion-service"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The responsibility, data, boundary, or other meaning of the element.",
+          "examples": [
+            "Accepts incoming events."
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "The evidence lineage and derivation basis for the element.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The service boundary is required by the ingestion objective.",
+              "confidence": 88
+            }
+          ]
+        },
+        "attributes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "description": "A named scalar attribute that extends a generic model item without prescribing a fixed architecture vocabulary.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]*$",
+                "description": "LowerCamelCase name of the attribute.",
+                "examples": [
+                  "protocol",
+                  "retentionDays"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Scalar attribute value represented as text so the generic contract remains notation-neutral.",
+                "examples": [
+                  "https",
+                  "30"
+                ]
+              }
+            },
+            "examples": [
+              {
+                "name": "protocol",
+                "value": "https"
+              }
+            ]
+          },
+          "description": "Optional extensible scalar attributes for the element.",
+          "examples": [
+            [
+              {
+                "name": "protocol",
+                "value": "https"
+              }
+            ],
+            []
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "description": "Optional lower-kebab-case labels used to group or filter elements.",
+          "examples": [
+            [
+              "boundary",
+              "critical-path"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "E-001",
+          "type": "service",
+          "name": "ingestion-service",
+          "description": "Accepts incoming events.",
+          "provenance": {
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "basis": "The service boundary is required by the ingestion objective.",
+            "confidence": 88
+          }
+        }
+      ]
+    },
+    "Endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "id"
+      ],
+      "description": "A typed endpoint of a relationship. The host resolves the identifier in the relevant result collection.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "element",
+            "artifact",
+            "view",
+            "reference"
+          ],
+          "description": "The result collection in which the endpoint identifier must be resolved.",
+          "examples": [
+            "element",
+            "reference"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier of the endpoint in the collection named by type.",
+          "examples": [
+            "E-001",
+            "REF-001"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "type": "element",
+          "id": "E-001"
+        }
+      ]
+    },
+    "Relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "source",
+        "target",
+        "description",
+        "provenance"
+      ],
+      "description": "A typed directed relationship between design endpoints. Endpoint resolution and graph consistency are host-level checks.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REL-[0-9]{3,}$",
+          "description": "Stable identifier for the relationship.",
+          "examples": [
+            "REL-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Extensible lower-kebab-case semantic type of the relationship.",
+          "examples": [
+            "publishes-to",
+            "reads-from",
+            "transforms"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "id"
+          ],
+          "description": "The origin endpoint of the directed relationship.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "element",
+                "artifact",
+                "view",
+                "reference"
+              ],
+              "description": "The result collection in which the endpoint identifier must be resolved.",
+              "examples": [
+                "element",
+                "reference"
+              ]
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Identifier of the endpoint in the collection named by type.",
+              "examples": [
+                "E-001",
+                "REF-001"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "type": "element",
+              "id": "E-001"
+            }
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "id"
+          ],
+          "description": "The destination endpoint of the directed relationship.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "element",
+                "artifact",
+                "view",
+                "reference"
+              ],
+              "description": "The result collection in which the endpoint identifier must be resolved.",
+              "examples": [
+                "element",
+                "reference"
+              ]
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Identifier of the endpoint in the collection named by type.",
+              "examples": [
+                "E-001",
+                "REF-001"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "type": "element",
+              "id": "E-002"
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the relationship means in the model, including data, control, dependency, or containment semantics where relevant.",
+          "examples": [
+            "The ingestion service publishes accepted events to the event store."
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "The evidence lineage and derivation basis for the relationship.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The relationship follows the required ingestion flow.",
+              "confidence": 82
+            }
+          ]
+        },
+        "attributes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "description": "A named scalar attribute that extends a generic model item without prescribing a fixed architecture vocabulary.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]*$",
+                "description": "LowerCamelCase name of the attribute.",
+                "examples": [
+                  "protocol",
+                  "retentionDays"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Scalar attribute value represented as text so the generic contract remains notation-neutral.",
+                "examples": [
+                  "https",
+                  "30"
+                ]
+              }
+            },
+            "examples": [
+              {
+                "name": "protocol",
+                "value": "https"
+              }
+            ]
+          },
+          "description": "Optional scalar metadata that qualifies the relationship.",
+          "examples": [
+            [
+              {
+                "name": "protocol",
+                "value": "event-stream"
+              }
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REL-001",
+          "type": "publishes-to",
+          "source": {
+            "type": "element",
+            "id": "E-001"
+          },
+          "target": {
+            "type": "element",
+            "id": "E-002"
+          },
+          "description": "The ingestion service publishes accepted events to the event store.",
+          "provenance": {
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "basis": "The relationship follows the required ingestion flow.",
+            "confidence": 82
+          }
+        }
+      ]
+    },
+    "View": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "name",
+        "description",
+        "elementRefs",
+        "relationRefs",
+        "provenance"
+      ],
+      "description": "A named projection of the generic model for a particular audience, concern, or data-flow perspective.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^V-[0-9]{3,}$",
+          "description": "Stable identifier for the view.",
+          "examples": [
+            "V-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Extensible lower-kebab-case semantic type of the view.",
+          "examples": [
+            "context",
+            "data-flow",
+            "deployment"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the view.",
+          "examples": [
+            "accepted-event-flow"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The purpose and interpretation of this projection of the model.",
+          "examples": [
+            "Shows the path of accepted events from ingress to persistence."
+          ]
+        },
+        "elementRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^E-[0-9]{3,}$",
+            "description": "The identifier of a modeled design element.",
+            "examples": [
+              "E-001"
+            ]
+          },
+          "description": "Modeled elements included in the view. The host verifies that each element exists.",
+          "examples": [
+            [
+              "E-001",
+              "E-002"
+            ]
+          ]
+        },
+        "relationRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^REL-[0-9]{3,}$",
+            "description": "The identifier of a modeled relationship.",
+            "examples": [
+              "REL-001"
+            ]
+          },
+          "description": "Relationships included in the view. The host verifies that each relationship exists and is compatible with the selected elements.",
+          "examples": [
+            [
+              "REL-001"
+            ],
+            []
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "The evidence lineage and derivation basis for the view.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The view highlights the flow required by the task objective.",
+              "confidence": 86
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "V-001",
+          "type": "data-flow",
+          "name": "accepted-event-flow",
+          "description": "Shows the path of accepted events from ingress to persistence.",
+          "elementRefs": [
+            "E-001",
+            "E-002"
+          ],
+          "relationRefs": [
+            "REL-001"
+          ],
+          "provenance": {
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "basis": "The view highlights the flow required by the task objective.",
+            "confidence": 86
+          }
+        }
+      ]
+    },
+    "Artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "name",
+        "description",
+        "locator",
+        "status",
+        "provenance"
+      ],
+      "description": "A durable design output or representation referenced by the design result. CUE artifacts are permitted but no artifact format is required.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^A-[0-9]{3,}$",
+          "description": "Stable identifier for the artifact.",
+          "examples": [
+            "A-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "diagram",
+            "document",
+            "model",
+            "schema",
+            "cue",
+            "interfaceDefinition",
+            "dataDictionary",
+            "other"
+          ],
+          "description": "The broad kind of durable design artifact.",
+          "examples": [
+            "diagram",
+            "cue"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the artifact.",
+          "examples": [
+            "accepted-event-flow"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the artifact contains and how it relates to the design result.",
+          "examples": [
+            "A CUE representation of the event envelope and validation constraints."
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A durable repository-relative path, URL, or other locator for retrieving the artifact.",
+          "examples": [
+            "docs/design/accepted-event-flow.cue",
+            "docs/design/accepted-event-flow.svg"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Optional artifact format or serialization name.",
+          "examples": [
+            "cue",
+            "svg",
+            "markdown"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "available",
+            "complete",
+            "deferred"
+          ],
+          "description": "Current availability posture of the artifact; it does not imply task approval or implementation completion.",
+          "examples": [
+            "available",
+            "proposed"
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "The evidence lineage and derivation basis for the artifact.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The artifact serializes the accepted event-flow model.",
+              "confidence": 91
+            }
+          ]
+        },
+        "elementRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^E-[0-9]{3,}$",
+            "description": "The identifier of a modeled design element.",
+            "examples": [
+              "E-001"
+            ]
+          },
+          "description": "Optional modeled elements represented by the artifact.",
+          "examples": [
+            [
+              "E-001"
+            ],
+            []
+          ]
+        },
+        "viewRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^V-[0-9]{3,}$",
+            "description": "The identifier of a design view.",
+            "examples": [
+              "V-001"
+            ]
+          },
+          "description": "Optional views rendered or persisted by the artifact.",
+          "examples": [
+            [
+              "V-001"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "A-001",
+          "type": "cue",
+          "name": "event-envelope",
+          "description": "A CUE representation of the event envelope and validation constraints.",
+          "locator": "docs/design/event-envelope.cue",
+          "format": "cue",
+          "status": "proposed",
+          "provenance": {
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "basis": "The artifact captures the proposed event contract.",
+            "confidence": 80
+          }
+        }
+      ]
+    },
+    "Outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "statement",
+        "status",
+        "impact",
+        "confidence",
+        "referenceRefs"
+      ],
+      "description": "A design conclusion or explicit downstream handoff. It does not itself approve, implement, test, validate, or deliver the result.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^O-[0-9]{3,}$",
+          "description": "Stable identifier for the outcome.",
+          "examples": [
+            "O-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "designDecision",
+            "requirementMapping",
+            "implementationHandoff",
+            "testHandoff",
+            "validationHandoff",
+            "artifact",
+            "recommendation",
+            "other"
+          ],
+          "description": "The kind of design outcome recorded.",
+          "examples": [
+            "implementationHandoff",
+            "designDecision"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The conclusion, mapping, recommendation, or handoff statement.",
+          "examples": [
+            "Implement ingestion and validation as separate components."
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "accepted",
+            "rejected",
+            "deferred",
+            "superseded"
+          ],
+          "description": "The posture of this outcome within the design result. Accepted is a result disposition, not lifecycle approval or implementation completion.",
+          "examples": [
+            "proposed",
+            "accepted"
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated significance of the outcome to downstream work, scored from 0 through 100.",
+          "examples": [
+            90
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence in the outcome statement and its supporting reasoning, scored from 0 through 100.",
+          "examples": [
+            86
+          ]
+        },
+        "referenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Typed references that support or are affected by the outcome.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ],
+            []
+          ]
+        },
+        "elementRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^E-[0-9]{3,}$",
+            "description": "The identifier of a modeled design element.",
+            "examples": [
+              "E-001"
+            ]
+          },
+          "description": "Optional modeled elements to which the outcome applies.",
+          "examples": [
+            [
+              "E-001"
+            ],
+            []
+          ]
+        },
+        "relationRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^REL-[0-9]{3,}$",
+            "description": "The identifier of a modeled relationship.",
+            "examples": [
+              "REL-001"
+            ]
+          },
+          "description": "Optional modeled relationships to which the outcome applies.",
+          "examples": [
+            [
+              "REL-001"
+            ],
+            []
+          ]
+        },
+        "artifactRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^A-[0-9]{3,}$",
+            "description": "The identifier of a durable design artifact.",
+            "examples": [
+              "A-001"
+            ]
+          },
+          "description": "Optional durable artifacts that embody or support the outcome.",
+          "examples": [
+            [
+              "A-001"
+            ],
+            []
+          ]
+        },
+        "suggestedTaskType": {
+          "type": "string",
+          "enum": [
+            "decomposition",
+            "research",
+            "decision",
+            "design",
+            "implementation",
+            "test-strategy",
+            "validation",
+            "review",
+            "rework",
+            "delivery"
+          ],
+          "description": "Optional task kind suggested for explicit downstream work; it does not create or authorize that task.",
+          "examples": [
+            "implementation",
+            "test-strategy"
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "referenceRefs",
+            "basis",
+            "confidence"
+          ],
+          "description": "Optional additional provenance for the outcome beyond its supporting referenceRefs.",
+          "properties": {
+            "referenceRefs": {
+              "type": "array",
+              "uniqueItems": true,
+              "description": "Typed available-context references that contributed to the item or inference.",
+              "items": {
+                "type": "string",
+                "pattern": "^REF-[0-9]{3,}$",
+                "description": "The identifier of a typed available-context reference declared in the references collection.",
+                "examples": [
+                  "REF-001"
+                ]
+              },
+              "examples": [
+                [
+                  "REF-001"
+                ],
+                []
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+              "examples": [
+                "The service boundary follows the stated separation objective."
+              ]
+            },
+            "confidence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+              "examples": [
+                90
+              ]
+            }
+          },
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The handoff follows the accepted design boundary.",
+              "confidence": 86
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "O-001",
+          "type": "implementationHandoff",
+          "statement": "Implement ingestion and validation as separate components.",
+          "status": "proposed",
+          "impact": 90,
+          "confidence": 86,
+          "referenceRefs": [
+            "REF-001"
+          ],
+          "suggestedTaskType": "implementation"
+        }
+      ]
+    },
+    "UnresolvedQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "question",
+        "reason",
+        "status",
+        "impact",
+        "confidence",
+        "referenceRefs"
+      ],
+      "description": "One design question that remains unresolved or intentionally deferred and must not be hidden as an assumption.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^Q-[0-9]{3,}$",
+          "description": "Stable identifier for the unresolved design question.",
+          "examples": [
+            "Q-001"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The precise design question that remains unanswered.",
+          "examples": [
+            "Which retention period is required for rejected events?"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this task could not resolve the question and why it remains relevant.",
+          "examples": [
+            "The available requirements do not define the retention policy."
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "deferred"
+          ],
+          "description": "Whether explicit follow-up remains active or the question was intentionally deferred.",
+          "examples": [
+            "open",
+            "deferred"
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated consequence of leaving the question unresolved, scored from 0 through 100.",
+          "examples": [
+            75
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that the question is correctly stated as unresolved, scored from 0 through 100.",
+          "examples": [
+            90
+          ]
+        },
+        "referenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Typed available-context references that establish or constrain the unresolved question.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ],
+            []
+          ]
+        },
+        "affectedRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Optional typed references whose interpretation or downstream use may be affected by the unresolved question.",
+          "items": {
+            "type": "string",
+            "pattern": "^REF-[0-9]{3,}$",
+            "description": "The identifier of a typed available-context reference declared in the references collection.",
+            "examples": [
+              "REF-001"
+            ]
+          },
+          "examples": [
+            [
+              "REF-001"
+            ],
+            []
+          ]
+        },
+        "suggestedTaskType": {
+          "type": "string",
+          "enum": [
+            "decomposition",
+            "research",
+            "decision",
+            "design",
+            "implementation",
+            "test-strategy",
+            "validation",
+            "review",
+            "rework",
+            "delivery"
+          ],
+          "description": "Optional task kind suggested for resolving the question; it does not create or schedule a follow-up task.",
+          "examples": [
+            "decision",
+            "research"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "Q-001",
+          "question": "Which retention period is required for rejected events?",
+          "reason": "The available requirements do not define the retention policy.",
+          "status": "open",
+          "impact": 75,
+          "confidence": 90,
+          "referenceRefs": [
+            "REF-001"
+          ],
+          "suggestedTaskType": "decision"
+        }
+      ]
+    },
+    "DesignIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "objectives",
+        "inScope",
+        "outOfScope",
+        "policy",
+        "profile",
+        "scope",
+        "facets",
+        "references",
+        "provenance",
+        "considerations",
+        "activities"
+      ],
+      "description": "The complete prospective design boundary, including purpose, available references, provenance, evaluated considerations, and planned activities.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of the design problem or result being pursued.",
+          "examples": [
+            "Define the event-ingestion architecture and its durable data flow."
+          ]
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Observable design objectives that bound the intended result.",
+          "examples": [
+            [
+              "Separate ingestion, validation, and persistence responsibilities."
+            ]
+          ]
+        },
+        "inScope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Architecture, data, interface, operational, or other concerns included in this design task.",
+          "examples": [
+            [
+              "Service boundaries and message flow"
+            ],
+            []
+          ]
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Concerns intentionally excluded from this design task so that the result is not mistaken for implementation or delivery authorization.",
+          "examples": [
+            [
+              "Production deployment changes"
+            ],
+            []
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/DesignPolicy",
+          "description": "The policy identity whose CUE/host rules derive expected outputs and verification obligations.",
+          "examples": [
+            {
+              "id": "component-design",
+              "version": "1"
+            }
+          ]
+        },
+        "profile": {
+          "$ref": "#/$defs/DesignProfile",
+          "description": "The readiness profile the design task is expected to achieve.",
+          "examples": [
+            "implementable"
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/DesignScope",
+          "description": "The structural design scope governed by the task.",
+          "examples": [
+            "component"
+          ]
+        },
+        "facets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/DesignFacet"
+          },
+          "description": "The design facets to which the selected policy applies.",
+          "examples": [
+            [
+              "structure",
+              "contract"
+            ]
+          ]
+        },
+        "references": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Typed context references available to the design task. Cross-task SDLC entities use globally qualified locators; repository and CUE resources use repository-relative paths.",
+          "items": {
+            "$ref": "#/$defs/Reference"
+          },
+          "examples": [
+            [
+              {
+                "id": "REF-001",
+                "type": "requirement",
+                "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+                "description": "The requirement for durable task-specific contracts."
+              }
+            ]
+          ],
+          "x-field-role": "context"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance",
+          "description": "The provenance of the design payload as a whole, including the references used to establish it and the method used to produce it.",
+          "examples": [
+            {
+              "referenceRefs": [
+                "REF-001",
+                "REF-002"
+              ],
+              "basis": "Requirements and the existing envelope contract were inspected before modeling the design boundary.",
+              "confidence": 92
+            }
+          ],
+          "x-field-role": "authoritative"
+        },
+        "considerations": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Semantic inputs that the design task actually evaluated. This collection is distinct from references, which only describe material available to the task.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "statement",
+              "evaluation",
+              "referenceRefs",
+              "status",
+              "impact",
+              "confidence"
+            ],
+            "description": "One semantic input actually evaluated by the design task, with its conclusion, provenance, and assessment.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^C-[0-9]{3,}$",
+                "description": "Stable identifier for the evaluated consideration.",
+                "examples": [
+                  "C-001"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "requirement",
+                  "constraint",
+                  "assumption",
+                  "risk",
+                  "researchFinding",
+                  "decision",
+                  "question",
+                  "rework",
+                  "boundary",
+                  "interface",
+                  "other"
+                ],
+                "description": "The semantic category of the input that was evaluated.",
+                "examples": [
+                  "constraint",
+                  "researchFinding"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The requirement, fact, assumption, risk, question, or other input considered by the design.",
+                "examples": [
+                  "The task envelope must remain separate from task-specific design data."
+                ]
+              },
+              "evaluation": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the design task concluded or did with this input; this distinguishes evaluated semantics from merely available references.",
+                "examples": [
+                  "Applied this constraint by keeping identity and lifecycle out of the design model."
+                ]
+              },
+              "referenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Available typed references that support or contextualize the evaluated input.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^REF-[0-9]{3,}$",
+                  "description": "The identifier of a typed available-context reference declared in the references collection.",
+                  "examples": [
+                    "REF-001"
+                  ]
+                },
+                "examples": [
+                  [
+                    "REF-001"
+                  ]
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "accepted",
+                  "rejected",
+                  "rework",
+                  "deferred",
+                  "notApplicable"
+                ],
+                "description": "The disposition reached for this consideration within the design result.",
+                "examples": [
+                  "accepted",
+                  "deferred"
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated significance of this consideration to the design, scored from 0 through 100.",
+                "examples": [
+                  90
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence in the evaluation of this consideration, scored from 0 through 100.",
+                "examples": [
+                  98
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "C-001",
+                "kind": "constraint",
+                "statement": "The task envelope must remain separate from task-specific design data.",
+                "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "status": "accepted",
+                "impact": 90,
+                "confidence": 98
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "C-001",
+                "kind": "constraint",
+                "statement": "The task envelope must remain separate from task-specific design data.",
+                "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+                "referenceRefs": [
+                  "REF-002"
+                ],
+                "status": "accepted",
+                "impact": 90,
+                "confidence": 98
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "activities": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Bounded research, decision, analysis, modeling, or review activities performed as part of the design task. Activities preserve provenance without turning research or a decision into an implicit approval or implementation.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "summary",
+              "status",
+              "referenceRefs",
+              "provenance"
+            ],
+            "description": "A bounded activity performed within the design task, such as research or decision analysis. It records work without changing task workflow or review-gate state.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^ACT-[0-9]{3,}$",
+                "description": "Stable identifier for the activity.",
+                "examples": [
+                  "ACT-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "research",
+                  "decision",
+                  "analysis",
+                  "modeling",
+                  "review",
+                  "other"
+                ],
+                "description": "The kind of design activity performed.",
+                "examples": [
+                  "research",
+                  "decision"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the activity investigated, compared, decided, modeled, or reviewed.",
+                "examples": [
+                  "Compare synchronous and asynchronous ingestion boundaries."
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "planned",
+                  "active",
+                  "completed",
+                  "blocked",
+                  "deferred"
+                ],
+                "description": "The status of this embedded activity within the design task; it is not the lifecycle status of the enclosing task.",
+                "examples": [
+                  "completed",
+                  "deferred"
+                ]
+              },
+              "referenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Available typed references inspected or intended for this activity.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^REF-[0-9]{3,}$",
+                  "description": "The identifier of a typed available-context reference declared in the references collection.",
+                  "examples": [
+                    "REF-001"
+                  ]
+                },
+                "examples": [
+                  [
+                    "REF-001"
+                  ],
+                  []
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "The evidence lineage and derivation basis for the activity record.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The requirement was compared with the modeled ingestion alternatives.",
+                    "confidence": 84
+                  }
+                ]
+              },
+              "outcomeRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^O-[0-9]{3,}$"
+                },
+                "description": "Optional outcomes informed or produced by this activity. The host verifies that each outcome exists.",
+                "examples": [
+                  [
+                    "O-001"
+                  ],
+                  []
+                ]
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional bounded notes about the activity that are not themselves a conclusion or approval.",
+                "examples": [
+                  "The comparison did not establish production latency."
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "ACT-001",
+                "type": "research",
+                "summary": "Compare synchronous and asynchronous ingestion boundaries.",
+                "status": "completed",
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The requirement was compared with the modeled ingestion alternatives.",
+                  "confidence": 84
+                }
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "ACT-001",
+                "type": "research",
+                "summary": "Compare synchronous and asynchronous ingestion boundaries.",
+                "status": "completed",
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The requirement was compared with the modeled ingestion alternatives.",
+                  "confidence": 84
+                }
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "summary": "Define the event-ingestion architecture and its durable data flow.",
+          "objectives": [
+            "Separate ingestion, validation, and persistence responsibilities."
+          ],
+          "inScope": [
+            "Service boundaries and message flow"
+          ],
+          "outOfScope": [
+            "Production deployment changes"
+          ],
+          "references": [
+            {
+              "id": "REF-001",
+              "type": "requirement",
+              "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+              "description": "The requirement for durable task-specific contracts."
+            },
+            {
+              "id": "REF-002",
+              "type": "repositoryPath",
+              "locator": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+              "description": "The common task envelope contract."
+            }
+          ],
+          "provenance": {
+            "referenceRefs": [
+              "REF-001",
+              "REF-002"
+            ],
+            "basis": "Requirements and the existing envelope contract were inspected before modeling the design boundary.",
+            "confidence": 92
+          },
+          "considerations": [
+            {
+              "id": "C-001",
+              "kind": "constraint",
+              "statement": "The task envelope must remain separate from task-specific design data.",
+              "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+              "referenceRefs": [
+                "REF-002"
+              ],
+              "status": "accepted",
+              "impact": 90,
+              "confidence": 98
+            }
+          ],
+          "activities": [],
+          "policy": {
+            "id": "component-design",
+            "version": "1"
+          },
+          "profile": "implementable",
+          "scope": "component",
+          "facets": [
+            "structure",
+            "contract"
+          ]
+        }
+      ]
+    },
+    "DesignResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "model",
+        "elements",
+        "relations",
+        "views",
+        "artifacts",
+        "outcomes",
+        "outputs",
+        "verificationObligations",
+        "unresolvedQuestions"
+      ],
+      "description": "The complete design output, including the model, artifacts, outcomes, and unresolved questions.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise explanation of the design result and its principal conclusion.",
+          "examples": [
+            "A bounded ingestion model with an explicit validation and persistence flow."
+          ]
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "kind",
+            "description"
+          ],
+          "description": "The broad subject and notation-neutral interpretation of the design model.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+              "description": "Stable lower-kebab-case name for the design model.",
+              "examples": [
+                "event-ingestion",
+                "bounded-contexts"
+              ]
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "architecture",
+                "data-flow",
+                "data-model",
+                "interface",
+                "deployment",
+                "security",
+                "process",
+                "other"
+              ],
+              "description": "The broad subject represented by the model. The model may combine multiple concerns through typed elements and relationships.",
+              "examples": [
+                "architecture",
+                "data-flow"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "description": "What the model represents and how its elements and relationships should be interpreted.",
+              "examples": [
+                "The elements and relationships describe how events move through the system."
+              ]
+            },
+            "notation": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+              "description": "Optional notation or modeling convention name. The design contract does not require or prescribe a particular notation.",
+              "examples": [
+                "custom",
+                "c4"
+              ]
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional version of the named notation or modeling convention.",
+              "examples": [
+                "1"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "event-ingestion",
+              "kind": "data-flow",
+              "description": "The elements and relationships describe how events move through the system.",
+              "notation": "custom"
+            }
+          ]
+        },
+        "elements": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "name",
+              "description",
+              "provenance"
+            ],
+            "description": "A generic typed item in the design model, such as a service, data store, actor, interface, process, or domain object.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^E-[0-9]{3,}$",
+                "description": "Stable identifier for the modeled element.",
+                "examples": [
+                  "E-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Extensible lower-kebab-case semantic type of the element; the schema intentionally does not restrict this to a fixed architecture collection.",
+                "examples": [
+                  "service",
+                  "data-store",
+                  "external-system"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case name for the element.",
+                "examples": [
+                  "ingestion-service"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The responsibility, data, boundary, or other meaning of the element.",
+                "examples": [
+                  "Accepts incoming events."
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "The evidence lineage and derivation basis for the element.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The service boundary is required by the ingestion objective.",
+                    "confidence": 88
+                  }
+                ]
+              },
+              "attributes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "value"
+                  ],
+                  "description": "A named scalar attribute that extends a generic model item without prescribing a fixed architecture vocabulary.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[a-z][A-Za-z0-9]*$",
+                      "description": "LowerCamelCase name of the attribute.",
+                      "examples": [
+                        "protocol",
+                        "retentionDays"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Scalar attribute value represented as text so the generic contract remains notation-neutral.",
+                      "examples": [
+                        "https",
+                        "30"
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "name": "protocol",
+                      "value": "https"
+                    }
+                  ]
+                },
+                "description": "Optional extensible scalar attributes for the element.",
+                "examples": [
+                  [
+                    {
+                      "name": "protocol",
+                      "value": "https"
+                    }
+                  ],
+                  []
+                ]
+              },
+              "tags": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+                },
+                "description": "Optional lower-kebab-case labels used to group or filter elements.",
+                "examples": [
+                  [
+                    "boundary",
+                    "critical-path"
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "E-001",
+                "type": "service",
+                "name": "ingestion-service",
+                "description": "Accepts incoming events.",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The service boundary is required by the ingestion objective.",
+                  "confidence": 88
+                }
+              }
+            ]
+          },
+          "description": "Generic typed elements of the model. Their extensible types avoid prescribing fixed architecture collections.",
+          "examples": [
+            [
+              {
+                "id": "E-001",
+                "type": "service",
+                "name": "ingestion-service",
+                "description": "Accepts incoming events.",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The service boundary is required by the ingestion objective.",
+                  "confidence": 88
+                }
+              }
+            ],
+            []
+          ]
+        },
+        "relations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "source",
+              "target",
+              "description",
+              "provenance"
+            ],
+            "description": "A typed directed relationship between design endpoints. Endpoint resolution and graph consistency are host-level checks.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^REL-[0-9]{3,}$",
+                "description": "Stable identifier for the relationship.",
+                "examples": [
+                  "REL-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Extensible lower-kebab-case semantic type of the relationship.",
+                "examples": [
+                  "publishes-to",
+                  "reads-from",
+                  "transforms"
+                ]
+              },
+              "source": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "id"
+                ],
+                "description": "The origin endpoint of the directed relationship.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "element",
+                      "artifact",
+                      "view",
+                      "reference"
+                    ],
+                    "description": "The result collection in which the endpoint identifier must be resolved.",
+                    "examples": [
+                      "element",
+                      "reference"
+                    ]
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identifier of the endpoint in the collection named by type.",
+                    "examples": [
+                      "E-001",
+                      "REF-001"
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "type": "element",
+                    "id": "E-001"
+                  }
+                ]
+              },
+              "target": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "id"
+                ],
+                "description": "The destination endpoint of the directed relationship.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "element",
+                      "artifact",
+                      "view",
+                      "reference"
+                    ],
+                    "description": "The result collection in which the endpoint identifier must be resolved.",
+                    "examples": [
+                      "element",
+                      "reference"
+                    ]
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identifier of the endpoint in the collection named by type.",
+                    "examples": [
+                      "E-001",
+                      "REF-001"
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "type": "element",
+                    "id": "E-002"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the relationship means in the model, including data, control, dependency, or containment semantics where relevant.",
+                "examples": [
+                  "The ingestion service publishes accepted events to the event store."
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "The evidence lineage and derivation basis for the relationship.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The relationship follows the required ingestion flow.",
+                    "confidence": 82
+                  }
+                ]
+              },
+              "attributes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "value"
+                  ],
+                  "description": "A named scalar attribute that extends a generic model item without prescribing a fixed architecture vocabulary.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[a-z][A-Za-z0-9]*$",
+                      "description": "LowerCamelCase name of the attribute.",
+                      "examples": [
+                        "protocol",
+                        "retentionDays"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Scalar attribute value represented as text so the generic contract remains notation-neutral.",
+                      "examples": [
+                        "https",
+                        "30"
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "name": "protocol",
+                      "value": "https"
+                    }
+                  ]
+                },
+                "description": "Optional scalar metadata that qualifies the relationship.",
+                "examples": [
+                  [
+                    {
+                      "name": "protocol",
+                      "value": "event-stream"
+                    }
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "REL-001",
+                "type": "publishes-to",
+                "source": {
+                  "type": "element",
+                  "id": "E-001"
+                },
+                "target": {
+                  "type": "element",
+                  "id": "E-002"
+                },
+                "description": "The ingestion service publishes accepted events to the event store.",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The relationship follows the required ingestion flow.",
+                  "confidence": 82
+                }
+              }
+            ]
+          },
+          "description": "Generic typed relationships between model endpoints.",
+          "examples": [
+            [
+              {
+                "id": "REL-001",
+                "type": "publishes-to",
+                "source": {
+                  "type": "element",
+                  "id": "E-001"
+                },
+                "target": {
+                  "type": "element",
+                  "id": "E-002"
+                },
+                "description": "The ingestion service publishes accepted events to the event store.",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The relationship follows the required ingestion flow.",
+                  "confidence": 82
+                }
+              }
+            ],
+            []
+          ]
+        },
+        "views": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "name",
+              "description",
+              "elementRefs",
+              "relationRefs",
+              "provenance"
+            ],
+            "description": "A named projection of the generic model for a particular audience, concern, or data-flow perspective.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^V-[0-9]{3,}$",
+                "description": "Stable identifier for the view.",
+                "examples": [
+                  "V-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Extensible lower-kebab-case semantic type of the view.",
+                "examples": [
+                  "context",
+                  "data-flow",
+                  "deployment"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case name for the view.",
+                "examples": [
+                  "accepted-event-flow"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The purpose and interpretation of this projection of the model.",
+                "examples": [
+                  "Shows the path of accepted events from ingress to persistence."
+                ]
+              },
+              "elementRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^E-[0-9]{3,}$",
+                  "description": "The identifier of a modeled design element.",
+                  "examples": [
+                    "E-001"
+                  ]
+                },
+                "description": "Modeled elements included in the view. The host verifies that each element exists.",
+                "examples": [
+                  [
+                    "E-001",
+                    "E-002"
+                  ]
+                ]
+              },
+              "relationRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^REL-[0-9]{3,}$",
+                  "description": "The identifier of a modeled relationship.",
+                  "examples": [
+                    "REL-001"
+                  ]
+                },
+                "description": "Relationships included in the view. The host verifies that each relationship exists and is compatible with the selected elements.",
+                "examples": [
+                  [
+                    "REL-001"
+                  ],
+                  []
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "The evidence lineage and derivation basis for the view.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The view highlights the flow required by the task objective.",
+                    "confidence": 86
+                  }
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "V-001",
+                "type": "data-flow",
+                "name": "accepted-event-flow",
+                "description": "Shows the path of accepted events from ingress to persistence.",
+                "elementRefs": [
+                  "E-001",
+                  "E-002"
+                ],
+                "relationRefs": [
+                  "REL-001"
+                ],
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The view highlights the flow required by the task objective.",
+                  "confidence": 86
+                }
+              }
+            ]
+          },
+          "description": "Named projections of the model for distinct concerns, audiences, or data-flow perspectives.",
+          "examples": [
+            [
+              {
+                "id": "V-001",
+                "type": "data-flow",
+                "name": "accepted-event-flow",
+                "description": "Shows the path of accepted events from ingress to persistence.",
+                "elementRefs": [
+                  "E-001"
+                ],
+                "relationRefs": [],
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The view highlights the flow required by the task objective.",
+                  "confidence": 86
+                }
+              }
+            ],
+            []
+          ]
+        },
+        "artifacts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "name",
+              "description",
+              "locator",
+              "status",
+              "provenance"
+            ],
+            "description": "A durable design output or representation referenced by the design result. CUE artifacts are permitted but no artifact format is required.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^A-[0-9]{3,}$",
+                "description": "Stable identifier for the artifact.",
+                "examples": [
+                  "A-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "diagram",
+                  "document",
+                  "model",
+                  "schema",
+                  "cue",
+                  "interfaceDefinition",
+                  "dataDictionary",
+                  "other"
+                ],
+                "description": "The broad kind of durable design artifact.",
+                "examples": [
+                  "diagram",
+                  "cue"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case name for the artifact.",
+                "examples": [
+                  "accepted-event-flow"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the artifact contains and how it relates to the design result.",
+                "examples": [
+                  "A CUE representation of the event envelope and validation constraints."
+                ]
+              },
+              "locator": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A durable repository-relative path, URL, or other locator for retrieving the artifact.",
+                "examples": [
+                  "docs/design/accepted-event-flow.cue",
+                  "docs/design/accepted-event-flow.svg"
+                ]
+              },
+              "format": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Optional artifact format or serialization name.",
+                "examples": [
+                  "cue",
+                  "svg",
+                  "markdown"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "proposed",
+                  "available",
+                  "complete",
+                  "deferred"
+                ],
+                "description": "Current availability posture of the artifact; it does not imply task approval or implementation completion.",
+                "examples": [
+                  "available",
+                  "proposed"
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "The evidence lineage and derivation basis for the artifact.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The artifact serializes the accepted event-flow model.",
+                    "confidence": 91
+                  }
+                ]
+              },
+              "elementRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^E-[0-9]{3,}$",
+                  "description": "The identifier of a modeled design element.",
+                  "examples": [
+                    "E-001"
+                  ]
+                },
+                "description": "Optional modeled elements represented by the artifact.",
+                "examples": [
+                  [
+                    "E-001"
+                  ],
+                  []
+                ]
+              },
+              "viewRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^V-[0-9]{3,}$",
+                  "description": "The identifier of a design view.",
+                  "examples": [
+                    "V-001"
+                  ]
+                },
+                "description": "Optional views rendered or persisted by the artifact.",
+                "examples": [
+                  [
+                    "V-001"
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "A-001",
+                "type": "cue",
+                "name": "event-envelope",
+                "description": "A CUE representation of the event envelope and validation constraints.",
+                "locator": "docs/design/event-envelope.cue",
+                "format": "cue",
+                "status": "proposed",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The artifact captures the proposed event contract.",
+                  "confidence": 80
+                }
+              }
+            ]
+          },
+          "description": "Durable design artifacts produced, proposed, or referenced by the result.",
+          "examples": [
+            [
+              {
+                "id": "A-001",
+                "type": "cue",
+                "name": "event-envelope",
+                "description": "A CUE representation of the event envelope and validation constraints.",
+                "locator": "docs/design/event-envelope.cue",
+                "format": "cue",
+                "status": "proposed",
+                "provenance": {
+                  "referenceRefs": [
+                    "REF-001"
+                  ],
+                  "basis": "The artifact captures the proposed event contract.",
+                  "confidence": 80
+                }
+              }
+            ],
+            []
+          ]
+        },
+        "outcomes": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Design conclusions, mappings, recommendations, and handoffs produced by the task. An outcome can point to downstream implementation, test, or validation work without creating or approving that work.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "type",
+              "statement",
+              "status",
+              "impact",
+              "confidence",
+              "referenceRefs"
+            ],
+            "description": "A design conclusion or explicit downstream handoff. It does not itself approve, implement, test, validate, or deliver the result.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^O-[0-9]{3,}$",
+                "description": "Stable identifier for the outcome.",
+                "examples": [
+                  "O-001"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "designDecision",
+                  "requirementMapping",
+                  "implementationHandoff",
+                  "testHandoff",
+                  "validationHandoff",
+                  "artifact",
+                  "recommendation",
+                  "other"
+                ],
+                "description": "The kind of design outcome recorded.",
+                "examples": [
+                  "implementationHandoff",
+                  "designDecision"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The conclusion, mapping, recommendation, or handoff statement.",
+                "examples": [
+                  "Implement ingestion and validation as separate components."
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "proposed",
+                  "accepted",
+                  "rejected",
+                  "deferred",
+                  "superseded"
+                ],
+                "description": "The posture of this outcome within the design result. Accepted is a result disposition, not lifecycle approval or implementation completion.",
+                "examples": [
+                  "proposed",
+                  "accepted"
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated significance of the outcome to downstream work, scored from 0 through 100.",
+                "examples": [
+                  90
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence in the outcome statement and its supporting reasoning, scored from 0 through 100.",
+                "examples": [
+                  86
+                ]
+              },
+              "referenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Typed references that support or are affected by the outcome.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^REF-[0-9]{3,}$",
+                  "description": "The identifier of a typed available-context reference declared in the references collection.",
+                  "examples": [
+                    "REF-001"
+                  ]
+                },
+                "examples": [
+                  [
+                    "REF-001"
+                  ],
+                  []
+                ]
+              },
+              "elementRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^E-[0-9]{3,}$",
+                  "description": "The identifier of a modeled design element.",
+                  "examples": [
+                    "E-001"
+                  ]
+                },
+                "description": "Optional modeled elements to which the outcome applies.",
+                "examples": [
+                  [
+                    "E-001"
+                  ],
+                  []
+                ]
+              },
+              "relationRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^REL-[0-9]{3,}$",
+                  "description": "The identifier of a modeled relationship.",
+                  "examples": [
+                    "REL-001"
+                  ]
+                },
+                "description": "Optional modeled relationships to which the outcome applies.",
+                "examples": [
+                  [
+                    "REL-001"
+                  ],
+                  []
+                ]
+              },
+              "artifactRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^A-[0-9]{3,}$",
+                  "description": "The identifier of a durable design artifact.",
+                  "examples": [
+                    "A-001"
+                  ]
+                },
+                "description": "Optional durable artifacts that embody or support the outcome.",
+                "examples": [
+                  [
+                    "A-001"
+                  ],
+                  []
+                ]
+              },
+              "suggestedTaskType": {
+                "type": "string",
+                "enum": [
+                  "decomposition",
+                  "research",
+                  "decision",
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation",
+                  "review",
+                  "rework",
+                  "delivery"
+                ],
+                "description": "Optional task kind suggested for explicit downstream work; it does not create or authorize that task.",
+                "examples": [
+                  "implementation",
+                  "test-strategy"
+                ]
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "referenceRefs",
+                  "basis",
+                  "confidence"
+                ],
+                "description": "Optional additional provenance for the outcome beyond its supporting referenceRefs.",
+                "properties": {
+                  "referenceRefs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Typed available-context references that contributed to the item or inference.",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^REF-[0-9]{3,}$",
+                      "description": "The identifier of a typed available-context reference declared in the references collection.",
+                      "examples": [
+                        "REF-001"
+                      ]
+                    },
+                    "examples": [
+                      [
+                        "REF-001"
+                      ],
+                      []
+                    ]
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "How the referenced material, evaluated considerations, or explicit reasoning produced this item.",
+                    "examples": [
+                      "The service boundary follows the stated separation objective."
+                    ]
+                  },
+                  "confidence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Confidence that the provenance explanation and its resulting item are accurate.",
+                    "examples": [
+                      90
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "referenceRefs": [
+                      "REF-001"
+                    ],
+                    "basis": "The handoff follows the accepted design boundary.",
+                    "confidence": 86
+                  }
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "O-001",
+                "type": "implementationHandoff",
+                "statement": "Implement ingestion and validation as separate components.",
+                "status": "proposed",
+                "impact": 90,
+                "confidence": 86,
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "suggestedTaskType": "implementation"
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "O-001",
+                "type": "implementationHandoff",
+                "statement": "Implement ingestion and validation as separate components.",
+                "status": "proposed",
+                "impact": 90,
+                "confidence": 86,
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "elementRefs": [
+                  "E-001"
+                ],
+                "suggestedTaskType": "implementation"
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "outputs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/DesignOutput"
+          },
+          "description": "Actual policy-governed output claims produced by the design task.",
+          "examples": [
+            []
+          ]
+        },
+        "verificationObligations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/VerificationObligation"
+          },
+          "description": "Design-time verification obligations derived from policy and intent inputs.",
+          "examples": [
+            []
+          ]
+        },
+        "unresolvedQuestions": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Design questions that remain open or intentionally deferred after this task and require explicit follow-up rather than an unstated assumption.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "question",
+              "reason",
+              "status",
+              "impact",
+              "confidence",
+              "referenceRefs"
+            ],
+            "description": "One design question that remains unresolved or intentionally deferred and must not be hidden as an assumption.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^Q-[0-9]{3,}$",
+                "description": "Stable identifier for the unresolved design question.",
+                "examples": [
+                  "Q-001"
+                ]
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The precise design question that remains unanswered.",
+                "examples": [
+                  "Which retention period is required for rejected events?"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this task could not resolve the question and why it remains relevant.",
+                "examples": [
+                  "The available requirements do not define the retention policy."
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "deferred"
+                ],
+                "description": "Whether explicit follow-up remains active or the question was intentionally deferred.",
+                "examples": [
+                  "open",
+                  "deferred"
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence of leaving the question unresolved, scored from 0 through 100.",
+                "examples": [
+                  75
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that the question is correctly stated as unresolved, scored from 0 through 100.",
+                "examples": [
+                  90
+                ]
+              },
+              "referenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Typed available-context references that establish or constrain the unresolved question.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^REF-[0-9]{3,}$",
+                  "description": "The identifier of a typed available-context reference declared in the references collection.",
+                  "examples": [
+                    "REF-001"
+                  ]
+                },
+                "examples": [
+                  [
+                    "REF-001"
+                  ],
+                  []
+                ]
+              },
+              "affectedRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Optional typed references whose interpretation or downstream use may be affected by the unresolved question.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^REF-[0-9]{3,}$",
+                  "description": "The identifier of a typed available-context reference declared in the references collection.",
+                  "examples": [
+                    "REF-001"
+                  ]
+                },
+                "examples": [
+                  [
+                    "REF-001"
+                  ],
+                  []
+                ]
+              },
+              "suggestedTaskType": {
+                "type": "string",
+                "enum": [
+                  "decomposition",
+                  "research",
+                  "decision",
+                  "design",
+                  "implementation",
+                  "test-strategy",
+                  "validation",
+                  "review",
+                  "rework",
+                  "delivery"
+                ],
+                "description": "Optional task kind suggested for resolving the question; it does not create or schedule a follow-up task.",
+                "examples": [
+                  "decision",
+                  "research"
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "Q-001",
+                "question": "Which retention period is required for rejected events?",
+                "reason": "The available requirements do not define the retention policy.",
+                "status": "open",
+                "impact": 75,
+                "confidence": 90,
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "suggestedTaskType": "decision"
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "Q-001",
+                "question": "Which retention period is required for rejected events?",
+                "reason": "The available requirements do not define the retention policy.",
+                "status": "open",
+                "impact": 75,
+                "confidence": 90,
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "suggestedTaskType": "decision"
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "summary": "A bounded ingestion model with an explicit validation and persistence flow.",
+          "model": {
+            "name": "event-ingestion",
+            "kind": "data-flow",
+            "description": "The elements and relationships describe how events move through the system.",
+            "notation": "custom"
+          },
+          "elements": [
+            {
+              "id": "E-001",
+              "type": "service",
+              "name": "ingestion-service",
+              "description": "Accepts incoming events.",
+              "provenance": {
+                "referenceRefs": [
+                  "REF-001"
+                ],
+                "basis": "The service boundary is required by the ingestion objective.",
+                "confidence": 88
+              }
+            }
+          ],
+          "relations": [],
+          "views": [],
+          "artifacts": [],
+          "outcomes": [
+            {
+              "id": "O-001",
+              "type": "implementationHandoff",
+              "statement": "Implement ingestion and validation as separate components.",
+              "status": "proposed",
+              "impact": 90,
+              "confidence": 86,
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "elementRefs": [
+                "E-001"
+              ],
+              "suggestedTaskType": "implementation"
+            }
+          ],
+          "unresolvedQuestions": [],
+          "outputs": [],
+          "verificationObligations": []
+        }
+      ]
+    },
+    "SdlcGlobalReference": {
+      "type": "string",
+      "oneOf": [
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        }
+      ],
+      "description": "A globally qualified SDLC reference. Use this form for cross-task SDLC entities so repository, task, entity kind, and entity identity are explicit.",
+      "examples": [
+        "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+        "sdlc://repo/local%2Fskills/WI-0003%7C03000000#artifact/A-001",
+        "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002"
+      ]
+    },
+    "RepositoryRelativePath": {
+      "type": "string",
+      "pattern": "^(?:[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*)$",
+      "description": "A repository-relative path composed of safe path segments; it does not escape the repository root and is not a URI.",
+      "examples": [
+        "sdlc/cue/task-design/v1/task-design.cue"
+      ]
+    },
+    "HttpUrl": {
+      "type": "string",
+      "pattern": "^https?://.+",
+      "description": "An HTTP or HTTPS URL used as an external design context locator.",
+      "examples": [
+        "https://example.com/architecture-guidance"
+      ]
+    },
+    "DesignProfile": {
+      "type": "string",
+      "enum": [
+        "coherent",
+        "decomposable",
+        "implementable",
+        "concrete"
+      ],
+      "description": "The design readiness profile requested from this task.",
+      "examples": [
+        "implementable"
+      ]
+    },
+    "DesignScope": {
+      "type": "string",
+      "enum": [
+        "system",
+        "subsystem",
+        "component",
+        "realization"
+      ],
+      "description": "The structural design scope governed by the task.",
+      "examples": [
+        "component"
+      ]
+    },
+    "DesignFacet": {
+      "type": "string",
+      "enum": [
+        "structure",
+        "behavior",
+        "contract",
+        "deployment",
+        "policy"
+      ],
+      "description": "A design facet governed by the selected policy.",
+      "examples": [
+        "contract"
+      ]
+    },
+    "DesignPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "description": "The policy identity selected by design intent. The policy body is resolved by the CUE/host policy registry; no content digest is stored here.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable policy identifier resolved by the applicable design policy registry.",
+          "examples": [
+            "component-design"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*(?:\\.[0-9]+){0,2}$",
+          "description": "Major or dotted policy version selected by the task.",
+          "examples": [
+            "1"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "component-design",
+          "version": "1"
+        }
+      ]
+    },
+    "OutputId": {
+      "type": "string",
+      "pattern": "^OUT-[0-9]{3,}$",
+      "description": "Stable identifier for one policy-governed design output claim.",
+      "examples": [
+        "OUT-001"
+      ]
+    },
+    "VerificationObligationId": {
+      "type": "string",
+      "pattern": "^VER-[0-9]{3,}$",
+      "description": "Stable identifier for one design-time verification obligation.",
+      "examples": [
+        "VER-001"
+      ]
+    },
+    "DesignTargetReference": {
+      "type": "string",
+      "pattern": "^(?:E|REL|V|A|O)-[0-9]{3,}$",
+      "description": "A task-local design result identifier used as a verification target.",
+      "examples": [
+        "A-001",
+        "E-001"
+      ]
+    },
+    "VerificationMethod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "steps"
+      ],
+      "description": "The planned method for checking a design obligation. This is not execution evidence.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "analysis",
+            "inspection",
+            "unit-test",
+            "component-test",
+            "contract-test",
+            "integration-test",
+            "build",
+            "deployment",
+            "runtime",
+            "other"
+          ],
+          "description": "The class of verification method.",
+          "examples": [
+            "inspection"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Ordered steps needed to perform the planned check.",
+          "examples": [
+            [
+              "Inspect the design artifact.",
+              "Compare the artifact with the referenced acceptance criterion."
+            ]
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional deterministic command for an executable verification method.",
+          "examples": [
+            "cue vet ./design"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "type": "inspection",
+          "steps": [
+            "Inspect the design artifact."
+          ]
+        }
+      ]
+    },
+    "DesignOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "status",
+        "sourceRefs",
+        "description"
+      ],
+      "description": "An actual design output claim linked to task-local source references. The policy evaluator matches these claims to derived output obligations.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/OutputId",
+          "description": "Stable identifier for one policy-governed design output claim.",
+          "examples": [
+            "OUT-001"
+          ]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "boundary",
+            "responsibility-allocation",
+            "architecture-structure",
+            "interface-contract",
+            "data-model",
+            "behavior-model",
+            "state-and-invariants",
+            "security-and-trust",
+            "deployment-model",
+            "decision-record",
+            "architecture-driver",
+            "quality-obligation",
+            "policy-application",
+            "requirement-allocation",
+            "verification-obligation",
+            "implementation-handoff",
+            "test-handoff",
+            "other"
+          ],
+          "description": "The policy output category claimed by this result.",
+          "examples": [
+            "requirement-allocation"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "available",
+            "complete",
+            "deferred",
+            "notApplicable"
+          ],
+          "description": "The availability posture of this output claim; it does not itself prove semantic correctness.",
+          "examples": [
+            "complete"
+          ]
+        },
+        "sourceRefs": {
+          "$ref": "#/$defs/ReferenceIdList",
+          "minItems": 1,
+          "description": "Task-local REF identifiers identifying the requirements, acceptance criteria, or other inputs addressed by this output.",
+          "examples": [
+            [
+              "REF-001"
+            ]
+          ]
+        },
+        "elementRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ElementId"
+          },
+          "description": "Optional task-local model elements embodying this output.",
+          "examples": [
+            [
+              "E-001"
+            ]
+          ]
+        },
+        "relationRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/RelationId"
+          },
+          "description": "Optional task-local relations embodying this output.",
+          "examples": [
+            [
+              "REL-001"
+            ]
+          ]
+        },
+        "viewRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ViewId"
+          },
+          "description": "Optional task-local views embodying this output.",
+          "examples": [
+            [
+              "V-001"
+            ]
+          ]
+        },
+        "artifactRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ArtifactId"
+          },
+          "description": "Optional task-local artifacts embodying this output.",
+          "examples": [
+            [
+              "A-001"
+            ]
+          ]
+        },
+        "outcomeRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/OutcomeId"
+          },
+          "description": "Optional task-local outcomes embodying this output.",
+          "examples": [
+            [
+              "O-001"
+            ]
+          ]
+        },
+        "verificationRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/VerificationObligationId"
+          },
+          "description": "Optional task-local verification obligations for this output.",
+          "examples": [
+            [
+              "VER-001"
+            ]
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this output provides and how it contributes to the design task.",
+          "examples": [
+            "The requirement is allocated to the completion component."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "OUT-001",
+          "category": "requirement-allocation",
+          "status": "complete",
+          "sourceRefs": [
+            "REF-001"
+          ],
+          "description": "The requirement is allocated to the completion component."
+        }
+      ]
+    },
+    "VerificationObligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "sourceRefs",
+        "method",
+        "requiredFor",
+        "description"
+      ],
+      "description": "A planned design-time verification obligation. It states how a design claim should be checked but does not record execution evidence.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/VerificationObligationId",
+          "description": "Stable identifier for one design-time verification obligation.",
+          "examples": [
+            "VER-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "analysis",
+            "inspection",
+            "unit-test",
+            "component-test",
+            "contract-test",
+            "integration-test",
+            "build",
+            "deployment",
+            "runtime",
+            "other"
+          ],
+          "description": "The class of verification obligation.",
+          "examples": [
+            "inspection"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "deferred",
+            "notApplicable"
+          ],
+          "description": "Planning status of the obligation; execution status belongs to validation or implementation results.",
+          "examples": [
+            "planned"
+          ]
+        },
+        "sourceRefs": {
+          "$ref": "#/$defs/ReferenceIdList",
+          "minItems": 1,
+          "description": "Task-local REF identifiers for the requirements, acceptance criteria, or decisions verified by this obligation.",
+          "examples": [
+            [
+              "REF-001"
+            ]
+          ]
+        },
+        "targetRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/DesignTargetReference"
+          },
+          "description": "Optional task-local design entities to inspect or analyze.",
+          "examples": [
+            [
+              "A-001"
+            ]
+          ]
+        },
+        "testCaseRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/SdlcGlobalReference"
+          },
+          "description": "Optional globally scoped SDLC test-case references; cross-task references must not use task-local syntax.",
+          "examples": [
+            [
+              "sdlc://repo/local%2Fskills/WI-0003%7C06000000#test-case/TC-001"
+            ]
+          ]
+        },
+        "method": {
+          "$ref": "#/$defs/VerificationMethod",
+          "description": "The planned method for checking a design obligation.",
+          "examples": [
+            {
+              "type": "inspection",
+              "steps": [
+                "Inspect the design artifact."
+              ]
+            }
+          ]
+        },
+        "requiredFor": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/DesignProfile"
+          },
+          "description": "Profiles for which this obligation is mandatory.",
+          "examples": [
+            [
+              "implementable"
+            ]
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this obligation must establish.",
+          "examples": [
+            "Inspect that the design addresses the acceptance criterion."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "VER-001",
+          "kind": "inspection",
+          "status": "planned",
+          "sourceRefs": [
+            "REF-001"
+          ],
+          "method": {
+            "type": "inspection",
+            "steps": [
+              "Inspect the design artifact."
+            ]
+          },
+          "requiredFor": [
+            "implementable"
+          ],
+          "description": "Inspect that the design addresses the requirement."
+        }
+      ]
+    },
+    "OutcomeId": {
+      "type": "string",
+      "pattern": "^O-[0-9]{3,}$",
+      "description": "The identifier of a design outcome.",
+      "examples": [
+        "O-001"
+      ]
+    },
+    "GlobalReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "locator",
+        "description"
+      ],
+      "description": "A typed design reference for cross-task SDLC material using the required global locator scope.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REF-[0-9]{3,}$",
+          "description": "Stable identifier used by considerations, activities, outcomes, and provenance to name this available reference.",
+          "examples": [
+            "REF-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "requirement",
+            "acceptanceCriterion",
+            "workItem",
+            "task",
+            "research",
+            "decision",
+            "question",
+            "artifact",
+            "element",
+            "architectureDriver",
+            "qualityObligation",
+            "policy"
+          ],
+          "description": "A cross-task SDLC entity kind. These values must use globally qualified SDLC references, including architecture drivers, quality obligations, and policies.",
+          "examples": [
+            "requirement",
+            "decision",
+            "architectureDriver",
+            "qualityObligation",
+            "policy"
+          ]
+        },
+        "locator": {
+          "$ref": "#/$defs/SdlcGlobalReference",
+          "description": "The scoped locator whose grammar is selected by the reference type.",
+          "examples": [
+            "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What context the locator identifies and why it may matter to the design task.",
+          "examples": [
+            "The common task envelope contract."
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Optional SHA-256 digest of the referenced content when exact source identity matters.",
+          "examples": [
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REF-001",
+          "type": "requirement",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+          "description": "A scoped design reference."
+        }
+      ]
+    },
+    "RepositoryReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "locator",
+        "description"
+      ],
+      "description": "A typed design reference for repositoryPath, cue, document material using the required locator scope.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REF-[0-9]{3,}$",
+          "description": "Stable identifier used by considerations, activities, outcomes, and provenance to name this available reference.",
+          "examples": [
+            "REF-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "repositoryPath",
+            "cue",
+            "document"
+          ],
+          "description": "A repository or CUE resource kind. These values must use repository-relative paths.",
+          "examples": [
+            "repositoryPath",
+            "cue"
+          ]
+        },
+        "locator": {
+          "$ref": "#/$defs/RepositoryRelativePath",
+          "description": "The scoped locator whose grammar is selected by the reference type.",
+          "examples": [
+            "sdlc/cue/task-design/v1/task-design.cue"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What context the locator identifies and why it may matter to the design task.",
+          "examples": [
+            "The common task envelope contract."
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Optional SHA-256 digest of the referenced content when exact source identity matters.",
+          "examples": [
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REF-001",
+          "type": "repositoryPath",
+          "locator": "sdlc/cue/task-design/v1/task-design.cue",
+          "description": "A scoped design reference."
+        }
+      ]
+    },
+    "UrlReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "locator",
+        "description"
+      ],
+      "description": "A typed design reference for url material using the required locator scope.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REF-[0-9]{3,}$",
+          "description": "Stable identifier used by considerations, activities, outcomes, and provenance to name this available reference.",
+          "examples": [
+            "REF-001"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "url"
+          ],
+          "description": "An external URL resource. These values must use HTTP(S) URLs.",
+          "examples": [
+            "url"
+          ]
+        },
+        "locator": {
+          "$ref": "#/$defs/HttpUrl",
+          "description": "The scoped locator whose grammar is selected by the reference type.",
+          "examples": [
+            "https://example.com/architecture-guidance"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What context the locator identifies and why it may matter to the design task.",
+          "examples": [
+            "The common task envelope contract."
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Optional SHA-256 digest of the referenced content when exact source identity matters.",
+          "examples": [
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REF-001",
+          "type": "url",
+          "locator": "https://example.com/architecture-guidance",
+          "description": "A scoped design reference."
+        }
+      ]
+    },
+    "OtherReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "locator",
+        "description"
+      ],
+      "description": "A reference whose semantic kind is not in the standard vocabulary. Its locator must still use an explicit global, repository-relative, or HTTP(S) scope.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REF-[0-9]{3,}$",
+          "description": "Stable identifier used by considerations, activities, outcomes, and provenance to name this available reference.",
+          "examples": [
+            "REF-001"
+          ]
+        },
+        "type": {
+          "const": "other",
+          "description": "An extensible reference kind outside the standard vocabulary.",
+          "examples": [
+            "other"
+          ]
+        },
+        "locator": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SdlcGlobalReference"
+            },
+            {
+              "$ref": "#/$defs/RepositoryRelativePath"
+            },
+            {
+              "$ref": "#/$defs/HttpUrl"
+            }
+          ],
+          "description": "An explicitly scoped locator for the extensible reference.",
+          "examples": [
+            "sdlc://repo/local%2Fskills/WI-0003%7C03000000#document/DOC-001"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What context the locator identifies and why it may matter to the design task.",
+          "examples": [
+            "The common task envelope contract."
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Optional SHA-256 digest of the referenced content when exact source identity matters.",
+          "examples": [
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REF-001",
+          "type": "other",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#document/DOC-001",
+          "description": "An explicitly scoped extensible reference."
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Define the event-ingestion architecture and its durable data flow.",
+        "objectives": [
+          "Separate ingestion, validation, and persistence responsibilities."
+        ],
+        "inScope": [
+          "Service boundaries and message flow"
+        ],
+        "outOfScope": [
+          "Production deployment changes"
+        ],
+        "references": [
+          {
+            "id": "REF-001",
+            "type": "requirement",
+            "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+            "description": "The requirement for durable task-specific contracts."
+          },
+          {
+            "id": "REF-002",
+            "type": "repositoryPath",
+            "locator": "sdlc/schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+            "description": "The common task envelope contract."
+          }
+        ],
+        "provenance": {
+          "referenceRefs": [
+            "REF-001",
+            "REF-002"
+          ],
+          "basis": "Requirements and the existing envelope contract were inspected before modeling the design boundary.",
+          "confidence": 92
+        },
+        "considerations": [
+          {
+            "id": "C-001",
+            "kind": "constraint",
+            "statement": "The task envelope must remain separate from task-specific design data.",
+            "evaluation": "Applied this constraint by keeping identity and lifecycle out of the design model.",
+            "referenceRefs": [
+              "REF-002"
+            ],
+            "status": "accepted",
+            "impact": 90,
+            "confidence": 98
+          }
+        ],
+        "activities": [],
+        "policy": {
+          "id": "component-design",
+          "version": "1"
+        },
+        "profile": "implementable",
+        "scope": "component",
+        "facets": [
+          "structure",
+          "contract"
+        ]
+      },
+      "result": {
+        "summary": "A bounded ingestion model with an explicit validation and persistence flow.",
+        "model": {
+          "name": "event-ingestion",
+          "kind": "data-flow",
+          "description": "The elements and relationships describe how events move through the system.",
+          "notation": "custom"
+        },
+        "elements": [
+          {
+            "id": "E-001",
+            "type": "service",
+            "name": "ingestion-service",
+            "description": "Accepts incoming events.",
+            "provenance": {
+              "referenceRefs": [
+                "REF-001"
+              ],
+              "basis": "The service boundary is required by the ingestion objective.",
+              "confidence": 88
+            }
+          }
+        ],
+        "relations": [],
+        "views": [],
+        "artifacts": [],
+        "outcomes": [
+          {
+            "id": "O-001",
+            "type": "implementationHandoff",
+            "statement": "Implement ingestion and validation as separate components.",
+            "status": "proposed",
+            "impact": 90,
+            "confidence": 86,
+            "referenceRefs": [
+              "REF-001"
+            ],
+            "elementRefs": [
+              "E-001"
+            ],
+            "suggestedTaskType": "implementation"
+          }
+        ],
+        "unresolvedQuestions": [],
+        "outputs": [],
+        "verificationObligations": []
+      }
+    }
+  ]
+}

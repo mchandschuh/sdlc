@@ -1,0 +1,1768 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/work-item-assessment/v1",
+  "title": "SDLC Work Item Assessment v1",
+  "description": "An agent-produced quality review of an intake work item. The assessment identifies strengths, ambiguity, contradictions, factual uncertainty, and questions that can improve the work item before or after user acceptance.",
+  "$comment": "The root object is the assessment. Host validation must recompute assessmentScore.value, verify typed reference prefixes, ensure formula components match classification.workItemType, enforce question and reference uniqueness, and apply acceptance policy. Unanswered questions do not automatically prevent acceptance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "workItemId",
+    "source",
+    "description",
+    "assessedAt",
+    "assessedBy",
+    "classification",
+    "assessmentScore",
+    "request",
+    "scope",
+    "nonGoals",
+    "requirements",
+    "questions",
+    "recommendation"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/work-item-assessment/v1",
+      "description": "The exact versioned contract used by this assessment record.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/work-item-assessment/v1"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle state of this assessment round. This is separate from recommendation.status, which is the advisory acceptance posture.",
+      "enum": [
+        "draft",
+        "requires_clarification",
+        "clarification_in_progress",
+        "finalized",
+        "superseded"
+      ],
+      "examples": [
+        "requires_clarification"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "workItemId": {
+      "type": "string",
+      "description": "Stable identity of the work item being assessed.",
+      "pattern": "^[A-Z]{1,10}-[0-9]+$",
+      "examples": [
+        "WI-0002"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "source": {
+      "type": "object",
+      "description": "The exact work-item artifact and schema version used as assessment input.",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "schema",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Repository-relative path to the assessed work-item JSON file.",
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+          "examples": [
+            ".docs/work-items/WI-0002/work-item.json"
+          ]
+        },
+        "schema": {
+          "const": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+          "description": "Schema version of the assessed work-item source.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/work-item/v2"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "description": "Lowercase SHA-256 digest of the assessed source file contents.",
+          "pattern": "^[0-9a-f]{64}$",
+          "examples": [
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "path": ".docs/work-items/WI-0002/work-item.json",
+          "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "description": {
+      "type": "string",
+      "description": "Prose summary of the complete assessment and its most important conclusion.",
+      "minLength": 1,
+      "examples": [
+        "The work item is coherent enough for review, but two high-impact questions remain open before decomposition."
+      ],
+      "x-field-role": "authoritative"
+    },
+    "assessedAt": {
+      "type": "string",
+      "description": "UTC timestamp at which the assessment was produced.",
+      "format": "date-time",
+      "examples": [
+        "2026-10-14T20:30:00Z"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "assessedBy": {
+      "type": "object",
+      "description": "Agent or operator provenance for the assessment and the inputs used to produce it.",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name",
+        "purpose",
+        "inputs"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Kind of assessor that produced the assessment.",
+          "enum": [
+            "agent",
+            "human",
+            "system"
+          ],
+          "examples": [
+            "agent"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Stable name of the assessor.",
+          "minLength": 1,
+          "examples": [
+            "sdlc-assessment-agent"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Purpose of the assessor in this workflow.",
+          "minLength": 1,
+          "examples": [
+            "Review an intake work item for quality, consistency, risk, and decomposition suitability."
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "description": "Ordered inputs used by the assessor. The first input must be the assessment prompt; subsequent inputs may identify skills or research.",
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "type": "object",
+              "description": "The prompt that defines the assessment task and boundaries.",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "text"
+              ],
+              "properties": {
+                "type": {
+                  "const": "prompt",
+                  "description": "Identifies the first input as the assessment prompt.",
+                  "examples": [
+                    "prompt"
+                  ]
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Instructions supplied to the assessor.",
+                  "minLength": 1,
+                  "examples": [
+                    "Assess the work item and identify questions that would improve its quality."
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "type": "prompt",
+                  "text": "Assess the work item and identify questions that would improve its quality."
+                }
+              ]
+            }
+          ],
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "description": "A skill input used by the assessor after the prompt.",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "name",
+                  "path",
+                  "purpose",
+                  "reason"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "skill",
+                    "description": "Identifies a skill input.",
+                    "examples": [
+                      "skill"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Stable skill name.",
+                    "minLength": 1,
+                    "examples": [
+                      "process"
+                    ]
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Absolute path to the skill file.",
+                    "pattern": "^/.+/SKILL\\.md$",
+                    "examples": [
+                      "/home/michael/.cline/skills/process/SKILL.md"
+                    ]
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "Purpose of the skill.",
+                    "minLength": 1,
+                    "examples": [
+                      "Repository delivery discipline."
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why the skill was used for this assessment.",
+                    "minLength": 1,
+                    "examples": [
+                      "Preserve evidence limits and safe next actions."
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "type": "skill",
+                    "name": "process",
+                    "path": "/home/michael/.cline/skills/process/SKILL.md",
+                    "purpose": "Repository delivery discipline.",
+                    "reason": "Preserve evidence limits and safe next actions."
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "description": "A research or reference input used by the assessor after the prompt.",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "source",
+                  "description",
+                  "reason"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "research",
+                    "description": "Identifies a research input.",
+                    "examples": [
+                      "research"
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Path or URI of the research source.",
+                    "minLength": 1,
+                    "examples": [
+                      "/home/michael/.cline/skills/nodejs-cli-pattern/SKILL.md"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "What the source contributes to the assessment.",
+                    "minLength": 1,
+                    "examples": [
+                      "Existing CLI conventions and non-goals."
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why the source was used.",
+                    "minLength": 1,
+                    "examples": [
+                      "Assess compatibility with repository guidance."
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "type": "research",
+                    "source": "/home/michael/.cline/skills/nodejs-cli-pattern/SKILL.md",
+                    "description": "Existing CLI conventions and non-goals.",
+                    "reason": "Assess compatibility with repository guidance."
+                  }
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "type": "prompt",
+                "text": "Assess the work item and identify questions that would improve its quality."
+              },
+              {
+                "type": "skill",
+                "name": "process",
+                "path": "/home/michael/.cline/skills/process/SKILL.md",
+                "purpose": "Repository delivery discipline.",
+                "reason": "Preserve evidence limits and safe next actions."
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "kind": "agent",
+          "name": "sdlc-assessment-agent",
+          "purpose": "Review an intake work item for quality, consistency, risk, and decomposition suitability.",
+          "inputs": [
+            {
+              "type": "prompt",
+              "text": "Assess the work item and identify questions that would improve its quality."
+            }
+          ]
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "classification": {
+      "type": "object",
+      "description": "Work-item classification used to select assessment factors and later decomposition policy.",
+      "additionalProperties": false,
+      "required": [
+        "workItemType",
+        "confidence",
+        "rationale"
+      ],
+      "properties": {
+        "workItemType": {
+          "type": "string",
+          "description": "Classification of the work item.",
+          "enum": [
+            "product",
+            "feature",
+            "bugfix"
+          ],
+          "examples": [
+            "feature"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Numeric confidence in the classification from 0 to 100.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            86
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why the classification and confidence were selected.",
+          "minLength": 1,
+          "examples": [
+            "The request adds a reusable capability rather than correcting a reported defect."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "workItemType": "feature",
+          "confidence": 86,
+          "rationale": "The request adds a reusable capability rather than correcting a reported defect."
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "assessmentScore": {
+      "type": "object",
+      "description": "Numeric assessment components and a deterministic derived score. The host must recompute value and ignore any supplied value when calculating acceptance.",
+      "additionalProperties": false,
+      "required": [
+        "formulaVersion",
+        "quality",
+        "confidence",
+        "completeness",
+        "clarity",
+        "consistency",
+        "verifiability",
+        "scopeBoundedness",
+        "ambiguity",
+        "contradiction",
+        "factualUncertainty",
+        "risk",
+        "complexity",
+        "effort",
+        "typeFactors",
+        "typeFactorValue",
+        "value",
+        "calculation"
+      ],
+      "properties": {
+        "formulaVersion": {
+          "const": "work-item-assessment/v1",
+          "description": "Identifier of the deterministic score formula used for recomputation.",
+          "examples": [
+            "work-item-assessment/v1"
+          ]
+        },
+        "quality": {
+          "type": "number",
+          "description": "Overall quality of the assessed work-item information; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            84
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Confidence in the assessment itself; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            82
+          ]
+        },
+        "completeness": {
+          "type": "number",
+          "description": "How much information needed for first-pass decomposition is present; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            72
+          ]
+        },
+        "clarity": {
+          "type": "number",
+          "description": "How clearly the request, scope, and requirements are expressed; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            86
+          ]
+        },
+        "consistency": {
+          "type": "number",
+          "description": "How well the request, scope, non-goals, requirements, and acceptance criteria agree; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            78
+          ]
+        },
+        "verifiability": {
+          "type": "number",
+          "description": "How objectively the requirements and acceptance criteria can be verified; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            76
+          ]
+        },
+        "scopeBoundedness": {
+          "type": "number",
+          "description": "How clearly the work is bounded and separable from adjacent work; higher is better.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            80
+          ]
+        },
+        "ambiguity": {
+          "type": "number",
+          "description": "Severity of unresolved interpretation ambiguity; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            34
+          ]
+        },
+        "contradiction": {
+          "type": "number",
+          "description": "Severity of contradictory statements or requirements; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            10
+          ]
+        },
+        "factualUncertainty": {
+          "type": "number",
+          "description": "Severity of unverified factual assumptions; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            28
+          ]
+        },
+        "risk": {
+          "type": "number",
+          "description": "Additional risk introduced by leaving uncertainty or quality gaps unresolved; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            35
+          ]
+        },
+        "complexity": {
+          "type": "number",
+          "description": "Intrinsic implementation complexity expected from the current work-item definition; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            58
+          ]
+        },
+        "effort": {
+          "type": "number",
+          "description": "Estimated implementation effort under the current definition; higher is worse.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            50
+          ]
+        },
+        "typeFactors": {
+          "type": "object",
+          "description": "Work-item-type-specific numeric factors. The host requires the object matching classification.workItemType.",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "product": {
+              "type": "object",
+              "description": "Factors for product-oriented work items.",
+              "additionalProperties": false,
+              "required": [],
+              "properties": {
+                "outcomeClarity": {
+                  "type": "number",
+                  "description": "Clarity of the desired product outcome; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    80
+                  ]
+                },
+                "stakeholderClarity": {
+                  "type": "number",
+                  "description": "Clarity of affected stakeholders and users; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    70
+                  ]
+                },
+                "valueHypothesisStrength": {
+                  "type": "number",
+                  "description": "Strength of the stated value hypothesis; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    75
+                  ]
+                },
+                "domainUncertainty": {
+                  "type": "number",
+                  "description": "Uncertainty in domain rules or vocabulary; higher is worse.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    25
+                  ]
+                },
+                "decisionReadiness": {
+                  "type": "number",
+                  "description": "Readiness for a product-level planning decision; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    70
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "outcomeClarity": 80,
+                  "stakeholderClarity": 70,
+                  "valueHypothesisStrength": 75,
+                  "domainUncertainty": 25,
+                  "decisionReadiness": 70
+                }
+              ]
+            },
+            "feature": {
+              "type": "object",
+              "description": "Factors for feature-oriented work items.",
+              "additionalProperties": false,
+              "required": [],
+              "properties": {
+                "behaviorClarity": {
+                  "type": "number",
+                  "description": "Clarity of the observable behavior; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    86
+                  ]
+                },
+                "compatibilityCoverage": {
+                  "type": "number",
+                  "description": "Coverage of compatibility and integration constraints; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    62
+                  ]
+                },
+                "integrationUncertainty": {
+                  "type": "number",
+                  "description": "Uncertainty in affected integration boundaries; higher is worse.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    42
+                  ]
+                },
+                "acceptanceReadiness": {
+                  "type": "number",
+                  "description": "Readiness of acceptance criteria for decomposition and validation; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    72
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "behaviorClarity": 86,
+                  "compatibilityCoverage": 62,
+                  "integrationUncertainty": 42,
+                  "acceptanceReadiness": 72
+                }
+              ]
+            },
+            "bugfix": {
+              "type": "object",
+              "description": "Factors for bugfix-oriented work items.",
+              "additionalProperties": false,
+              "required": [],
+              "properties": {
+                "reproductionQuality": {
+                  "type": "number",
+                  "description": "Quality of the bounded failure reproduction; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    80
+                  ]
+                },
+                "expectedActualClarity": {
+                  "type": "number",
+                  "description": "Clarity of expected versus actual behavior; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    85
+                  ]
+                },
+                "rootCauseConfidence": {
+                  "type": "number",
+                  "description": "Confidence in the root-cause hypothesis; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    45
+                  ]
+                },
+                "regressionReadiness": {
+                  "type": "number",
+                  "description": "Readiness of regression evidence and acceptance checks; higher is better.",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "examples": [
+                    65
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "reproductionQuality": 80,
+                  "expectedActualClarity": 85,
+                  "rootCauseConfidence": 45,
+                  "regressionReadiness": 65
+                }
+              ]
+            }
+          },
+          "examples": [
+            {
+              "feature": {
+                "behaviorClarity": 86,
+                "compatibilityCoverage": 62,
+                "integrationUncertainty": 42,
+                "acceptanceReadiness": 72
+              }
+            }
+          ]
+        },
+        "typeFactorValue": {
+          "type": "number",
+          "description": "Normalized 0–100 contribution of the selected work-item-type factors; host-computed.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            70
+          ]
+        },
+        "value": {
+          "type": "number",
+          "description": "Final normalized 0–100 assessment score; host-computed and ignored as input when recomputing.",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [
+            76
+          ]
+        },
+        "calculation": {
+          "type": "object",
+          "description": "Auditable metadata for the deterministic assessment score calculation.",
+          "additionalProperties": false,
+          "required": [
+            "commonValue",
+            "typeFactorValue",
+            "equation",
+            "valueSource"
+          ],
+          "properties": {
+            "commonValue": {
+              "type": "number",
+              "description": "Normalized common-factor score before type-specific weighting; host-computed.",
+              "minimum": 0,
+              "maximum": 100,
+              "examples": [
+                77
+              ]
+            },
+            "typeFactorValue": {
+              "type": "number",
+              "description": "Normalized type-specific factor score; host-computed.",
+              "minimum": 0,
+              "maximum": 100,
+              "examples": [
+                70
+              ]
+            },
+            "equation": {
+              "type": "string",
+              "description": "Human-readable deterministic equation used to recompute value.",
+              "minLength": 1,
+              "examples": [
+                "value = round(0.80 * commonValue + 0.20 * typeFactorValue)"
+              ]
+            },
+            "valueSource": {
+              "const": "computed",
+              "description": "Indicates that value is derived by the host rather than trusted from the input.",
+              "examples": [
+                "computed"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "commonValue": 77,
+              "typeFactorValue": 70,
+              "equation": "value = round(0.80 * commonValue + 0.20 * typeFactorValue)",
+              "valueSource": "computed"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "formulaVersion": "work-item-assessment/v1",
+          "quality": 84,
+          "confidence": 82,
+          "completeness": 72,
+          "clarity": 86,
+          "consistency": 78,
+          "verifiability": 76,
+          "scopeBoundedness": 80,
+          "ambiguity": 34,
+          "contradiction": 10,
+          "factualUncertainty": 28,
+          "risk": 35,
+          "complexity": 58,
+          "effort": 50,
+          "typeFactors": {
+            "feature": {
+              "behaviorClarity": 86,
+              "compatibilityCoverage": 62,
+              "integrationUncertainty": 42,
+              "acceptanceReadiness": 72
+            }
+          },
+          "typeFactorValue": 70,
+          "value": 76,
+          "calculation": {
+            "commonValue": 77,
+            "typeFactorValue": 70,
+            "equation": "value = round(0.80 * commonValue + 0.20 * typeFactorValue)",
+            "valueSource": "computed"
+          }
+        }
+      ],
+      "x-field-role": "derived"
+    },
+    "request": {
+      "type": "array",
+      "description": "Assessment responses for the preserved initial request.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "Assessment of one request field or request aspect.",
+        "additionalProperties": false,
+        "required": [
+          "requestId",
+          "quality",
+          "ambiguity",
+          "description",
+          "affectedRefs"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Typed reference to the request aspect being assessed.",
+            "minLength": 1,
+            "examples": [
+              "request.text"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "description": "Quality of the assessed request aspect.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "high"
+            ]
+          },
+          "ambiguity": {
+            "type": "string",
+            "description": "Ambiguity of the assessed request aspect.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment of quality, readiness, completeness, correctness, or suitability for advancing the work item.",
+            "minLength": 1,
+            "examples": [
+              "The initial request clearly identifies the desired outcome."
+            ]
+          },
+          "affectedRefs": {
+            "type": "array",
+            "description": "References whose quality or resolution influenced this assessment.",
+            "items": {
+              "type": "string",
+              "description": "A work-item field, requirement ID, acceptance criterion ID, scope ID, non-goal ID, or question ID.",
+              "minLength": 1,
+              "examples": [
+                "WI-0002_REQ_001"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              []
+            ]
+          }
+        },
+        "examples": [
+          {
+            "requestId": "request.text",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "The initial request clearly identifies the desired outcome.",
+            "affectedRefs": []
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "requestId": "request.text",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "The initial request clearly identifies the desired outcome.",
+            "affectedRefs": []
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "scope": {
+      "type": "array",
+      "description": "Assessment responses for work-item scope entries.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "Assessment of one scope entry.",
+        "additionalProperties": false,
+        "required": [
+          "scopeId",
+          "quality",
+          "ambiguity",
+          "description",
+          "affectedRefs"
+        ],
+        "properties": {
+          "scopeId": {
+            "type": "string",
+            "description": "Typed reference to the scope entry being assessed.",
+            "pattern": "^scope\\.[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "examples": [
+              "scope.typed-configuration"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "description": "Quality of the assessed scope entry.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "high"
+            ]
+          },
+          "ambiguity": {
+            "type": "string",
+            "description": "Ambiguity of the assessed scope entry.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment of the scope entry's quality, readiness, completeness, correctness, or suitability for advancing the work item.",
+            "minLength": 1,
+            "examples": [
+              "Typed conversion and validation are clearly bounded."
+            ]
+          },
+          "affectedRefs": {
+            "type": "array",
+            "description": "References that influenced this scope assessment.",
+            "items": {
+              "type": "string",
+              "description": "A related requirement, acceptance criterion, non-goal, or question reference.",
+              "minLength": 1,
+              "examples": [
+                "WI-0002_REQ_002"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              []
+            ]
+          }
+        },
+        "examples": [
+          {
+            "scopeId": "scope.typed-configuration",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "Typed conversion and validation are clearly bounded.",
+            "affectedRefs": []
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "scopeId": "scope.typed-configuration",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "Typed conversion and validation are clearly bounded.",
+            "affectedRefs": []
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "nonGoals": {
+      "type": "array",
+      "description": "Assessment responses for explicit work-item non-goals.",
+      "items": {
+        "type": "object",
+        "description": "Assessment of one non-goal entry.",
+        "additionalProperties": false,
+        "required": [
+          "nonGoalId",
+          "quality",
+          "ambiguity",
+          "description",
+          "affectedRefs"
+        ],
+        "properties": {
+          "nonGoalId": {
+            "type": "string",
+            "description": "Typed reference to the non-goal entry being assessed.",
+            "pattern": "^nonGoals\\.[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "examples": [
+              "nonGoals.provider-configuration"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "description": "Quality of the assessed non-goal.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "high"
+            ]
+          },
+          "ambiguity": {
+            "type": "string",
+            "description": "Ambiguity of the assessed non-goal.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment of the non-goal's quality, readiness, completeness, correctness, or suitability for advancing the work item.",
+            "minLength": 1,
+            "examples": [
+              "The provider exclusion is explicit and has protected paths."
+            ]
+          },
+          "affectedRefs": {
+            "type": "array",
+            "description": "References that influenced this non-goal assessment.",
+            "items": {
+              "type": "string",
+              "description": "A related requirement, scope, or question reference.",
+              "minLength": 1,
+              "examples": [
+                "WI-0002_REQ_005"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              []
+            ]
+          }
+        },
+        "examples": [
+          {
+            "nonGoalId": "nonGoals.provider-configuration",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "The provider exclusion is explicit and has protected paths.",
+            "affectedRefs": []
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "nonGoalId": "nonGoals.provider-configuration",
+            "quality": "high",
+            "ambiguity": "low",
+            "description": "The provider exclusion is explicit and has protected paths.",
+            "affectedRefs": []
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "requirements": {
+      "type": "array",
+      "description": "Assessment responses for requirements and their acceptance criteria.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "Assessment of one requirement and its acceptance criteria.",
+        "additionalProperties": false,
+        "required": [
+          "requirementId",
+          "quality",
+          "ambiguity",
+          "description",
+          "affectedRefs",
+          "acceptanceCriteria"
+        ],
+        "properties": {
+          "requirementId": {
+            "type": "string",
+            "description": "Typed reference to the requirement being assessed.",
+            "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}$",
+            "examples": [
+              "WI-0002_REQ_001"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "description": "Quality of the assessed requirement.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "medium"
+            ]
+          },
+          "ambiguity": {
+            "type": "string",
+            "description": "Ambiguity of the assessed requirement.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "examples": [
+              "medium"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment of the requirement's quality, readiness, completeness, correctness, or suitability for advancing the work item.",
+            "minLength": 1,
+            "examples": [
+              "The requirement is important but depends on an unresolved policy decision."
+            ]
+          },
+          "affectedRefs": {
+            "type": "array",
+            "description": "References that influenced this requirement assessment.",
+            "items": {
+              "type": "string",
+              "description": "A related scope, non-goal, acceptance criterion, or question reference.",
+              "minLength": 1,
+              "examples": [
+                "WI-0002_Q_001"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              [
+                "WI-0002_Q_001"
+              ]
+            ]
+          },
+          "acceptanceCriteria": {
+            "type": "array",
+            "description": "Assessment responses for acceptance criteria belonging to this requirement.",
+            "items": {
+              "type": "object",
+              "description": "Assessment of one acceptance criterion.",
+              "additionalProperties": false,
+              "required": [
+                "acceptanceCriteriaId",
+                "quality",
+                "ambiguity",
+                "description",
+                "affectedRefs"
+              ],
+              "properties": {
+                "acceptanceCriteriaId": {
+                  "type": "string",
+                  "description": "Typed reference to the acceptance criterion being assessed.",
+                  "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,}$",
+                  "examples": [
+                    "WI-0002_REQ_001_AC_001"
+                  ]
+                },
+                "quality": {
+                  "type": "string",
+                  "description": "Quality of the assessed acceptance criterion.",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "examples": [
+                    "medium"
+                  ]
+                },
+                "ambiguity": {
+                  "type": "string",
+                  "description": "Ambiguity of the assessed acceptance criterion.",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "examples": [
+                    "medium"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Assessment of the acceptance criterion's quality, readiness, completeness, correctness, or suitability for advancing the work item.",
+                  "minLength": 1,
+                  "examples": [
+                    "The criterion is observable but depends on the unresolved precedence policy."
+                  ]
+                },
+                "affectedRefs": {
+                  "type": "array",
+                  "description": "References that influenced this acceptance-criterion assessment.",
+                  "items": {
+                    "type": "string",
+                    "description": "A related question, requirement, scope, or non-goal reference.",
+                    "minLength": 1,
+                    "examples": [
+                      "WI-0002_Q_001"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "examples": [
+                    [
+                      "WI-0002_Q_001"
+                    ]
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "acceptanceCriteriaId": "WI-0002_REQ_001_AC_001",
+                  "quality": "medium",
+                  "ambiguity": "medium",
+                  "description": "The criterion is observable but depends on the unresolved precedence policy.",
+                  "affectedRefs": [
+                    "WI-0002_Q_001"
+                  ]
+                }
+              ]
+            },
+            "examples": [
+              [
+                {
+                  "acceptanceCriteriaId": "WI-0002_REQ_001_AC_001",
+                  "quality": "medium",
+                  "ambiguity": "medium",
+                  "description": "The criterion is observable but depends on the unresolved precedence policy.",
+                  "affectedRefs": [
+                    "WI-0002_Q_001"
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "examples": [
+          {
+            "requirementId": "WI-0002_REQ_001",
+            "quality": "medium",
+            "ambiguity": "medium",
+            "description": "The requirement is important but depends on an unresolved policy decision.",
+            "affectedRefs": [
+              "WI-0002_Q_001"
+            ],
+            "acceptanceCriteria": [
+              {
+                "acceptanceCriteriaId": "WI-0002_REQ_001_AC_001",
+                "quality": "medium",
+                "ambiguity": "medium",
+                "description": "The criterion is observable but depends on the unresolved precedence policy.",
+                "affectedRefs": [
+                  "WI-0002_Q_001"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "requirementId": "WI-0002_REQ_001",
+            "quality": "medium",
+            "ambiguity": "medium",
+            "description": "The requirement is important but depends on an unresolved policy decision.",
+            "affectedRefs": [
+              "WI-0002_Q_001"
+            ],
+            "acceptanceCriteria": [
+              {
+                "acceptanceCriteriaId": "WI-0002_REQ_001_AC_001",
+                "quality": "medium",
+                "ambiguity": "medium",
+                "description": "The criterion is observable but depends on the unresolved precedence policy.",
+                "affectedRefs": [
+                  "WI-0002_Q_001"
+                ]
+              }
+            ]
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "questions": {
+      "type": "array",
+      "description": "Questions generated by assessment to improve the work item. Unanswered questions may remain when acceptance policy permits carrying uncertainty forward.",
+      "items": {
+        "type": "object",
+        "description": "One assessment question and its optional answer state.",
+        "additionalProperties": false,
+        "required": [
+          "questionId",
+          "category",
+          "priority",
+          "impactScore",
+          "question",
+          "reason",
+          "answerSource",
+          "answer",
+          "updatedAt",
+          "status",
+          "affects"
+        ],
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "Stable question identifier scoped to the work item.",
+            "pattern": "^[A-Z]{1,10}-[0-9]+_Q_[0-9]{3,}$",
+            "examples": [
+              "WI-0002_Q_001"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Kind of uncertainty or decision raised by the question.",
+            "enum": [
+              "requirements",
+              "scope",
+              "technology",
+              "consistency",
+              "factual",
+              "acceptance",
+              "security",
+              "evidence"
+            ],
+            "examples": [
+              "requirements"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "description": "Policy priority of resolving the question.",
+            "enum": [
+              "blocking",
+              "required",
+              "recommended",
+              "informational"
+            ],
+            "examples": [
+              "blocking"
+            ]
+          },
+          "impactScore": {
+            "type": "number",
+            "description": "Estimated impact of leaving the question unresolved; higher is more consequential.",
+            "minimum": 0,
+            "maximum": 100,
+            "examples": [
+              92
+            ]
+          },
+          "question": {
+            "type": "string",
+            "description": "The precise question whose answer would improve the work item.",
+            "minLength": 1,
+            "examples": [
+              "Should .env files be loaded automatically or only when explicitly requested?"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why answering the question would improve assessment or decomposition quality.",
+            "minLength": 1,
+            "examples": [
+              "This changes precedence, security expectations, and test fixtures."
+            ]
+          },
+          "answerSource": {
+            "type": "string",
+            "description": "Source expected to provide or that provided the answer.",
+            "enum": [
+              "human",
+              "requester",
+              "agent",
+              "repository",
+              "externalAuthority",
+              "notApplicable"
+            ],
+            "examples": [
+              "human"
+            ]
+          },
+          "answer": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional answer. Null means the question remains unanswered.",
+            "examples": [
+              null
+            ]
+          },
+          "updatedAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Timestamp of the latest answer update, or null when unanswered.",
+            "examples": [
+              null
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Current answer state for the question.",
+            "enum": [
+              "open",
+              "answered",
+              "declined",
+              "notApplicable"
+            ],
+            "examples": [
+              "open"
+            ]
+          },
+          "affects": {
+            "type": "array",
+            "description": "Typed work-item references whose assessment or decomposition could change because of this question.",
+            "items": {
+              "type": "string",
+              "description": "A request, scope, non-goal, requirement, acceptance criterion, or assessment reference.",
+              "minLength": 1,
+              "examples": [
+                "WI-0002_REQ_001"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              [
+                "WI-0002_REQ_001"
+              ]
+            ]
+          }
+        },
+        "examples": [
+          {
+            "questionId": "WI-0002_Q_001",
+            "category": "requirements",
+            "priority": "blocking",
+            "impactScore": 92,
+            "question": "Should .env files be loaded automatically or only when explicitly requested?",
+            "reason": "This changes precedence, security expectations, and test fixtures.",
+            "answerSource": "human",
+            "answer": null,
+            "updatedAt": null,
+            "status": "open",
+            "affects": [
+              "WI-0002_REQ_001"
+            ]
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "questionId": "WI-0002_Q_001",
+            "category": "requirements",
+            "priority": "blocking",
+            "impactScore": 92,
+            "question": "Should .env files be loaded automatically or only when explicitly requested?",
+            "reason": "This changes precedence, security expectations, and test fixtures.",
+            "answerSource": "human",
+            "answer": null,
+            "updatedAt": null,
+            "status": "open",
+            "affects": [
+              "WI-0002_REQ_001"
+            ]
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "recommendation": {
+      "type": "object",
+      "description": "Assessment recommendation for review and acceptance. It is advisory; user acceptance is a separate workflow action.",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "rationale",
+        "unansweredQuestionsAllowed",
+        "blockingQuestionIds",
+        "acceptanceNotes"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Recommended acceptance posture.",
+          "enum": [
+            "acceptRecommended",
+            "reviewRequired",
+            "hold"
+          ],
+          "examples": [
+            "reviewRequired"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why the recommendation follows from the assessment score and questions.",
+          "minLength": 1,
+          "examples": [
+            "Review the score and high-impact questions before deciding whether to accept the current uncertainty."
+          ]
+        },
+        "unansweredQuestionsAllowed": {
+          "type": "boolean",
+          "description": "Whether the user may accept the work item while questions remain unanswered.",
+          "examples": [
+            true
+          ]
+        },
+        "blockingQuestionIds": {
+          "type": "array",
+          "description": "Questions with blocking priority or equivalent impact that should be shown during acceptance review.",
+          "items": {
+            "type": "string",
+            "description": "A question identifier.",
+            "pattern": "^[A-Z]{1,10}-[0-9]+_Q_[0-9]{3,}$",
+            "examples": [
+              "WI-0002_Q_001"
+            ]
+          },
+          "uniqueItems": true,
+          "examples": [
+            [
+              "WI-0002_Q_001"
+            ]
+          ]
+        },
+        "acceptanceNotes": {
+          "type": "string",
+          "description": "Guidance shown to the user when deciding whether to accept the work item.",
+          "minLength": 1,
+          "examples": [
+            "Acceptance does not require all questions to be answered, but requires explicit review of the score and unresolved uncertainty."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "reviewRequired",
+          "rationale": "Review the score and high-impact questions before deciding whether to accept the current uncertainty.",
+          "unansweredQuestionsAllowed": true,
+          "blockingQuestionIds": [
+            "WI-0002_Q_001"
+          ],
+          "acceptanceNotes": "Acceptance does not require all questions to be answered, but requires explicit review of the score and unresolved uncertainty."
+        }
+      ],
+      "x-field-role": "authoritative"
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/work-item-assessment/v1",
+      "status": "requires_clarification",
+      "workItemId": "WI-0002",
+      "source": {
+        "path": ".docs/work-items/WI-0002/work-item.json",
+        "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      },
+      "description": "The work item is coherent enough for review, but two high-impact questions remain open before decomposition.",
+      "assessedAt": "2026-10-14T20:30:00Z",
+      "assessedBy": {
+        "kind": "agent",
+        "name": "sdlc-assessment-agent",
+        "purpose": "Review an intake work item for quality, consistency, risk, and decomposition suitability.",
+        "inputs": [
+          {
+            "type": "prompt",
+            "text": "Assess the work item and identify questions that would improve its quality."
+          }
+        ]
+      },
+      "classification": {
+        "workItemType": "feature",
+        "confidence": 86,
+        "rationale": "The request adds a reusable capability rather than correcting a reported defect."
+      },
+      "assessmentScore": {
+        "formulaVersion": "work-item-assessment/v1",
+        "quality": 84,
+        "confidence": 82,
+        "completeness": 72,
+        "clarity": 86,
+        "consistency": 78,
+        "verifiability": 76,
+        "scopeBoundedness": 80,
+        "ambiguity": 34,
+        "contradiction": 10,
+        "factualUncertainty": 28,
+        "risk": 35,
+        "complexity": 58,
+        "effort": 50,
+        "typeFactors": {
+          "feature": {
+            "behaviorClarity": 86,
+            "compatibilityCoverage": 62,
+            "integrationUncertainty": 42,
+            "acceptanceReadiness": 72
+          }
+        },
+        "typeFactorValue": 70,
+        "value": 76,
+        "calculation": {
+          "commonValue": 77,
+          "typeFactorValue": 70,
+          "equation": "value = round(0.80 * commonValue + 0.20 * typeFactorValue)",
+          "valueSource": "computed"
+        }
+      },
+      "request": [
+        {
+          "requestId": "request.text",
+          "quality": "high",
+          "ambiguity": "low",
+          "description": "The initial request clearly identifies the desired outcome.",
+          "affectedRefs": []
+        }
+      ],
+      "scope": [
+        {
+          "scopeId": "scope.configuration-source-layering",
+          "quality": "medium",
+          "ambiguity": "medium",
+          "description": "The source precedence policy is not yet fully specified.",
+          "affectedRefs": [
+            "WI-0002_REQ_001"
+          ]
+        }
+      ],
+      "nonGoals": [
+        {
+          "nonGoalId": "nonGoals.provider-configuration",
+          "quality": "high",
+          "ambiguity": "low",
+          "description": "Provider credentials and live calls are explicitly excluded.",
+          "affectedRefs": []
+        }
+      ],
+      "requirements": [
+        {
+          "requirementId": "WI-0002_REQ_001",
+          "quality": "medium",
+          "ambiguity": "medium",
+          "description": "The source-precedence requirement depends on an unresolved policy decision.",
+          "affectedRefs": [
+            "WI-0002_Q_001"
+          ],
+          "acceptanceCriteria": [
+            {
+              "acceptanceCriteriaId": "WI-0002_REQ_001_AC_001",
+              "quality": "medium",
+              "ambiguity": "medium",
+              "description": "The criterion is observable but depends on the unresolved precedence policy.",
+              "affectedRefs": [
+                "WI-0002_Q_001"
+              ]
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "questionId": "WI-0002_Q_001",
+          "category": "requirements",
+          "priority": "blocking",
+          "impactScore": 92,
+          "question": "Should .env files be loaded automatically or only when explicitly requested?",
+          "reason": "This changes precedence, security expectations, and test fixtures.",
+          "answerSource": "human",
+          "answer": null,
+          "updatedAt": null,
+          "status": "open",
+          "affects": [
+            "WI-0002_REQ_001"
+          ]
+        }
+      ],
+      "recommendation": {
+        "status": "reviewRequired",
+        "rationale": "Review the score and high-impact questions before deciding whether to accept the current uncertainty.",
+        "unansweredQuestionsAllowed": true,
+        "blockingQuestionIds": [
+          "WI-0002_Q_001"
+        ],
+        "acceptanceNotes": "Acceptance does not require all questions to be answered, but requires explicit review of the score and unresolved uncertainty."
+      }
+    }
+  ]
+}

@@ -1,0 +1,751 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "title": "SDLC Work Item v2",
+  "description": "An agent-guided intake record that bounds a request and captures provisional requirements for later decomposition. It does not contain decomposition steps or execution evidence.",
+  "$comment": "JSON Schema validates structure and field types. Host-level validation must additionally enforce work-item ID allocation, branch and baseline state, request digest, requirement ID uniqueness, acceptance-criterion ID uniqueness, path containment, intake-owned write authorization, and the explicit acceptance gate for status=accepted. Optional type, baseline, and source fields support repository coordination metadata without replacing the authoritative structured request and requirements contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workItemId",
+    "status",
+    "title",
+    "objective",
+    "repository",
+    "context",
+    "request",
+    "scope",
+    "nonGoals",
+    "requirements",
+    "stepsPath"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+      "description": "The exact versioned contract used by this work-item record.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/work-item/v2"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "workItemId": {
+      "type": "string",
+      "description": "Stable local or externally originated work-item identifier allocated or confirmed during intake.",
+      "pattern": "^[A-Z]{1,10}-[0-9]+$",
+      "examples": [
+        "WI-0002",
+        "GH-0042"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of the work-item record. Use accepted only after explicit acceptance follows a finalized successful assessment; accepted does not claim implementation or production readiness.",
+      "enum": [
+        "planned",
+        "accepted",
+        "active",
+        "blocked",
+        "implemented",
+        "implemented-unproven",
+        "complete",
+        "deferred"
+      ],
+      "oneOf": [
+        {
+          "const": "planned",
+          "description": "Use while intake is captured but the work item has not passed or has not yet received explicit acceptance after assessment."
+        },
+        {
+          "const": "accepted",
+          "description": "Use after the latest assessment is finalized, has no unresolved blocking or required questions, recommends acceptance, and an authorized operator explicitly accepts the work item. This status permits decomposition or implementation but does not claim that either has completed."
+        },
+        {
+          "const": "active",
+          "description": "Use after acceptance when decomposition, implementation, or another authorized delivery activity is actively in progress."
+        },
+        {
+          "const": "blocked",
+          "description": "Use when progress cannot continue because a material blocker is recorded with an owner or next action."
+        },
+        {
+          "const": "implemented",
+          "description": "Use when the requested implementation work is recorded as completed, while final completion or release evidence may still be pending."
+        },
+        {
+          "const": "implemented-unproven",
+          "description": "Use when implementation changes exist but required validation or evidence is incomplete; do not treat the work as proven or complete."
+        },
+        {
+          "const": "complete",
+          "description": "Use only when the required implementation, validation, and completion evidence has passed and the work item is closed."
+        },
+        {
+          "const": "deferred",
+          "description": "Use when an authorized decision explicitly postpones the work item; record the reason and any resumption condition."
+        }
+      ],
+      "examples": [
+        "planned",
+        "accepted",
+        "active",
+        "blocked",
+        "implemented",
+        "implemented-unproven",
+        "complete",
+        "deferred"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable title for the bounded request.",
+      "minLength": 1,
+      "examples": [
+        "Add configuration layering and fail-fast validation to nodejs-cli-pattern"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "type": {
+      "type": "string",
+      "description": "Optional repository work-item classification, such as feature, maintenance, or bugfix-coordination. When present, it is coordination metadata; detailed assessment classification remains in the applicable assessment contract.",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "examples": [
+        "feature",
+        "bugfix-coordination"
+      ],
+      "x-field-role": "coordination"
+    },
+    "objective": {
+      "type": "string",
+      "description": "The intended outcome of the request. YAML literal and folded block strings are supported when normalized to JSON.",
+      "minLength": 1,
+      "examples": [
+        "Extend nodejs-cli-pattern with a reusable configuration pattern for typed Node.js CLIs."
+      ],
+      "x-field-role": "authoritative"
+    },
+    "repository": {
+      "type": "object",
+      "description": "Repository context in which intake was performed and where the work-item record is authoritative.",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "authority"
+      ],
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "Absolute path to the Git repository root.",
+          "pattern": "^/.+$",
+          "examples": [
+            "/home/michael/.cline/skills"
+          ]
+        },
+        "authority": {
+          "type": "string",
+          "description": "Authority class for this repository record.",
+          "enum": [
+            "local",
+            "github",
+            "external",
+            "mixed"
+          ],
+          "examples": [
+            "local"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "root": "/home/michael/.cline/skills",
+          "authority": "local"
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "context": {
+      "type": "object",
+      "description": "Branch and merge context captured during intake. Intake may recommend a branch but does not create or switch it.",
+      "additionalProperties": false,
+      "required": [
+        "mergeTarget",
+        "branch"
+      ],
+      "properties": {
+        "mergeTarget": {
+          "type": "object",
+          "description": "The branch into which the work is intended to merge.",
+          "additionalProperties": false,
+          "required": [
+            "branch"
+          ],
+          "properties": {
+            "branch": {
+              "type": "string",
+              "description": "Merge-target branch name.",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+              "examples": [
+                "master",
+                "main"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "branch": "master"
+            }
+          ]
+        },
+        "branch": {
+          "type": "object",
+          "description": "Branch identity recommended or confirmed during intake.",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "created",
+            "rationale"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Recommended or user-specified work branch name.",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+              "examples": [
+                "wi-0002-nodejs-cli-config-layering"
+              ]
+            },
+            "created": {
+              "type": "boolean",
+              "description": "Whether intake created the recommended branch. Intake normally records false because branch creation is a separate operator action.",
+              "examples": [
+                false
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "description": "Reason for the recommended or confirmed branch name.",
+              "minLength": 1,
+              "examples": [
+                "The name identifies the work item and the requested configuration-layering capability."
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "wi-0002-nodejs-cli-config-layering",
+              "created": false,
+              "rationale": "The name identifies the work item and the requested configuration-layering capability."
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "mergeTarget": {
+            "branch": "master"
+          },
+          "branch": {
+            "name": "wi-0002-nodejs-cli-config-layering",
+            "created": false,
+            "rationale": "The name identifies the work item and the requested configuration-layering capability."
+          }
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "request": {
+      "type": "object",
+      "description": "The initial request captured during the agent-guided intake conversation.",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "text",
+        "sha256"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Origin of the preserved initial request.",
+          "const": "conversation",
+          "examples": [
+            "conversation"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "Original request text preserved as intake input.",
+          "minLength": 1,
+          "examples": [
+            "Add a standard configuration pattern to nodejs-cli-pattern for typed Node.js CLIs."
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "description": "Lowercase SHA-256 digest of the preserved request text.",
+          "pattern": "^[0-9a-f]{64}$",
+          "examples": [
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "source": "conversation",
+          "text": "Add a standard configuration pattern to nodejs-cli-pattern for typed Node.js CLIs.",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "scope": {
+      "type": "array",
+      "description": "Semantic responsibilities included in the bounded request.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "One responsibility included in the work-item scope.",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "reason"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Stable lowercase kebab-case name for the scope item.",
+            "pattern": "^[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "examples": [
+              "typed-configuration"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "What is included in the work-item scope.",
+            "minLength": 1,
+            "examples": [
+              "Convert environment and command-line string values into validated typed configuration values."
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why this responsibility belongs in the work item.",
+            "minLength": 1,
+            "examples": [
+              "Node environment variables are strings and require explicit conversion and validation."
+            ]
+          }
+        },
+        "examples": [
+          {
+            "name": "typed-configuration",
+            "description": "Convert environment and command-line string values into validated typed configuration values.",
+            "reason": "Node environment variables are strings and require explicit conversion and validation."
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "name": "typed-configuration",
+            "description": "Convert environment and command-line string values into validated typed configuration values.",
+            "reason": "Node environment variables are strings and require explicit conversion and validation."
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "nonGoals": {
+      "type": "array",
+      "description": "Explicit exclusions from the bounded request, including optional file restrictions.",
+      "items": {
+        "type": "object",
+        "description": "One explicit exclusion from the work-item scope.",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "reason",
+          "forbiddenFileWrites",
+          "forbiddenFileReads"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Stable lowercase kebab-case name for the non-goal.",
+            "pattern": "^[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "examples": [
+              "provider-configuration"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "What is explicitly excluded.",
+            "minLength": 1,
+            "examples": [
+              "Do not add provider credentials, provider-specific configuration, or live provider calls."
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the exclusion exists.",
+            "minLength": 1,
+            "examples": [
+              "The pattern must remain provider-neutral and safe for offline testing."
+            ]
+          },
+          "forbiddenFileWrites": {
+            "type": "array",
+            "description": "Repository-relative files or directory prefixes that intake or later work must not write.",
+            "items": {
+              "type": "string",
+              "description": "Repository-relative forbidden write path without parent traversal.",
+              "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+              "examples": [
+                "credentials/"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              [
+                ".env",
+                ".env.*",
+                "credentials/",
+                "secrets/"
+              ]
+            ]
+          },
+          "forbiddenFileReads": {
+            "type": "array",
+            "description": "Repository-relative files or directory prefixes that intake or later work must not read. Enforcement requires a mediated read boundary.",
+            "items": {
+              "type": "string",
+              "description": "Repository-relative forbidden read path without parent traversal.",
+              "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+              "examples": [
+                "secrets/"
+              ]
+            },
+            "uniqueItems": true,
+            "examples": [
+              [
+                ".env",
+                ".env.*",
+                "credentials/",
+                "secrets/"
+              ]
+            ]
+          }
+        },
+        "examples": [
+          {
+            "name": "provider-configuration",
+            "description": "Do not add provider credentials, provider-specific configuration, or live provider calls.",
+            "reason": "The pattern must remain provider-neutral and safe for offline testing.",
+            "forbiddenFileWrites": [
+              ".env",
+              ".env.*",
+              "credentials/",
+              "secrets/"
+            ],
+            "forbiddenFileReads": [
+              ".env",
+              ".env.*",
+              "credentials/",
+              "secrets/"
+            ]
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "name": "provider-configuration",
+            "description": "Do not add provider credentials, provider-specific configuration, or live provider calls.",
+            "reason": "The pattern must remain provider-neutral and safe for offline testing.",
+            "forbiddenFileWrites": [
+              ".env",
+              ".env.*",
+              "credentials/",
+              "secrets/"
+            ],
+            "forbiddenFileReads": [
+              ".env",
+              ".env.*",
+              "credentials/",
+              "secrets/"
+            ]
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "requirements": {
+      "type": "object",
+      "description": "Provisional requirements gathered during intake. Requirements are not decomposition steps and remain subject to user review.",
+      "additionalProperties": false,
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Reviewable requirements for the bounded request.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "description": "One provisional requirement and its candidate acceptance criteria.",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "description",
+              "reason",
+              "acceptanceCriteria"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable requirement identifier scoped to the work item.",
+                "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}$",
+                "examples": [
+                  "WI-0002_REQ_001"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "Stable lowercase kebab-case name for the requirement.",
+                "pattern": "^[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "examples": [
+                  "deterministic-source-precedence"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "description": "The obligation or desired behavior expressed by the requirement.",
+                "minLength": 1,
+                "examples": [
+                  "The documented pattern must define deterministic precedence between configuration sources."
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why the requirement matters to the requested outcome.",
+                "minLength": 1,
+                "examples": [
+                  "Users must be able to predict which configuration value wins."
+                ]
+              },
+              "acceptanceCriteria": {
+                "type": "array",
+                "description": "Candidate criteria that later decomposition and validation steps must make testable.",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "description": "One candidate acceptance criterion for the requirement.",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "description"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Stable acceptance-criterion identifier scoped to the requirement.",
+                      "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,}$",
+                      "examples": [
+                        "WI-0002_REQ_001_AC_001"
+                      ]
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Observable condition that can be verified by a later step-specific validation procedure.",
+                      "minLength": 1,
+                      "examples": [
+                        "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "id": "WI-0002_REQ_001_AC_001",
+                      "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                    }
+                  ]
+                },
+                "examples": [
+                  [
+                    {
+                      "id": "WI-0002_REQ_001_AC_001",
+                      "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                    }
+                  ]
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "WI-0002_REQ_001",
+                "name": "deterministic-source-precedence",
+                "description": "The documented pattern must define deterministic precedence between configuration sources.",
+                "reason": "Users must be able to predict which configuration value wins.",
+                "acceptanceCriteria": [
+                  {
+                    "id": "WI-0002_REQ_001_AC_001",
+                    "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                  }
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "WI-0002_REQ_001",
+                "name": "deterministic-source-precedence",
+                "description": "The documented pattern must define deterministic precedence between configuration sources.",
+                "reason": "Users must be able to predict which configuration value wins.",
+                "acceptanceCriteria": [
+                  {
+                    "id": "WI-0002_REQ_001_AC_001",
+                    "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "items": [
+            {
+              "id": "WI-0002_REQ_001",
+              "name": "deterministic-source-precedence",
+              "description": "The documented pattern must define deterministic precedence between configuration sources.",
+              "reason": "Users must be able to predict which configuration value wins.",
+              "acceptanceCriteria": [
+                {
+                  "id": "WI-0002_REQ_001_AC_001",
+                  "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "baseline": {
+      "type": "string",
+      "description": "Optional lowercase Git commit identifier that records the source baseline for coordination and delivery checks.",
+      "pattern": "^[0-9a-f]{40}$",
+      "examples": [
+        "e6abe3263142785c1a0417f8216ff1fbb6dadeb9"
+      ],
+      "x-field-role": "coordination"
+    },
+    "sourceWorkItem": {
+      "type": "string",
+      "description": "Optional absolute or repository-relative path to an upstream work-item record when this item is derived or coordinates another record.",
+      "minLength": 1,
+      "examples": [
+        ".docs/work-items/WI-0001/work-item.json"
+      ],
+      "x-field-role": "coordination"
+    },
+    "sourceStep": {
+      "type": "string",
+      "description": "Optional absolute or repository-relative path to an upstream step record when this item is derived from a step-level request.",
+      "minLength": 1,
+      "examples": [
+        ".docs/work-items/WI-0001/steps/WI-0001-01.md"
+      ],
+      "x-field-role": "coordination"
+    },
+    "stepsPath": {
+      "type": "string",
+      "description": "Repository-relative directory locator for independently authoritative step files. The work-item does not embed or maintain step contents, statuses, dependencies, validation plans, or commit subjects.",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+/$",
+      "examples": [
+        ".docs/work-items/WI-0002/steps/"
+      ],
+      "x-field-role": "authoritative"
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+      "workItemId": "WI-0002",
+      "status": "planned",
+      "title": "Add configuration layering and fail-fast validation to nodejs-cli-pattern",
+      "type": "feature",
+      "objective": "Extend nodejs-cli-pattern with a reusable configuration pattern for typed Node.js CLIs.",
+      "repository": {
+        "root": "/home/michael/.cline/skills",
+        "authority": "local"
+      },
+      "context": {
+        "mergeTarget": {
+          "branch": "master"
+        },
+        "branch": {
+          "name": "wi-0002-nodejs-cli-config-layering",
+          "created": false,
+          "rationale": "The name identifies the work item and the requested configuration-layering capability."
+        }
+      },
+      "baseline": "e6abe3263142785c1a0417f8216ff1fbb6dadeb9",
+      "request": {
+        "source": "conversation",
+        "text": "Add a standard configuration pattern to nodejs-cli-pattern for typed Node.js CLIs.",
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      },
+      "scope": [
+        {
+          "name": "typed-configuration",
+          "description": "Convert environment and command-line string values into validated typed configuration values.",
+          "reason": "Node environment variables are strings and require explicit conversion and validation."
+        }
+      ],
+      "nonGoals": [
+        {
+          "name": "provider-configuration",
+          "description": "Do not add provider credentials, provider-specific configuration, or live provider calls.",
+          "reason": "The pattern must remain provider-neutral and safe for offline testing.",
+          "forbiddenFileWrites": [
+            ".env",
+            ".env.*",
+            "credentials/",
+            "secrets/"
+          ],
+          "forbiddenFileReads": [
+            ".env",
+            ".env.*",
+            "credentials/",
+            "secrets/"
+          ]
+        }
+      ],
+      "requirements": {
+        "items": [
+          {
+            "id": "WI-0002_REQ_001",
+            "name": "deterministic-source-precedence",
+            "description": "The documented pattern must define deterministic precedence between configuration sources.",
+            "reason": "Users must be able to predict which configuration value wins.",
+            "acceptanceCriteria": [
+              {
+                "id": "WI-0002_REQ_001_AC_001",
+                "description": "The pattern documents the precedence order and demonstrates it with a deterministic example."
+              }
+            ]
+          }
+        ]
+      },
+      "stepsPath": ".docs/work-items/WI-0002/steps/"
+    }
+  ]
+}

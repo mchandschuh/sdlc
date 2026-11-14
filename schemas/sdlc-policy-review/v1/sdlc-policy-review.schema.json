@@ -1,0 +1,1699 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/policy-review/v1",
+  "title": "SDLC Review Policy v1",
+  "description": "The versioned policy contract that selects and governs reviews of SDLC task results. It declares applicability, gate mode, required criteria and evidence, authorization, agent-profile and prompt references, execution limits, output constraints, escalation, and explicit host effects. It does not contain a review finding or decide whether a particular result is correct.",
+  "$comment": "This policy configures review execution and host enforcement; it does not replace the reviewing agent or embed sdlc-agent-profile/v1. The host must resolve the effective policy deterministically, verify policy inheritance and locked overrides, resolve agentProfileRef and promptTemplateRef, translate the permitted agent configuration into llm-request/v1, render and digest the request, validate https://schemas.handschuh.dev/sdlc/task-review/v1 output, independently check target and evidence digests, enforce authorization and conflict rules, and apply lifecycle effects only through an explicit host action. A policy decision never silently mutates task or work-item lifecycle state. Evidence-tier fields use the canonical vocabulary from https://schemas.handschuh.dev/sdlc/evidence-tier/v1; the enum is repeated locally so nested examples remain synchronously authorable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "policyId",
+    "policyVersion",
+    "description",
+    "authority",
+    "scope",
+    "mode",
+    "gates",
+    "review",
+    "authorization",
+    "evidence",
+    "execution",
+    "output",
+    "escalation",
+    "transitions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/policy-review/v1",
+      "description": "The versioned review-policy contract identifier.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/policy-review/v1"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "policyId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Stable lower-kebab-case identity of this review policy within its authority domain.",
+      "examples": [
+        "implementation-quality-required",
+        "validation-evidence-optional"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "policyVersion": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*(?:\\.[0-9]+){0,2}$",
+      "description": "Semantic version of this policy instance; changes to its effective rules require a new digest and may require a new version.",
+      "examples": [
+        "1.0",
+        "1.1.0"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable explanation of the review policy's purpose and governance boundary.",
+      "examples": [
+        "Require an authorized code review before an implementation result may satisfy its implementation-result gate."
+      ],
+      "x-field-role": "authoritative"
+    },
+    "authority": {
+      "$ref": "#/$defs/Authority",
+      "description": "The source and precedence metadata that establish who controls this policy and how it participates in inheritance.",
+      "examples": [
+        {
+          "source": "repository",
+          "ref": ".sdlc/policies/implementation-review.json",
+          "owner": "repository-governance",
+          "locked": true
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "scope": {
+      "$ref": "#/$defs/Scope",
+      "description": "The task and gate selectors to which this policy applies.",
+      "examples": [
+        {
+          "taskTypes": [
+            "implementation"
+          ],
+          "reviewKinds": [
+            "code"
+          ],
+          "gateIds": [
+            "implementation-result"
+          ]
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "off",
+        "optional",
+        "required"
+      ],
+      "description": "Whether this policy disables review, makes review available without blocking by default, or requires an accepted gate before the governed transition.",
+      "examples": [
+        "required",
+        "optional"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/Gate",
+        "description": "One named approval or review checkpoint governed by this policy.",
+        "examples": [
+          {
+            "id": "implementation-result",
+            "purpose": "Review the completed implementation result.",
+            "required": true,
+            "minimumApprovals": 1
+          }
+        ]
+      },
+      "description": "Named gates whose review decisions can be evaluated under this policy.",
+      "examples": [
+        [
+          {
+            "id": "implementation-result",
+            "purpose": "Review the completed implementation result.",
+            "required": true,
+            "minimumApprovals": 1
+          }
+        ]
+      ],
+      "x-field-role": "authoritative"
+    },
+    "review": {
+      "$ref": "#/$defs/ReviewRules",
+      "description": "Rules for the review subject, required criteria, findings, and decisions.",
+      "examples": [
+        {
+          "taskSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "allowedKinds": [
+            "code"
+          ],
+          "requiredCriteria": [
+            "scope-compliance",
+            "correctness",
+            "maintainability"
+          ],
+          "blockingFindingSeverities": [
+            "blocker",
+            "required"
+          ],
+          "requireCompleteCriteriaCoverage": true
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "authorization": {
+      "$ref": "#/$defs/Authorization",
+      "description": "Actor authorization, independence, and approval-count rules applied by the host.",
+      "examples": [
+        {
+          "requiredRole": "code-reviewer",
+          "minimumApprovals": 1,
+          "allowSelfApproval": false,
+          "requireDistinctActors": true,
+          "conflictAction": "blocked"
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "evidence": {
+      "$ref": "#/$defs/EvidenceRules",
+      "description": "Evidence presence, freshness, and evidence-tier rules that must hold before an accepted decision can satisfy the gate.",
+      "examples": [
+        {
+          "requiredKinds": [
+            "target-result",
+            "diff",
+            "validation"
+          ],
+          "minimumTier": "unit",
+          "requireCurrentTargetDigest": true,
+          "requireCurrentEvidenceDigests": true,
+          "allowAgentOnlyEvidence": false
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "execution": {
+      "$ref": "#/$defs/ExecutionRules",
+      "description": "References and bounded settings used to construct the review-agent request; the referenced agent profile will later translate into llm-request/v1.",
+      "examples": [
+        {
+          "agentProfileRef": ".sdlc/agents/code-reviewer.json",
+          "promptTemplateRef": ".sdlc/prompts/code-review.prompt.md",
+          "outputSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "modelConstraint": "repository-approved",
+          "thinking": "high",
+          "temperature": 0,
+          "maxFailedAttempts": 3,
+          "maxIterations": 2,
+          "readBoundary": {
+            "allowedKinds": [
+              "target-result",
+              "diff",
+              "validation",
+              "contract",
+              "repository-guidance"
+            ],
+            "deniedKinds": [
+              "credentials",
+              "secrets",
+              "environment-files"
+            ]
+          }
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "output": {
+      "$ref": "#/$defs/OutputRules",
+      "description": "The structured output and reproducibility records required from the review execution.",
+      "examples": [
+        {
+          "schema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "requiredFields": [
+            "decision",
+            "criteriaEvaluations",
+            "findings",
+            "evidence",
+            "limitations",
+            "nonClaims"
+          ],
+          "requireReproducibility": true,
+          "requireExecutionReceipt": true,
+          "allowDecisionWithoutAgent": false
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "escalation": {
+      "$ref": "#/$defs/EscalationRules",
+      "description": "Rules for abstention, blocked execution, conflicts, and exhausted review/rework cycles.",
+      "examples": [
+        {
+          "allowAbstention": true,
+          "onAbstention": "escalate",
+          "onBlocked": "blocked",
+          "onConflict": "blocked",
+          "maxReviewReworkCycles": 3,
+          "onExhausted": "blocked",
+          "escalationRole": "review-escalation-owner"
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "transitions": {
+      "$ref": "#/$defs/TransitionRules",
+      "description": "Explicit host actions and eligibility effects for each terminal review disposition; these are not direct lifecycle mutations by the agent.",
+      "examples": [
+        {
+          "accepted": {
+            "satisfyGate": true,
+            "createRework": false,
+            "downstreamEligible": true,
+            "requiresExplicitHostAction": true
+          },
+          "changesRequested": {
+            "satisfyGate": false,
+            "createRework": true,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          },
+          "rejected": {
+            "satisfyGate": false,
+            "createRework": false,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          },
+          "blocked": {
+            "satisfyGate": false,
+            "createRework": false,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          }
+        }
+      ],
+      "x-field-role": "authoritative"
+    }
+  },
+  "$defs": {
+    "AuthoritySource": {
+      "type": "string",
+      "enum": [
+        "task",
+        "work-item",
+        "profile",
+        "run",
+        "repository",
+        "default",
+        "override"
+      ],
+      "description": "The configuration layer from which the effective policy was selected.",
+      "examples": [
+        "repository",
+        "run"
+      ]
+    },
+    "Authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "ref",
+        "owner",
+        "locked"
+      ],
+      "description": "Policy provenance, ownership, and inheritance precedence metadata.",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/AuthoritySource",
+          "description": "The layer that supplied this policy.",
+          "examples": [
+            "repository"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Durable reference to the policy source or authority record.",
+          "examples": [
+            ".sdlc/policies/implementation-review.json"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "Stable owner identity responsible for maintaining or authorizing the policy.",
+          "examples": [
+            "repository-governance"
+          ]
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "Whether lower-precedence policy sources are prevented from weakening or disabling this policy.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "source": "repository",
+          "ref": ".sdlc/policies/implementation-review.json",
+          "owner": "repository-governance",
+          "locked": true
+        }
+      ]
+    },
+    "Scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskTypes",
+        "reviewKinds",
+        "gateIds"
+      ],
+      "description": "Selectors identifying the tasks, review modes, and gates governed by the policy.",
+      "properties": {
+        "taskTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "decomposition",
+              "research",
+              "decision",
+              "design",
+              "implementation",
+              "test-strategy",
+              "validation",
+              "review",
+              "rework",
+              "delivery"
+            ],
+            "description": "A task kind to which this policy applies.",
+            "examples": [
+              "implementation"
+            ]
+          },
+          "description": "Task kinds whose results may be selected by this policy.",
+          "examples": [
+            [
+              "implementation",
+              "validation"
+            ]
+          ]
+        },
+        "reviewKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "general",
+              "code",
+              "design",
+              "decision",
+              "decomposition",
+              "planning",
+              "test",
+              "validation",
+              "delivery"
+            ],
+            "description": "A review mode to which this policy applies.",
+            "examples": [
+              "code"
+            ]
+          },
+          "description": "Review modes governed by this policy.",
+          "examples": [
+            [
+              "code"
+            ]
+          ]
+        },
+        "gateIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A named review or approval gate selected by this policy.",
+            "examples": [
+              "implementation-result",
+              "validation-evidence"
+            ]
+          },
+          "description": "Gate identifiers for which this policy is effective.",
+          "examples": [
+            [
+              "implementation-result"
+            ]
+          ]
+        },
+        "orderKeyRanges": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/OrderKeyRange",
+            "description": "An optional eight-digit task-tree range selector.",
+            "examples": [
+              {
+                "start": "11000000",
+                "end": "18999999"
+              }
+            ]
+          },
+          "description": "Optional task-tree regions that further restrict policy applicability.",
+          "examples": [
+            [
+              {
+                "start": "11000000",
+                "end": "18999999"
+              }
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "taskTypes": [
+            "implementation"
+          ],
+          "reviewKinds": [
+            "code"
+          ],
+          "gateIds": [
+            "implementation-result"
+          ],
+          "orderKeyRanges": []
+        }
+      ]
+    },
+    "OrderKeyRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "description": "An inclusive fixed-width eight-digit task-tree range used for deterministic policy selection.",
+      "properties": {
+        "start": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive lower bound of the order-key range.",
+          "examples": [
+            "11000000"
+          ]
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$",
+          "description": "Inclusive upper bound of the order-key range; host validation must ensure it is not lower than start.",
+          "examples": [
+            "18999999"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "start": "11000000",
+          "end": "18999999"
+        }
+      ]
+    },
+    "Gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "purpose",
+        "required",
+        "minimumApprovals"
+      ],
+      "description": "One named checkpoint whose accepted review decision can satisfy a governed transition.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case gate identifier.",
+          "examples": [
+            "implementation-result",
+            "validation-evidence"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The transition or assurance boundary checked by this gate.",
+          "examples": [
+            "Review the completed implementation result."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this gate must be accepted before its governed transition may become eligible.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "minimumApprovals": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of acceptable decisions required for this gate, subject to authorization and distinct-actor rules.",
+          "examples": [
+            1,
+            2
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "implementation-result",
+          "purpose": "Review the completed implementation result.",
+          "required": true,
+          "minimumApprovals": 1
+        }
+      ]
+    },
+    "CriterionRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "required",
+        "minimumEvidenceTier"
+      ],
+      "description": "A policy-required review criterion and the minimum evidence tier permitted to support it.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable policy criterion identifier referenced by review intent and criteria selection.",
+          "examples": [
+            "scope-compliance",
+            "correctness"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The condition that must be evaluated for this criterion.",
+          "examples": [
+            "The result stays within the declared implementation scope and non-goals."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this criterion must be satisfied for an accepted decision under this policy.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "minimumEvidenceTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The minimum source evidence tier that may support a satisfied evaluation.",
+          "examples": [
+            "static",
+            "unit"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "scope-compliance",
+          "statement": "The result stays within the declared implementation scope and non-goals.",
+          "required": true,
+          "minimumEvidenceTier": "static"
+        }
+      ]
+    },
+    "EvidenceTier": {
+      "type": "string",
+      "enum": [
+        "static",
+        "unit",
+        "component",
+        "cli-audit",
+        "integration",
+        "manual",
+        "inspection",
+        "provider",
+        "operational"
+      ],
+      "description": "The shared SDLC evidence tier vocabulary defined by https://schemas.handschuh.dev/sdlc/evidence-tier/v1.",
+      "examples": [
+        "static",
+        "unit",
+        "cli-audit",
+        "operational"
+      ]
+    },
+    "ReviewRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskSchema",
+        "allowedKinds",
+        "requiredCriteria",
+        "blockingFindingSeverities",
+        "requireCompleteCriteriaCoverage"
+      ],
+      "description": "Required structure and semantic completeness rules for the review payload.",
+      "properties": {
+        "taskSchema": {
+          "const": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "description": "The task-specific review contract expected for the review child result.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/task-review/v1"
+          ]
+        },
+        "allowedKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "general",
+              "code",
+              "design",
+              "decision",
+              "decomposition",
+              "planning",
+              "test",
+              "validation",
+              "delivery"
+            ],
+            "description": "A review mode allowed by this policy.",
+            "examples": [
+              "code"
+            ]
+          },
+          "description": "Review modes for which the policy's criteria and execution rules are valid.",
+          "examples": [
+            [
+              "code"
+            ]
+          ]
+        },
+        "requiredCriteria": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/CriterionRule",
+            "description": "One criterion required or recommended by the policy.",
+            "examples": [
+              {
+                "id": "correctness",
+                "statement": "The result satisfies the required behavior.",
+                "required": true,
+                "minimumEvidenceTier": "unit"
+              }
+            ]
+          },
+          "description": "The criteria that must be present in the review intent and evaluated in the review result.",
+          "examples": [
+            [
+              {
+                "id": "scope-compliance",
+                "statement": "The result stays within scope.",
+                "required": true,
+                "minimumEvidenceTier": "static"
+              },
+              {
+                "id": "correctness",
+                "statement": "The result satisfies the required behavior.",
+                "required": true,
+                "minimumEvidenceTier": "unit"
+              }
+            ],
+            []
+          ]
+        },
+        "blockingFindingSeverities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "blocker",
+              "required",
+              "advisory",
+              "informational"
+            ],
+            "description": "Finding severities that prevent acceptance while their findings remain open.",
+            "examples": [
+              "blocker",
+              "required"
+            ]
+          },
+          "description": "The policy's blocking finding threshold.",
+          "examples": [
+            [
+              "blocker",
+              "required"
+            ],
+            []
+          ]
+        },
+        "requireCompleteCriteriaCoverage": {
+          "type": "boolean",
+          "description": "Whether the result must contain an evaluation for every criterion selected in intent before a decision can be accepted.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "taskSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "allowedKinds": [
+            "code"
+          ],
+          "requiredCriteria": [],
+          "blockingFindingSeverities": [
+            "blocker",
+            "required"
+          ],
+          "requireCompleteCriteriaCoverage": true
+        }
+      ]
+    },
+    "Authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredRole",
+        "minimumApprovals",
+        "allowSelfApproval",
+        "requireDistinctActors",
+        "conflictAction"
+      ],
+      "description": "Host-enforced authorization and independence constraints for review decisions.",
+      "properties": {
+        "requiredRole": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Role that an actor must hold to provide an acceptable decision.",
+          "examples": [
+            "code-reviewer"
+          ]
+        },
+        "minimumApprovals": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum number of authorized acceptable decisions required for the selected gate.",
+          "examples": [
+            1,
+            2
+          ]
+        },
+        "allowSelfApproval": {
+          "type": "boolean",
+          "description": "Whether the producer of the target result may also produce an acceptable review decision.",
+          "examples": [
+            false,
+            true
+          ]
+        },
+        "requireDistinctActors": {
+          "type": "boolean",
+          "description": "Whether approvals must come from distinct actor identities rather than repeated decisions by one actor.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "conflictAction": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "escalate",
+            "abstain"
+          ],
+          "description": "The required handling when the host detects a conflict of interest or failed independence check.",
+          "examples": [
+            "blocked",
+            "escalate"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "requiredRole": "code-reviewer",
+          "minimumApprovals": 1,
+          "allowSelfApproval": false,
+          "requireDistinctActors": true,
+          "conflictAction": "blocked"
+        }
+      ]
+    },
+    "EvidenceRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredKinds",
+        "minimumTier",
+        "requireCurrentTargetDigest",
+        "requireCurrentEvidenceDigests",
+        "allowAgentOnlyEvidence"
+      ],
+      "description": "Host-checkable rules for the evidence required to support a review decision.",
+      "properties": {
+        "requiredKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "target-result",
+              "source-result",
+              "validation",
+              "test",
+              "diff",
+              "repository-state",
+              "command",
+              "artifact",
+              "policy",
+              "other"
+            ],
+            "description": "An evidence kind that must be represented before acceptance can satisfy the gate.",
+            "examples": [
+              "target-result",
+              "validation"
+            ]
+          },
+          "description": "Evidence categories required by this policy.",
+          "examples": [
+            [
+              "target-result",
+              "diff",
+              "validation"
+            ],
+            []
+          ]
+        },
+        "minimumTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "Minimum evidence tier required for the policy's required evidence set.",
+          "examples": [
+            "unit",
+            "operational"
+          ]
+        },
+        "requireCurrentTargetDigest": {
+          "type": "boolean",
+          "description": "Whether the target result digest must still match when the host evaluates the review decision.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "requireCurrentEvidenceDigests": {
+          "type": "boolean",
+          "description": "Whether referenced evidence digests must still match the records available at decision time.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "allowAgentOnlyEvidence": {
+          "type": "boolean",
+          "description": "Whether an evidence claim produced only by the reviewing agent may satisfy a required evidence rule without an independently resolvable source.",
+          "examples": [
+            false,
+            true
+          ]
+        }
+      },
+      "examples": [
+        {
+          "requiredKinds": [
+            "target-result",
+            "validation"
+          ],
+          "minimumTier": "unit",
+          "requireCurrentTargetDigest": true,
+          "requireCurrentEvidenceDigests": true,
+          "allowAgentOnlyEvidence": false
+        }
+      ]
+    },
+    "ModelConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model"
+      ],
+      "description": "Optional allowlist constraint for the provider and model selected by the later agent-profile to llm-request translation.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9._-]*$",
+          "description": "Required provider identity or approved provider family.",
+          "examples": [
+            "approved-provider"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+          "description": "Required model identity or approved model family.",
+          "examples": [
+            "approved-review-model"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "provider": "approved-provider",
+          "model": "approved-review-model"
+        }
+      ]
+    },
+    "ReadBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowedKinds",
+        "deniedKinds"
+      ],
+      "description": "The evidence and repository-resource boundary exposed to the review agent.",
+      "properties": {
+        "allowedKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A resource kind the agent may inspect for this review.",
+            "examples": [
+              "target-result",
+              "repository-guidance"
+            ]
+          },
+          "description": "Kinds of resources that may be supplied to or read by the agent.",
+          "examples": [
+            [
+              "target-result",
+              "diff",
+              "validation"
+            ]
+          ]
+        },
+        "deniedKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A resource kind the agent must not receive or inspect.",
+            "examples": [
+              "credentials",
+              "secrets"
+            ]
+          },
+          "description": "Kinds of sensitive or out-of-scope resources denied to the agent.",
+          "examples": [
+            [
+              "credentials",
+              "secrets",
+              "environment-files"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "allowedKinds": [
+            "target-result",
+            "diff",
+            "validation"
+          ],
+          "deniedKinds": [
+            "credentials",
+            "secrets"
+          ]
+        }
+      ]
+    },
+    "ExecutionRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentProfileRef",
+        "promptTemplateRef",
+        "outputSchema",
+        "modelConstraint",
+        "thinking",
+        "temperature",
+        "maxFailedAttempts",
+        "maxIterations",
+        "readBoundary"
+      ],
+      "description": "Bounded review-agent invocation settings and references; agent-profile/v1 itself is intentionally defined outside this contract.",
+      "properties": {
+        "agentProfileRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference to the agent profile that will be translated into llm-request/v1; the profile is not embedded here.",
+          "examples": [
+            ".sdlc/agents/code-reviewer.json"
+          ]
+        },
+        "promptTemplateRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference to the versioned prompt template or prompt-construction instructions used with this policy.",
+          "examples": [
+            ".sdlc/prompts/code-review.prompt.md"
+          ]
+        },
+        "outputSchema": {
+          "const": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "description": "The structured output contract expected from the review agent.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/task-review/v1"
+          ]
+        },
+        "modelConstraint": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "repository-approved",
+                "policy-approved"
+              ],
+              "description": "A host-resolved model allowlist label.",
+              "examples": [
+                "repository-approved"
+              ]
+            },
+            {
+              "$ref": "#/$defs/ModelConstraint",
+              "description": "An explicit provider and model allowlist constraint.",
+              "examples": [
+                {
+                  "provider": "approved-provider",
+                  "model": "approved-review-model"
+                }
+              ]
+            }
+          ],
+          "description": "The provider/model restriction applied after resolving the agent profile.",
+          "examples": [
+            "repository-approved",
+            {
+              "provider": "approved-provider",
+              "model": "approved-review-model"
+            }
+          ]
+        },
+        "thinking": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "description": "Reasoning effort requested from the later llm-request/v1 translation, subject to provider support.",
+          "examples": [
+            "high"
+          ]
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Sampling temperature requested for the review invocation; deterministic policies normally use zero.",
+          "examples": [
+            0,
+            0.2
+          ]
+        },
+        "maxFailedAttempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum provider or invocation failures the host may retry before recording execution failure.",
+          "examples": [
+            3
+          ]
+        },
+        "maxIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Maximum successful request/response iterations permitted for one review action, including bounded correction requests.",
+          "examples": [
+            2,
+            3
+          ]
+        },
+        "readBoundary": {
+          "$ref": "#/$defs/ReadBoundary",
+          "description": "The resource boundary the host must enforce for the review agent.",
+          "examples": [
+            {
+              "allowedKinds": [
+                "target-result",
+                "diff",
+                "validation"
+              ],
+              "deniedKinds": [
+                "credentials",
+                "secrets"
+              ]
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "agentProfileRef": ".sdlc/agents/code-reviewer.json",
+          "promptTemplateRef": ".sdlc/prompts/code-review.prompt.md",
+          "outputSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "modelConstraint": "repository-approved",
+          "thinking": "high",
+          "temperature": 0,
+          "maxFailedAttempts": 3,
+          "maxIterations": 2,
+          "readBoundary": {
+            "allowedKinds": [
+              "target-result",
+              "diff",
+              "validation"
+            ],
+            "deniedKinds": [
+              "credentials",
+              "secrets"
+            ]
+          }
+        }
+      ]
+    },
+    "OutputRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "requiredFields",
+        "requireReproducibility",
+        "requireExecutionReceipt",
+        "allowDecisionWithoutAgent"
+      ],
+      "description": "Output-shape and provenance requirements for accepting a review result as a policy-compliant decision.",
+      "properties": {
+        "schema": {
+          "const": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "description": "Structured review result schema required by the host.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/task-review/v1"
+          ]
+        },
+        "requiredFields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "decision",
+              "criteriaEvaluations",
+              "findings",
+              "evidence",
+              "limitations",
+              "nonClaims",
+              "reproducibility",
+              "executionReceipt"
+            ],
+            "description": "A review result field that must be present and semantically evaluated.",
+            "examples": [
+              "decision",
+              "findings"
+            ]
+          },
+          "description": "Fields that the host must require in the structured review result.",
+          "examples": [
+            [
+              "decision",
+              "criteriaEvaluations",
+              "findings",
+              "evidence",
+              "limitations",
+              "nonClaims"
+            ]
+          ]
+        },
+        "requireReproducibility": {
+          "type": "boolean",
+          "description": "Whether policy-compliant review results must record policy, prompt, agent-configuration, and execution-receipt digests.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "requireExecutionReceipt": {
+          "type": "boolean",
+          "description": "Whether the host must retain a durable bounded execution receipt for the review invocation.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "allowDecisionWithoutAgent": {
+          "type": "boolean",
+          "description": "Whether an authorized non-agent actor may submit a decision without an agent execution; false preserves agent-driven review for this policy.",
+          "examples": [
+            false,
+            true
+          ]
+        }
+      },
+      "examples": [
+        {
+          "schema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+          "requiredFields": [
+            "decision",
+            "criteriaEvaluations",
+            "findings"
+          ],
+          "requireReproducibility": true,
+          "requireExecutionReceipt": true,
+          "allowDecisionWithoutAgent": false
+        }
+      ]
+    },
+    "EscalationRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowAbstention",
+        "onAbstention",
+        "onBlocked",
+        "onConflict",
+        "maxReviewReworkCycles",
+        "onExhausted",
+        "escalationRole"
+      ],
+      "description": "Bounded handling for review uncertainty, execution blockers, conflicts, and repeated corrective cycles.",
+      "properties": {
+        "allowAbstention": {
+          "type": "boolean",
+          "description": "Whether the reviewing agent may return abstained instead of an approval disposition.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "onAbstention": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "escalate",
+            "defer"
+          ],
+          "description": "Host action when an allowed abstention is recorded.",
+          "examples": [
+            "escalate",
+            "blocked"
+          ]
+        },
+        "onBlocked": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "escalate",
+            "defer"
+          ],
+          "description": "Host action when required review inputs or execution are blocked.",
+          "examples": [
+            "blocked"
+          ]
+        },
+        "onConflict": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "escalate",
+            "defer"
+          ],
+          "description": "Host action when a policy or actor conflict prevents a valid decision.",
+          "examples": [
+            "blocked",
+            "escalate"
+          ]
+        },
+        "maxReviewReworkCycles": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Maximum number of review/rework cycles allowed before the policy's exhausted action applies.",
+          "examples": [
+            3,
+            5
+          ]
+        },
+        "onExhausted": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "escalate",
+            "defer"
+          ],
+          "description": "Host action when the review/rework limit is exhausted without an accepted gate.",
+          "examples": [
+            "blocked",
+            "escalate"
+          ]
+        },
+        "escalationRole": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Role responsible for resolving an escalated review condition.",
+          "examples": [
+            "review-escalation-owner"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "allowAbstention": true,
+          "onAbstention": "escalate",
+          "onBlocked": "blocked",
+          "onConflict": "blocked",
+          "maxReviewReworkCycles": 3,
+          "onExhausted": "blocked",
+          "escalationRole": "review-escalation-owner"
+        }
+      ]
+    },
+    "Transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "satisfyGate",
+        "createRework",
+        "downstreamEligible",
+        "requiresExplicitHostAction"
+      ],
+      "description": "The explicit host-level effect associated with one review disposition; it does not authorize silent lifecycle mutation.",
+      "properties": {
+        "satisfyGate": {
+          "type": "boolean",
+          "description": "Whether a policy-compliant disposition may satisfy the selected gate after host validation.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "createRework": {
+          "type": "boolean",
+          "description": "Whether the host may create a distinct rework action for this disposition.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "downstreamEligible": {
+          "type": "boolean",
+          "description": "Whether the governed downstream transition may become eligible after the explicit host action.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "requiresExplicitHostAction": {
+          "type": "boolean",
+          "description": "Whether a separate authorized host operation is required before recording the gate or eligibility effect.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "satisfyGate": true,
+          "createRework": false,
+          "downstreamEligible": true,
+          "requiresExplicitHostAction": true
+        }
+      ]
+    },
+    "TransitionRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "changesRequested",
+        "rejected",
+        "blocked"
+      ],
+      "description": "Explicit host effects for each review disposition supported by the policy.",
+      "properties": {
+        "accepted": {
+          "$ref": "#/$defs/Transition",
+          "description": "Effect after an accepted decision passes host policy checks.",
+          "examples": [
+            {
+              "satisfyGate": true,
+              "createRework": false,
+              "downstreamEligible": true,
+              "requiresExplicitHostAction": true
+            }
+          ]
+        },
+        "changesRequested": {
+          "$ref": "#/$defs/Transition",
+          "description": "Effect after a valid changes_requested decision.",
+          "examples": [
+            {
+              "satisfyGate": false,
+              "createRework": true,
+              "downstreamEligible": false,
+              "requiresExplicitHostAction": true
+            }
+          ]
+        },
+        "rejected": {
+          "$ref": "#/$defs/Transition",
+          "description": "Effect after a valid rejected decision.",
+          "examples": [
+            {
+              "satisfyGate": false,
+              "createRework": false,
+              "downstreamEligible": false,
+              "requiresExplicitHostAction": true
+            }
+          ]
+        },
+        "blocked": {
+          "$ref": "#/$defs/Transition",
+          "description": "Effect when review cannot safely produce or apply a decision.",
+          "examples": [
+            {
+              "satisfyGate": false,
+              "createRework": false,
+              "downstreamEligible": false,
+              "requiresExplicitHostAction": true
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "accepted": {
+            "satisfyGate": true,
+            "createRework": false,
+            "downstreamEligible": true,
+            "requiresExplicitHostAction": true
+          },
+          "changesRequested": {
+            "satisfyGate": false,
+            "createRework": true,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          },
+          "rejected": {
+            "satisfyGate": false,
+            "createRework": false,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          },
+          "blocked": {
+            "satisfyGate": false,
+            "createRework": false,
+            "downstreamEligible": false,
+            "requiresExplicitHostAction": true
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/policy-review/v1",
+      "policyId": "implementation-quality-required",
+      "policyVersion": "1.0",
+      "description": "Require an authorized code review before an implementation result may satisfy its implementation-result gate.",
+      "authority": {
+        "source": "repository",
+        "ref": ".sdlc/policies/implementation-review.json",
+        "owner": "repository-governance",
+        "locked": true
+      },
+      "scope": {
+        "taskTypes": [
+          "implementation"
+        ],
+        "reviewKinds": [
+          "code"
+        ],
+        "gateIds": [
+          "implementation-result"
+        ],
+        "orderKeyRanges": []
+      },
+      "mode": "required",
+      "gates": [
+        {
+          "id": "implementation-result",
+          "purpose": "Review the completed implementation result.",
+          "required": true,
+          "minimumApprovals": 1
+        }
+      ],
+      "review": {
+        "taskSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+        "allowedKinds": [
+          "code"
+        ],
+        "requiredCriteria": [
+          {
+            "id": "scope-compliance",
+            "statement": "The result stays within scope.",
+            "required": true,
+            "minimumEvidenceTier": "static"
+          },
+          {
+            "id": "correctness",
+            "statement": "The result satisfies required behavior.",
+            "required": true,
+            "minimumEvidenceTier": "unit"
+          }
+        ],
+        "blockingFindingSeverities": [
+          "blocker",
+          "required"
+        ],
+        "requireCompleteCriteriaCoverage": true
+      },
+      "authorization": {
+        "requiredRole": "code-reviewer",
+        "minimumApprovals": 1,
+        "allowSelfApproval": false,
+        "requireDistinctActors": true,
+        "conflictAction": "blocked"
+      },
+      "evidence": {
+        "requiredKinds": [
+          "target-result",
+          "diff",
+          "validation"
+        ],
+        "minimumTier": "unit",
+        "requireCurrentTargetDigest": true,
+        "requireCurrentEvidenceDigests": true,
+        "allowAgentOnlyEvidence": false
+      },
+      "execution": {
+        "agentProfileRef": ".sdlc/agents/code-reviewer.json",
+        "promptTemplateRef": ".sdlc/prompts/code-review.prompt.md",
+        "outputSchema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+        "modelConstraint": "repository-approved",
+        "thinking": "high",
+        "temperature": 0,
+        "maxFailedAttempts": 3,
+        "maxIterations": 2,
+        "readBoundary": {
+          "allowedKinds": [
+            "target-result",
+            "diff",
+            "validation",
+            "contract",
+            "repository-guidance"
+          ],
+          "deniedKinds": [
+            "credentials",
+            "secrets",
+            "environment-files"
+          ]
+        }
+      },
+      "output": {
+        "schema": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+        "requiredFields": [
+          "decision",
+          "criteriaEvaluations",
+          "findings",
+          "evidence",
+          "limitations",
+          "nonClaims",
+          "reproducibility",
+          "executionReceipt"
+        ],
+        "requireReproducibility": true,
+        "requireExecutionReceipt": true,
+        "allowDecisionWithoutAgent": false
+      },
+      "escalation": {
+        "allowAbstention": true,
+        "onAbstention": "escalate",
+        "onBlocked": "blocked",
+        "onConflict": "blocked",
+        "maxReviewReworkCycles": 3,
+        "onExhausted": "blocked",
+        "escalationRole": "review-escalation-owner"
+      },
+      "transitions": {
+        "accepted": {
+          "satisfyGate": true,
+          "createRework": false,
+          "downstreamEligible": true,
+          "requiresExplicitHostAction": true
+        },
+        "changesRequested": {
+          "satisfyGate": false,
+          "createRework": true,
+          "downstreamEligible": false,
+          "requiresExplicitHostAction": true
+        },
+        "rejected": {
+          "satisfyGate": false,
+          "createRework": false,
+          "downstreamEligible": false,
+          "requiresExplicitHostAction": true
+        },
+        "blocked": {
+          "satisfyGate": false,
+          "createRework": false,
+          "downstreamEligible": false,
+          "requiresExplicitHostAction": true
+        }
+      }
+    }
+  ]
+}

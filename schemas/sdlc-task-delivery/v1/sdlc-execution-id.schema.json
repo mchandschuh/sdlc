@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/execution-id/v1",
+  "title": "SDLC Execution ID v1",
+  "description": "A stable identifier for one actual execution or inspection of a declared delivery procedure.",
+  "type": "string",
+  "pattern": "^EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+  "examples": [
+    "EXEC-001",
+    "EXEC-VERIFY-001"
+  ]
+}

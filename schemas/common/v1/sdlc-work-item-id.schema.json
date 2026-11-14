@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/work-item-id/v1",
+  "title": "SDLC Work-Item ID v1",
+  "description": "The repository-unique identifier of a work item. The prefix is one through ten uppercase ASCII letters, the separator is a hyphen, and the numeric portion may contain any number of digits. Leading zeroes are significant.",
+  "$comment": "WorkItemId has the form {prefix}-{number}. Examples include WI-0003, GH-0042, and PROJECT-17. A work-item ID does not include a descriptive suffix; descriptive metadata belongs in the work-item record.",
+  "type": "string",
+  "pattern": "^[A-Z]{1,10}-[0-9]+$",
+  "examples": [
+    "WI-0003",
+    "GH-0042",
+    "PROJECT-17"
+  ]
+}

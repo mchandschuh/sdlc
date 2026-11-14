@@ -1,0 +1,493 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/classification-result/v1",
+  "title": "SDLC Classification Result v1",
+  "description": "A deterministic classification and workflow-selection result derived from one exact SDLC work-item/v2 record.",
+  "$comment": "This result identifies the classified work kind, scope, impact, risk, uncertainty, research disposition, and selected workflow/topology. It deliberately does not contain blockers or nextAction. The host must verify that workItemRef resolves to the assessed work-item artifact, that workItemSha256 matches its exact bytes, and that workflow profile/topology values are registered and compatible with the classification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "workItemRef",
+    "workItemSha256",
+    "classification",
+    "workflow",
+    "research"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/classification-result/v1",
+      "description": "The versioned classification-result contract identifier.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/classification-result/v1"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "status": {
+      "const": "classified",
+      "description": "The terminal status of a successfully produced classification result.",
+      "examples": [
+        "classified"
+      ],
+      "x-field-role": "derived"
+    },
+    "workItemRef": {
+      "type": "string",
+      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#work-item\\.json%23work-item/[A-Z]{1,10}-[0-9]+$",
+      "description": "A globally qualified reference to the classified work-item.json artifact and its work-item entity.",
+      "examples": [
+        "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "workItemSha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "The SHA-256 digest of the exact work-item/v2 bytes classified by this result.",
+      "examples": [
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ],
+      "x-field-role": "authoritative"
+    },
+    "classification": {
+      "examples": [
+        {
+          "workKind": "feature",
+          "scopeClass": "atomic",
+          "architectureImpact": "none",
+          "integrationImpact": "none",
+          "migrationImpact": "none",
+          "deploymentImpact": "none",
+          "risk": "low",
+          "uncertainty": "low",
+          "acceptanceCriteriaTestable": true,
+          "reasons": [
+            {
+              "statement": "The work item is one bounded feature with testable acceptance criteria.",
+              "sourceRefs": [
+                "#/type",
+                "#/requirements/items/0"
+              ]
+            }
+          ]
+        }
+      ],
+      "$ref": "#/$defs/Classification",
+      "description": "The work kind, scope, impact, risk, uncertainty, and acceptance-criteria classification.",
+      "x-field-role": "derived"
+    },
+    "workflow": {
+      "examples": [
+        {
+          "profile": "atomic-feature/v1",
+          "topology": "bounded-sequential/v1"
+        }
+      ],
+      "$ref": "#/$defs/WorkflowSelection",
+      "description": "The registered workflow profile and graph topology selected for this classification.",
+      "x-field-role": "derived"
+    },
+    "research": {
+      "examples": [
+        {
+          "disposition": "not-required",
+          "reasons": [
+            {
+              "statement": "The atomic feature does not trigger research.",
+              "sourceRefs": [
+                "#/classification"
+              ]
+            }
+          ]
+        }
+      ],
+      "$ref": "#/$defs/ResearchDisposition",
+      "description": "The research disposition and reasons derived from the classification.",
+      "x-field-role": "derived"
+    }
+  },
+  "$defs": {
+    "WorkKind": {
+      "type": "string",
+      "enum": [
+        "feature",
+        "bugfix",
+        "refactor",
+        "architecture",
+        "migration",
+        "deployment",
+        "documentation",
+        "security",
+        "maintenance",
+        "unknown"
+      ],
+      "description": "The normalized kind of work requested by the work item.",
+      "examples": [
+        "feature",
+        "bugfix"
+      ]
+    },
+    "ScopeClass": {
+      "type": "string",
+      "enum": [
+        "atomic",
+        "composite",
+        "clarification-required"
+      ],
+      "description": "Whether the request is one bounded action, contains multiple independently deliverable actions, or needs clarification before workflow selection.",
+      "examples": [
+        "atomic"
+      ]
+    },
+    "Impact": {
+      "type": "string",
+      "enum": [
+        "none",
+        "present",
+        "unknown"
+      ],
+      "description": "Whether the request explicitly indicates the named impact area.",
+      "examples": [
+        "none"
+      ]
+    },
+    "Risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "unknown"
+      ],
+      "description": "The normalized risk posture inferred from the work-item boundary.",
+      "examples": [
+        "low"
+      ]
+    },
+    "Uncertainty": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "The amount of unresolved scope or interpretation uncertainty remaining in the work item.",
+      "examples": [
+        "low"
+      ]
+    },
+    "Reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statement",
+        "sourceRefs"
+      ],
+      "description": "An auditable explanation for a classification or disposition.",
+      "properties": {
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The concise factual reason for the derived classification.",
+          "examples": [
+            "The work item declares one feature requirement with one acceptance criterion."
+          ]
+        },
+        "sourceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A work-item-local JSON pointer or semantic source label supporting the reason.",
+            "examples": [
+              "#/type",
+              "#/requirements/items/0/acceptanceCriteria/0"
+            ]
+          },
+          "description": "The work-item fields inspected to derive this reason.",
+          "examples": [
+            [
+              "#/type",
+              "#/requirements/items/0"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "statement": "The work item declares one bounded feature outcome.",
+          "sourceRefs": [
+            "#/type",
+            "#/objective"
+          ]
+        }
+      ]
+    },
+    "Classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workKind",
+        "scopeClass",
+        "architectureImpact",
+        "integrationImpact",
+        "migrationImpact",
+        "deploymentImpact",
+        "risk",
+        "uncertainty",
+        "acceptanceCriteriaTestable",
+        "reasons"
+      ],
+      "description": "The normalized classification used to select a workflow profile.",
+      "properties": {
+        "workKind": {
+          "$ref": "#/$defs/WorkKind",
+          "description": "The normalized work kind.",
+          "examples": [
+            "feature"
+          ]
+        },
+        "scopeClass": {
+          "$ref": "#/$defs/ScopeClass",
+          "description": "The normalized scope class.",
+          "examples": [
+            "atomic"
+          ]
+        },
+        "architectureImpact": {
+          "$ref": "#/$defs/Impact",
+          "description": "Whether architecture or a new design concept is implicated.",
+          "examples": [
+            "none"
+          ]
+        },
+        "integrationImpact": {
+          "$ref": "#/$defs/Impact",
+          "description": "Whether an external system or integration boundary is implicated.",
+          "examples": [
+            "none"
+          ]
+        },
+        "migrationImpact": {
+          "$ref": "#/$defs/Impact",
+          "description": "Whether a data or state migration is implicated.",
+          "examples": [
+            "none"
+          ]
+        },
+        "deploymentImpact": {
+          "$ref": "#/$defs/Impact",
+          "description": "Whether deployment or infrastructure work is implicated.",
+          "examples": [
+            "none"
+          ]
+        },
+        "risk": {
+          "$ref": "#/$defs/Risk",
+          "description": "The normalized risk posture.",
+          "examples": [
+            "low"
+          ]
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty",
+          "description": "The normalized uncertainty posture.",
+          "examples": [
+            "low"
+          ]
+        },
+        "acceptanceCriteriaTestable": {
+          "type": "boolean",
+          "description": "Whether every declared acceptance criterion is sufficiently observable to validate.",
+          "examples": [
+            true
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Reason"
+          },
+          "description": "Auditable reasons supporting the classification.",
+          "examples": [
+            [
+              {
+                "statement": "The request is explicitly classified as a feature.",
+                "sourceRefs": [
+                  "#/type"
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "workKind": "feature",
+          "scopeClass": "atomic",
+          "architectureImpact": "none",
+          "integrationImpact": "none",
+          "migrationImpact": "none",
+          "deploymentImpact": "none",
+          "risk": "low",
+          "uncertainty": "low",
+          "acceptanceCriteriaTestable": true,
+          "reasons": [
+            {
+              "statement": "The work item declares one bounded feature requirement with testable acceptance criteria.",
+              "sourceRefs": [
+                "#/type",
+                "#/requirements/items/0"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "WorkflowSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "topology"
+      ],
+      "description": "The registered workflow and topology selection. Unselected means the initial classifier did not authorize a workflow profile for this request.",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": [
+            "atomic-feature/v1",
+            "unselected"
+          ],
+          "description": "The registered workflow profile selected by host policy.",
+          "examples": [
+            "atomic-feature/v1"
+          ]
+        },
+        "topology": {
+          "type": "string",
+          "enum": [
+            "bounded-sequential/v1",
+            "unselected"
+          ],
+          "description": "The registered graph topology selected by the workflow profile.",
+          "examples": [
+            "bounded-sequential/v1"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "profile": "atomic-feature/v1",
+          "topology": "bounded-sequential/v1"
+        }
+      ]
+    },
+    "ResearchDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disposition",
+        "reasons"
+      ],
+      "description": "The research requirement selected by host policy for this classification.",
+      "properties": {
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "not-required",
+            "recommended",
+            "required"
+          ],
+          "description": "Whether research is omitted, suggested, or required before workflow execution.",
+          "examples": [
+            "not-required"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Reason"
+          },
+          "description": "Auditable reasons supporting the research disposition.",
+          "examples": [
+            [
+              {
+                "statement": "No architecture, integration, migration, or deployment impact is declared.",
+                "sourceRefs": [
+                  "#/objective",
+                  "#/scope"
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "disposition": "not-required",
+          "reasons": [
+            {
+              "statement": "The atomic feature profile has no research trigger.",
+              "sourceRefs": [
+                "#/type",
+                "#/requirements/items"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/classification-result/v1",
+      "status": "classified",
+      "workItemRef": "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002",
+      "workItemSha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "classification": {
+        "workKind": "feature",
+        "scopeClass": "atomic",
+        "architectureImpact": "none",
+        "integrationImpact": "none",
+        "migrationImpact": "none",
+        "deploymentImpact": "none",
+        "risk": "low",
+        "uncertainty": "low",
+        "acceptanceCriteriaTestable": true,
+        "reasons": [
+          {
+            "statement": "The work item declares one bounded feature requirement with testable acceptance criteria.",
+            "sourceRefs": [
+              "#/type",
+              "#/requirements/items/0"
+            ]
+          }
+        ]
+      },
+      "workflow": {
+        "profile": "atomic-feature/v1",
+        "topology": "bounded-sequential/v1"
+      },
+      "research": {
+        "disposition": "not-required",
+        "reasons": [
+          {
+            "statement": "No architecture, integration, migration, or deployment impact is declared.",
+            "sourceRefs": [
+              "#/objective",
+              "#/scope"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

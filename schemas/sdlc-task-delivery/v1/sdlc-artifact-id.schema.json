@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/artifact-id/v1",
+  "title": "SDLC Artifact ID v1",
+  "description": "A stable identifier for a delivery artifact. ART is the canonical artifact reference prefix across SDLC task-local, task-qualified, and global references.",
+  "type": "string",
+  "pattern": "^ART-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+  "examples": [
+    "ART-001",
+    "ART-MANIFEST-001"
+  ]
+}

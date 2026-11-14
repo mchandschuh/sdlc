@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/delivery-type/v1",
+  "title": "SDLC Delivery Type v1",
+  "description": "A bounded kind of delivery action declared by a delivery task.",
+  "type": "string",
+  "enum": [
+    "package",
+    "release",
+    "link",
+    "install",
+    "integration",
+    "deployment"
+  ],
+  "examples": [
+    "package",
+    "release"
+  ]
+}

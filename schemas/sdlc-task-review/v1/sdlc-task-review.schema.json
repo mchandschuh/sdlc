@@ -1,0 +1,1709 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-review/v1",
+  "title": "SDLC Task Review v1",
+  "description": "The task-specific payload for reviewing one exact result produced by any supported SDLC task kind. Intent declares the review target, policy reference, criteria, evidence requirements, non-goals, and prompt context. Result records the review execution, reproducibility data, criterion evaluations, findings, decision, limitations, and non-claims. The payload deliberately has only the two high-level properties intent and result; task identity, processing state, routing, dependencies, and the common task wrapper remain owned by https://schemas.handschuh.dev/sdlc/task-envelope/v1.",
+  "$comment": "A review decision is not a lifecycle mutation. Host validation must resolve the target task and exact result, verify targetResult.sha256, resolve policyRef against https://schemas.handschuh.dev/sdlc/policy-review/v1, verify that policy and prompt digests are current, enforce authorization and self-approval rules, confirm required evidence and criteria coverage, validate that accepted decisions have no policy-blocking unsatisfied criteria or findings, and apply any resulting lifecycle action explicitly. Agent-produced findings and decisions are claims to evaluate; policy compliance and lifecycle effects are host-derived. Approval of one result does not transfer to a later result with a different digest. Evidence-tier fields use the canonical vocabulary from https://schemas.handschuh.dev/sdlc/evidence-tier/v1; the enum is repeated locally so nested examples remain synchronously authorable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ReviewIntent",
+      "description": "The declared review boundary and inputs from which the host constructs the review request.",
+      "examples": [
+        {
+          "summary": "Review the implementation result for scope, correctness, maintainability, and security boundaries.",
+          "reviewKind": "code",
+          "target": {
+            "taskType": "implementation",
+            "taskRef": "WI-0003|06000000",
+            "result": {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          },
+          "gateId": "implementation-result",
+          "policyRef": {
+            "ref": ".sdlc/policies/implementation-review.json",
+            "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          },
+          "criteria": [
+            {
+              "id": "CRIT-001",
+              "statement": "The result stays within the declared implementation scope and non-goals.",
+              "purpose": "Prevent unreviewed work from being accepted through scope expansion.",
+              "required": true,
+              "evidenceRefs": [
+                "WI-0003|06000000#result/R-001"
+              ]
+            },
+            {
+              "id": "CRIT-002",
+              "statement": "The implementation satisfies the required behavior and preserves relevant invariants.",
+              "purpose": "Assess substantive correctness against the task result and required evidence.",
+              "required": true,
+              "evidenceRefs": [
+                "WI-0003|08000000#result/R-001"
+              ]
+            }
+          ],
+          "evidenceRequirements": [
+            {
+              "id": "EVID-001",
+              "kind": "validation",
+              "ref": "WI-0003|08000000#result/R-001",
+              "purpose": "Provide the current validation result for the implementation.",
+              "required": true,
+              "minimumTier": "unit"
+            }
+          ],
+          "nonGoals": [
+            {
+              "id": "NON-001",
+              "statement": "This review does not approve production deployment or establish production readiness."
+            }
+          ],
+          "context": [
+            {
+              "id": "CTX-001",
+              "kind": "repository-guidance",
+              "ref": ".docs/sdlc/approval-process.draft.md",
+              "purpose": "Explain the separation between review decisions and lifecycle transitions.",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "x-field-role": "authoritative"
+    },
+    "result": {
+      "$ref": "#/$defs/ReviewResult",
+      "description": "The durable review output, including the agent's assessment and host-checkable execution provenance.",
+      "examples": [
+        {
+          "status": "complete",
+          "decision": "accepted",
+          "summary": "The implementation satisfies the required review criteria; no blocking findings remain.",
+          "actor": {
+            "id": "code-review-agent",
+            "role": "code-reviewer",
+            "authorityRef": "repository-policy.code-review.v1"
+          },
+          "criteriaEvaluations": [
+            {
+              "criterionRef": "#criterion/CRIT-001",
+              "status": "satisfied",
+              "summary": "The implementation changes remain inside the declared owned paths.",
+              "evidenceRefs": [
+                "WI-0003|06000000#result/R-001"
+              ],
+              "findingRefs": []
+            },
+            {
+              "criterionRef": "#criterion/CRIT-002",
+              "status": "satisfied",
+              "summary": "The current validation result reports the required checks as passed.",
+              "evidenceRefs": [
+                "WI-0003|08000000#result/R-001"
+              ],
+              "findingRefs": []
+            }
+          ],
+          "findings": [],
+          "evidence": [
+            {
+              "id": "EVID-001",
+              "kind": "validation",
+              "ref": "WI-0003|08000000#result/R-001",
+              "claim": "The current validation result records successful required checks.",
+              "tier": "unit",
+              "source": "referenced-result"
+            }
+          ],
+          "limitations": [
+            "The review does not establish provider or production behavior."
+          ],
+          "nonClaims": [
+            "This decision does not mutate the implementation task lifecycle.",
+            "This decision does not authorize deployment."
+          ],
+          "reproducibility": {
+            "policyDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+            "renderedPromptDigest": "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+            "agentConfigurationDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "executionReceiptDigest": "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+          },
+          "executionReceipt": {
+            "executionId": "EXEC-REVIEW-001",
+            "status": "succeeded",
+            "startedAt": "2026-10-16T00:00:00Z",
+            "finishedAt": "2026-10-16T00:02:00Z",
+            "requestRef": ".workflow/reviews/EXEC-REVIEW-001/request.json",
+            "responseRef": ".workflow/reviews/EXEC-REVIEW-001/response.json"
+          }
+        }
+      ],
+      "x-field-role": "authoritative"
+    }
+  },
+  "$defs": {
+    "ReviewKind": {
+      "type": "string",
+      "enum": [
+        "general",
+        "code",
+        "design",
+        "decision",
+        "decomposition",
+        "planning",
+        "test",
+        "validation",
+        "delivery"
+      ],
+      "description": "The substantive review mode used to select criteria and prompt construction rules.",
+      "examples": [
+        "code",
+        "validation"
+      ]
+    },
+    "TaskType": {
+      "type": "string",
+      "enum": [
+        "decomposition",
+        "research",
+        "decision",
+        "design",
+        "implementation",
+        "test-strategy",
+        "validation",
+        "review",
+        "rework",
+        "delivery"
+      ],
+      "description": "A supported SDLC task kind whose result may be reviewed.",
+      "examples": [
+        "implementation",
+        "validation"
+      ]
+    },
+    "TaskReference": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}$",
+      "description": "A work-item-qualified task identity using the canonical pipe-separated task reference form.",
+      "examples": [
+        "WI-0003|06000000",
+        "GH-0042|19000000"
+      ]
+    },
+    "AnyReference": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A reference resolved against the current review task or its declared inputs.",
+          "examples": [
+            "#criterion/CRIT-001",
+            "#finding/FIND-001"
+          ]
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-local reference resolved against the selected work-item directory."
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A reference resolved against a task in the same or an authorized work item.",
+          "examples": [
+            "WI-0003|06000000#result/R-001",
+            "WI-0003|08000000#result/R-001"
+          ]
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A globally qualified repository reference resolved across repository boundaries allowed by policy.",
+          "examples": [
+            "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C06000000#result/R-001"
+          ]
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-global reference resolved against a repository and work-item artifact."
+        },
+        {
+          "type": "string",
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+          "description": "A repository-relative path or local durable reference resolved by the host.",
+          "examples": [
+            ".docs/sdlc/approval-process.draft.md",
+            ".workflow/reviews/EXEC-REVIEW-001/request.json"
+          ]
+        }
+      ],
+      "description": "A task-local, task-qualified, globally qualified, or repository-relative reference accepted as review input or evidence.",
+      "examples": [
+        "#criterion/CRIT-001",
+        "WI-0003|06000000#result/R-001",
+        ".docs/sdlc/approval-process.draft.md"
+      ]
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$",
+      "description": "A content digest using the explicit SHA-256 algorithm prefix.",
+      "examples": [
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ]
+    },
+    "ReviewTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskType",
+        "taskRef",
+        "result"
+      ],
+      "description": "The immutable review target, identified by task and exact result digest.",
+      "properties": {
+        "taskType": {
+          "$ref": "#/$defs/TaskType",
+          "description": "The task kind that produced the target result.",
+          "examples": [
+            "implementation"
+          ]
+        },
+        "taskRef": {
+          "$ref": "#/$defs/TaskReference",
+          "description": "The work-item-qualified identity of the task whose result is reviewed.",
+          "examples": [
+            "WI-0003|06000000"
+          ]
+        },
+        "result": {
+          "$ref": "#/$defs/ResultReference",
+          "description": "The exact durable result selected for review.",
+          "examples": [
+            {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "taskType": "implementation",
+          "taskRef": "WI-0003|06000000",
+          "result": {
+            "ref": "WI-0003|06000000#result/R-001",
+            "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        }
+      ]
+    },
+    "ResultReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "sha256"
+      ],
+      "description": "A durable result reference paired with the digest that makes the review target exact.",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "The address of the result entity or durable result document.",
+          "examples": [
+            "WI-0003|06000000#result/R-001"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256",
+          "description": "The SHA-256 digest of the exact result representation reviewed.",
+          "examples": [
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "ref": "WI-0003|06000000#result/R-001",
+          "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        }
+      ]
+    },
+    "PolicyReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "sha256"
+      ],
+      "description": "The digest-pinned effective review policy used to construct and evaluate this review.",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repository-relative or otherwise authorized durable reference to an https://schemas.handschuh.dev/sdlc/policy-review/v1 document.",
+          "examples": [
+            ".sdlc/policies/implementation-review.json"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256",
+          "description": "The SHA-256 digest of the exact policy document resolved for this review.",
+          "examples": [
+            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "ref": ".sdlc/policies/implementation-review.json",
+          "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        }
+      ]
+    },
+    "Criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "purpose",
+        "required",
+        "evidenceRefs"
+      ],
+      "description": "One criterion that the reviewer must evaluate against the exact target and permitted evidence.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CRIT-[0-9]{3,}$",
+          "description": "Stable criterion identifier used by criterion evaluations and findings.",
+          "examples": [
+            "CRIT-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The observable or reasoned condition that the reviewed result must satisfy.",
+          "examples": [
+            "The result stays within the declared implementation scope and non-goals."
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this criterion matters to the review gate.",
+          "examples": [
+            "Prevent unreviewed work from being accepted through scope expansion."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether failure or inconclusive evaluation of this criterion prevents an accepted decision under the effective policy.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "A target, evidence, or context reference relevant to this criterion.",
+            "examples": [
+              "WI-0003|08000000#result/R-001"
+            ]
+          },
+          "description": "References that establish the permitted source boundary for evaluating this criterion.",
+          "examples": [
+            [
+              "WI-0003|06000000#result/R-001"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "CRIT-001",
+          "statement": "The result stays within the declared implementation scope and non-goals.",
+          "purpose": "Prevent unreviewed work from being accepted through scope expansion.",
+          "required": true,
+          "evidenceRefs": [
+            "WI-0003|06000000#result/R-001"
+          ]
+        }
+      ]
+    },
+    "EvidenceTier": {
+      "type": "string",
+      "enum": [
+        "static",
+        "unit",
+        "component",
+        "cli-audit",
+        "integration",
+        "manual",
+        "inspection",
+        "provider",
+        "operational"
+      ],
+      "description": "The shared SDLC evidence tier vocabulary defined by https://schemas.handschuh.dev/sdlc/evidence-tier/v1.",
+      "examples": [
+        "static",
+        "unit",
+        "cli-audit",
+        "operational"
+      ]
+    },
+    "EvidenceRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "purpose",
+        "required",
+        "minimumTier"
+      ],
+      "description": "One concrete evidence reference required or considered by this review.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^EVID-[0-9]{3,}$",
+          "description": "Stable identifier for the evidence requirement within the review intent.",
+          "examples": [
+            "EVID-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "target-result",
+            "source-result",
+            "validation",
+            "test",
+            "diff",
+            "repository-state",
+            "command",
+            "artifact",
+            "policy",
+            "other"
+          ],
+          "description": "The semantic kind of evidence the review consumes.",
+          "examples": [
+            "validation",
+            "diff"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "The exact evidence record, artifact, or repository reference supplied to the review.",
+          "examples": [
+            "WI-0003|08000000#result/R-001"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What claim or review activity this evidence is intended to support.",
+          "examples": [
+            "Provide the current validation result for the implementation."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the absence or invalidity of this evidence blocks a policy-compliant review.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "minimumTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The minimum evidence tier required for this reference to satisfy the requirement.",
+          "examples": [
+            "unit"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "EVID-001",
+          "kind": "validation",
+          "ref": "WI-0003|08000000#result/R-001",
+          "purpose": "Provide the current validation result for the implementation.",
+          "required": true,
+          "minimumTier": "unit"
+        }
+      ]
+    },
+    "NonGoal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement"
+      ],
+      "description": "An explicit boundary that the reviewer must not treat as part of the review decision.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^NON-[0-9]{3,}$",
+          "description": "Stable non-goal identifier used for prompt traceability.",
+          "examples": [
+            "NON-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The excluded claim, action, or scope boundary.",
+          "examples": [
+            "This review does not approve production deployment or establish production readiness."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "NON-001",
+          "statement": "This review does not approve production deployment."
+        }
+      ]
+    },
+    "ContextInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "purpose",
+        "required"
+      ],
+      "description": "A bounded context reference included when constructing the review request without becoming a review finding itself.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CTX-[0-9]{3,}$",
+          "description": "Stable context identifier used for prompt traceability.",
+          "examples": [
+            "CTX-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "repository-guidance",
+            "contract",
+            "requirement",
+            "acceptance-criteria",
+            "prior-review",
+            "task-history",
+            "other"
+          ],
+          "description": "The role of the context reference in the review request.",
+          "examples": [
+            "repository-guidance",
+            "contract"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "The repository path or SDLC reference supplied as context.",
+          "examples": [
+            ".docs/sdlc/approval-process.draft.md"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the context is supplied to the reviewer.",
+          "examples": [
+            "Explain the separation between review decisions and lifecycle transitions."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the context must be available before the review can execute.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "CTX-001",
+          "kind": "repository-guidance",
+          "ref": ".docs/sdlc/approval-process.draft.md",
+          "purpose": "Explain review and lifecycle boundaries.",
+          "required": true
+        }
+      ]
+    },
+    "ReviewIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "reviewKind",
+        "target",
+        "gateId",
+        "policyRef",
+        "criteria",
+        "evidenceRequirements",
+        "nonGoals",
+        "context"
+      ],
+      "description": "The prospective review request, including the exact target and all declared prompt inputs.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise statement of what the review must determine.",
+          "examples": [
+            "Review the implementation result for scope, correctness, maintainability, and security boundaries."
+          ]
+        },
+        "reviewKind": {
+          "$ref": "#/$defs/ReviewKind",
+          "description": "The review mode selected for this target.",
+          "examples": [
+            "code"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/ReviewTarget",
+          "description": "The exact task result under review.",
+          "examples": [
+            {
+              "taskType": "implementation",
+              "taskRef": "WI-0003|06000000",
+              "result": {
+                "ref": "WI-0003|06000000#result/R-001",
+                "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+              }
+            }
+          ]
+        },
+        "gateId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "The policy gate whose review outcome is being evaluated.",
+          "examples": [
+            "implementation-result",
+            "validation-evidence"
+          ]
+        },
+        "policyRef": {
+          "$ref": "#/$defs/PolicyReference",
+          "description": "The digest-pinned effective https://schemas.handschuh.dev/sdlc/policy-review/v1 document.",
+          "examples": [
+            {
+              "ref": ".sdlc/policies/implementation-review.json",
+              "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+            }
+          ]
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Criterion",
+            "description": "One criterion selected for this review.",
+            "examples": [
+              {
+                "id": "CRIT-001",
+                "statement": "The result stays within the declared implementation scope and non-goals.",
+                "purpose": "Prevent scope expansion.",
+                "required": true,
+                "evidenceRefs": []
+              }
+            ]
+          },
+          "description": "The complete set of criteria the reviewer must evaluate; host validation compares it with policy-required criteria.",
+          "examples": [
+            [
+              {
+                "id": "CRIT-001",
+                "statement": "The result stays within the declared implementation scope and non-goals.",
+                "purpose": "Prevent scope expansion.",
+                "required": true,
+                "evidenceRefs": []
+              }
+            ]
+          ]
+        },
+        "evidenceRequirements": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/EvidenceRequirement",
+            "description": "One evidence input required or considered by this review.",
+            "examples": [
+              {
+                "id": "EVID-001",
+                "kind": "validation",
+                "ref": "WI-0003|08000000#result/R-001",
+                "purpose": "Provide current validation evidence.",
+                "required": true,
+                "minimumTier": "unit"
+              }
+            ]
+          },
+          "description": "Concrete evidence references supplied to the review; policy may impose additional evidence requirements.",
+          "examples": [
+            [
+              {
+                "id": "EVID-001",
+                "kind": "validation",
+                "ref": "WI-0003|08000000#result/R-001",
+                "purpose": "Provide current validation evidence.",
+                "required": true,
+                "minimumTier": "unit"
+              }
+            ],
+            []
+          ]
+        },
+        "nonGoals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/NonGoal",
+            "description": "One explicit review boundary.",
+            "examples": [
+              {
+                "id": "NON-001",
+                "statement": "This review does not approve production deployment."
+              }
+            ]
+          },
+          "description": "Claims and actions explicitly excluded from the review decision.",
+          "examples": [
+            [
+              {
+                "id": "NON-001",
+                "statement": "This review does not approve production deployment."
+              }
+            ],
+            []
+          ]
+        },
+        "context": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ContextInput",
+            "description": "One bounded context reference supplied to prompt construction.",
+            "examples": [
+              {
+                "id": "CTX-001",
+                "kind": "repository-guidance",
+                "ref": ".docs/sdlc/approval-process.draft.md",
+                "purpose": "Explain review and lifecycle boundaries.",
+                "required": true
+              }
+            ]
+          },
+          "description": "Additional declared context available to the reviewer without expanding the target boundary.",
+          "examples": [
+            [
+              {
+                "id": "CTX-001",
+                "kind": "repository-guidance",
+                "ref": ".docs/sdlc/approval-process.draft.md",
+                "purpose": "Explain review and lifecycle boundaries.",
+                "required": true
+              }
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Review the implementation result for correctness.",
+          "reviewKind": "code",
+          "target": {
+            "taskType": "implementation",
+            "taskRef": "WI-0003|06000000",
+            "result": {
+              "ref": "WI-0003|06000000#result/R-001",
+              "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            }
+          },
+          "gateId": "implementation-result",
+          "policyRef": {
+            "ref": ".sdlc/policies/implementation-review.json",
+            "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          },
+          "criteria": [
+            {
+              "id": "CRIT-001",
+              "statement": "The result satisfies its declared scope.",
+              "purpose": "Prevent scope expansion.",
+              "required": true,
+              "evidenceRefs": []
+            }
+          ],
+          "evidenceRequirements": [],
+          "nonGoals": [],
+          "context": []
+        }
+      ]
+    },
+    "Actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "authorityRef"
+      ],
+      "description": "The principal that produced the review decision or recommendation; it may be an agent, operator, service, or other authorized actor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "Stable actor identity used for authorization and audit.",
+          "examples": [
+            "code-review-agent",
+            "operator-42"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Authorization role claimed by the actor for this review.",
+          "examples": [
+            "code-reviewer"
+          ]
+        },
+        "authorityRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference to the authority, profile, or policy under which the actor acted.",
+          "examples": [
+            "repository-policy.code-review.v1"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "code-review-agent",
+          "role": "code-reviewer",
+          "authorityRef": "repository-policy.code-review.v1"
+        }
+      ]
+    },
+    "CriterionEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterionRef",
+        "status",
+        "summary",
+        "evidenceRefs",
+        "findingRefs"
+      ],
+      "description": "The reviewer's evaluation of one declared criterion.",
+      "properties": {
+        "criterionRef": {
+          "type": "string",
+          "pattern": "^#criterion/CRIT-[0-9]{3,}$",
+          "description": "Task-local reference to the criterion being evaluated.",
+          "examples": [
+            "#criterion/CRIT-001"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "satisfied",
+            "unsatisfied",
+            "inconclusive",
+            "not-applicable"
+          ],
+          "description": "The substantive outcome for this criterion; host validation determines whether the status permits the selected decision.",
+          "examples": [
+            "satisfied",
+            "unsatisfied",
+            "inconclusive"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise rationale for the criterion evaluation.",
+          "examples": [
+            "The current validation result reports the required checks as passed."
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Evidence supporting this criterion evaluation.",
+            "examples": [
+              "WI-0003|08000000#result/R-001"
+            ]
+          },
+          "description": "References to evidence actually considered for this criterion.",
+          "examples": [
+            [
+              "WI-0003|08000000#result/R-001"
+            ],
+            []
+          ]
+        },
+        "findingRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^#finding/FIND-[0-9]{3,}$",
+            "description": "Task-local reference to a finding relevant to this evaluation.",
+            "examples": [
+              "#finding/FIND-001"
+            ]
+          },
+          "description": "Findings that explain an unsatisfied, inconclusive, or qualified criterion.",
+          "examples": [
+            [],
+            [
+              "#finding/FIND-001"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "criterionRef": "#criterion/CRIT-001",
+          "status": "satisfied",
+          "summary": "The implementation remains inside the declared owned paths.",
+          "evidenceRefs": [
+            "WI-0003|06000000#result/R-001"
+          ],
+          "findingRefs": []
+        }
+      ]
+    },
+    "Finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "severity",
+        "status",
+        "message",
+        "criterionRefs",
+        "affectedRefs",
+        "evidenceRefs"
+      ],
+      "description": "A stable, actionable observation or defect identified during review.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^FIND-[0-9]{3,}$",
+          "description": "Stable finding identifier used by feedback, rework, and subsequent review.",
+          "examples": [
+            "FIND-001"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "blocker",
+            "required",
+            "advisory",
+            "informational"
+          ],
+          "description": "The seriousness of the finding; policy determines which severities prevent acceptance.",
+          "examples": [
+            "required",
+            "advisory"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "resolved",
+            "waived",
+            "not-applicable"
+          ],
+          "description": "Disposition of the finding at the time of this review; an open blocking finding normally prevents acceptance.",
+          "examples": [
+            "open",
+            "resolved"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Specific statement of the observed issue or positive review observation.",
+          "examples": [
+            "The error path does not preserve the required validation failure code."
+          ]
+        },
+        "requestedChange": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Actionable correction expected when the finding is open and changes are requested.",
+          "examples": [
+            "Preserve the validation failure code and add a focused regression test."
+          ]
+        },
+        "criterionRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^#criterion/CRIT-[0-9]{3,}$",
+            "description": "Task-local criterion reference affected by this finding.",
+            "examples": [
+              "#criterion/CRIT-002"
+            ]
+          },
+          "description": "Criteria to which the finding is relevant.",
+          "examples": [
+            [
+              "#criterion/CRIT-002"
+            ],
+            []
+          ]
+        },
+        "affectedRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Target, path, artifact, or other reference affected by the finding.",
+            "examples": [
+              "WI-0003|06000000#result/R-001"
+            ]
+          },
+          "description": "Precise references that let a rework action locate the affected material.",
+          "examples": [
+            [
+              "WI-0003|06000000#result/R-001"
+            ],
+            []
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Evidence supporting the finding.",
+            "examples": [
+              "WI-0003|08000000#result/R-001"
+            ]
+          },
+          "description": "References supporting the factual basis of the finding.",
+          "examples": [
+            [
+              "WI-0003|08000000#result/R-001"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "FIND-001",
+          "severity": "required",
+          "status": "open",
+          "message": "The error path does not preserve the required validation failure code.",
+          "requestedChange": "Preserve the validation failure code and add a focused regression test.",
+          "criterionRefs": [
+            "#criterion/CRIT-002"
+          ],
+          "affectedRefs": [
+            "WI-0003|06000000#result/R-001"
+          ],
+          "evidenceRefs": [
+            "WI-0003|08000000#result/R-001"
+          ]
+        }
+      ]
+    },
+    "ReviewEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "claim",
+        "tier",
+        "source"
+      ],
+      "description": "A bounded evidence item actually considered or produced during the review.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^EVID-[0-9]{3,}$",
+          "description": "Stable identifier for the evidence item within the review result.",
+          "examples": [
+            "EVID-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "target-result",
+            "source-result",
+            "validation",
+            "test",
+            "diff",
+            "repository-state",
+            "command",
+            "artifact",
+            "policy",
+            "other"
+          ],
+          "description": "The semantic kind of the evidence item.",
+          "examples": [
+            "validation",
+            "command"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "The durable reference to the evidence source.",
+          "examples": [
+            "WI-0003|08000000#result/R-001"
+          ]
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The bounded claim supported by this evidence item.",
+          "examples": [
+            "The current validation result records successful required checks."
+          ]
+        },
+        "tier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The evidence strength established by the source, not raised by the review.",
+          "examples": [
+            "unit"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "target-result",
+            "referenced-result",
+            "repository",
+            "host",
+            "agent"
+          ],
+          "description": "Whether the evidence came from the target, another durable result, repository state, host validation, or the reviewing agent.",
+          "examples": [
+            "referenced-result",
+            "host"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "EVID-001",
+          "kind": "validation",
+          "ref": "WI-0003|08000000#result/R-001",
+          "claim": "The current validation result records successful required checks.",
+          "tier": "unit",
+          "source": "referenced-result"
+        }
+      ]
+    },
+    "Reproducibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policyDigest",
+        "renderedPromptDigest",
+        "agentConfigurationDigest",
+        "executionReceiptDigest"
+      ],
+      "description": "Content digests that allow the host to reproduce which policy, rendered prompt, agent configuration, and execution receipt governed the result.",
+      "properties": {
+        "policyDigest": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Digest of the effective https://schemas.handschuh.dev/sdlc/policy-review/v1 document.",
+          "examples": [
+            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          ]
+        },
+        "renderedPromptDigest": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Digest of the exact prompt or structured request sent to the reviewer.",
+          "examples": [
+            "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+          ]
+        },
+        "agentConfigurationDigest": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Digest of the resolved agent configuration that will later translate into llm-request/v1.",
+          "examples": [
+            "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+          ]
+        },
+        "executionReceiptDigest": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Digest of the durable execution receipt for the review invocation.",
+          "examples": [
+            "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "policyDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+          "renderedPromptDigest": "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+          "agentConfigurationDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+          "executionReceiptDigest": "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+        }
+      ]
+    },
+    "ExecutionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionId",
+        "status",
+        "startedAt",
+        "finishedAt"
+      ],
+      "description": "A bounded receipt for one review-agent invocation, without embedding provider credentials or an unbounded prompt or response.",
+      "properties": {
+        "executionId": {
+          "type": "string",
+          "pattern": "^EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable identifier for this review execution.",
+          "examples": [
+            "EXEC-REVIEW-001"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "succeeded",
+            "failed",
+            "blocked",
+            "aborted"
+          ],
+          "description": "Operational outcome of the review invocation.",
+          "examples": [
+            "succeeded",
+            "blocked"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp at which the review invocation began.",
+          "examples": [
+            "2026-10-16T00:00:00Z"
+          ]
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp at which the review invocation ended.",
+          "examples": [
+            "2026-10-16T00:02:00Z"
+          ]
+        },
+        "requestRef": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "Optional durable reference to the bounded request record translated into llm-request/v1.",
+          "examples": [
+            ".workflow/reviews/EXEC-REVIEW-001/request.json"
+          ]
+        },
+        "responseRef": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "Optional durable reference to the bounded structured response record.",
+          "examples": [
+            ".workflow/reviews/EXEC-REVIEW-001/response.json"
+          ]
+        },
+        "failureCode": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Optional sanitized stable failure code when execution did not succeed.",
+          "examples": [
+            "OUTPUT_INVALID",
+            "PROVIDER_REQUEST_FAILED"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "executionId": "EXEC-REVIEW-001",
+          "status": "succeeded",
+          "startedAt": "2026-10-16T00:00:00Z",
+          "finishedAt": "2026-10-16T00:02:00Z",
+          "requestRef": ".workflow/reviews/EXEC-REVIEW-001/request.json",
+          "responseRef": ".workflow/reviews/EXEC-REVIEW-001/response.json"
+        }
+      ]
+    },
+    "ReviewResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "decision",
+        "summary",
+        "actor",
+        "criteriaEvaluations",
+        "findings",
+        "evidence",
+        "limitations",
+        "nonClaims",
+        "reproducibility",
+        "executionReceipt"
+      ],
+      "description": "The retrospective review result and decision against the exact intent target.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "blocked",
+            "failed",
+            "invalid",
+            "inconclusive"
+          ],
+          "description": "Lifecycle of the review result itself; this is distinct from the decision and from the target task lifecycle.",
+          "examples": [
+            "complete",
+            "blocked"
+          ]
+        },
+        "decision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "accepted",
+            "changes_requested",
+            "rejected",
+            "abstained",
+            null
+          ],
+          "description": "The agent's review disposition. Null is used when execution is blocked or otherwise cannot produce a decision; host policy determines whether abstention is allowed.",
+          "examples": [
+            "accepted",
+            "changes_requested",
+            null
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise explanation of the review outcome and its material limitations.",
+          "examples": [
+            "The implementation satisfies the required review criteria; no blocking findings remain."
+          ]
+        },
+        "actor": {
+          "$ref": "#/$defs/Actor",
+          "description": "The principal that produced this review result.",
+          "examples": [
+            {
+              "id": "code-review-agent",
+              "role": "code-reviewer",
+              "authorityRef": "repository-policy.code-review.v1"
+            }
+          ]
+        },
+        "criteriaEvaluations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/CriterionEvaluation",
+            "description": "Evaluation of one declared criterion.",
+            "examples": [
+              {
+                "criterionRef": "#criterion/CRIT-001",
+                "status": "satisfied",
+                "summary": "The implementation remains in scope.",
+                "evidenceRefs": [],
+                "findingRefs": []
+              }
+            ]
+          },
+          "description": "Criterion evaluations produced by the reviewer; host validation requires complete coverage before accepting a required gate.",
+          "examples": [
+            [
+              {
+                "criterionRef": "#criterion/CRIT-001",
+                "status": "satisfied",
+                "summary": "The implementation remains in scope.",
+                "evidenceRefs": [],
+                "findingRefs": []
+              }
+            ],
+            []
+          ]
+        },
+        "findings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Finding",
+            "description": "One actionable review finding.",
+            "examples": [
+              {
+                "id": "FIND-001",
+                "severity": "required",
+                "status": "open",
+                "message": "The implementation does not preserve the required failure code.",
+                "criterionRefs": [
+                  "#criterion/CRIT-002"
+                ],
+                "affectedRefs": [],
+                "evidenceRefs": []
+              }
+            ]
+          },
+          "description": "All material observations from the review, including findings that are advisory or resolved.",
+          "examples": [
+            [],
+            [
+              {
+                "id": "FIND-001",
+                "severity": "required",
+                "status": "open",
+                "message": "The implementation does not preserve the required failure code.",
+                "criterionRefs": [
+                  "#criterion/CRIT-002"
+                ],
+                "affectedRefs": [],
+                "evidenceRefs": []
+              }
+            ]
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ReviewEvidence",
+            "description": "One bounded evidence item considered or produced by the review.",
+            "examples": [
+              {
+                "id": "EVID-001",
+                "kind": "validation",
+                "ref": "WI-0003|08000000#result/R-001",
+                "claim": "Required validation checks passed.",
+                "tier": "unit",
+                "source": "referenced-result"
+              }
+            ]
+          },
+          "description": "Evidence references and bounded claims supporting the review result; this does not raise source evidence tiers.",
+          "examples": [
+            [],
+            [
+              {
+                "id": "EVID-001",
+                "kind": "validation",
+                "ref": "WI-0003|08000000#result/R-001",
+                "claim": "Required validation checks passed.",
+                "tier": "unit",
+                "source": "referenced-result"
+              }
+            ]
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A limitation on what this review result can establish.",
+            "examples": [
+              "The review does not establish provider or production behavior."
+            ]
+          },
+          "description": "Limitations that remain true even when the review decision is accepted.",
+          "examples": [
+            [
+              "The review does not establish provider or production behavior."
+            ]
+          ]
+        },
+        "nonClaims": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An explicit claim that this review result does not make.",
+            "examples": [
+              "This decision does not authorize deployment."
+            ]
+          },
+          "description": "Explicit non-claims preventing consumers from treating review as broader assurance or lifecycle mutation.",
+          "examples": [
+            [
+              "This decision does not authorize deployment.",
+              "This decision does not mutate the implementation task lifecycle."
+            ]
+          ]
+        },
+        "reproducibility": {
+          "$ref": "#/$defs/Reproducibility",
+          "description": "Digests needed to reproduce the policy and agent request that produced this result.",
+          "examples": [
+            {
+              "policyDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+              "renderedPromptDigest": "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+              "agentConfigurationDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+              "executionReceiptDigest": "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+            }
+          ]
+        },
+        "executionReceipt": {
+          "$ref": "#/$defs/ExecutionReceipt",
+          "description": "Receipt for the bounded review-agent execution.",
+          "examples": [
+            {
+              "executionId": "EXEC-REVIEW-001",
+              "status": "succeeded",
+              "startedAt": "2026-10-16T00:00:00Z",
+              "finishedAt": "2026-10-16T00:02:00Z"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "complete",
+          "decision": "accepted",
+          "summary": "All required criteria are satisfied.",
+          "actor": {
+            "id": "code-review-agent",
+            "role": "code-reviewer",
+            "authorityRef": "repository-policy.code-review.v1"
+          },
+          "criteriaEvaluations": [],
+          "findings": [],
+          "evidence": [],
+          "limitations": [
+            "The review does not establish production behavior."
+          ],
+          "nonClaims": [
+            "This decision does not mutate task lifecycle."
+          ],
+          "reproducibility": {
+            "policyDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+            "renderedPromptDigest": "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+            "agentConfigurationDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "executionReceiptDigest": "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+          },
+          "executionReceipt": {
+            "executionId": "EXEC-REVIEW-001",
+            "status": "succeeded",
+            "startedAt": "2026-10-16T00:00:00Z",
+            "finishedAt": "2026-10-16T00:02:00Z"
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Review the implementation result for correctness.",
+        "reviewKind": "code",
+        "target": {
+          "taskType": "implementation",
+          "taskRef": "WI-0003|06000000",
+          "result": {
+            "ref": "WI-0003|06000000#result/R-001",
+            "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        },
+        "gateId": "implementation-result",
+        "policyRef": {
+          "ref": ".sdlc/policies/implementation-review.json",
+          "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        },
+        "criteria": [
+          {
+            "id": "CRIT-001",
+            "statement": "The result satisfies its declared scope.",
+            "purpose": "Prevent scope expansion.",
+            "required": true,
+            "evidenceRefs": []
+          }
+        ],
+        "evidenceRequirements": [],
+        "nonGoals": [],
+        "context": []
+      },
+      "result": {
+        "status": "complete",
+        "decision": "accepted",
+        "summary": "All required criteria are satisfied.",
+        "actor": {
+          "id": "code-review-agent",
+          "role": "code-reviewer",
+          "authorityRef": "repository-policy.code-review.v1"
+        },
+        "criteriaEvaluations": [
+          {
+            "criterionRef": "#criterion/CRIT-001",
+            "status": "satisfied",
+            "summary": "The result satisfies its declared scope.",
+            "evidenceRefs": [],
+            "findingRefs": []
+          }
+        ],
+        "findings": [],
+        "evidence": [],
+        "limitations": [
+          "The review does not establish production behavior."
+        ],
+        "nonClaims": [
+          "This decision does not mutate task lifecycle."
+        ],
+        "reproducibility": {
+          "policyDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+          "renderedPromptDigest": "sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+          "agentConfigurationDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+          "executionReceiptDigest": "sha256:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+        },
+        "executionReceipt": {
+          "executionId": "EXEC-REVIEW-001",
+          "status": "succeeded",
+          "startedAt": "2026-10-16T00:00:00Z",
+          "finishedAt": "2026-10-16T00:02:00Z"
+        }
+      }
+    }
+  ]
+}

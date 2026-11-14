@@ -1,0 +1,1539 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-decision/v1",
+  "title": "SDLC Task Decision v1",
+  "description": "The task-specific payload for resolving one bounded design, compatibility, policy, or naming decision. It has exactly two root properties: intent defines the question and alternatives to evaluate, and result records the selected outcome and its consequences, posture, and affected references.",
+  "$comment": "Decision completion and review are separate. A selected outcome may be recorded while a review is pending or changes are requested. Impact and confidence are integer scores from 0 through 100. The sdlc host may additionally verify that references resolve and that review and gate state follow the applicable policy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/DecisionIntent",
+      "description": "The prospective decision boundary.",
+      "examples": [
+        {
+          "question": {
+            "id": "DQ-001",
+            "statement": "Which research-result boundaries must be resolved before downstream design work proceeds?",
+            "reason": "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions.",
+            "impact": 90,
+            "confidence": 94
+          },
+          "alternatives": [
+            {
+              "id": "ALT-001",
+              "name": "findings-only",
+              "description": "Treat findings as the primary research result and handle questions and recommendations informally.",
+              "advantages": [
+                "Smaller result shape."
+              ],
+              "disadvantages": [
+                "Unresolved uncertainty and proposed follow-up become difficult to track."
+              ],
+              "impact": 70,
+              "confidence": 95,
+              "evidenceRefs": [
+                "F-001"
+              ]
+            },
+            {
+              "id": "ALT-002",
+              "name": "separated-research-results",
+              "description": "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections.",
+              "advantages": [
+                "Preserves provenance and state distinctions."
+              ],
+              "disadvantages": [
+                "Requires more structured result data."
+              ],
+              "impact": 85,
+              "confidence": 92,
+              "evidenceRefs": [
+                "F-001",
+                "Q-002"
+              ]
+            }
+          ],
+          "criteria": [
+            {
+              "id": "CRIT-001",
+              "name": "provenance",
+              "description": "Research conclusions can be traced to durable sources.",
+              "weight": 30
+            },
+            {
+              "id": "CRIT-002",
+              "name": "uncertainty-visibility",
+              "description": "Unresolved questions remain explicit and actionable.",
+              "weight": 30
+            }
+          ],
+          "assumptions": []
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/DecisionResult",
+      "description": "The decision outcome and its current disposition.",
+      "examples": [
+        {
+          "selected": {
+            "alternativeId": "ALT-002",
+            "rationale": "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof.",
+            "impact": 85,
+            "confidence": 92,
+            "decisionRefs": [
+              "F-001",
+              "Q-002"
+            ]
+          },
+          "consequences": {
+            "positive": [
+              "Design tasks can reference specific findings and questions."
+            ],
+            "negative": [
+              "Research payloads require more structured records."
+            ],
+            "risks": [
+              {
+                "id": "RISK-001",
+                "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+                "impact": 70,
+                "confidence": 90,
+                "mitigation": "Keep review-gate state and review actions separate from decision status."
+              }
+            ]
+          },
+          "reversibility": {
+            "level": "reversible",
+            "description": "The result shape can be changed before downstream schemas depend on it.",
+            "conditions": [
+              "Review the decision before implementing dependent task schemas."
+            ]
+          },
+          "affectedRefs": [
+            "sdlc/schemas/sdlc-task-research/v1/sdlc-task-research.schema.json",
+            ".docs/sdlc/approval-process.draft.md"
+          ],
+          "status": "selected",
+          "approval": {
+            "required": true,
+            "state": "pending",
+            "gateId": "contract",
+            "reviewTaskRef": null,
+            "approvalRefs": []
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "Score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "An integer score from 0 through 100, where 0 is none and 100 is maximum.",
+      "examples": [
+        0,
+        50,
+        100
+      ]
+    },
+    "Question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "reason",
+        "impact",
+        "confidence"
+      ],
+      "description": "The bounded decision question and its assessed importance.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^DQ-[0-9]{3,}$",
+          "description": "Stable identifier for the decision question.",
+          "examples": [
+            "DQ-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The precise question the decision must answer.",
+          "examples": [
+            "Which research-result boundaries must be resolved before downstream design work proceeds?"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this decision is required.",
+          "examples": [
+            "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions."
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated consequence of leaving this decision unresolved, scored from 0 to 100.",
+          "examples": [
+            90
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that the question and its assessed impact are accurate, scored from 0 to 100.",
+          "examples": [
+            94
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "DQ-001",
+          "statement": "Which research-result boundaries must be resolved before downstream design work proceeds?",
+          "reason": "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions.",
+          "impact": 90,
+          "confidence": 94
+        }
+      ]
+    },
+    "Alternative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "advantages",
+        "disadvantages",
+        "impact",
+        "confidence"
+      ],
+      "description": "One decision alternative evaluated against the declared criteria.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ALT-[0-9]{3,}$",
+          "description": "Stable identifier for the alternative.",
+          "examples": [
+            "ALT-001"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case name for the alternative.",
+          "examples": [
+            "findings-only",
+            "separated-research-results"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this alternative would do.",
+          "examples": [
+            "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections."
+          ]
+        },
+        "advantages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Expected benefits of this alternative.",
+          "examples": [
+            [
+              "Preserves provenance and state distinctions."
+            ]
+          ]
+        },
+        "disadvantages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Expected costs, drawbacks, or trade-offs of this alternative.",
+          "examples": [
+            [
+              "Requires more structured result data."
+            ]
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated significance of this alternative to the work, scored from 0 to 100.",
+          "examples": [
+            85
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence in the assessment of this alternative, scored from 0 to 100.",
+          "examples": [
+            92
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:SRC|F|Q)-[0-9]{3,}$"
+          },
+          "description": "Research source, finding, or question identifiers supporting this alternative.",
+          "examples": [
+            [
+              "F-001",
+              "Q-002"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "ALT-002",
+          "name": "separated-research-results",
+          "description": "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections.",
+          "advantages": [
+            "Preserves provenance and state distinctions."
+          ],
+          "disadvantages": [
+            "Requires more structured result data."
+          ],
+          "impact": 85,
+          "confidence": 92,
+          "evidenceRefs": [
+            "F-001",
+            "Q-002"
+          ]
+        }
+      ]
+    },
+    "Criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "weight"
+      ],
+      "description": "A weighted criterion used to compare decision alternatives.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CRIT-[0-9]{3,}$",
+          "description": "Stable identifier for the criterion.",
+          "examples": [
+            "CRIT-001"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case criterion name.",
+          "examples": [
+            "provenance",
+            "uncertainty-visibility"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the criterion measures when comparing alternatives.",
+          "examples": [
+            "Unresolved questions remain explicit and actionable."
+          ]
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Relative importance of this criterion, scored from 1 through 100. The sdlc host may validate aggregate weighting policy.",
+          "examples": [
+            30
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "CRIT-001",
+          "name": "provenance",
+          "description": "Research conclusions can be traced to durable sources.",
+          "weight": 30
+        }
+      ]
+    },
+    "SelectedOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alternativeId",
+        "rationale",
+        "impact",
+        "confidence"
+      ],
+      "description": "The selected alternative and rationale for choosing it.",
+      "properties": {
+        "alternativeId": {
+          "type": "string",
+          "pattern": "^ALT-[0-9]{3,}$",
+          "description": "Identifier of the selected alternative. The sdlc host verifies that it matches one declared alternative.",
+          "examples": [
+            "ALT-002"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reason the selected alternative best satisfies the decision criteria.",
+          "examples": [
+            "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof."
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated significance of the selected outcome, scored from 0 to 100.",
+          "examples": [
+            85
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that the selected outcome is appropriate, scored from 0 to 100.",
+          "examples": [
+            92
+          ]
+        },
+        "decisionRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:SRC|F|Q|CRIT)-[0-9]{3,}$"
+          },
+          "description": "Source, finding, question, or criterion identifiers supporting the selected outcome.",
+          "examples": [
+            [
+              "F-001",
+              "Q-002"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "alternativeId": "ALT-002",
+          "rationale": "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof.",
+          "impact": 85,
+          "confidence": 92,
+          "decisionRefs": [
+            "F-001",
+            "Q-002"
+          ]
+        }
+      ]
+    },
+    "Assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "impact",
+        "confidence"
+      ],
+      "description": "An assumption used during decision evaluation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ASM-[0-9]{3,}$",
+          "description": "Stable identifier for the assumption.",
+          "examples": [
+            "ASM-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The assumption being made.",
+          "examples": [
+            "Downstream task consumers can preserve references to earlier research results."
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated consequence if the assumption is false, scored from 0 to 100.",
+          "examples": [
+            60
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that the assumption is reasonable, scored from 0 to 100.",
+          "examples": [
+            75
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:SRC|F|Q)-[0-9]{3,}$"
+          },
+          "description": "Optional source, finding, or question identifiers related to the assumption.",
+          "examples": [
+            [
+              "SRC-001"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "ASM-001",
+          "statement": "Downstream task consumers can preserve references to earlier research results.",
+          "impact": 60,
+          "confidence": 75,
+          "evidenceRefs": []
+        }
+      ]
+    },
+    "Consequences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "positive",
+        "negative",
+        "risks"
+      ],
+      "description": "Expected effects and risks of the selected outcome.",
+      "properties": {
+        "positive": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Expected benefits of the selected outcome.",
+          "examples": [
+            [
+              "Design tasks can reference specific findings and questions."
+            ]
+          ]
+        },
+        "negative": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Expected costs, limitations, or trade-offs of the selected outcome.",
+          "examples": [
+            [
+              "Research payloads require more structured records."
+            ]
+          ]
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "description",
+              "impact",
+              "confidence"
+            ],
+            "description": "A risk associated with the selected decision outcome.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^RISK-[0-9]{3,}$",
+                "description": "Stable identifier for the risk.",
+                "examples": [
+                  "RISK-001"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The risk statement.",
+                "examples": [
+                  "Recommendations may be treated as decisions without review-gate state."
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence if the risk occurs, scored from 0 to 100.",
+                "examples": [
+                  70
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that this risk is relevant, scored from 0 to 100.",
+                "examples": [
+                  90
+                ]
+              },
+              "mitigation": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional mitigation or follow-up action.",
+                "examples": [
+                  "Keep approval state separate from decision status."
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "RISK-001",
+                "description": "Recommendations may be treated as decisions without review-gate state.",
+                "impact": 70,
+                "confidence": 90
+              }
+            ]
+          },
+          "description": "Risks introduced or left unresolved by the selected outcome.",
+          "examples": [
+            [
+              {
+                "id": "RISK-001",
+                "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+                "impact": 70,
+                "confidence": 90
+              }
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "positive": [
+            "Design tasks can reference specific findings and questions."
+          ],
+          "negative": [
+            "Research payloads require more structured records."
+          ],
+          "risks": []
+        }
+      ]
+    },
+    "Risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "impact",
+        "confidence"
+      ],
+      "description": "A risk associated with the selected decision outcome.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^RISK-[0-9]{3,}$",
+          "description": "Stable identifier for the risk.",
+          "examples": [
+            "RISK-001"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The risk statement.",
+          "examples": [
+            "Consumers may treat recommendations as decisions unless review-gate state remains separate."
+          ]
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Estimated consequence if the risk occurs, scored from 0 to 100.",
+          "examples": [
+            70
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Confidence that this risk is relevant, scored from 0 to 100.",
+          "examples": [
+            90
+          ]
+        },
+        "mitigation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional mitigation or follow-up action for the risk.",
+          "examples": [
+            "Keep review-gate state and review actions separate from decision status."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "RISK-001",
+          "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+          "impact": 70,
+          "confidence": 90,
+          "mitigation": "Keep review-gate state and review actions separate from decision status."
+        }
+      ]
+    },
+    "Reversibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "description",
+        "conditions"
+      ],
+      "description": "The expected effort and conditions for changing the decision later.",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "reversible",
+            "costly",
+            "irreversible"
+          ],
+          "description": "Qualitative reversibility category. Reversible changes can be revisited with limited cost; costly changes require material rework; irreversible changes cannot be safely undone after commitment.",
+          "examples": [
+            "reversible",
+            "costly"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the selected reversibility level applies.",
+          "examples": [
+            "The result shape can be changed before downstream schemas depend on it."
+          ]
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Conditions or safeguards that preserve reversibility or define when a change becomes costly.",
+          "examples": [
+            [
+              "Review the decision before implementing dependent task schemas."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "level": "reversible",
+          "description": "The result shape can be changed before downstream schemas depend on it.",
+          "conditions": [
+            "Review the decision before implementing dependent task schemas."
+          ]
+        }
+      ]
+    },
+    "Approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "state",
+        "gateId",
+        "reviewTaskRef",
+        "approvalRefs"
+      ],
+      "description": "Approval posture for the decision. This is a summary and routing field; the authoritative approval action remains a distinct post-work task.",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether policy requires a separate approval action before the decision may govern downstream work.",
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "notRequired",
+            "pending",
+            "accepted",
+            "changesRequested",
+            "rejected",
+            "superseded"
+          ],
+          "description": "Current approval posture. Accepted means the applicable gate accepted the referenced result; it does not mean the decision task is complete or implemented.",
+          "examples": [
+            "pending",
+            "accepted"
+          ]
+        },
+        "gateId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Stable policy gate identifier governing the approval action.",
+          "examples": [
+            "contract",
+            "architecture"
+          ]
+        },
+        "reviewTaskRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$",
+          "description": "Task UID of the distinct post-work review action, or null while no review task has been created.",
+          "examples": [
+            null,
+            "WI-0003-29000000"
+          ]
+        },
+        "approvalRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Durable references to approval decisions, review results, or policy records.",
+          "examples": [
+            [],
+            [
+              ".workflow/results/WI-0003-29000000-review.json"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "required": true,
+          "state": "pending",
+          "gateId": "contract",
+          "reviewTaskRef": null,
+          "approvalRefs": []
+        }
+      ]
+    },
+    "DecisionIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "alternatives",
+        "criteria",
+        "assumptions"
+      ],
+      "description": "The bounded decision question, alternatives, evaluation criteria, and assumptions to assess.",
+      "properties": {
+        "question": {
+          "$ref": "#/$defs/Question",
+          "description": "The bounded decision question being resolved.",
+          "examples": [
+            {
+              "id": "DQ-001",
+              "statement": "Which research-result boundaries must be resolved before downstream design work proceeds?",
+              "reason": "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions.",
+              "impact": 90,
+              "confidence": 94
+            }
+          ],
+          "x-field-role": "authoritative"
+        },
+        "alternatives": {
+          "type": "array",
+          "minItems": 2,
+          "description": "The materially different options considered for the decision. At least two alternatives are required so the decision records a choice rather than only a conclusion.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "description",
+              "advantages",
+              "disadvantages",
+              "impact",
+              "confidence"
+            ],
+            "description": "One decision alternative evaluated against the declared criteria.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^ALT-[0-9]{3,}$",
+                "description": "Stable identifier for the alternative.",
+                "examples": [
+                  "ALT-001"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case name for the alternative.",
+                "examples": [
+                  "findings-only"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What this alternative would do.",
+                "examples": [
+                  "Keep research findings as the primary result."
+                ]
+              },
+              "advantages": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Expected benefits of this alternative.",
+                "examples": [
+                  [
+                    "Smaller result shape."
+                  ]
+                ]
+              },
+              "disadvantages": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Expected costs or trade-offs of this alternative.",
+                "examples": [
+                  [
+                    "Unresolved uncertainty becomes harder to track."
+                  ]
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated significance of this alternative, scored from 0 to 100.",
+                "examples": [
+                  70
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence in the assessment of this alternative, scored from 0 to 100.",
+                "examples": [
+                  95
+                ]
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:SRC|F|Q)-[0-9]{3,}$"
+                },
+                "description": "Supporting source, finding, or question identifiers.",
+                "examples": [
+                  [
+                    "F-001"
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "ALT-001",
+                "name": "findings-only",
+                "description": "Keep research findings as the primary result.",
+                "advantages": [
+                  "Smaller result shape."
+                ],
+                "disadvantages": [
+                  "Unresolved uncertainty becomes harder to track."
+                ],
+                "impact": 70,
+                "confidence": 95
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "ALT-001",
+                "name": "findings-only",
+                "description": "Treat findings as the primary research result and handle questions and recommendations informally.",
+                "advantages": [
+                  "Smaller result shape."
+                ],
+                "disadvantages": [
+                  "Unresolved uncertainty and proposed follow-up become difficult to track."
+                ],
+                "impact": 70,
+                "confidence": 95
+              },
+              {
+                "id": "ALT-002",
+                "name": "separated-research-results",
+                "description": "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections.",
+                "advantages": [
+                  "Preserves provenance and state distinctions."
+                ],
+                "disadvantages": [
+                  "Requires more structured result data."
+                ],
+                "impact": 85,
+                "confidence": 92
+              }
+            ]
+          ],
+          "x-field-role": "authoritative"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The criteria used to compare alternatives. Criteria make the decision rationale inspectable rather than purely asserted.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "description",
+              "weight"
+            ],
+            "description": "A weighted criterion used to compare decision alternatives.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^CRIT-[0-9]{3,}$",
+                "description": "Stable identifier for the criterion.",
+                "examples": [
+                  "CRIT-001"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case criterion name.",
+                "examples": [
+                  "provenance"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the criterion measures.",
+                "examples": [
+                  "Research conclusions can be traced to durable sources."
+                ]
+              },
+              "weight": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Relative importance of the criterion, scored from 1 to 100.",
+                "examples": [
+                  30
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "CRIT-001",
+                "name": "provenance",
+                "description": "Research conclusions can be traced to durable sources.",
+                "weight": 30
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "CRIT-001",
+                "name": "provenance",
+                "description": "Research conclusions can be traced to durable sources.",
+                "weight": 30
+              },
+              {
+                "id": "CRIT-002",
+                "name": "uncertainty-visibility",
+                "description": "Unresolved questions remain explicit and actionable.",
+                "weight": 30
+              }
+            ]
+          ],
+          "x-field-role": "authoritative"
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Assumptions used while evaluating alternatives or selecting the outcome. Assumptions are not established facts unless supported by separate evidence.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement",
+              "impact",
+              "confidence"
+            ],
+            "description": "An assumption used during decision evaluation.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^ASM-[0-9]{3,}$",
+                "description": "Stable identifier for the assumption.",
+                "examples": [
+                  "ASM-001"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The assumption being made.",
+                "examples": [
+                  "Downstream consumers can preserve research references."
+                ]
+              },
+              "impact": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated consequence if the assumption is false, scored from 0 to 100.",
+                "examples": [
+                  60
+                ]
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence that the assumption is reasonable, scored from 0 to 100.",
+                "examples": [
+                  75
+                ]
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:SRC|F|Q)-[0-9]{3,}$"
+                },
+                "description": "Related source, finding, or question identifiers.",
+                "examples": [
+                  [
+                    "SRC-001"
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "ASM-001",
+                "statement": "Downstream consumers can preserve research references.",
+                "impact": 60,
+                "confidence": 75
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "ASM-001",
+                "statement": "Downstream task consumers can preserve references to earlier research results.",
+                "impact": 60,
+                "confidence": 75
+              }
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "question": {
+            "id": "DQ-001",
+            "statement": "Which research-result boundaries must be resolved before downstream design work proceeds?",
+            "reason": "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions.",
+            "impact": 90,
+            "confidence": 94
+          },
+          "alternatives": [
+            {
+              "id": "ALT-001",
+              "name": "findings-only",
+              "description": "Treat findings as the primary research result and handle questions and recommendations informally.",
+              "advantages": [
+                "Smaller result shape."
+              ],
+              "disadvantages": [
+                "Unresolved uncertainty and proposed follow-up become difficult to track."
+              ],
+              "impact": 70,
+              "confidence": 95,
+              "evidenceRefs": [
+                "F-001"
+              ]
+            },
+            {
+              "id": "ALT-002",
+              "name": "separated-research-results",
+              "description": "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections.",
+              "advantages": [
+                "Preserves provenance and state distinctions."
+              ],
+              "disadvantages": [
+                "Requires more structured result data."
+              ],
+              "impact": 85,
+              "confidence": 92,
+              "evidenceRefs": [
+                "F-001",
+                "Q-002"
+              ]
+            }
+          ],
+          "criteria": [
+            {
+              "id": "CRIT-001",
+              "name": "provenance",
+              "description": "Research conclusions can be traced to durable sources.",
+              "weight": 30
+            },
+            {
+              "id": "CRIT-002",
+              "name": "uncertainty-visibility",
+              "description": "Unresolved questions remain explicit and actionable.",
+              "weight": 30
+            }
+          ],
+          "assumptions": []
+        }
+      ]
+    },
+    "DecisionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selected",
+        "consequences",
+        "reversibility",
+        "affectedRefs",
+        "status",
+        "approval"
+      ],
+      "description": "The selected decision outcome, consequences, reversibility, affected references, and approval posture produced by the decision task.",
+      "properties": {
+        "selected": {
+          "$ref": "#/$defs/SelectedOutcome",
+          "description": "The selected alternative and the rationale for choosing it. Selection is not approval and does not apply the decision.",
+          "examples": [
+            {
+              "alternativeId": "ALT-002",
+              "rationale": "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof.",
+              "impact": 85,
+              "confidence": 92,
+              "decisionRefs": [
+                "F-001",
+                "Q-002"
+              ]
+            }
+          ],
+          "x-field-role": "authoritative"
+        },
+        "consequences": {
+          "$ref": "#/$defs/Consequences",
+          "description": "Expected positive and negative consequences, risks, and follow-up implications of the selected outcome.",
+          "examples": [
+            {
+              "positive": [
+                "Design tasks can reference specific findings and questions."
+              ],
+              "negative": [
+                "Research payloads require more structured records."
+              ],
+              "risks": [
+                {
+                  "id": "RISK-001",
+                  "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+                  "impact": 70,
+                  "confidence": 90
+                }
+              ]
+            }
+          ],
+          "x-field-role": "authoritative"
+        },
+        "reversibility": {
+          "$ref": "#/$defs/Reversibility",
+          "description": "The expected cost and process for changing the selected decision later.",
+          "examples": [
+            {
+              "level": "reversible",
+              "description": "The result shape can be changed before downstream schemas depend on it.",
+              "conditions": [
+                "Review the decision before implementing dependent task schemas."
+              ]
+            }
+          ],
+          "x-field-role": "authoritative"
+        },
+        "affectedRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Requirements, tasks, contracts, or repository paths affected by this decision.",
+          "examples": [
+            [
+              "sdlc/schemas/sdlc-task-research/v1/sdlc-task-research.schema.json",
+              ".docs/sdlc/approval-process.draft.md"
+            ],
+            []
+          ],
+          "x-field-role": "authoritative"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "selected",
+            "implemented",
+            "superseded",
+            "deferred"
+          ],
+          "description": "Lifecycle state of the decision action. Selected means an outcome was chosen; implemented means the decision has been applied by a separate action, not merely recorded here.",
+          "examples": [
+            "selected",
+            "proposed"
+          ],
+          "x-field-role": "authoritative"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval",
+          "description": "Review-gate posture for the selected decision. This field records a decision-task recommendation and does not replace the distinct post-work review action used by approval workflows.",
+          "examples": [
+            {
+              "required": true,
+              "state": "pending",
+              "gateId": "contract",
+              "reviewTaskRef": null,
+              "approvalRefs": []
+            }
+          ],
+          "x-field-role": "authoritative"
+        }
+      },
+      "examples": [
+        {
+          "selected": {
+            "alternativeId": "ALT-002",
+            "rationale": "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof.",
+            "impact": 85,
+            "confidence": 92,
+            "decisionRefs": [
+              "F-001",
+              "Q-002"
+            ]
+          },
+          "consequences": {
+            "positive": [
+              "Design tasks can reference specific findings and questions."
+            ],
+            "negative": [
+              "Research payloads require more structured records."
+            ],
+            "risks": [
+              {
+                "id": "RISK-001",
+                "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+                "impact": 70,
+                "confidence": 90,
+                "mitigation": "Keep review-gate state and review actions separate from decision status."
+              }
+            ]
+          },
+          "reversibility": {
+            "level": "reversible",
+            "description": "The result shape can be changed before downstream schemas depend on it.",
+            "conditions": [
+              "Review the decision before implementing dependent task schemas."
+            ]
+          },
+          "affectedRefs": [
+            "sdlc/schemas/sdlc-task-research/v1/sdlc-task-research.schema.json",
+            ".docs/sdlc/approval-process.draft.md"
+          ],
+          "status": "selected",
+          "approval": {
+            "required": true,
+            "state": "pending",
+            "gateId": "contract",
+            "reviewTaskRef": null,
+            "approvalRefs": []
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "question": {
+          "id": "DQ-001",
+          "statement": "Which research-result boundaries must be resolved before downstream design work proceeds?",
+          "reason": "Prevent design tasks from relying on implicit assumptions or unreviewed research conclusions.",
+          "impact": 90,
+          "confidence": 94
+        },
+        "alternatives": [
+          {
+            "id": "ALT-001",
+            "name": "findings-only",
+            "description": "Treat findings as the primary research result and handle questions and recommendations informally.",
+            "advantages": [
+              "Smaller result shape."
+            ],
+            "disadvantages": [
+              "Unresolved uncertainty and proposed follow-up become difficult to track."
+            ],
+            "impact": 70,
+            "confidence": 95,
+            "evidenceRefs": [
+              "F-001"
+            ]
+          },
+          {
+            "id": "ALT-002",
+            "name": "separated-research-results",
+            "description": "Keep findings, unresolved questions, recommendations, and evidence limitations as separate collections.",
+            "advantages": [
+              "Preserves provenance and state distinctions."
+            ],
+            "disadvantages": [
+              "Requires more structured result data."
+            ],
+            "impact": 85,
+            "confidence": 92,
+            "evidenceRefs": [
+              "F-001",
+              "Q-002"
+            ]
+          }
+        ],
+        "criteria": [
+          {
+            "id": "CRIT-001",
+            "name": "provenance",
+            "description": "Research conclusions can be traced to durable sources.",
+            "weight": 30
+          },
+          {
+            "id": "CRIT-002",
+            "name": "uncertainty-visibility",
+            "description": "Unresolved questions remain explicit and actionable.",
+            "weight": 30
+          }
+        ],
+        "assumptions": []
+      },
+      "result": {
+        "selected": {
+          "alternativeId": "ALT-002",
+          "rationale": "Separate collections preserve the distinction between observed evidence, unresolved uncertainty, proposed action, and limits of proof.",
+          "impact": 85,
+          "confidence": 92,
+          "decisionRefs": [
+            "F-001",
+            "Q-002"
+          ]
+        },
+        "consequences": {
+          "positive": [
+            "Design tasks can reference specific findings and questions."
+          ],
+          "negative": [
+            "Research payloads require more structured records."
+          ],
+          "risks": [
+            {
+              "id": "RISK-001",
+              "description": "Consumers may treat recommendations as decisions unless review-gate state remains separate.",
+              "impact": 70,
+              "confidence": 90,
+              "mitigation": "Keep review-gate state and review actions separate from decision status."
+            }
+          ]
+        },
+        "reversibility": {
+          "level": "reversible",
+          "description": "The result shape can be changed before downstream schemas depend on it.",
+          "conditions": [
+            "Review the decision before implementing dependent task schemas."
+          ]
+        },
+        "affectedRefs": [
+          "sdlc/schemas/sdlc-task-research/v1/sdlc-task-research.schema.json",
+          ".docs/sdlc/approval-process.draft.md"
+        ],
+        "status": "selected",
+        "approval": {
+          "required": true,
+          "state": "pending",
+          "gateId": "contract",
+          "reviewTaskRef": null,
+          "approvalRefs": []
+        }
+      }
+    }
+  ]
+}

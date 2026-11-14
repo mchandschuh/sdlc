@@ -1,0 +1,1761 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-validation/v1",
+  "title": "SDLC Task Validation v1",
+  "description": "The task-specific payload for executing deterministic validation against one or more task results, artifacts, repository states, or environments. Intent declares the targets, referenced objectives and test cases, procedures, expected outcomes, evidence ceilings, and non-goals. Result records actual executions, observations, findings, evidence tier, limitations, and explicit non-claims. A validation task may target any SDLC task kind and is not limited to implementation tasks.",
+  "$comment": "The common https://schemas.handschuh.dev/sdlc/task-envelope/v1 owns task identity, processing state, dependencies, routing, repository context, and the common task wrapper. This payload intentionally has exactly two high-level properties: intent and result. Host validation must resolve targets, inputs, objectiveRefs, testCaseRefs, and procedureRefs; verify that procedure references are declared and scoped; ensure every required procedure has an execution; compare observed outcomes with expected outcomes; enforce unique IDs; prevent evidence tiers from exceeding the procedure or source-task boundary; preserve findings and limitations; and derive lifecycle effects without treating validation output as a lifecycle mutation. A validation task may target research, decision, planning, design, implementation, test, validation, review, delivery, or any task kind permitted by the envelope. Validation evidence uses the canonical https://schemas.handschuh.dev/sdlc/evidence/v1 vocabulary and may be submitted to an independent review task, but passing validation does not itself satisfy a review gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ValidationIntent",
+      "description": "The prospective validation boundary, including the records to inspect and the deterministic procedures to perform.",
+      "examples": [
+        {
+          "summary": "Validate the completed design result and its required contract checks.",
+          "inputs": [
+            {
+              "id": "INPUT-DESIGN-001",
+              "kind": "design",
+              "ref": "WI-0003|03000000#result/R-001",
+              "purpose": "Provide the design result whose contract assertions must be checked.",
+              "required": true
+            }
+          ],
+          "targets": [
+            {
+              "id": "TARGET-DESIGN-001",
+              "kind": "taskResult",
+              "taskType": "design",
+              "ref": "WI-0003|03000000#result/R-001",
+              "purpose": "Validate the design result rather than an implementation result.",
+              "required": true
+            }
+          ],
+          "objectiveRefs": [
+            "#objective/OBJ-001"
+          ],
+          "testCaseRefs": [
+            "#test-case/TC-001"
+          ],
+          "procedures": [
+            {
+              "id": "VAL-001",
+              "sequence": 1,
+              "name": "validate-design-contract",
+              "description": "Inspect the design contract fixture and validate its required fields.",
+              "reason": "The design result must satisfy its published contract before downstream work begins.",
+              "targetRefs": [
+                "#target/TARGET-DESIGN-001"
+              ],
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "testCaseRefs": [
+                "#test-case/TC-001"
+              ],
+              "method": {
+                "executionMode": "executable",
+                "target": "Design contract fixture",
+                "steps": [
+                  "Load the materialized design fixture.",
+                  "Run the schema validator against the fixture.",
+                  "Record the exit code and assertion result."
+                ],
+                "command": "schema-validate fixtures/design-result.json"
+              },
+              "expected": {
+                "outcome": "passed",
+                "exitCode": 0,
+                "assertions": [
+                  "The design fixture validates without schema errors."
+                ]
+              },
+              "evidenceTier": "static",
+              "required": true
+            }
+          ],
+          "nonGoals": [
+            "Do not claim that the design has been implemented.",
+            "Do not claim provider or production behavior."
+          ]
+        }
+      ]
+    },
+    "result": {
+      "$ref": "#/$defs/ValidationResult",
+      "description": "The retrospective validation outcome and the evidence actually collected.",
+      "examples": [
+        {
+          "status": "passed",
+          "summary": "The required design contract check passed.",
+          "executions": [
+            {
+              "id": "EXEC-001",
+              "procedureRef": "#procedure/VAL-001",
+              "status": "passed",
+              "observed": {
+                "outcome": "passed",
+                "exitCode": 0,
+                "summary": "The design fixture validated successfully.",
+                "assertions": [
+                  "The validator exited with code zero.",
+                  "No schema assertions failed."
+                ]
+              },
+              "evidenceTier": "static",
+              "evidence": [
+                {
+                  "kind": "command",
+                  "source": "Validation execution EXEC-001",
+                  "claim": "The design fixture passed schema validation.",
+                  "command": "schema-validate fixtures/design-result.json",
+                  "reference": "#target/TARGET-DESIGN-001"
+                }
+              ]
+            }
+          ],
+          "findings": [],
+          "evidenceTier": "static",
+          "limitations": [
+            "Static schema validation does not establish runtime or provider behavior."
+          ],
+          "nonClaims": [
+            "This result does not claim that the design has been implemented.",
+            "This result does not claim production readiness."
+          ]
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "ValidationIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "inputs",
+        "targets",
+        "objectiveRefs",
+        "testCaseRefs",
+        "procedures",
+        "nonGoals"
+      ],
+      "description": "The complete planned validation boundary. It identifies authoritative sources, arbitrary task or artifact targets, strategy-owned objectives and test cases, deterministic procedures, and explicit exclusions.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of what the validation will establish and the boundary within which it operates.",
+          "examples": [
+            "Validate the completed design result and its required contract checks."
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Authoritative sources supplied to the validation task, such as task results, strategies, requirements, fixtures, or policy records.",
+          "items": {
+            "$ref": "#/$defs/ValidationInput",
+            "description": "One authoritative validation input.",
+            "examples": [
+              {
+                "id": "INPUT-DESIGN-001",
+                "kind": "design",
+                "ref": "WI-0003|03000000#result/R-001",
+                "purpose": "Provide the design result whose contract assertions must be checked.",
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "INPUT-DESIGN-001",
+                "kind": "design",
+                "ref": "WI-0003|03000000#result/R-001",
+                "purpose": "Provide the design result whose contract assertions must be checked.",
+                "required": true
+              }
+            ]
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The task results, task records, artifacts, repository states, environments, or providers that validation procedures will inspect. A task target may have any supported taskType.",
+          "items": {
+            "$ref": "#/$defs/ValidationTarget",
+            "description": "One validation target.",
+            "examples": [
+              {
+                "id": "TARGET-DESIGN-001",
+                "kind": "taskResult",
+                "taskType": "design",
+                "ref": "WI-0003|03000000#result/R-001",
+                "purpose": "Validate the design result rather than an implementation result.",
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "TARGET-IMPLEMENTATION-001",
+                "kind": "taskResult",
+                "taskType": "implementation",
+                "ref": "WI-0003|06000000#result/R-001",
+                "purpose": "Validate implementation evidence when this target is selected.",
+                "required": true
+              }
+            ]
+          ]
+        },
+        "objectiveRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "A reference to an objective established by the target task or its governing strategy.",
+            "examples": [
+              "#objective/OBJ-001"
+            ]
+          },
+          "description": "Objectives that the validation intends to check. These references do not duplicate the strategy's coverage mappings.",
+          "examples": [
+            [
+              "#objective/OBJ-001"
+            ],
+            []
+          ]
+        },
+        "testCaseRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "A reference to a strategy-owned or task-owned test case that the validation will execute or inspect.",
+            "examples": [
+              "#test-case/TC-001"
+            ]
+          },
+          "description": "Test cases that the validation intends to exercise or interpret. Coverage ownership remains with the test strategy when one exists.",
+          "examples": [
+            [
+              "#test-case/TC-001"
+            ],
+            []
+          ]
+        },
+        "procedures": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Ordered deterministic or explicitly bounded procedures used to validate the declared targets.",
+          "items": {
+            "$ref": "#/$defs/ValidationProcedure",
+            "description": "One validation procedure.",
+            "examples": [
+              {
+                "id": "VAL-001",
+                "sequence": 1,
+                "name": "validate-design-contract",
+                "description": "Inspect the design contract fixture and validate its required fields.",
+                "reason": "The design result must satisfy its published contract before downstream work begins.",
+                "targetRefs": [
+                  "#target/TARGET-DESIGN-001"
+                ],
+                "objectiveRefs": [
+                  "#objective/OBJ-001"
+                ],
+                "testCaseRefs": [
+                  "#test-case/TC-001"
+                ],
+                "method": {
+                  "executionMode": "executable",
+                  "target": "Design contract fixture",
+                  "steps": [
+                    "Load the materialized design fixture.",
+                    "Run the schema validator against the fixture."
+                  ],
+                  "command": "schema-validate fixtures/design-result.json"
+                },
+                "expected": {
+                  "outcome": "passed",
+                  "exitCode": 0,
+                  "assertions": [
+                    "The design fixture validates without schema errors."
+                  ]
+                },
+                "evidenceTier": "static",
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "VAL-001",
+                "sequence": 1,
+                "name": "inspect-result",
+                "description": "Inspect the target result against its declared objective.",
+                "reason": "The target result must be checked before it can support a downstream transition.",
+                "targetRefs": [
+                  "#target/TARGET-DESIGN-001"
+                ],
+                "objectiveRefs": [],
+                "testCaseRefs": [],
+                "method": {
+                  "executionMode": "inspection",
+                  "target": "Target result",
+                  "steps": [
+                    "Read the target result.",
+                    "Compare the result with its stated objective."
+                  ]
+                },
+                "expected": {
+                  "outcome": "passed"
+                },
+                "evidenceTier": "inspection",
+                "required": true
+              }
+            ]
+          ]
+        },
+        "nonGoals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A claim or action that this validation deliberately does not undertake.",
+            "examples": [
+              "Do not claim provider or production behavior."
+            ]
+          },
+          "description": "Explicit exclusions that prevent the validation from being interpreted as broader proof.",
+          "examples": [
+            [
+              "Do not claim that the design has been implemented.",
+              "Do not claim provider or production behavior."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Validate the completed design result and its required contract checks.",
+          "inputs": [
+            {
+              "id": "INPUT-DESIGN-001",
+              "kind": "design",
+              "ref": "WI-0003|03000000#result/R-001",
+              "purpose": "Provide the design result whose contract assertions must be checked.",
+              "required": true
+            }
+          ],
+          "targets": [
+            {
+              "id": "TARGET-DESIGN-001",
+              "kind": "taskResult",
+              "taskType": "design",
+              "ref": "WI-0003|03000000#result/R-001",
+              "purpose": "Validate the design result rather than an implementation result.",
+              "required": true
+            }
+          ],
+          "objectiveRefs": [
+            "#objective/OBJ-001"
+          ],
+          "testCaseRefs": [
+            "#test-case/TC-001"
+          ],
+          "procedures": [
+            {
+              "id": "VAL-001",
+              "sequence": 1,
+              "name": "validate-design-contract",
+              "description": "Inspect the design contract fixture and validate its required fields.",
+              "reason": "The design result must satisfy its published contract before downstream work begins.",
+              "targetRefs": [
+                "#target/TARGET-DESIGN-001"
+              ],
+              "objectiveRefs": [
+                "#objective/OBJ-001"
+              ],
+              "testCaseRefs": [
+                "#test-case/TC-001"
+              ],
+              "method": {
+                "executionMode": "executable",
+                "target": "Design contract fixture",
+                "steps": [
+                  "Load the materialized design fixture.",
+                  "Run the schema validator against the fixture.",
+                  "Record the exit code and assertion result."
+                ],
+                "command": "schema-validate fixtures/design-result.json"
+              },
+              "expected": {
+                "outcome": "passed",
+                "exitCode": 0,
+                "assertions": [
+                  "The design fixture validates without schema errors."
+                ]
+              },
+              "evidenceTier": "static",
+              "required": true
+            }
+          ],
+          "nonGoals": [
+            "Do not claim that the design has been implemented.",
+            "Do not claim provider or production behavior."
+          ]
+        }
+      ]
+    },
+    "ValidationInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "purpose",
+        "required"
+      ],
+      "description": "An authoritative source that supplies context or evidence to the validation task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable validation-local identifier for this input.",
+          "examples": [
+            "INPUT-DESIGN-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "task",
+            "taskResult",
+            "research",
+            "decision",
+            "planning",
+            "design",
+            "implementation",
+            "testStrategy",
+            "test",
+            "validation",
+            "review",
+            "rework",
+            "delivery",
+            "requirement",
+            "acceptanceCriterion",
+            "invariant",
+            "objective",
+            "testCase",
+            "artifact",
+            "fixture",
+            "policy",
+            "repositoryState",
+            "environment",
+            "provider"
+          ],
+          "description": "The semantic category of the input being supplied to validation.",
+          "examples": [
+            "design",
+            "testStrategy"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "Reference resolved by the host to the input record or entity.",
+          "examples": [
+            "WI-0003|03000000#result/R-001"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this input is needed for the declared validation boundary.",
+          "examples": [
+            "Provide the design result whose contract assertions must be checked."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether failure to resolve or consider this input blocks validation completion.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "INPUT-DESIGN-001",
+          "kind": "design",
+          "ref": "WI-0003|03000000#result/R-001",
+          "purpose": "Provide the design result whose contract assertions must be checked.",
+          "required": true
+        }
+      ]
+    },
+    "ValidationTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "purpose",
+        "required"
+      ],
+      "description": "A record, task result, artifact, repository state, environment, or provider boundary selected for validation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^TARGET-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable validation-local identifier for this target.",
+          "examples": [
+            "TARGET-DESIGN-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "task",
+            "taskResult",
+            "artifact",
+            "fixture",
+            "repositoryState",
+            "environment",
+            "provider",
+            "record"
+          ],
+          "description": "The boundary category being validated.",
+          "examples": [
+            "taskResult",
+            "artifact"
+          ]
+        },
+        "taskType": {
+          "type": "string",
+          "enum": [
+            "decomposition",
+            "research",
+            "decision",
+            "design",
+            "implementation",
+            "test-strategy",
+            "validation",
+            "review",
+            "rework",
+            "delivery"
+          ],
+          "description": "Optional task-kind declaration for a task or task-result target. Validation is intentionally permitted for every listed kind.",
+          "examples": [
+            "design",
+            "implementation"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/AnyReference",
+          "description": "Reference resolved by the host to the target.",
+          "examples": [
+            "WI-0003|03000000#result/R-001"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this target is included in the validation boundary.",
+          "examples": [
+            "Validate the design result rather than an implementation result."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether failure to resolve or validate this target blocks the validation result.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "TARGET-DESIGN-001",
+          "kind": "taskResult",
+          "taskType": "design",
+          "ref": "WI-0003|03000000#result/R-001",
+          "purpose": "Validate the design result rather than an implementation result.",
+          "required": true
+        }
+      ]
+    },
+    "ValidationProcedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sequence",
+        "name",
+        "description",
+        "reason",
+        "targetRefs",
+        "objectiveRefs",
+        "testCaseRefs",
+        "method",
+        "expected",
+        "evidenceTier",
+        "required"
+      ],
+      "description": "One ordered validation procedure with declared targets, traceability references, method, expected outcome, and maximum evidence tier.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable identifier for the procedure within this validation task.",
+          "examples": [
+            "VAL-001"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Default display and execution order. Identity is carried by id, not sequence.",
+          "examples": [
+            1
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable human-readable slug for the validation procedure.",
+          "examples": [
+            "validate-design-contract"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this procedure checks.",
+          "examples": [
+            "Inspect the design contract fixture and validate its required fields."
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this procedure is necessary for the validation objective.",
+          "examples": [
+            "The design result must satisfy its published contract before downstream work begins."
+          ]
+        },
+        "targetRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Reference to a target declared in intent.targets.",
+            "examples": [
+              "#target/TARGET-DESIGN-001"
+            ]
+          },
+          "description": "Declared validation targets addressed by this procedure.",
+          "examples": [
+            [
+              "#target/TARGET-DESIGN-001"
+            ]
+          ]
+        },
+        "objectiveRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Reference to an objective declared in intent.objectiveRefs.",
+            "examples": [
+              "#objective/OBJ-001"
+            ]
+          },
+          "description": "Objectives addressed by this procedure, without duplicating their governing coverage mappings.",
+          "examples": [
+            [
+              "#objective/OBJ-001"
+            ],
+            []
+          ]
+        },
+        "testCaseRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AnyReference",
+            "description": "Reference to a test case declared in intent.testCaseRefs or resolved from a governing strategy.",
+            "examples": [
+              "#test-case/TC-001"
+            ]
+          },
+          "description": "Test cases exercised or interpreted by this procedure.",
+          "examples": [
+            [
+              "#test-case/TC-001"
+            ],
+            []
+          ]
+        },
+        "method": {
+          "$ref": "#/$defs/ValidationMethod",
+          "description": "The deterministic command, inspection, manual action, provider interaction, or operational procedure to perform.",
+          "examples": [
+            {
+              "executionMode": "executable",
+              "target": "Design contract fixture",
+              "steps": [
+                "Load the materialized design fixture.",
+                "Run the schema validator against the fixture."
+              ],
+              "command": "schema-validate fixtures/design-result.json"
+            }
+          ]
+        },
+        "expected": {
+          "$ref": "#/$defs/ExpectedObservation",
+          "description": "The result and assertions expected when the procedure is performed correctly.",
+          "examples": [
+            {
+              "outcome": "passed",
+              "exitCode": 0,
+              "assertions": [
+                "The design fixture validates without schema errors."
+              ]
+            }
+          ]
+        },
+        "evidenceTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The highest evidence tier this procedure is permitted to establish.",
+          "examples": [
+            "static",
+            "unit"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this procedure must execute successfully for the validation result to be passed.",
+          "examples": [
+            true
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "VAL-001",
+          "sequence": 1,
+          "name": "validate-design-contract",
+          "description": "Inspect the design contract fixture and validate its required fields.",
+          "reason": "The design result must satisfy its published contract before downstream work begins.",
+          "targetRefs": [
+            "#target/TARGET-DESIGN-001"
+          ],
+          "objectiveRefs": [
+            "#objective/OBJ-001"
+          ],
+          "testCaseRefs": [
+            "#test-case/TC-001"
+          ],
+          "method": {
+            "executionMode": "executable",
+            "target": "Design contract fixture",
+            "steps": [
+              "Load the materialized design fixture.",
+              "Run the schema validator against the fixture."
+            ],
+            "command": "schema-validate fixtures/design-result.json"
+          },
+          "expected": {
+            "outcome": "passed",
+            "exitCode": 0,
+            "assertions": [
+              "The design fixture validates without schema errors."
+            ]
+          },
+          "evidenceTier": "static",
+          "required": true
+        }
+      ]
+    },
+    "ValidationMethod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionMode",
+        "target",
+        "steps"
+      ],
+      "description": "A bounded validation method. Executable methods should include the exact command; inspection and manual methods describe their repeatable actions and evidence boundary.",
+      "properties": {
+        "executionMode": {
+          "type": "string",
+          "enum": [
+            "executable",
+            "inspection",
+            "manual",
+            "provider",
+            "operational"
+          ],
+          "description": "How the validation procedure is performed.",
+          "examples": [
+            "executable",
+            "inspection"
+          ]
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concrete code boundary, artifact, environment, system, provider, or record inspected by the method.",
+          "examples": [
+            "Design contract fixture"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One ordered action in the validation method.",
+            "examples": [
+              "Run the schema validator against the fixture."
+            ]
+          },
+          "description": "Ordered actions that make the procedure repeatable and auditable.",
+          "examples": [
+            [
+              "Load the materialized design fixture.",
+              "Run the schema validator against the fixture."
+            ]
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact command to execute when executionMode is executable or when a command is used to support another mode.",
+          "examples": [
+            "schema-validate fixtures/design-result.json"
+          ]
+        },
+        "paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/RepositoryPath",
+            "description": "Repository-relative path inspected by this method.",
+            "examples": [
+              "sdlc/schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json"
+            ]
+          },
+          "description": "Repository-relative paths inspected when the method operates on repository content.",
+          "examples": [
+            [
+              "sdlc/schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json"
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "executionMode": "executable",
+          "target": "Design contract fixture",
+          "steps": [
+            "Load the materialized design fixture.",
+            "Run the schema validator against the fixture."
+          ],
+          "command": "schema-validate fixtures/design-result.json"
+        }
+      ]
+    },
+    "ExpectedObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome"
+      ],
+      "description": "The expected high-level result and optional assertions for one validation procedure.",
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "invalid",
+            "inconclusive"
+          ],
+          "description": "Expected procedure outcome.",
+          "examples": [
+            "passed"
+          ]
+        },
+        "exitCode": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Expected process exit code when the procedure is executable; null means no process exit code applies.",
+          "examples": [
+            0,
+            null
+          ]
+        },
+        "assertions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Additional factual conditions expected from the procedure.",
+            "examples": [
+              "The design fixture validates without schema errors."
+            ]
+          },
+          "description": "Expected observations beyond the aggregate outcome.",
+          "examples": [
+            [
+              "The design fixture validates without schema errors."
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "outcome": "passed",
+          "exitCode": 0,
+          "assertions": [
+            "The design fixture validates without schema errors."
+          ]
+        }
+      ]
+    },
+    "ValidationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "summary",
+        "executions",
+        "findings",
+        "evidenceTier",
+        "limitations",
+        "nonClaims"
+      ],
+      "description": "The actual validation result. It distinguishes validation outcome from task lifecycle status and records evidence limits explicitly.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "blocked",
+            "invalid",
+            "failed",
+            "implemented-unproven"
+          ],
+          "description": "Aggregate validation outcome. implemented-unproven is retained for compatibility with implementation evidence workflows and means the target has work recorded but required proof remains incomplete.",
+          "examples": [
+            "passed",
+            "implemented-unproven",
+            "blocked"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise factual summary of what the validation established and whether required checks were satisfied.",
+          "examples": [
+            "The required design contract check passed."
+          ]
+        },
+        "executions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Actual executions or inspections of declared validation procedures.",
+          "items": {
+            "$ref": "#/$defs/ValidationExecution",
+            "description": "One actual validation execution.",
+            "examples": [
+              {
+                "id": "EXEC-001",
+                "procedureRef": "#procedure/VAL-001",
+                "status": "passed",
+                "observed": {
+                  "outcome": "passed",
+                  "exitCode": 0,
+                  "summary": "The design fixture validated successfully.",
+                  "assertions": [
+                    "The validator exited with code zero.",
+                    "No schema assertions failed."
+                  ]
+                },
+                "evidenceTier": "static",
+                "evidence": [
+                  {
+                    "kind": "command",
+                    "source": "Validation execution EXEC-001",
+                    "claim": "The design fixture passed schema validation.",
+                    "command": "schema-validate fixtures/design-result.json"
+                  }
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "EXEC-001",
+                "procedureRef": "#procedure/VAL-001",
+                "status": "passed",
+                "observed": {
+                  "outcome": "passed",
+                  "exitCode": 0,
+                  "summary": "The design fixture validated successfully.",
+                  "assertions": [
+                    "The validator exited with code zero."
+                  ]
+                },
+                "evidenceTier": "static",
+                "evidence": [
+                  {
+                    "kind": "command",
+                    "source": "Validation execution EXEC-001",
+                    "claim": "The design fixture passed schema validation.",
+                    "command": "schema-validate fixtures/design-result.json"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        "findings": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Factual validation findings, including warnings, errors, and blocking conditions. Findings must not be hidden or downgraded to make the aggregate status pass.",
+          "items": {
+            "$ref": "#/$defs/Finding",
+            "description": "One validation finding.",
+            "examples": [
+              {
+                "code": "VALIDATION_FAILED",
+                "severity": "blocking",
+                "kind": "contract",
+                "message": "The required contract fixture did not validate.",
+                "evidence": {
+                  "kind": "command",
+                  "source": "Validation execution EXEC-001",
+                  "claim": "The schema validator reported a contract failure.",
+                  "command": "schema-validate fixtures/design-result.json"
+                }
+              }
+            ]
+          },
+          "examples": [
+            [],
+            [
+              {
+                "code": "VALIDATION_FAILED",
+                "severity": "blocking",
+                "kind": "contract",
+                "message": "The required contract fixture did not validate.",
+                "evidence": {
+                  "kind": "command",
+                  "source": "Validation execution EXEC-001",
+                  "claim": "The schema validator reported a contract failure.",
+                  "command": "schema-validate fixtures/design-result.json"
+                }
+              }
+            ]
+          ]
+        },
+        "evidenceTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The highest evidence tier actually established by the complete validation result, not merely planned by a procedure.",
+          "examples": [
+            "static",
+            "unit",
+            "operational"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A limitation on what the collected validation evidence can establish.",
+            "examples": [
+              "Static schema validation does not establish runtime or provider behavior."
+            ]
+          },
+          "description": "Evidence limitations that remain true even when required procedures pass.",
+          "examples": [
+            [
+              "Static schema validation does not establish runtime or provider behavior."
+            ]
+          ]
+        },
+        "nonClaims": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An explicit claim that this result does not make.",
+            "examples": [
+              "This result does not claim production readiness."
+            ]
+          },
+          "description": "Explicit non-claims that prevent consumers from treating bounded evidence as broader assurance or approval.",
+          "examples": [
+            [
+              "This result does not claim that the design has been implemented.",
+              "This result does not claim production readiness."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "passed",
+          "summary": "The required design contract check passed.",
+          "executions": [
+            {
+              "id": "EXEC-001",
+              "procedureRef": "#procedure/VAL-001",
+              "status": "passed",
+              "observed": {
+                "outcome": "passed",
+                "exitCode": 0,
+                "summary": "The design fixture validated successfully.",
+                "assertions": [
+                  "The validator exited with code zero."
+                ]
+              },
+              "evidenceTier": "static",
+              "evidence": [
+                {
+                  "kind": "command",
+                  "source": "Validation execution EXEC-001",
+                  "claim": "The design fixture passed schema validation.",
+                  "command": "schema-validate fixtures/design-result.json"
+                }
+              ]
+            }
+          ],
+          "findings": [],
+          "evidenceTier": "static",
+          "limitations": [
+            "Static schema validation does not establish runtime or provider behavior."
+          ],
+          "nonClaims": [
+            "This result does not claim that the design has been implemented.",
+            "This result does not claim production readiness."
+          ]
+        }
+      ]
+    },
+    "ValidationExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "procedureRef",
+        "status",
+        "observed",
+        "evidenceTier",
+        "evidence"
+      ],
+      "description": "One actual execution of a declared validation procedure, with observed result and named evidence.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable identifier for this execution within the validation result.",
+          "examples": [
+            "EXEC-001"
+          ]
+        },
+        "procedureRef": {
+          "type": "string",
+          "pattern": "^#procedure/VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Task-local reference to the procedure that was executed.",
+          "examples": [
+            "#procedure/VAL-001"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "invalid",
+            "inconclusive",
+            "not-run"
+          ],
+          "description": "Observed execution state. not-run is retained explicitly when a declared procedure could not be attempted.",
+          "examples": [
+            "passed",
+            "blocked",
+            "not-run"
+          ]
+        },
+        "observed": {
+          "$ref": "#/$defs/ObservedResult",
+          "description": "Actual result and assertions observed during this execution.",
+          "examples": [
+            {
+              "outcome": "passed",
+              "exitCode": 0,
+              "summary": "The design fixture validated successfully.",
+              "assertions": [
+                "The validator exited with code zero."
+              ]
+            }
+          ]
+        },
+        "evidenceTier": {
+          "$ref": "#/$defs/EvidenceTier",
+          "description": "The highest evidence tier actually produced by this execution.",
+          "examples": [
+            "static",
+            "unit"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Named evidence supporting the observed result.",
+          "items": {
+            "$ref": "#/$defs/Evidence",
+            "description": "One bounded evidence item.",
+            "examples": [
+              {
+                "kind": "command",
+                "source": "Validation execution EXEC-001",
+                "claim": "The design fixture passed schema validation.",
+                "command": "schema-validate fixtures/design-result.json"
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "kind": "command",
+                "source": "Validation execution EXEC-001",
+                "claim": "The design fixture passed schema validation.",
+                "command": "schema-validate fixtures/design-result.json"
+              }
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "EXEC-001",
+          "procedureRef": "#procedure/VAL-001",
+          "status": "passed",
+          "observed": {
+            "outcome": "passed",
+            "exitCode": 0,
+            "summary": "The design fixture validated successfully.",
+            "assertions": [
+              "The validator exited with code zero."
+            ]
+          },
+          "evidenceTier": "static",
+          "evidence": [
+            {
+              "kind": "command",
+              "source": "Validation execution EXEC-001",
+              "claim": "The design fixture passed schema validation.",
+              "command": "schema-validate fixtures/design-result.json"
+            }
+          ]
+        }
+      ]
+    },
+    "ObservedResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "summary"
+      ],
+      "description": "The actual outcome and factual observations from one validation execution.",
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "invalid",
+            "inconclusive",
+            "not-run"
+          ],
+          "description": "Actual high-level outcome of the procedure.",
+          "examples": [
+            "passed",
+            "failed",
+            "blocked"
+          ]
+        },
+        "exitCode": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Actual process exit code when applicable; null means no process exit code was produced.",
+          "examples": [
+            0,
+            1,
+            null
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Concise factual description of what the execution produced.",
+          "examples": [
+            "The design fixture validated successfully."
+          ]
+        },
+        "assertions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An actual assertion or observation recorded by the execution.",
+            "examples": [
+              "The validator exited with code zero."
+            ]
+          },
+          "description": "Detailed observations supporting the aggregate outcome.",
+          "examples": [
+            [
+              "The validator exited with code zero.",
+              "No schema assertions failed."
+            ],
+            []
+          ]
+        },
+        "stdoutReference": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bounded reference to captured standard output; raw unbounded output should remain outside the task result.",
+          "examples": [
+            ".workflow/evidence/EXEC-001.stdout"
+          ]
+        },
+        "stderrReference": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bounded reference to captured standard error; raw unbounded output should remain outside the task result.",
+          "examples": [
+            ".workflow/evidence/EXEC-001.stderr"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "outcome": "passed",
+          "exitCode": 0,
+          "summary": "The design fixture validated successfully.",
+          "assertions": [
+            "The validator exited with code zero.",
+            "No schema assertions failed."
+          ]
+        }
+      ]
+    },
+    "Finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "kind",
+        "message"
+      ],
+      "description": "A bounded validation finding using the existing SDLC finding vocabulary.",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "MALFORMED_RECORD",
+            "MISSING_FIELD",
+            "REPOSITORY_MISMATCH",
+            "BRANCH_MISMATCH",
+            "ROOT_COMMIT_MISSING",
+            "DEPENDENCY_UNSATISFIED",
+            "DEPENDENCY_CYCLE",
+            "OWNERSHIP_VIOLATION",
+            "DIRTY_WORKTREE",
+            "COMMIT_SUBJECT_MISMATCH",
+            "COMMIT_BODY_MISSING",
+            "OUT_OF_SCOPE_PATH",
+            "ITERATOR_FAILED",
+            "VALIDATION_FAILED",
+            "OPERATIONAL_ERROR"
+          ],
+          "description": "Stable finding code from the existing SDLC finding vocabulary.",
+          "examples": [
+            "VALIDATION_FAILED"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error",
+            "blocking"
+          ],
+          "description": "Impact of the finding on the validation result or governed transition.",
+          "examples": [
+            "blocking",
+            "warning"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "process",
+            "operational",
+            "contract"
+          ],
+          "description": "Finding category used by existing SDLC reports.",
+          "examples": [
+            "contract"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Factual human-readable finding message.",
+          "examples": [
+            "The required contract fixture did not validate."
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional repository-relative or record path associated with the finding.",
+          "examples": [
+            "fixtures/design-result.json"
+          ]
+        },
+        "step": {
+          "type": "string",
+          "pattern": "^[0-9]{2}$",
+          "description": "Optional two-digit work-item step associated with the finding.",
+          "examples": [
+            "08"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence",
+          "description": "Optional bounded evidence supporting this finding.",
+          "examples": [
+            {
+              "kind": "command",
+              "source": "Validation execution EXEC-001",
+              "claim": "The schema validator reported a contract failure.",
+              "command": "schema-validate fixtures/design-result.json"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "code": "VALIDATION_FAILED",
+          "severity": "blocking",
+          "kind": "contract",
+          "message": "The required contract fixture did not validate.",
+          "evidence": {
+            "kind": "command",
+            "source": "Validation execution EXEC-001",
+            "claim": "The schema validator reported a contract failure.",
+            "command": "schema-validate fixtures/design-result.json"
+          }
+        }
+      ]
+    },
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source",
+        "claim"
+      ],
+      "description": "A bounded named source supporting an observed validation result or finding.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "record",
+            "git",
+            "command",
+            "file",
+            "test",
+            "process"
+          ],
+          "description": "Evidence source category from the existing SDLC evidence vocabulary.",
+          "examples": [
+            "command",
+            "test"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bounded name of the command, record, file, process, or test that produced the evidence.",
+          "examples": [
+            "Validation execution EXEC-001"
+          ]
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The precise claim supported by this evidence item.",
+          "examples": [
+            "The design fixture passed schema validation."
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact command that produced the evidence when applicable.",
+          "examples": [
+            "schema-validate fixtures/design-result.json"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repository-relative path or bounded artifact path containing the evidence.",
+          "examples": [
+            "fixtures/design-result.json"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference to the task, result, artifact, or external receipt associated with the evidence.",
+          "examples": [
+            "#target/TARGET-DESIGN-001"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "kind": "command",
+          "source": "Validation execution EXEC-001",
+          "claim": "The design fixture passed schema validation.",
+          "command": "schema-validate fixtures/design-result.json",
+          "reference": "#target/TARGET-DESIGN-001"
+        }
+      ]
+    },
+    "EvidenceTier": {
+      "type": "string",
+      "enum": [
+        "static",
+        "unit",
+        "component",
+        "cli-audit",
+        "integration",
+        "manual",
+        "inspection",
+        "provider",
+        "operational"
+      ],
+      "description": "The shared SDLC evidence tier vocabulary defined by https://schemas.handschuh.dev/sdlc/evidence-tier/v1.",
+      "examples": [
+        "static",
+        "unit",
+        "cli-audit",
+        "operational"
+      ]
+    },
+    "RepositoryPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+      "description": "A non-empty repository-relative path without an absolute-path prefix or parent traversal.",
+      "examples": [
+        "sdlc/schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json",
+        ".docs/sdlc/approval-process.draft.md"
+      ]
+    },
+    "AnyReference": {
+      "type": "string",
+      "oneOf": [
+        {
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-local reference resolved against the selected work-item directory."
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-global reference resolved against a repository and work-item artifact."
+        }
+      ],
+      "description": "A task-local, task-qualified, or globally qualified SDLC reference resolved by host validation.",
+      "examples": [
+        "#objective/OBJ-001",
+        "WI-0003|03000000#result/R-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C03000000#result/R-001"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Validate the completed design result and its required contract checks.",
+        "inputs": [
+          {
+            "id": "INPUT-DESIGN-001",
+            "kind": "design",
+            "ref": "WI-0003|03000000#result/R-001",
+            "purpose": "Provide the design result whose contract assertions must be checked.",
+            "required": true
+          }
+        ],
+        "targets": [
+          {
+            "id": "TARGET-DESIGN-001",
+            "kind": "taskResult",
+            "taskType": "design",
+            "ref": "WI-0003|03000000#result/R-001",
+            "purpose": "Validate the design result rather than an implementation result.",
+            "required": true
+          }
+        ],
+        "objectiveRefs": [
+          "#objective/OBJ-001"
+        ],
+        "testCaseRefs": [
+          "#test-case/TC-001"
+        ],
+        "procedures": [
+          {
+            "id": "VAL-001",
+            "sequence": 1,
+            "name": "validate-design-contract",
+            "description": "Inspect the design contract fixture and validate its required fields.",
+            "reason": "The design result must satisfy its published contract before downstream work begins.",
+            "targetRefs": [
+              "#target/TARGET-DESIGN-001"
+            ],
+            "objectiveRefs": [
+              "#objective/OBJ-001"
+            ],
+            "testCaseRefs": [
+              "#test-case/TC-001"
+            ],
+            "method": {
+              "executionMode": "executable",
+              "target": "Design contract fixture",
+              "steps": [
+                "Load the materialized design fixture.",
+                "Run the schema validator against the fixture.",
+                "Record the exit code and assertion result."
+              ],
+              "command": "schema-validate fixtures/design-result.json"
+            },
+            "expected": {
+              "outcome": "passed",
+              "exitCode": 0,
+              "assertions": [
+                "The design fixture validates without schema errors."
+              ]
+            },
+            "evidenceTier": "static",
+            "required": true
+          }
+        ],
+        "nonGoals": [
+          "Do not claim that the design has been implemented.",
+          "Do not claim provider or production behavior."
+        ]
+      },
+      "result": {
+        "status": "passed",
+        "summary": "The required design contract check passed.",
+        "executions": [
+          {
+            "id": "EXEC-001",
+            "procedureRef": "#procedure/VAL-001",
+            "status": "passed",
+            "observed": {
+              "outcome": "passed",
+              "exitCode": 0,
+              "summary": "The design fixture validated successfully.",
+              "assertions": [
+                "The validator exited with code zero.",
+                "No schema assertions failed."
+              ]
+            },
+            "evidenceTier": "static",
+            "evidence": [
+              {
+                "kind": "command",
+                "source": "Validation execution EXEC-001",
+                "claim": "The design fixture passed schema validation.",
+                "command": "schema-validate fixtures/design-result.json",
+                "reference": "#target/TARGET-DESIGN-001"
+              }
+            ]
+          }
+        ],
+        "findings": [],
+        "evidenceTier": "static",
+        "limitations": [
+          "Static schema validation does not establish runtime or provider behavior."
+        ],
+        "nonClaims": [
+          "This result does not claim that the design has been implemented.",
+          "This result does not claim production readiness."
+        ]
+      }
+    }
+  ]
+}

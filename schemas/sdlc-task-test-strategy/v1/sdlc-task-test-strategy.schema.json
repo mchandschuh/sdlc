@@ -1,0 +1,2311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-test-strategy/v1",
+  "title": "SDLC Task Test Strategy v1",
+  "description": "The task-specific payload for defining the minimum evidence-oriented test strategy for an implementation. Intent records the implementation inputs, requirements, objectives, and design-derived invariants under test. Result records required and recommended test cases, fixtures, procedures, expected outcomes, coverage mappings, and evidence limitations without claiming that any test passed.",
+  "$comment": "The common https://schemas.handschuh.dev/sdlc/task-envelope/v1 owns task identity, processing state, dependencies, task routing, repository context, and the common task wrapper. This payload has exactly two high-level properties: intent and result. The strategy is a prerequisite only when the applicable task policy materializes it; when materialized, an implementation task should declare an explicit dependsOn reference to the completed strategy task. Host validation must resolve all references, enforce unique IDs, verify complete requirement/invariant/objective coverage, ensure minimumRequiredTestCaseRefs identify required test cases, ensure recommendedTestCaseRefs identify recommended test cases, and never treat this strategy result as execution evidence. A later implementation result records actual evidence and references these test-case IDs. Evidence-tier values use the canonical https://schemas.handschuh.dev/sdlc/evidence/v1 vocabulary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "result"
+  ],
+  "properties": {
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "inputs",
+        "requirements",
+        "invariants",
+        "objectives",
+        "nonGoals"
+      ],
+      "description": "The complete test-strategy input boundary. It identifies the implementation requirements, design-derived invariants, objectives, and exclusions that the strategy must cover.",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A concise statement of the behavior and evidence boundary for which the strategy is being defined.",
+          "examples": [
+            "Define the smallest deterministic test set that can verify event validation before persistence."
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Authoritative sources reviewed by the strategy task, including implementation requirements, design results, and invariant sources.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "ref",
+              "purpose",
+              "required"
+            ],
+            "description": "One authoritative strategy input and its task-local alias.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable alias for this input within the strategy intent.",
+                "examples": [
+                  "INPUT-REQ-001"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "requirement",
+                  "acceptanceCriterion",
+                  "design",
+                  "invariant",
+                  "implementation",
+                  "task",
+                  "artifact",
+                  "constraint"
+                ],
+                "description": "The semantic kind of source represented by this input.",
+                "examples": [
+                  "requirement",
+                  "design"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "oneOf": [
+                  {
+                    "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "description": "A work-item-local reference resolved against the selected work-item directory."
+                  },
+                  {
+                    "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                  },
+                  {
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "description": "A work-item-global reference resolved against a repository and work-item artifact."
+                  }
+                ],
+                "description": "The source reference resolved by the host for this strategy input.",
+                "examples": [
+                  "#requirement/REQ-001"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why the strategy must consider this source.",
+                "examples": [
+                  "Define the expected rejection behavior."
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether failure to resolve or consider this input blocks strategy completion.",
+                "examples": [
+                  true,
+                  false
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "INPUT-REQ-001",
+                "kind": "requirement",
+                "ref": "#requirement/REQ-001",
+                "purpose": "Define the expected rejection behavior.",
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "INPUT-REQ-001",
+                "kind": "requirement",
+                "ref": "#requirement/REQ-001",
+                "purpose": "Define rejection behavior before persistence.",
+                "required": true
+              },
+              {
+                "id": "INPUT-DESIGN-001",
+                "kind": "design",
+                "ref": "#design/DESIGN-001",
+                "purpose": "Define the validation boundary and its persistence dependency.",
+                "required": true
+              }
+            ]
+          ]
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The requirements and acceptance criteria that the strategy must cover with one or more test cases.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "statement",
+              "inputRefs",
+              "required"
+            ],
+            "description": "One requirement or acceptance criterion that must be mapped to strategy coverage.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable requirement identifier within the strategy intent.",
+                "examples": [
+                  "REQ-001"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "requirement",
+                  "acceptanceCriterion"
+                ],
+                "description": "Whether this source is a requirement or an acceptance criterion.",
+                "examples": [
+                  "requirement",
+                  "acceptanceCriterion"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The behavior or acceptance condition that coverage must address.",
+                "examples": [
+                  "Invalid events are rejected before persistence is invoked."
+                ]
+              },
+              "inputRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Strategy input alias supporting this requirement.",
+                  "examples": [
+                    "INPUT-REQ-001"
+                  ]
+                },
+                "description": "Authoritative inputs from which this requirement was derived.",
+                "examples": [
+                  [
+                    "INPUT-REQ-001"
+                  ]
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this requirement must be covered by the minimum required test set.",
+                "examples": [
+                  true,
+                  false
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "REQ-001",
+                "kind": "requirement",
+                "statement": "Invalid events are rejected before persistence is invoked.",
+                "inputRefs": [
+                  "INPUT-REQ-001"
+                ],
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "REQ-001",
+                "kind": "requirement",
+                "statement": "Invalid events are rejected before persistence is invoked.",
+                "inputRefs": [
+                  "INPUT-REQ-001",
+                  "INPUT-DESIGN-001"
+                ],
+                "required": true
+              }
+            ]
+          ]
+        },
+        "invariants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The design-derived behavior and boundary invariants that the strategy must cover and that implementation verification must later report.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement",
+              "inputRefs",
+              "required"
+            ],
+            "description": "One design-derived invariant that the implementation must preserve and the strategy must cover.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable invariant identifier within the strategy intent.",
+                "examples": [
+                  "INV-001"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The behavior, safety property, or boundary that must remain true.",
+                "examples": [
+                  "Persistence is not called when validation rejects an event."
+                ]
+              },
+              "inputRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Strategy input alias establishing or motivating this invariant.",
+                  "examples": [
+                    "INPUT-DESIGN-001"
+                  ]
+                },
+                "description": "Design or requirement inputs from which this invariant was derived.",
+                "examples": [
+                  [
+                    "INPUT-DESIGN-001"
+                  ]
+                ]
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this invariant must be covered by the minimum required test set.",
+                "examples": [
+                  true,
+                  false
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "INV-001",
+                "statement": "Persistence is not called when validation rejects an event.",
+                "inputRefs": [
+                  "INPUT-DESIGN-001"
+                ],
+                "required": true
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "INV-001",
+                "statement": "Persistence is not called when validation rejects an event.",
+                "inputRefs": [
+                  "INPUT-DESIGN-001"
+                ],
+                "required": true
+              }
+            ]
+          ]
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The test-strategy objectives and their requirement and invariant traceability.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement",
+              "inputRefs",
+              "requirementRefs",
+              "invariantRefs"
+            ],
+            "description": "One strategy objective connecting source inputs, requirements, and design-derived invariants.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable objective identifier within the strategy intent.",
+                "examples": [
+                  "OBJ-001"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The bounded behavior or evidence objective to address.",
+                "examples": [
+                  "Verify the validation-to-persistence boundary."
+                ]
+              },
+              "inputRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Strategy input alias supporting this objective.",
+                  "examples": [
+                    "INPUT-REQ-001"
+                  ]
+                },
+                "description": "Authoritative sources from which this objective was derived.",
+                "examples": [
+                  [
+                    "INPUT-REQ-001"
+                  ]
+                ]
+              },
+              "requirementRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Requirement identifier addressed by this objective.",
+                  "examples": [
+                    "REQ-001"
+                  ]
+                },
+                "description": "Requirements that define this objective's expected behavior.",
+                "examples": [
+                  [
+                    "REQ-001"
+                  ]
+                ]
+              },
+              "invariantRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Invariant identifier that this objective must preserve.",
+                  "examples": [
+                    "INV-001"
+                  ]
+                },
+                "description": "Design-derived invariants that the objective requires the strategy to cover.",
+                "examples": [
+                  [
+                    "INV-001"
+                  ]
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "OBJ-001",
+                "statement": "Verify the validation-to-persistence boundary.",
+                "inputRefs": [
+                  "INPUT-REQ-001"
+                ],
+                "requirementRefs": [
+                  "REQ-001"
+                ],
+                "invariantRefs": [
+                  "INV-001"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "OBJ-001",
+                "statement": "Verify the validation-to-persistence boundary.",
+                "inputRefs": [
+                  "INPUT-REQ-001",
+                  "INPUT-DESIGN-001"
+                ],
+                "requirementRefs": [
+                  "REQ-001"
+                ],
+                "invariantRefs": [
+                  "INV-001"
+                ]
+              }
+            ]
+          ]
+        },
+        "nonGoals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A verification concern explicitly excluded from this strategy.",
+            "examples": [
+              "Do not claim provider or production behavior from local unit tests."
+            ]
+          },
+          "description": "Explicit evidence and scope exclusions that the strategy must preserve.",
+          "examples": [
+            [
+              "Do not claim production deployment readiness."
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "summary": "Define the smallest deterministic test set that can verify event validation before persistence.",
+          "inputs": [
+            {
+              "id": "INPUT-REQ-001",
+              "kind": "requirement",
+              "ref": "#requirement/REQ-001",
+              "purpose": "Define rejection behavior before persistence.",
+              "required": true
+            }
+          ],
+          "requirements": [
+            {
+              "id": "REQ-001",
+              "kind": "requirement",
+              "statement": "Invalid events are rejected before persistence is invoked.",
+              "inputRefs": [
+                "INPUT-REQ-001"
+              ],
+              "required": true
+            }
+          ],
+          "invariants": [
+            {
+              "id": "INV-001",
+              "statement": "Persistence is not called when validation rejects an event.",
+              "inputRefs": [
+                "INPUT-REQ-001"
+              ],
+              "required": true
+            }
+          ],
+          "objectives": [
+            {
+              "id": "OBJ-001",
+              "statement": "Verify the validation-to-persistence boundary.",
+              "inputRefs": [
+                "INPUT-REQ-001"
+              ],
+              "requirementRefs": [
+                "REQ-001"
+              ],
+              "invariantRefs": [
+                "INV-001"
+              ]
+            }
+          ],
+          "nonGoals": []
+        }
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "testCases",
+        "fixtures",
+        "coverage",
+        "minimumRequiredTestCaseRefs",
+        "recommendedTestCaseRefs",
+        "evidenceLimitations"
+      ],
+      "description": "The defined strategy. It specifies what must be tested and how, but it is not evidence that any test was executed or passed.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "defined",
+            "blocked",
+            "failed"
+          ],
+          "description": "Whether the strategy was defined successfully or could not be completed because of a blocker or strategy failure.",
+          "examples": [
+            "defined",
+            "blocked"
+          ]
+        },
+        "testCases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The complete set of required and recommended test cases, including their test type, procedure, expected outcome, and maximum evidence tier.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "title",
+              "type",
+              "requirementLevel",
+              "purpose",
+              "procedure",
+              "expectedOutcome",
+              "passCriteria",
+              "evidenceTier",
+              "fixtureRefs",
+              "limitations"
+            ],
+            "description": "One required or recommended test case in the strategy. It defines a procedure and expected result but does not contain an observed result.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable identifier used by coverage mappings and later implementation verification evidence.",
+                "examples": [
+                  "TC-001"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Short human-readable name for the check.",
+                "examples": [
+                  "Reject invalid event before persistence"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "unit",
+                  "component",
+                  "integration",
+                  "cli",
+                  "manual",
+                  "inspection",
+                  "provider",
+                  "operational"
+                ],
+                "description": "The test type and boundary covered by this case.",
+                "examples": [
+                  "unit",
+                  "integration",
+                  "provider"
+                ]
+              },
+              "requirementLevel": {
+                "type": "string",
+                "enum": [
+                  "required",
+                  "recommended"
+                ],
+                "description": "Whether this case belongs to the minimum required test set or is an explicitly non-blocking recommendation.",
+                "examples": [
+                  "required",
+                  "recommended"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this test case is needed and what uncertainty or behavior it addresses.",
+                "examples": [
+                  "Prove the validation boundary for malformed input."
+                ]
+              },
+              "procedure": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "executionMode",
+                  "target",
+                  "steps"
+                ],
+                "description": "The ordered procedure for producing evidence for this case.",
+                "properties": {
+                  "executionMode": {
+                    "type": "string",
+                    "enum": [
+                      "executable",
+                      "manual",
+                      "inspection",
+                      "provider",
+                      "operational"
+                    ],
+                    "description": "How the procedure obtains evidence. Executable means a fresh command or automated check can run it; the other modes require the named human, inspection, provider, or operational boundary.",
+                    "examples": [
+                      "executable",
+                      "manual"
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The code, command, system, document, provider, or operational boundary examined by the procedure.",
+                    "examples": [
+                      "Validation service unit test"
+                    ]
+                  },
+                  "steps": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "One ordered action in the procedure.",
+                      "examples": [
+                        "Construct an invalid event fixture."
+                      ]
+                    },
+                    "description": "Ordered actions needed to perform the check and observe its result.",
+                    "examples": [
+                      [
+                        "Construct an invalid event fixture.",
+                        "Invoke the validation service."
+                      ]
+                    ]
+                  },
+                  "command": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The exact repository-relative command to run when executionMode is executable or a command is otherwise useful for the procedure.",
+                    "examples": [
+                      "npm test -- --runInBand test/validation/service.test.ts"
+                    ]
+                  }
+                },
+                "examples": [
+                  {
+                    "executionMode": "executable",
+                    "target": "Validation service unit test",
+                    "steps": [
+                      "Construct an invalid event fixture.",
+                      "Assert rejection."
+                    ],
+                    "command": "npm test -- --runInBand test/validation/service.test.ts"
+                  }
+                ]
+              },
+              "expectedOutcome": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The behavior that should be observed when the procedure succeeds.",
+                "examples": [
+                  "The service rejects the event and persistence receives zero calls."
+                ]
+              },
+              "passCriteria": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The concrete condition used to classify observed evidence as passed.",
+                "examples": [
+                  "The test process exits zero and all assertions pass."
+                ]
+              },
+              "evidenceTier": {
+                "type": "string",
+                "enum": [
+                  "static",
+                  "unit",
+                  "component",
+                  "cli-audit",
+                  "integration",
+                  "manual",
+                  "inspection",
+                  "provider",
+                  "operational"
+                ],
+                "description": "The highest evidence tier this case can establish when performed as designed.",
+                "examples": [
+                  "unit",
+                  "operational"
+                ]
+              },
+              "fixtureRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^FIX-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Fixture identifier required by this test case.",
+                  "examples": [
+                    "FIX-001"
+                  ]
+                },
+                "description": "Deterministic fixtures used by this procedure.",
+                "examples": [
+                  [
+                    "FIX-001"
+                  ],
+                  []
+                ]
+              },
+              "limitations": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A case-specific boundary on what this test can establish.",
+                  "examples": [
+                    "This check does not prove behavior against a real persistence provider."
+                  ]
+                },
+                "description": "Evidence limitations specific to this test case.",
+                "examples": [
+                  [
+                    "This check does not prove behavior against a real persistence provider."
+                  ],
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "TC-001",
+                "title": "Reject invalid event before persistence",
+                "type": "unit",
+                "requirementLevel": "required",
+                "purpose": "Prove the validation boundary for malformed input.",
+                "procedure": {
+                  "executionMode": "executable",
+                  "target": "Validation service unit test",
+                  "steps": [
+                    "Construct an invalid event fixture.",
+                    "Assert rejection and verify the persistence spy was not called."
+                  ],
+                  "command": "npm test -- --runInBand test/validation/service.test.ts"
+                },
+                "expectedOutcome": "The service rejects the event and persistence receives zero calls.",
+                "passCriteria": "The test process exits zero and all assertions pass.",
+                "evidenceTier": "unit",
+                "fixtureRefs": [
+                  "FIX-001"
+                ],
+                "limitations": [
+                  "This check does not prove behavior against a real persistence provider."
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "TC-001",
+                "title": "Reject invalid event before persistence",
+                "type": "unit",
+                "requirementLevel": "required",
+                "purpose": "Prove the validation boundary for malformed input.",
+                "procedure": {
+                  "executionMode": "executable",
+                  "target": "Validation service unit test",
+                  "steps": [
+                    "Construct an invalid event fixture.",
+                    "Invoke the validation service with a persistence spy.",
+                    "Assert rejection and verify the persistence spy was not called."
+                  ],
+                  "command": "npm test -- --runInBand test/validation/service.test.ts"
+                },
+                "expectedOutcome": "The service rejects the event and persistence receives zero calls.",
+                "passCriteria": "The test process exits zero and all assertions pass.",
+                "evidenceTier": "unit",
+                "fixtureRefs": [
+                  "FIX-001"
+                ],
+                "limitations": [
+                  "This check does not prove behavior against a real persistence provider."
+                ]
+              }
+            ]
+          ]
+        },
+        "fixtures": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Deterministic data, doubles, environment setup, or inspection material required by the declared test cases.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "purpose",
+              "setup",
+              "teardown",
+              "sourceRefs"
+            ],
+            "description": "A deterministic fixture or test-environment input referenced by one or more strategy test cases.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^FIX-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable fixture identifier within the strategy result.",
+                "examples": [
+                  "FIX-001"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Stable lower-kebab-case fixture name.",
+                "examples": [
+                  "invalid-event"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What behavior or boundary this fixture makes reproducible.",
+                "examples": [
+                  "Provide a stable malformed event for the negative path."
+                ]
+              },
+              "setup": {
+                "type": "string",
+                "minLength": 1,
+                "description": "How the fixture and any required test doubles or environment are prepared.",
+                "examples": [
+                  "Create the event object with a missing required field and a persistence spy."
+                ]
+              },
+              "teardown": {
+                "type": "string",
+                "minLength": 1,
+                "description": "How the fixture, temporary state, or test doubles are removed or reset.",
+                "examples": [
+                  "Reset the spy after the test."
+                ]
+              },
+              "sourceRefs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    },
+                    {
+                      "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                      "description": "A work-item-local reference resolved against the selected work-item directory."
+                    },
+                    {
+                      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    },
+                    {
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    },
+                    {
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                      "description": "A work-item-global reference resolved against a repository and work-item artifact."
+                    }
+                  ],
+                  "description": "A task-local, task-qualified, or globally qualified SDLC reference used for strategy provenance and source resolution.",
+                  "examples": [
+                    "#requirement/REQ-001",
+                    "WI-0003|50000000#outcome/O-001",
+                    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001"
+                  ]
+                },
+                "description": "Authoritative references for fixture format, source data, or setup constraints.",
+                "examples": [
+                  []
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "FIX-001",
+                "name": "invalid-event",
+                "purpose": "Provide a stable malformed event for the negative path.",
+                "setup": "Create the event object with a missing required field and a persistence spy.",
+                "teardown": "Reset the spy after the test.",
+                "sourceRefs": [
+                  "#artifact/FIXTURE-INVALID-EVENT"
+                ]
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "FIX-001",
+                "name": "invalid-event",
+                "purpose": "Provide a stable malformed event for the negative path.",
+                "setup": "Create the event object with a missing required field and a persistence spy.",
+                "teardown": "Reset the spy after the test.",
+                "sourceRefs": [
+                  "#artifact/FIXTURE-INVALID-EVENT"
+                ]
+              }
+            ]
+          ]
+        },
+        "coverage": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Explicit mappings from every required requirement, invariant, and objective to the test cases intended to cover them.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "requirementRefs",
+              "invariantRefs",
+              "objectiveRefs",
+              "testCaseRefs",
+              "rationale"
+            ],
+            "description": "A traceability mapping that explains which strategy test cases cover a requirement, invariant, and objective.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^COV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "description": "Stable coverage mapping identifier within the strategy result.",
+                "examples": [
+                  "COV-001"
+                ]
+              },
+              "requirementRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Requirement identifier covered by this mapping.",
+                  "examples": [
+                    "REQ-001"
+                  ]
+                },
+                "description": "Requirements addressed by the mapped test cases.",
+                "examples": [
+                  [
+                    "REQ-001"
+                  ]
+                ]
+              },
+              "invariantRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Invariant identifier covered by this mapping.",
+                  "examples": [
+                    "INV-001"
+                  ]
+                },
+                "description": "Design-derived invariants addressed by the mapped test cases.",
+                "examples": [
+                  [
+                    "INV-001"
+                  ]
+                ]
+              },
+              "objectiveRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "Objective identifier addressed by this mapping.",
+                  "examples": [
+                    "OBJ-001"
+                  ]
+                },
+                "description": "Strategy objectives addressed by the mapped test cases.",
+                "examples": [
+                  [
+                    "OBJ-001"
+                  ]
+                ]
+              },
+              "testCaseRefs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
+                  "examples": [
+                    "TC-001",
+                    "TC-CLI-001"
+                  ]
+                },
+                "description": "Test-case identifiers intended to provide this coverage.",
+                "examples": [
+                  [
+                    "TC-001"
+                  ]
+                ]
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why the mapped test cases are sufficient for the declared coverage at their stated evidence tiers.",
+                "examples": [
+                  "The unit test directly exercises rejection and the no-persistence side effect."
+                ]
+              }
+            },
+            "examples": [
+              {
+                "id": "COV-001",
+                "requirementRefs": [
+                  "REQ-001"
+                ],
+                "invariantRefs": [
+                  "INV-001"
+                ],
+                "objectiveRefs": [
+                  "OBJ-001"
+                ],
+                "testCaseRefs": [
+                  "TC-001"
+                ],
+                "rationale": "The unit test directly exercises rejection and the no-persistence side effect."
+              }
+            ]
+          },
+          "examples": [
+            [
+              {
+                "id": "COV-001",
+                "requirementRefs": [
+                  "REQ-001"
+                ],
+                "invariantRefs": [
+                  "INV-001"
+                ],
+                "objectiveRefs": [
+                  "OBJ-001"
+                ],
+                "testCaseRefs": [
+                  "TC-001"
+                ],
+                "rationale": "The unit test directly exercises rejection and the no-persistence side effect."
+              }
+            ]
+          ]
+        },
+        "minimumRequiredTestCaseRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
+            "examples": [
+              "TC-001",
+              "TC-CLI-001"
+            ]
+          },
+          "description": "The smallest set of test-case IDs that must be executed successfully for the implementation to be considered proven under this strategy.",
+          "examples": [
+            [
+              "TC-001"
+            ]
+          ]
+        },
+        "recommendedTestCaseRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
+            "examples": [
+              "TC-001",
+              "TC-CLI-001"
+            ]
+          },
+          "description": "Recommended but non-blocking test-case IDs that improve confidence when time, environment, and policy permit.",
+          "examples": [
+            [
+              "TC-002"
+            ],
+            []
+          ]
+        },
+        "evidenceLimitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A limitation on what the planned checks can establish, including unavailable higher evidence tiers or provider boundaries.",
+            "examples": [
+              "Unit and CLI checks do not establish production deployment behavior."
+            ]
+          },
+          "description": "The strategy's explicit evidence boundaries. These limitations remain relevant even when all planned checks pass.",
+          "examples": [
+            [
+              "No authenticated provider or production check is required by this strategy."
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "status": "defined",
+          "testCases": [
+            {
+              "id": "TC-001",
+              "title": "Reject invalid event before persistence",
+              "type": "unit",
+              "requirementLevel": "required",
+              "purpose": "Prove the validation boundary for malformed input.",
+              "procedure": {
+                "executionMode": "executable",
+                "target": "Validation service unit test",
+                "steps": [
+                  "Construct an invalid event fixture.",
+                  "Invoke the validation service with a persistence spy.",
+                  "Assert rejection and verify the persistence spy was not called."
+                ],
+                "command": "npm test -- --runInBand test/validation/service.test.ts"
+              },
+              "expectedOutcome": "The service rejects the event and persistence receives zero calls.",
+              "passCriteria": "The test process exits zero and all assertions pass.",
+              "evidenceTier": "unit",
+              "fixtureRefs": [
+                "FIX-001"
+              ],
+              "limitations": [
+                "This check does not prove behavior against a real persistence provider."
+              ]
+            }
+          ],
+          "fixtures": [
+            {
+              "id": "FIX-001",
+              "name": "invalid-event",
+              "purpose": "Provide a stable malformed event for the negative path.",
+              "setup": "Create the event object with a missing required field and a persistence spy.",
+              "teardown": "Reset the spy after the test.",
+              "sourceRefs": [
+                "#artifact/FIXTURE-INVALID-EVENT"
+              ]
+            }
+          ],
+          "coverage": [
+            {
+              "id": "COV-001",
+              "requirementRefs": [
+                "REQ-001"
+              ],
+              "invariantRefs": [
+                "INV-001"
+              ],
+              "objectiveRefs": [
+                "OBJ-001"
+              ],
+              "testCaseRefs": [
+                "TC-001"
+              ],
+              "rationale": "The unit test directly exercises rejection and the no-persistence side effect."
+            }
+          ],
+          "minimumRequiredTestCaseRefs": [
+            "TC-001"
+          ],
+          "recommendedTestCaseRefs": [],
+          "evidenceLimitations": [
+            "No authenticated provider or production check is required by this strategy."
+          ]
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "AnyReference": {
+      "type": "string",
+      "oneOf": [
+        {
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-local reference resolved against the selected work-item directory."
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "description": "A work-item-global reference resolved against a repository and work-item artifact."
+        }
+      ],
+      "description": "A task-local, task-qualified, or globally qualified SDLC reference used for strategy provenance and source resolution.",
+      "examples": [
+        "#requirement/REQ-001",
+        "WI-0003|50000000#outcome/O-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001"
+      ]
+    },
+    "Input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "ref",
+        "purpose",
+        "required"
+      ],
+      "description": "One authoritative strategy input and its task-local alias.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable alias for this input within the strategy intent.",
+          "examples": [
+            "INPUT-REQ-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "requirement",
+            "acceptanceCriterion",
+            "design",
+            "invariant",
+            "implementation",
+            "task",
+            "artifact",
+            "constraint"
+          ],
+          "description": "The semantic kind of source represented by this input.",
+          "examples": [
+            "requirement",
+            "design"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "oneOf": [
+            {
+              "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+            },
+            {
+              "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+              "description": "A work-item-local reference resolved against the selected work-item directory."
+            },
+            {
+              "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+            },
+            {
+              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+            },
+            {
+              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+              "description": "A work-item-global reference resolved against a repository and work-item artifact."
+            }
+          ],
+          "description": "The source reference resolved by the host for this strategy input.",
+          "examples": [
+            "#requirement/REQ-001"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the strategy must consider this source.",
+          "examples": [
+            "Define the expected rejection behavior."
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether failure to resolve or consider this input blocks strategy completion.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "INPUT-REQ-001",
+          "kind": "requirement",
+          "ref": "#requirement/REQ-001",
+          "purpose": "Define the expected rejection behavior.",
+          "required": true
+        }
+      ]
+    },
+    "Requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "statement",
+        "inputRefs",
+        "required"
+      ],
+      "description": "One requirement or acceptance criterion that must be mapped to strategy coverage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable requirement identifier within the strategy intent.",
+          "examples": [
+            "REQ-001"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "requirement",
+            "acceptanceCriterion"
+          ],
+          "description": "Whether this source is a requirement or an acceptance criterion.",
+          "examples": [
+            "requirement",
+            "acceptanceCriterion"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The behavior or acceptance condition that coverage must address.",
+          "examples": [
+            "Invalid events are rejected before persistence is invoked."
+          ]
+        },
+        "inputRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Strategy input alias supporting this requirement.",
+            "examples": [
+              "INPUT-REQ-001"
+            ]
+          },
+          "description": "Authoritative inputs from which this requirement was derived.",
+          "examples": [
+            [
+              "INPUT-REQ-001"
+            ]
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this requirement must be covered by the minimum required test set.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "REQ-001",
+          "kind": "requirement",
+          "statement": "Invalid events are rejected before persistence is invoked.",
+          "inputRefs": [
+            "INPUT-REQ-001"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "Invariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "inputRefs",
+        "required"
+      ],
+      "description": "One design-derived invariant that the implementation must preserve and the strategy must cover.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable invariant identifier within the strategy intent.",
+          "examples": [
+            "INV-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The behavior, safety property, or boundary that must remain true.",
+          "examples": [
+            "Persistence is not called when validation rejects an event."
+          ]
+        },
+        "inputRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Strategy input alias establishing or motivating this invariant.",
+            "examples": [
+              "INPUT-DESIGN-001"
+            ]
+          },
+          "description": "Design or requirement inputs from which this invariant was derived.",
+          "examples": [
+            [
+              "INPUT-DESIGN-001"
+            ]
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this invariant must be covered by the minimum required test set.",
+          "examples": [
+            true,
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "INV-001",
+          "statement": "Persistence is not called when validation rejects an event.",
+          "inputRefs": [
+            "INPUT-DESIGN-001"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "Objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "inputRefs",
+        "requirementRefs",
+        "invariantRefs"
+      ],
+      "description": "One strategy objective connecting source inputs, requirements, and design-derived invariants.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable objective identifier within the strategy intent.",
+          "examples": [
+            "OBJ-001"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The bounded behavior or evidence objective to address.",
+          "examples": [
+            "Verify the validation-to-persistence boundary."
+          ]
+        },
+        "inputRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Strategy input alias supporting this objective.",
+            "examples": [
+              "INPUT-REQ-001"
+            ]
+          },
+          "description": "Authoritative sources from which this objective was derived.",
+          "examples": [
+            [
+              "INPUT-REQ-001"
+            ]
+          ]
+        },
+        "requirementRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Requirement identifier addressed by this objective.",
+            "examples": [
+              "REQ-001"
+            ]
+          },
+          "description": "Requirements that define this objective's expected behavior.",
+          "examples": [
+            [
+              "REQ-001"
+            ]
+          ]
+        },
+        "invariantRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Invariant identifier that this objective must preserve.",
+            "examples": [
+              "INV-001"
+            ]
+          },
+          "description": "Design-derived invariants that the objective requires the strategy to cover.",
+          "examples": [
+            [
+              "INV-001"
+            ]
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "OBJ-001",
+          "statement": "Verify the validation-to-persistence boundary.",
+          "inputRefs": [
+            "INPUT-REQ-001"
+          ],
+          "requirementRefs": [
+            "REQ-001"
+          ],
+          "invariantRefs": [
+            "INV-001"
+          ]
+        }
+      ]
+    },
+    "Procedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionMode",
+        "target",
+        "steps"
+      ],
+      "description": "The reproducible or explicitly bounded procedure for one strategy test case.",
+      "properties": {
+        "executionMode": {
+          "type": "string",
+          "enum": [
+            "executable",
+            "manual",
+            "inspection",
+            "provider",
+            "operational"
+          ],
+          "description": "How the procedure obtains evidence. Executable means a fresh command or automated check can run it; the other modes require the named human, inspection, provider, or operational boundary.",
+          "examples": [
+            "executable",
+            "manual"
+          ]
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The code, command, system, document, provider, or operational boundary examined by the procedure.",
+          "examples": [
+            "Validation service unit test"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One ordered action in the procedure.",
+            "examples": [
+              "Construct an invalid event fixture."
+            ]
+          },
+          "description": "Ordered actions needed to perform the check and observe its result.",
+          "examples": [
+            [
+              "Construct an invalid event fixture.",
+              "Invoke the validation service."
+            ]
+          ]
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The exact repository-relative command to run when executionMode is executable or a command is otherwise useful for the procedure.",
+          "examples": [
+            "npm test -- --runInBand test/validation/service.test.ts"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "executionMode": "executable",
+          "target": "Validation service unit test",
+          "steps": [
+            "Construct an invalid event fixture.",
+            "Invoke the validation service."
+          ],
+          "command": "npm test -- --runInBand test/validation/service.test.ts"
+        }
+      ]
+    },
+    "TestCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "type",
+        "requirementLevel",
+        "purpose",
+        "procedure",
+        "expectedOutcome",
+        "passCriteria",
+        "evidenceTier",
+        "fixtureRefs",
+        "limitations"
+      ],
+      "description": "One required or recommended test case in the strategy. It defines a procedure and expected result but does not contain an observed result.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable identifier used by coverage mappings and later implementation verification evidence.",
+          "examples": [
+            "TC-001"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short human-readable name for the check.",
+          "examples": [
+            "Reject invalid event before persistence"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "unit",
+            "component",
+            "integration",
+            "cli",
+            "manual",
+            "inspection",
+            "provider",
+            "operational"
+          ],
+          "description": "The test type and boundary covered by this case.",
+          "examples": [
+            "unit",
+            "integration",
+            "provider"
+          ]
+        },
+        "requirementLevel": {
+          "type": "string",
+          "enum": [
+            "required",
+            "recommended"
+          ],
+          "description": "Whether this case belongs to the minimum required test set or is an explicitly non-blocking recommendation.",
+          "examples": [
+            "required",
+            "recommended"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this test case is needed and what uncertainty or behavior it addresses.",
+          "examples": [
+            "Prove the validation boundary for malformed input."
+          ]
+        },
+        "procedure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "executionMode",
+            "target",
+            "steps"
+          ],
+          "description": "The ordered procedure for producing evidence for this case.",
+          "properties": {
+            "executionMode": {
+              "type": "string",
+              "enum": [
+                "executable",
+                "manual",
+                "inspection",
+                "provider",
+                "operational"
+              ],
+              "description": "How the procedure obtains evidence. Executable means a fresh command or automated check can run it; the other modes require the named human, inspection, provider, or operational boundary.",
+              "examples": [
+                "executable",
+                "manual"
+              ]
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The code, command, system, document, provider, or operational boundary examined by the procedure.",
+              "examples": [
+                "Validation service unit test"
+              ]
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "description": "One ordered action in the procedure.",
+                "examples": [
+                  "Construct an invalid event fixture."
+                ]
+              },
+              "description": "Ordered actions needed to perform the check and observe its result.",
+              "examples": [
+                [
+                  "Construct an invalid event fixture.",
+                  "Invoke the validation service."
+                ]
+              ]
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The exact repository-relative command to run when executionMode is executable or a command is otherwise useful for the procedure.",
+              "examples": [
+                "npm test -- --runInBand test/validation/service.test.ts"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "executionMode": "executable",
+              "target": "Validation service unit test",
+              "steps": [
+                "Construct an invalid event fixture.",
+                "Assert rejection."
+              ],
+              "command": "npm test -- --runInBand test/validation/service.test.ts"
+            }
+          ]
+        },
+        "expectedOutcome": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The behavior that should be observed when the procedure succeeds.",
+          "examples": [
+            "The service rejects the event and persistence receives zero calls."
+          ]
+        },
+        "passCriteria": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The concrete condition used to classify observed evidence as passed.",
+          "examples": [
+            "The test process exits zero and all assertions pass."
+          ]
+        },
+        "evidenceTier": {
+          "type": "string",
+          "enum": [
+            "static",
+            "unit",
+            "component",
+            "cli-audit",
+            "integration",
+            "manual",
+            "inspection",
+            "provider",
+            "operational"
+          ],
+          "description": "The shared SDLC evidence tier vocabulary defined by https://schemas.handschuh.dev/sdlc/evidence-tier/v1.",
+          "examples": [
+            "static",
+            "unit",
+            "cli-audit",
+            "operational"
+          ]
+        },
+        "fixtureRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^FIX-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Fixture identifier required by this test case.",
+            "examples": [
+              "FIX-001"
+            ]
+          },
+          "description": "Deterministic fixtures used by this procedure.",
+          "examples": [
+            [
+              "FIX-001"
+            ],
+            []
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A case-specific boundary on what this test can establish.",
+            "examples": [
+              "This check does not prove behavior against a real persistence provider."
+            ]
+          },
+          "description": "Evidence limitations specific to this test case.",
+          "examples": [
+            [
+              "This check does not prove behavior against a real persistence provider."
+            ],
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "TC-001",
+          "title": "Reject invalid event before persistence",
+          "type": "unit",
+          "requirementLevel": "required",
+          "purpose": "Prove the validation boundary for malformed input.",
+          "procedure": {
+            "executionMode": "executable",
+            "target": "Validation service unit test",
+            "steps": [
+              "Construct an invalid event fixture.",
+              "Assert rejection and verify the persistence spy was not called."
+            ],
+            "command": "npm test -- --runInBand test/validation/service.test.ts"
+          },
+          "expectedOutcome": "The service rejects the event and persistence receives zero calls.",
+          "passCriteria": "The test process exits zero and all assertions pass.",
+          "evidenceTier": "unit",
+          "fixtureRefs": [
+            "FIX-001"
+          ],
+          "limitations": [
+            "This check does not prove behavior against a real persistence provider."
+          ]
+        }
+      ]
+    },
+    "Fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "purpose",
+        "setup",
+        "teardown",
+        "sourceRefs"
+      ],
+      "description": "A deterministic fixture or test-environment input referenced by one or more strategy test cases.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^FIX-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable fixture identifier within the strategy result.",
+          "examples": [
+            "FIX-001"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "Stable lower-kebab-case fixture name.",
+          "examples": [
+            "invalid-event"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What behavior or boundary this fixture makes reproducible.",
+          "examples": [
+            "Provide a stable malformed event for the negative path."
+          ]
+        },
+        "setup": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the fixture and any required test doubles or environment are prepared.",
+          "examples": [
+            "Create the event object with a missing required field and a persistence spy."
+          ]
+        },
+        "teardown": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the fixture, temporary state, or test doubles are removed or reset.",
+          "examples": [
+            "Reset the spy after the test."
+          ]
+        },
+        "sourceRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "oneOf": [
+              {
+                "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              },
+              {
+                "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                "description": "A work-item-local reference resolved against the selected work-item directory."
+              },
+              {
+                "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              },
+              {
+                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              },
+              {
+                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                "description": "A work-item-global reference resolved against a repository and work-item artifact."
+              }
+            ],
+            "description": "A task-local, task-qualified, or globally qualified SDLC reference used for strategy provenance and source resolution.",
+            "examples": [
+              "#requirement/REQ-001",
+              "WI-0003|50000000#outcome/O-001",
+              "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001"
+            ]
+          },
+          "description": "Authoritative references for fixture format, source data, or setup constraints.",
+          "examples": [
+            []
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "FIX-001",
+          "name": "invalid-event",
+          "purpose": "Provide a stable malformed event for the negative path.",
+          "setup": "Create the event object with a missing required field and a persistence spy.",
+          "teardown": "Reset the spy after the test.",
+          "sourceRefs": [
+            "#artifact/FIXTURE-INVALID-EVENT"
+          ]
+        }
+      ]
+    },
+    "Coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requirementRefs",
+        "invariantRefs",
+        "objectiveRefs",
+        "testCaseRefs",
+        "rationale"
+      ],
+      "description": "A traceability mapping that explains which strategy test cases cover a requirement, invariant, and objective.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^COV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "description": "Stable coverage mapping identifier within the strategy result.",
+          "examples": [
+            "COV-001"
+          ]
+        },
+        "requirementRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Requirement identifier covered by this mapping.",
+            "examples": [
+              "REQ-001"
+            ]
+          },
+          "description": "Requirements addressed by the mapped test cases.",
+          "examples": [
+            [
+              "REQ-001"
+            ]
+          ]
+        },
+        "invariantRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Invariant identifier covered by this mapping.",
+            "examples": [
+              "INV-001"
+            ]
+          },
+          "description": "Design-derived invariants addressed by the mapped test cases.",
+          "examples": [
+            [
+              "INV-001"
+            ]
+          ]
+        },
+        "objectiveRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "Objective identifier addressed by this mapping.",
+            "examples": [
+              "OBJ-001"
+            ]
+          },
+          "description": "Strategy objectives addressed by the mapped test cases.",
+          "examples": [
+            [
+              "OBJ-001"
+            ]
+          ]
+        },
+        "testCaseRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
+            "examples": [
+              "TC-001",
+              "TC-CLI-001"
+            ]
+          },
+          "description": "Test-case identifiers intended to provide this coverage.",
+          "examples": [
+            [
+              "TC-001"
+            ]
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the mapped test cases are sufficient for the declared coverage at their stated evidence tiers.",
+          "examples": [
+            "The unit test directly exercises rejection and the no-persistence side effect."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "id": "COV-001",
+          "requirementRefs": [
+            "REQ-001"
+          ],
+          "invariantRefs": [
+            "INV-001"
+          ],
+          "objectiveRefs": [
+            "OBJ-001"
+          ],
+          "testCaseRefs": [
+            "TC-001"
+          ],
+          "rationale": "The unit test directly exercises rejection and the no-persistence side effect."
+        }
+      ]
+    },
+    "TestCaseId": {
+      "type": "string",
+      "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
+      "examples": [
+        "TC-001",
+        "TC-CLI-001"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "summary": "Define the smallest deterministic test set that can verify event validation before persistence.",
+        "inputs": [
+          {
+            "id": "INPUT-REQ-001",
+            "kind": "requirement",
+            "ref": "#requirement/REQ-001",
+            "purpose": "Define rejection behavior before persistence.",
+            "required": true
+          },
+          {
+            "id": "INPUT-DESIGN-001",
+            "kind": "design",
+            "ref": "#design/DESIGN-001",
+            "purpose": "Define the validation boundary and its persistence dependency.",
+            "required": true
+          }
+        ],
+        "requirements": [
+          {
+            "id": "REQ-001",
+            "kind": "requirement",
+            "statement": "Invalid events are rejected before persistence is invoked.",
+            "inputRefs": [
+              "INPUT-REQ-001",
+              "INPUT-DESIGN-001"
+            ],
+            "required": true
+          }
+        ],
+        "invariants": [
+          {
+            "id": "INV-001",
+            "statement": "Persistence is not called when validation rejects an event.",
+            "inputRefs": [
+              "INPUT-DESIGN-001"
+            ],
+            "required": true
+          }
+        ],
+        "objectives": [
+          {
+            "id": "OBJ-001",
+            "statement": "Verify the validation-to-persistence boundary.",
+            "inputRefs": [
+              "INPUT-REQ-001",
+              "INPUT-DESIGN-001"
+            ],
+            "requirementRefs": [
+              "REQ-001"
+            ],
+            "invariantRefs": [
+              "INV-001"
+            ]
+          }
+        ],
+        "nonGoals": [
+          "Do not claim provider or production behavior from local unit tests."
+        ]
+      },
+      "result": {
+        "status": "defined",
+        "testCases": [
+          {
+            "id": "TC-001",
+            "title": "Reject invalid event before persistence",
+            "type": "unit",
+            "requirementLevel": "required",
+            "purpose": "Prove the validation boundary for malformed input.",
+            "procedure": {
+              "executionMode": "executable",
+              "target": "Validation service unit test",
+              "steps": [
+                "Construct an invalid event fixture.",
+                "Invoke the validation service with a persistence spy.",
+                "Assert rejection and verify the persistence spy was not called."
+              ],
+              "command": "npm test -- --runInBand test/validation/service.test.ts"
+            },
+            "expectedOutcome": "The service rejects the event and persistence receives zero calls.",
+            "passCriteria": "The test process exits zero and all assertions pass.",
+            "evidenceTier": "unit",
+            "fixtureRefs": [
+              "FIX-001"
+            ],
+            "limitations": [
+              "This check does not prove behavior against a real persistence provider."
+            ]
+          }
+        ],
+        "fixtures": [
+          {
+            "id": "FIX-001",
+            "name": "invalid-event",
+            "purpose": "Provide a stable malformed event for the negative path.",
+            "setup": "Create the event object with a missing required field and a persistence spy.",
+            "teardown": "Reset the spy after the test.",
+            "sourceRefs": [
+              "#artifact/FIXTURE-INVALID-EVENT"
+            ]
+          }
+        ],
+        "coverage": [
+          {
+            "id": "COV-001",
+            "requirementRefs": [
+              "REQ-001"
+            ],
+            "invariantRefs": [
+              "INV-001"
+            ],
+            "objectiveRefs": [
+              "OBJ-001"
+            ],
+            "testCaseRefs": [
+              "TC-001"
+            ],
+            "rationale": "The unit test directly exercises rejection and the no-persistence side effect."
+          }
+        ],
+        "minimumRequiredTestCaseRefs": [
+          "TC-001"
+        ],
+        "recommendedTestCaseRefs": [],
+        "evidenceLimitations": [
+          "No authenticated provider or production check is required by this strategy."
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-result-reference/v1",
+  "title": "SDLC Task Result Reference v1",
+  "description": "A durable reference to one exact SDLC task result, paired with the SHA-256 digest of the representation selected by the relationship.",
+  "$comment": "The host must resolve ref, verify that it identifies a result belonging to the named task, and compare sha256 with the exact bytes or canonical representation used for the relationship. A digest-pinned reference is required when a later action reviews, corrects, or otherwise acts on a result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ref",
+    "sha256"
+  ],
+  "properties": {
+    "ref": {
+      "$ref": "sdlc-any-reference.schema.json",
+      "description": "The task-local, task-qualified, or globally qualified reference to the result entity or durable result record.",
+      "examples": [
+        "WI-0003|06000000#result/R-001"
+      ]
+    },
+    "sha256": {
+      "$ref": "../../sdlc-task-delivery/v1/sdlc-artifact-digest.schema.json",
+      "description": "The SHA-256 digest of the exact result representation identified by ref.",
+      "examples": [
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ref": "WI-0003|06000000#result/R-001",
+      "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  ]
+}
