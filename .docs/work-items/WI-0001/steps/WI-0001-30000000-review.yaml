@@ -4,7 +4,7 @@ taskUid: WI-0001-30000000
 orderKey: '30000000'
 parentTaskUid: WI-0001-20000000
 taskType: review
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Review the CLI plumbing and bounded task records
 objective: Review the exact implementation and validation scope for correctness, traceability, and release-boundary honesty.
 references:
