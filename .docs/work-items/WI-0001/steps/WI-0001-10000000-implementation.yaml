@@ -4,7 +4,7 @@ taskUid: WI-0001-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement the nodejs-cli-pattern CLI plumbing
 objective: Create the buildable TypeScript/ESM package boundary and stable help/version CLI behavior.
 references:
@@ -20,6 +20,7 @@ dependsOn: []
 governance:
   schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
   ownedPaths:
+    - .docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml
     - README.md
     - package.json
     - yarn.lock
