@@ -4,7 +4,7 @@ taskUid: WI-0001-40000000
 orderKey: '40000000'
 parentTaskUid: WI-0001-30000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Produce the local CLI release candidate
 objective: Build and smoke-test the compiled CLI and record a local release candidate without publishing or deploying it.
 references:
@@ -125,7 +125,7 @@ task:
       - id: ART-002
         kind: manifest
         path: package.json
-        checksum: sha256:76d7574843b981025cc2f47edc07cba6eb69542c3c3914e21abe206a4f87a84c
+        checksum: sha256:084892982c1668914f0ac72158e60fc5cde2dee523418681f5fd6d2e5d8736af
     executions:
       - id: EXEC-RELEASE-001
         procedureRef: '#procedure/PROC-001'
