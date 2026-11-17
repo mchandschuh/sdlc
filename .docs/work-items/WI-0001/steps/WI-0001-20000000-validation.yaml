@@ -1,0 +1,185 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0001
+taskUid: WI-0001-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0001-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate the CLI plumbing and work-item contract
+objective: Run deterministic typecheck, build, test, and schema-instance validation for the implementation and task records.
+references:
+  required:
+    - package.json
+    - yarn.lock
+    - tsconfig.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0001/work-item.json
+    - .docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml
+  informational:
+    - README.md
+dependsOn:
+  - WI-0001-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0001/steps/WI-0001-20000000-validation.yaml
+  commitSubject: 'WI-0001: feat(cli): scaffold nodejs-cli-pattern plumbing'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0001/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: complete
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the implementation boundary, CLI aliases, and schema-backed work-item records.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0001|10000000#result/R-001
+        purpose: Identify the implementation result and its declared verification.
+        required: true
+      - id: INPUT-WORK-ITEM-001
+        kind: requirement
+        ref: WI-0001#work-item.json#requirement/WI-0001_REQ_001
+        purpose: Identify the acceptance requirement for stable CLI flags.
+        required: true
+    targets:
+      - id: TARGET-CLI-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0001|10000000#result/R-001
+        purpose: Validate the implementation result and its executable evidence.
+        required: true
+      - id: TARGET-WORK-ITEM-001
+        kind: record
+        ref: WI-0001#work-item.json#work-item/WI-0001
+        purpose: Validate the work-item JSON against the local v2 contract.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+    testCaseRefs:
+      - '#test-case/TC-HELP'
+      - '#test-case/TC-VERSION'
+    procedures:
+      - id: VAL-CLI-001
+        sequence: 1
+        name: validate-cli-boundary
+        description: Run the package typecheck, compiled build, and focused CLI test suite.
+        reason: Confirm the implementation is executable and the requested aliases are covered.
+        targetRefs:
+          - '#target/TARGET-CLI-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+        testCaseRefs:
+          - '#test-case/TC-HELP'
+          - '#test-case/TC-VERSION'
+        method:
+          executionMode: executable
+          target: Repository CLI package
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+          command: yarn test
+          paths:
+            - package.json
+            - src/cli/main.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+      - id: VAL-SCHEMA-001
+        sequence: 2
+        name: validate-work-item-record
+        description: Validate work-item.json and all task envelopes against the local schema registry.
+        reason: Ensure the associated task files are complete schema instances rather than prose-only records.
+        targetRefs:
+          - '#target/TARGET-WORK-ITEM-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: Work-item and task artifact tree
+          steps:
+            - Validate work-item.json with the work-item v2 schema.
+            - Validate each YAML envelope with task-envelope v1.
+            - Validate each nested task payload with its selected task schema.
+          command: schema-validate
+          paths:
+            - .docs/work-items/WI-0001/work-item.json
+            - .docs/work-items/WI-0001/steps/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: static
+        required: true
+    nonGoals:
+      - Do not claim provider, deployment, or production evidence.
+      - Do not mutate work-item lifecycle state as a side effect of validation.
+  result:
+    status: passed
+    summary: The CLI checks and the work-item/task document contracts are planned for deterministic local validation.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-CLI-001'
+        status: passed
+        observed:
+          outcome: passed
+          summary: yarn typecheck, yarn build, and yarn test completed successfully.
+          assertions:
+            - The compiled launcher resolved the TypeScript entrypoint.
+            - The focused suite passed all six CLI tests.
+        evidenceTier: cli-audit
+        evidence:
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The CLI package typechecks, builds, and passes its focused tests.
+            command: yarn typecheck && yarn build && yarn test
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - Static schema validation does not establish semantic approval or deployment readiness.
+      - The validation task does not exercise a provider, HTTP server, container, or production environment.
+    nonClaims:
+      - This result does not approve the release.
+      - This result does not establish production readiness.

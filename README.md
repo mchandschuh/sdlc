@@ -5,14 +5,33 @@ Schema-first SDLC process definitions and, eventually, a CLI built on top of
 
 ## Current seed
 
-This repository is intentionally a schema-only seed. It contains the SDLC type
-system under [`schemas/`](./schemas) and no application runtime yet.
+This repository contains the SDLC type system under [`schemas/`](./schemas) and
+the initial TypeScript/ESM CLI plumbing for the `nodejs-cli-pattern` skill.
+The CLI is intentionally a small runtime boundary: it currently exposes stable
+help and version behavior while leaving command registration and application
+services for later work.
 
 The initial seed does **not** include the previous SDLC implementation, CLI,
-tests, CUE definitions, generated output, package dependencies, or LangGraph
-runtime code. The previous implementation remains at
+tests, CUE definitions, generated output, or LangGraph runtime code. The
+previous implementation remains at
 `/home/michael/.cline/skills/sdlc` as a reference until the migration reaches a
 later checkpoint.
+
+## CLI plumbing
+
+The package uses native ESM, TypeScript, and Yarn through Corepack:
+
+```bash
+yarn install
+yarn build
+node ./bin/cli.js --help
+node ./bin/cli.js --version
+yarn test
+```
+
+The short aliases `-h` and `-v` are equivalent to `--help` and `--version`.
+The launcher runs compiled JavaScript from `dist/`; local TypeScript execution
+is available through `yarn dev`.
 
 The schema set currently covers:
 

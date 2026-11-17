@@ -1,0 +1,28 @@
+{
+  "name": "nodejs-cli-pattern",
+  "version": "0.1.0",
+  "description": "TypeScript Node.js CLI plumbing for the nodejs-cli-pattern skill.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "yarn@1.22.22",
+  "bin": {
+    "nodejs-cli-pattern": "./bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/main.ts",
+    "start": "node ./bin/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "license": "UNLICENSED"
+}

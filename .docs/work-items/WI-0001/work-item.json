@@ -1,0 +1,107 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0001",
+  "status": "implemented",
+  "title": "Prepare the nodejs-cli-pattern skill app plumbing",
+  "type": "feature",
+  "objective": "Create the initial TypeScript/ESM Node.js CLI application plumbing for the nodejs-cli-pattern skill, including stable help/version flags and a bounded release task.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested a reviewed commit on the current repository."
+    }
+  },
+  "baseline": "03ebacd3ae4be9287c68e278676993703732b2b1",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare the plumbing of a ~/.cline/skills/nodejs-cli-pattern/SKILL.md app in this repository. Support -h|--help and -v|--version. Include a release task in a .docs/work-items/* directory. Review and commit changes after the work-item.json and associated task files are completed.",
+    "sha256": "b598ab0d4134301af92b0fce7643658fd6809576299fcdc9755dead2f7fcad6d"
+  },
+  "scope": [
+    {
+      "name": "cli-application-plumbing",
+      "description": "Add the package metadata, TypeScript build configuration, compiled launcher, CLI entrypoint, and focused tests for the nodejs-cli-pattern application.",
+      "reason": "The repository needs a buildable application boundary before future skill-specific commands can be added."
+    },
+    {
+      "name": "work-item-release-record",
+      "description": "Record implementation, validation, review, and release task envelopes under the work-item steps directory.",
+      "reason": "The requested change must remain traceable and include an explicit release task without conflating local evidence with deployment approval."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "domain-command-runtime",
+      "description": "Do not implement domain-specific commands, provider integrations, HTTP services, or persistent application state.",
+      "reason": "This request is limited to the initial CLI plumbing and stable terminal flags.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "production-release",
+      "description": "Do not deploy the application, publish a package, approve a release, or claim production readiness.",
+      "reason": "The release task records a bounded local delivery procedure only.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0001_REQ_001",
+        "name": "stable-cli-help-version",
+        "description": "The CLI must support -h|--help and -v|--version with deterministic output and successful exit codes.",
+        "reason": "The initial application boundary must be discoverable and report its installed version consistently.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0001_REQ_001_AC_001",
+            "description": "Both help spellings print usage information and both version spellings print 0.1.0 with exit code zero."
+          }
+        ]
+      },
+      {
+        "id": "WI-0001_REQ_002",
+        "name": "typed-esm-package-boundary",
+        "description": "The application must use TypeScript, native ESM, Yarn metadata, and a compiled JavaScript launcher.",
+        "reason": "The nodejs-cli-pattern skill requires one authoritative package/build convention that works for source and compiled execution.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0001_REQ_002_AC_001",
+            "description": "yarn typecheck, yarn build, and yarn test complete successfully from the repository root."
+          }
+        ]
+      },
+      {
+        "id": "WI-0001_REQ_003",
+        "name": "bounded-release-task",
+        "description": "The work item must include a delivery task that defines local release packaging and explicitly excludes deployment and approval.",
+        "reason": "The requested release task must be traceable without overstating local validation as production release evidence.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0001_REQ_003_AC_001",
+            "description": "A task-envelope YAML file with taskType delivery and deliveryTypes including release exists below .docs/work-items/WI-0001/steps/."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0001/steps/"
+}

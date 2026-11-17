@@ -1,0 +1,157 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0001
+taskUid: WI-0001-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement the nodejs-cli-pattern CLI plumbing
+objective: Create the buildable TypeScript/ESM package boundary and stable help/version CLI behavior.
+references:
+  required:
+    - README.md
+    - package.json
+    - tsconfig.json
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+  informational:
+    - README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - README.md
+    - package.json
+    - yarn.lock
+    - tsconfig.json
+    - bin/
+    - src/
+    - tests/
+  commitSubject: 'WI-0001: feat(cli): scaffold nodejs-cli-pattern plumbing'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: implemented
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement the initial Node.js CLI application boundary and stable terminal flags.
+    changeTypes:
+      - production-code
+      - test-code
+      - configuration
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0001#work-item.json#requirement/WI-0001_REQ_001
+        purpose: Define the required help and version aliases.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0001#work-item.json#requirement/WI-0001_REQ_002
+        purpose: Define the TypeScript, ESM, Yarn, and compiled launcher boundary.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The package builds as native ESM and the CLI returns stable help/version responses.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-HELP'
+          - '#test-case/TC-VERSION'
+    ownedPaths:
+      - README.md
+      - package.json
+      - yarn.lock
+      - tsconfig.json
+      - bin/
+      - src/
+      - tests/
+    nonGoals:
+      - Do not add domain-specific commands or provider integrations.
+      - Do not add HTTP, container, credential, or persistence behavior.
+    steps:
+      - Add package metadata, Yarn package-manager metadata, and strict NodeNext TypeScript configuration.
+      - Implement the thin compiled launcher and CLI main entrypoint with -h|--help and -v|--version.
+      - Add focused tests and document the current runtime boundary.
+  result:
+    status: implemented
+    implementation:
+      summary: Added a private TypeScript/ESM package with a compiled CLI launcher and stable help/version behavior.
+      changes:
+        - id: CHANGE-001
+          type: production-code
+          summary: Added the thin bin launcher and TypeScript CLI main entrypoint.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - bin/cli.js
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: configuration
+          summary: Added package scripts, Yarn metadata, lockfile, and NodeNext compiler configuration.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - package.json
+            - yarn.lock
+            - tsconfig.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added focused CLI tests for both help and version aliases and unknown options.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-HELP'
+          path: tests/cli.test.ts
+          selector: prints help for -h and --help
+        - testCaseRef: '#test-case/TC-VERSION'
+          path: tests/cli.test.ts
+          selector: prints the package version for -v and --version
+    verification:
+      status: passed
+      objectiveRefs:
+        - OBJ-001
+      tests:
+        - id: EXEC-CLI-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-HELP'
+            - '#test-case/TC-VERSION'
+          command: yarn test
+          status: passed
+          result: The focused Vitest suite passed all six CLI tests.
+    limitations:
+      - No domain-specific command behavior is implemented yet.
+      - No provider-backed, containerized, deployed, or production behavior was established.

@@ -1,0 +1,144 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0001
+taskUid: WI-0001-40000000
+orderKey: '40000000'
+parentTaskUid: WI-0001-30000000
+taskType: delivery
+processingStatus: unprocessed
+title: Produce the local CLI release candidate
+objective: Build and smoke-test the compiled CLI and record a local release candidate without publishing or deploying it.
+references:
+  required:
+    - package.json
+    - yarn.lock
+    - tsconfig.json
+    - bin/cli.js
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0001/steps/WI-0001-20000000-validation.yaml
+    - .docs/work-items/WI-0001/steps/WI-0001-30000000-review.yaml
+  informational:
+    - README.md
+dependsOn:
+  - WI-0001-20000000
+  - WI-0001-30000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0001/steps/WI-0001-40000000-release.yaml
+  commitSubject: 'WI-0001: feat(cli): scaffold nodejs-cli-pattern plumbing'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: build-release-candidate
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: smoke-release-candidate
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - --version
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: complete
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Build and smoke-test a local release candidate for the compiled nodejs-cli-pattern CLI.
+    deliveryTypes:
+      - package
+      - release
+    inputs:
+      - id: INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0001|20000000#result/R-001
+        purpose: Confirm the implementation and task records have local validation evidence.
+        required: true
+      - id: INPUT-REVIEW-001
+        kind: taskResult
+        ref: WI-0001|30000000#result/R-001
+        purpose: Confirm the bounded review result and its release non-claims.
+        required: true
+      - id: INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the repository revision from which the release candidate is built.
+        required: true
+    artifacts:
+      - id: ART-001
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI entrypoint used by the bin launcher.
+        required: true
+      - id: ART-002
+        kind: manifest
+        path: package.json
+        purpose: Package metadata and executable declaration for the local release candidate.
+        required: true
+    procedures:
+      - id: PROC-001
+        sequence: 1
+        name: build-release-candidate
+        description: Compile the TypeScript source into the dist directory.
+        steps:
+          - Run yarn build.
+          - Confirm dist/cli/main.js exists.
+        command: yarn build
+        expected:
+          result: The TypeScript build completes successfully and produces the compiled CLI entrypoint.
+        required: true
+      - id: PROC-002
+        sequence: 2
+        name: smoke-release-candidate
+        description: Run the compiled launcher through its version flag.
+        steps:
+          - Run node ./bin/cli.js --version.
+          - Confirm the output is 0.1.0.
+        command: node ./bin/cli.js --version
+        expected:
+          result: The compiled launcher reports version 0.1.0 and exits successfully.
+        required: true
+    nonGoals:
+      - Do not publish the package to a registry.
+      - Do not deploy the application or install it into a production environment.
+      - Do not approve the release or mutate the work-item lifecycle directly.
+  result:
+    status: delivered
+    summary: The compiled CLI and package metadata form a locally verified release candidate; no publishing or deployment was attempted.
+    artifacts:
+      - id: ART-001
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:96b66a5b95835394121656ab89508c92fee98b7f00477e3454297baac720c814
+      - id: ART-002
+        kind: manifest
+        path: package.json
+        checksum: sha256:76d7574843b981025cc2f47edc07cba6eb69542c3c3914e21abe206a4f87a84c
+    executions:
+      - id: EXEC-RELEASE-001
+        procedureRef: '#procedure/PROC-001'
+        result:
+          status: passed
+          summary: yarn build completed successfully and produced the compiled CLI entrypoint.
+        command: yarn build
+      - id: EXEC-RELEASE-002
+        procedureRef: '#procedure/PROC-002'
+        result:
+          status: passed
+          summary: The compiled launcher reported version 0.1.0 and exited successfully.
+        command: node ./bin/cli.js --version
+    limitations:
+      - The release candidate is local and is not published, deployed, or installed into production.
+      - The dist directory is generated and ignored; the committed source, package metadata, and task records are the durable inputs.
