@@ -4,7 +4,7 @@ taskUid: WI-0001-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0001-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate the CLI plumbing and work-item contract
 objective: Run deterministic typecheck, build, test, and schema-instance validation for the implementation and task records.
 references:
@@ -175,6 +175,23 @@ task:
             source: Validation execution EXEC-VAL-001
             claim: The CLI package typechecks, builds, and passes its focused tests.
             command: yarn typecheck && yarn build && yarn test
+      - id: EXEC-VAL-002
+        procedureRef: '#procedure/VAL-SCHEMA-001'
+        status: passed
+        observed:
+          outcome: passed
+          summary: The work-item, task envelopes, nested task payloads, and complete schema registry validated successfully.
+          assertions:
+            - work-item.json passed the work-item v2 schema.
+            - All four task envelopes passed task-envelope v1.
+            - All four nested task payloads passed their selected task schemas.
+            - The complete repository schema audit passed.
+        evidenceTier: static
+        evidence:
+          - kind: command
+            source: Validation execution EXEC-VAL-002
+            claim: The work-item and task artifact tree conforms to the repository-local schema contracts.
+            command: schema-validate --root schemas --schema schemas/work-item/v2/work-item.schema.json --document .docs/work-items/WI-0001/work-item.json
     findings: []
     evidenceTier: cli-audit
     limitations:
