@@ -1,0 +1,143 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0009
+taskUid: WI-0009-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement next-task selection
+objective: Add sdlc task next --work-item <work-item> with deterministic unprocessed-task selection, stable response schema, and read-only tests.
+references:
+  required:
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0008/work-item.json
+  informational:
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0009/steps/WI-0009-10000000-implementation.yaml
+    - schemas/sdlc-task-next/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: 'WI-0009: feat(cli): select next task'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement deterministic read-only next-task selection for tasks whose processingStatus is unprocessed.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_001
+        purpose: Define unprocessed-task selection semantics.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_002
+        purpose: Define selected and exhausted response behavior.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_003
+        purpose: Define selector errors and read-only behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_004
+        purpose: Define mixed-status fixture coverage.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The task next command selects the first unprocessed task in deterministic task order and returns no-next-task when all tasks are processed or blocked.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-TASK-NEXT-SELECT'
+          - '#test-case/TC-TASK-NEXT-EMPTY'
+      - id: OBJ-002
+        statement: Task next preserves selector errors, response schema stability, and read-only task-file behavior.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-TASK-NEXT-ERRORS'
+          - '#test-case/TC-TASK-NEXT-READ-ONLY'
+    ownedPaths:
+      - schemas/sdlc-task-next/
+      - src/core/
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not mutate processingStatus, execute tasks, lock tasks, or change lifecycle state.
+      - Do not change existing task list discovery ordering or output.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Add reusable next-task selection over the existing task discovery report and --work-item option parsing.
+      - Add the closed selected/no-next-task response schema and human-readable/JSON output.
+      - Add focused tests for mixed processing statuses, no-next-task, invalid selectors, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded next-task selection implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0009/steps/WI-0009-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The task next command and response schema are not yet implemented.

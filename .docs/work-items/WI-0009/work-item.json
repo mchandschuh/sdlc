@@ -1,0 +1,140 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0009",
+  "status": "planned",
+  "title": "Select the next task requiring processing",
+  "type": "feature",
+  "objective": "Add sdlc task next --work-item <work-item> as a deterministic read-only command that returns the first task whose processingStatus is unprocessed.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "19a7aebf65010364db7e96206c088204de93897d",
+  "request": {
+    "source": "conversation",
+    "text": "prepare a new work item for 'sdlc task next --work-item <work-item> that pulls the next task that requires processing. commit the new work item.\n\nProcess the new work item, commit per task.",
+    "sha256": "9d586b730371157065b9ccec7946a73e6a69f510638aca5db35f381b399d4f52"
+  },
+  "scope": [
+    {
+      "name": "next-task-command",
+      "description": "Add sdlc task next --work-item <work-item> to select the next task requiring host processing.",
+      "reason": "Operators need a deterministic command that identifies the next unprocessed task without scanning task records manually."
+    },
+    {
+      "name": "processing-status-selection",
+      "description": "Select only tasks with processingStatus unprocessed, preserving deterministic task-file ordering and leaving task files unchanged.",
+      "reason": "processingStatus is the authoritative host-processing boundary in the task envelope."
+    },
+    {
+      "name": "next-task-response",
+      "description": "Persist a closed response schema for selected-task and no-next-task results, including the selected task summary when available.",
+      "reason": "CLI JSON response objects require durable versioned schemas."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "task-processing",
+      "description": "Do not mutate processingStatus, execute a task, lock a task, or transition task/work-item lifecycle state.",
+      "reason": "The command selects work; a separate processor owns execution and lifecycle mutation.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "task-ordering-change",
+      "description": "Do not change task discovery ordering, task envelope parsing, task-list output, or invalid work-item option behavior.",
+      "reason": "task next reuses the established deterministic task discovery boundary."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0009 is limited to local task selection and response serialization.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0009_REQ_001",
+        "name": "next-task-selection",
+        "description": "sdlc task next --work-item <work-item> must select the first discovered task whose processingStatus is unprocessed.",
+        "reason": "The command must identify the next task requiring host processing without changing task state.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0009_REQ_001_AC_001",
+            "description": "For a work item with unprocessed tasks, the command returns zero and selects the first unprocessed task in the existing deterministic task order."
+          },
+          {
+            "id": "WI-0009_REQ_001_AC_002",
+            "description": "Tasks with processingStatus processing_in_progress, processing_completed, processing_blocked, or processing_failed are not selected."
+          }
+        ]
+      },
+      {
+        "id": "WI-0009_REQ_002",
+        "name": "next-task-response",
+        "description": "The command must provide stable human-readable and JSON results for a selected task and for the no-next-task case.",
+        "reason": "Interactive and automated callers need to distinguish a selected task from an exhausted work item.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0009_REQ_002_AC_001",
+            "description": "The persisted response schema covers selected and no-next-task results and includes the work-item ID, selection status, and selected task summary when present."
+          },
+          {
+            "id": "WI-0009_REQ_002_AC_002",
+            "description": "When no task requires processing, the command returns a stable zero-exit response indicating no next task rather than an error."
+          }
+        ]
+      },
+      {
+        "id": "WI-0009_REQ_003",
+        "name": "selector-and-read-only-boundary",
+        "description": "The command must require --work-item <work-item>, reject missing/duplicate/invalid/unknown selectors consistently, and not modify task files.",
+        "reason": "Selection must remain scoped and safe to call repeatedly before a processor executes the task.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0009_REQ_003_AC_001",
+            "description": "Focused tests cover valid selection, no-next-task behavior, missing/duplicate/invalid/unknown selectors, and unchanged task-file bytes."
+          }
+        ]
+      },
+      {
+        "id": "WI-0009_REQ_004",
+        "name": "task-next-validation",
+        "description": "The implementation and validation evidence must cover existing WI-0008 task states and a deterministic temporary fixture with mixed processing statuses.",
+        "reason": "The current repository mostly contains completed tasks, so selection and no-next-task behavior both require explicit evidence."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0009_REQ_004_AC_001",
+            "description": "yarn test and fresh-process task next checks pass for selected, exhausted, and invalid-input cases."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0002",
+  "stepsPath": ".docs/work-items/WI-0009/steps/"
+}

@@ -1,0 +1,178 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0009
+taskUid: WI-0009-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0009-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate next-task selection
+objective: Validate sdlc task next selection, exhausted work items, selector errors, deterministic ordering, response schema, and read-only behavior.
+references:
+  required:
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+    - .docs/work-items/WI-0009/work-item.json
+    - .docs/work-items/WI-0009/steps/WI-0009-10000000-implementation.yaml
+  informational:
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0008/work-item.json
+dependsOn:
+  - WI-0009-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0009/steps/WI-0009-20000000-validation.yaml
+  commitSubject: 'WI-0009: feat(cli): select next task'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0009/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate selected and exhausted task-next responses with focused and fresh-process checks.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0009|10000000#result/R-001
+        purpose: Identify the next-task implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_001
+        purpose: Identify task selection acceptance conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_002
+        purpose: Identify selected and exhausted response conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_003
+        purpose: Identify selector and read-only conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0009#work-item.json#requirement/WI-0009_REQ_004
+        purpose: Identify mixed-status fixture coverage.
+        required: true
+    targets:
+      - id: TARGET-TASK-NEXT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0009|10000000#result/R-001
+        purpose: Validate the task-next implementation and response contract.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-TASK-NEXT-SELECT'
+      - '#test-case/TC-TASK-NEXT-EMPTY'
+      - '#test-case/TC-TASK-NEXT-ERRORS'
+      - '#test-case/TC-TASK-NEXT-READ-ONLY'
+    procedures:
+      - id: VAL-TASK-NEXT-001
+        sequence: 1
+        name: validate-task-next
+        description: Run package checks, selected/no-next-task CLI audits, invalid selector checks, response-schema validation, and read-only checks.
+        reason: Prove task next selects only unprocessed work in deterministic order without mutating task records.
+        targetRefs:
+          - '#target/TARGET-TASK-NEXT-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-TASK-NEXT-SELECT'
+          - '#test-case/TC-TASK-NEXT-EMPTY'
+          - '#test-case/TC-TASK-NEXT-ERRORS'
+          - '#test-case/TC-TASK-NEXT-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc task next command and selected work-item task records
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc task next --work-item WI-0008.
+            - Run sdlc task next --work-item WI-0001.
+            - Run sdlc task next against a temporary mixed-status fixture.
+            - Validate selected and no-next-task responses against schemas/sdlc-task-next/v1/sdlc-task-next.schema.json.
+            - Confirm task files remain unchanged.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+            - src/core/discovery.ts
+            - src/cli/main.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim task execution, lifecycle mutation, locking, provider, persistence, deployment, or production evidence.
+      - Do not mutate task or work-item records during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-TASK-NEXT-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The task-next validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The task next command and representative selection validation have not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the command currently exists.
+      - This result does not approve or release WI-0009.
