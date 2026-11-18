@@ -1,0 +1,145 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0015
+taskUid: WI-0015-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Register bare work-item and task UID references
+objective: Extend the schema-driven direct reference registry and dynamic tests so bare work-item IDs and canonical task UIDs validate without changing qualified reference behavior.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - tests/cli.test.ts
+    - schemas/common/v1/sdlc-work-item-id.schema.json
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - .docs/work-items/WI-0015/work-item.json
+    - .docs/work-items/WI-0007/work-item.json
+  informational:
+    - src/core/reference.ts
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0015/steps/WI-0015-10000000-implementation.yaml
+    - .cline/README.md
+    - schemas/common/v1/
+    - schemas/sdlc-ref/v1/
+    - tests/
+  commitSubject: 'WI-0015: feat(ref): validate bare work-item and task IDs'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Register bare WorkItemId and canonical task UID schemas as direct reference types, update the reference contract/documentation, and cover them dynamically and explicitly in tests.
+    changeTypes:
+      - schema
+      - test-code
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_001
+        purpose: Define bare work-item ID acceptance.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_002
+        purpose: Define bare task UID acceptance.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_003
+        purpose: Define dynamic registry coverage.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_004
+        purpose: Define syntactic-only and read-only behavior.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Bare work-item IDs and canonical task UIDs are discovered as marked direct reference schemas and accepted by sdlc ref validate.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-BARE-WORK-ITEM-REFERENCE'
+          - '#test-case/TC-BARE-TASK-REFERENCE'
+      - id: OBJ-002
+        statement: Existing dynamic reference coverage, qualified references, response examples, documentation, and read-only behavior remain valid.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-BARE-REFERENCE-DYNAMIC-COVERAGE'
+          - '#test-case/TC-BARE-REFERENCE-READ-ONLY'
+    ownedPaths:
+      - .cline/README.md
+      - schemas/common/v1/
+      - schemas/sdlc-ref/v1/
+      - tests/
+    nonGoals:
+      - Do not add target existence resolution to ref validate.
+      - Do not hardcode bare IDs in the validator implementation or replace recursive schema discovery.
+    steps:
+      - Mark the existing work-item ID schema and add a marked canonical task UID schema with valid examples.
+      - Update the reference registry convention and validation response examples.
+      - Add explicit bare-ID assertions while retaining dynamic marked-schema example coverage.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded schema-registry and dynamic-test implementation plan for bare identity references.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0015/steps/WI-0015-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - sdlc ref validate currently rejects bare WorkItemId and canonical task UID inputs because no marked direct reference schemas cover those forms.

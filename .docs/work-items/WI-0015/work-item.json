@@ -1,0 +1,135 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0015",
+  "status": "planned",
+  "title": "Validate bare work-item and task IDs as references",
+  "type": "feature",
+  "objective": "Make sdlc ref validate accept bare repository-local work-item IDs such as WI-0001 and canonical task UIDs such as WI-0001-80000000 through the dynamic reference-schema registry.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "b34cc9d97bbe530c26c45633f87243323a15ec3e",
+  "request": {
+    "source": "conversation",
+    "text": "Review the unexpected behavior where sdlc ref validate rejects bare work-item IDs such as WI-0001 and bare canonical task IDs such as WI-0001-80000000 even though sdlc task list can discover those objects. Prepare a new .docs/work-items/* and commit the work item. Process the new work item, commit per task.",
+    "sha256": "ac3f563b110b65068b39c992c7f1c82195f4b7bd2ea385c95422cb470d0fe110"
+  },
+  "scope": [
+    {
+      "name": "bare-work-item-reference",
+      "description": "Register the canonical WorkItemId string grammar as a supported direct reference for sdlc ref validate.",
+      "reason": "Operators need to validate a bare work-item identity without adding a file or selector suffix."
+    },
+    {
+      "name": "bare-task-reference",
+      "description": "Register the canonical task UID grammar, including its work-item prefix and eight-digit order key, as a supported direct reference for sdlc ref validate.",
+      "reason": "Task discovery exposes canonical task UIDs such as WI-0001-80000000 and the same identity should be accepted by direct reference validation."
+    },
+    {
+      "name": "dynamic-reference-coverage",
+      "description": "Preserve recursive discovery of marked reference schemas and exercise the new bare-ID examples through the existing dynamic test boundary.",
+      "reason": "Future direct reference types must remain covered without hardcoded validator or test lists."
+    },
+    {
+      "name": "reference-contract-documentation",
+      "description": "Document that marked identifier schemas may participate in direct reference validation and update the response contract examples.",
+      "reason": "The registry convention must explain why identity schemas are marked and make the accepted forms discoverable."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "target-resolution",
+      "description": "Do not make sdlc ref validate resolve the supplied bare ID to an existing work-item or task file.",
+      "reason": "The existing command contract is syntactic schema matching; object resolution belongs to work-item validation or another future command.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "qualified-reference-change",
+      "description": "Do not change the existing local, task-qualified, global, or task-specific entity reference grammars except where contract examples must acknowledge the new direct identifier forms.",
+      "reason": "The defect is limited to bare identity forms and existing qualified references already work.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "version-release",
+      "description": "Do not bump the package version as part of this work item.",
+      "reason": "The user requested the behavior fix and task commits but did not request a release-version change; versioning can be handled by a separate release work item.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0015_REQ_001",
+        "name": "bare-work-item-id",
+        "description": "sdlc ref validate must accept a bare WorkItemId matching the repository WorkItemId grammar.",
+        "reason": "A work-item identity is a valid direct reference input for operators and automation.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0015_REQ_001_AC_001",
+            "description": "sdlc ref validate --ref WI-0001 returns exit code zero and identifies the registered work-item ID schema."
+          },
+          {
+            "id": "WI-0015_REQ_001_AC_002",
+            "description": "Malformed work-item-like strings remain invalid."
+          }
+        ]
+      },
+      {
+        "id": "WI-0015_REQ_002",
+        "name": "bare-task-uid",
+        "description": "sdlc ref validate must accept a bare canonical task UID matching the task envelope UID grammar, including a work-item prefix and eight-digit order key.",
+        "reason": "Task list exposes canonical UIDs and callers should not need to construct a qualified entity selector to validate the identity.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0015_REQ_002_AC_001",
+            "description": "sdlc ref validate --ref WI-0001-80000000 returns exit code zero and identifies the registered task UID schema."
+          },
+          {
+            "id": "WI-0015_REQ_002_AC_002",
+            "description": "Malformed task UID strings and pipe-qualified identifiers outside the bare UID grammar are not incorrectly accepted by the task UID schema."
+          }
+        ]
+      },
+      {
+        "id": "WI-0015_REQ_003",
+        "name": "dynamic-registry-coverage",
+        "description": "The implementation must use the existing recursive x-sdlc-reference-type registry convention and dynamically exercise every marked schema example.",
+        "reason": "The registry must remain extensible without hardcoded schema or reference-type lists.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0015_REQ_003_AC_001",
+            "description": "The dynamic reference test validates every root example, including the new bare work-item and task UID examples, and existing marked reference examples continue to pass."
+          }
+        ]
+      },
+      {
+        "id": "WI-0015_REQ_004",
+        "name": "read-only-reference-validation",
+        "description": "The command and tests must remain read-only and must retain the existing syntactic-only response contract.",
+        "reason": "Direct reference validation must not mutate or require resolution of the selected repository objects.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0015_REQ_004_AC_001",
+            "description": "Fresh-process validation from the sdlc repository and a separate repository returns stable JSON, leaves repository state unchanged, and preserves existing qualified-reference behavior."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0007",
+  "stepsPath": ".docs/work-items/WI-0015/steps/"
+}

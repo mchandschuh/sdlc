@@ -1,0 +1,176 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0015
+taskUid: WI-0015-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0015-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate bare identity reference behavior
+objective: Validate bare work-item and task UID reference acceptance, dynamic marked-schema coverage, qualified-reference compatibility, response contracts, and read-only behavior.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - tests/cli.test.ts
+    - schemas/common/v1/sdlc-work-item-id.schema.json
+    - schemas/common/v1/sdlc-task-uid.schema.json
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - .docs/work-items/WI-0015/work-item.json
+    - .docs/work-items/WI-0015/steps/WI-0015-10000000-implementation.yaml
+  informational:
+    - src/core/reference.ts
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+dependsOn:
+  - WI-0015-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0015/steps/WI-0015-20000000-validation.yaml
+    - .docs/work-items/WI-0015/work-item.json
+  commitSubject: 'WI-0015: test(ref): validate bare identity references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0015/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate bare work-item and task UID references with fresh-process CLI checks from the sdlc and llm repositories, dynamic example coverage, response/schema checks, and read-only comparisons.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0015|10000000#result/R-001
+        purpose: Identify the bare identity reference implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_001
+        purpose: Identify bare work-item ID conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_002
+        purpose: Identify bare task UID conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_003
+        purpose: Identify dynamic registry conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0015#work-item.json#requirement/WI-0015_REQ_004
+        purpose: Identify compatibility and read-only conditions.
+        required: true
+    targets:
+      - id: TARGET-BARE-REFERENCE-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0015|10000000#result/R-001
+        purpose: Validate the schema-driven bare identity reference implementation.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-BARE-WORK-ITEM-REFERENCE'
+      - '#test-case/TC-BARE-TASK-REFERENCE'
+      - '#test-case/TC-BARE-REFERENCE-DYNAMIC-COVERAGE'
+      - '#test-case/TC-BARE-REFERENCE-READ-ONLY'
+    procedures:
+      - id: VAL-BARE-REFERENCE-001
+        sequence: 1
+        name: validate-bare-identity-references
+        description: Run package checks, dynamic and explicit reference tests, fresh-process checks from the sdlc and llm repositories, response/schema validation, and read-only checks.
+        reason: Prove that bare WorkItemId and canonical task UID inputs are accepted without regressing existing reference behavior or mutating repositories.
+        targetRefs:
+          - '#target/TARGET-BARE-REFERENCE-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-BARE-WORK-ITEM-REFERENCE'
+          - '#test-case/TC-BARE-TASK-REFERENCE'
+          - '#test-case/TC-BARE-REFERENCE-DYNAMIC-COVERAGE'
+          - '#test-case/TC-BARE-REFERENCE-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc ref validate direct reference registry
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc ref validate --ref WI-0001 from the sdlc repository.
+            - Run sdlc ref validate --ref WI-0001-80000000 from the sdlc repository.
+            - Run both bare reference checks from /home/michael/src/github/llm.
+            - Run representative existing local, task-qualified, and global reference checks.
+            - Validate the response and task artifacts against repository-local schemas.
+            - Confirm repository state remains unchanged.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim target existence resolution, semantic approval, release publication, provider, deployment, persistence, or production evidence.
+      - Do not mutate work-item records, task records, schema files, or Git metadata during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-BARE-REFERENCE-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Bare identity reference validation is declared but has not yet been executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Bare work-item and task UID reference behavior has not yet been verified.
+    nonClaims:
+      - This planned result does not claim that bare IDs are currently accepted.
+      - This result does not claim target existence resolution or a published release.
