@@ -4,7 +4,7 @@ taskUid: WI-0006-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Restore unscoped work-item listing
 objective: Restore sdlc work-item list and sdlc work-item list --json without changing selected task-list option behavior.
 references:
@@ -54,7 +54,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -114,24 +114,50 @@ task:
       - Update work-item list help and stable missing-option handling without changing task list errors.
       - Add focused tests for plain and JSON unscoped listing, preserved task selection, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Restored unscoped plain and JSON work-item listing while preserving explicit task-list selection and error behavior.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded regression repair for unscoped work-item listing.
+        - id: CHANGE-001
+          type: production-code
+          summary: Made --work-item optional for work-item list while retaining selector filtering and task-list requirements.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0006/steps/WI-0006-10000000-implementation.yaml
-      testImplementations: []
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: test-code
+          summary: Added regression coverage for plain and JSON unscoped work-item listing, output shape, and read-only behavior.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-LIST-UNSCOPED'
+          path: tests/cli.test.ts
+          selector: lists all work items without a selector in plain and JSON forms
+        - testCaseRef: '#test-case/TC-WORK-ITEM-LIST-JSON'
+          path: tests/cli.test.ts
+          selector: lists all work items without a selector in plain and JSON forms
+        - testCaseRef: '#test-case/TC-TASK-LIST-PRESERVED'
+          path: tests/cli.test.ts
+          selector: rejects invalid normalized option forms
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-WORK-ITEM-LIST-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-WORK-ITEM-LIST-UNSCOPED'
+            - '#test-case/TC-WORK-ITEM-LIST-JSON'
+            - '#test-case/TC-TASK-LIST-PRESERVED'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all eighteen CLI and discovery tests, including unscoped plain and JSON work-item listing.
     limitations:
-      - The unscoped work-item list regression remains present until implementation is processed.
+      - Discovery remains local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.

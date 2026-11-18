@@ -126,19 +126,18 @@ describe('discovery commands', () => {
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml');
   });
 
-  it('documents the normalized work-item option forms in command help', async () => {
+  it('documents the work-item inventory and normalized task option forms in command help', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
     await expect(main(['work-item', 'list', '--help'])).resolves.toBe(0);
     await expect(main(['task', 'list', '--help'])).resolves.toBe(0);
 
-    expect(output).toContain('Usage: sdlc work-item list --work-item <work-item> [--json]');
+    expect(output).toContain('Usage: sdlc work-item list [--work-item <work-item>] [--json]');
     expect(output).toContain('Usage: sdlc task list --work-item <work-item> [--json]');
   });
 
   it.each([
-    [['work-item', 'list'], 'Usage: sdlc work-item list --work-item <work-item> [--json]'],
     [['task', 'list'], 'Usage: sdlc task list --work-item <work-item> [--json]'],
     [['task', 'list', '--work-item', 'WI-0001', '--work-item', 'WI-0002'], 'Duplicate --work-item option.'],
     [['task', 'list', 'WI-0001'], 'Unknown option: WI-0001'],
@@ -148,6 +147,23 @@ describe('discovery commands', () => {
 
     await expect(main(args)).resolves.toBe(1);
     expect(errors[0]).toBe(expected);
+  });
+
+  it('lists all work items without a selector in plain and JSON forms', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const before = await readFile('.docs/work-items/WI-0001/work-item.json', 'utf8');
+
+    await expect(main(['work-item', 'list'])).resolves.toBe(0);
+    expect(output.join('\n')).toContain('Work items:');
+    expect(output.join('\n')).toContain('WI-0001');
+    output.length = 0;
+
+    await expect(main(['work-item', 'list', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; items: Array<{ workItemId: string }> };
+    expect(report.schema).toBe('sdlc-work-item-list/v1');
+    expect(report.items.map((item) => item.workItemId)).toContain('WI-0001');
+    expect(await readFile('.docs/work-items/WI-0001/work-item.json', 'utf8')).toBe(before);
   });
 
   it('discovers fixture records and preserves their bytes', async () => {

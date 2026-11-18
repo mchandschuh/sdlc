@@ -51,7 +51,7 @@ function printTasks(workItemId: string, report: DiscoveryReport<TaskSummary>, js
 
 function commandHelp(command: 'work-item list' | 'task list'): number {
   if (command === 'work-item list') {
-    console.log('Usage: sdlc work-item list --work-item <work-item> [--json]');
+    console.log('Usage: sdlc work-item list [--work-item <work-item>] [--json]');
     console.log('List canonical work-item.json records below .docs/work-items/.');
   } else {
     console.log('Usage: sdlc task list --work-item <work-item> [--json]');
@@ -95,9 +95,12 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
     const selected = optionValue(args.slice(2), '--work-item');
     if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
     if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-    if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item list --work-item <work-item> [--json]');
-    if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
     const report = await discoverWorkItems(repositoryRoot);
+    if (!selected.value) {
+      printWorkItems(report, jsonRequested(args));
+      return report.findings.length > 0 ? 1 : 0;
+    }
+    if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
     if (!report.items.some((item) => item.workItemId === selected.value)) throw new DiscoveryError(`Work item not found: ${selected.value}`);
     const selectedReport = { ...report, items: report.items.filter((item) => item.workItemId === selected.value) };
     printWorkItems(selectedReport, jsonRequested(args));
