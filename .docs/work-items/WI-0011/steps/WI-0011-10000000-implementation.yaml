@@ -115,24 +115,64 @@ task:
       - Apply the same path-field correction to work-item validation objects and response examples.
       - Update focused tests and representative schema validation for stat and work-item validation responses.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Normalized the existing sdlc/stat/v1 and work-item validation path fields by removing requestedPath, retaining repositoryPath as relative, and adding fullPath as absolute.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded stat path-field normalization plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Updated stat and work-item validation runtime objects to emit repositoryPath and absolute fullPath without requestedPath.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0011/steps/WI-0011-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/discovery.ts
+            - src/core/work-item-validation.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Updated existing sdlc/stat/v1 and work-item validation schemas/examples in place without changing schema versions.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
+            - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Updated stat and work-item validation assertions for repository-relative and absolute path semantics.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-PATH-CONTRACT'
+          path: tests/cli.test.ts
+          selector: returns relative repositoryPath and absolute fullPath for stat output
+        - testCaseRef: '#test-case/TC-VALIDATION-PATH-CONTRACT'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-OBJECT-IDENTITY-PRESERVED'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-PATH-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: does not modify the inspected file
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-PATH-CONTRACT-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-PATH-CONTRACT'
+            - '#test-case/TC-VALIDATION-PATH-CONTRACT'
+            - '#test-case/TC-OBJECT-IDENTITY-PRESERVED'
+            - '#test-case/TC-PATH-READ-ONLY'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all twenty-five CLI, discovery, stat, reference, task-next, and work-item-validation tests with normalized path fields.
     limitations:
-      - The requestedPath/fullPath contract correction has not yet been implemented.
+      - Path normalization does not establish semantic object resolution or provider, persistence, deployment, or production evidence.

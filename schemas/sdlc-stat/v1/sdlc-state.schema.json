@@ -8,8 +8,8 @@
   "additionalProperties": false,
   "required": [
     "schema",
-    "requestedPath",
     "repositoryPath",
+    "fullPath",
     "tracked",
     "objectKind",
     "ref",
@@ -32,20 +32,20 @@
         "https://schemas.handschuh.dev/sdlc/stat/v1"
       ]
     },
-    "requestedPath": {
-      "type": "string",
-      "minLength": 1,
-      "description": "The caller-provided repository-relative path.",
-      "examples": [
-        "README.md"
-      ]
-    },
     "repositoryPath": {
       "type": "string",
       "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
       "description": "The normalized repository-relative path resolved for the stat operation.",
       "examples": [
         "README.md"
+      ]
+    },
+    "fullPath": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute filesystem path resolved for the stat operation.",
+      "examples": [
+        "/home/michael/src/github/sdlc/README.md"
       ]
     },
     "tracked": {
@@ -161,8 +161,8 @@
   "examples": [
     {
       "schema": "sdlc/stat/v1",
-      "requestedPath": "README.md",
       "repositoryPath": "README.md",
+      "fullPath": "/home/michael/src/github/sdlc/README.md",
       "tracked": true,
       "objectKind": "file",
       "ref": null,
@@ -176,8 +176,8 @@
     },
     {
       "schema": "sdlc/stat/v1",
-      "requestedPath": ".docs/work-items/WI-0008/work-item.json",
       "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+      "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
       "tracked": true,
       "objectKind": "file",
       "ref": "WI-0008#work-item.json#work-item/WI-0008",
@@ -191,8 +191,8 @@
     },
     {
       "schema": "sdlc/stat/v1",
-      "requestedPath": ".docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
       "repositoryPath": ".docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
+      "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
       "tracked": true,
       "objectKind": "file",
       "ref": "WI-0007#steps/WI-0007-10000000-implementation.yaml#task/WI-0007-10000000",

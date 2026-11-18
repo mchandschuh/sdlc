@@ -38,8 +38,8 @@ export class DiscoveryError extends Error {
 
 export interface FileStatReport {
   readonly schema: 'sdlc/stat/v1';
-  readonly requestedPath: string;
   readonly repositoryPath: string;
+  readonly fullPath: string;
   readonly tracked: true;
   readonly objectKind: 'file';
   readonly ref: string | null;
@@ -95,8 +95,8 @@ export async function statTrackedPath(repositoryRoot: string, requestedPath: str
   const object = await statObjectMetadata(repositoryRoot, repositoryPath);
   return {
     schema: 'sdlc/stat/v1',
-    requestedPath,
     repositoryPath,
+    fullPath: candidate,
     tracked: true,
     objectKind: 'file',
     ...object,

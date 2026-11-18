@@ -163,6 +163,7 @@ describe('discovery commands', () => {
     const result = await statTrackedPath(process.cwd(), 'README.md');
     const after = await readFile('README.md', 'utf8');
     expect(result.repositoryPath).toBe('README.md');
+    expect(result.fullPath).toBe(join(process.cwd(), 'README.md'));
     expect(after).toBe(before);
   });
 
@@ -287,8 +288,8 @@ describe('discovery commands', () => {
     expect(report.invalidObjectCount).toBe(0);
     expect(report.objects[0]).toEqual(expect.objectContaining({
       schema: 'sdlc/stat/v1',
-      requestedPath: '.docs/work-items/WI-0008/work-item.json',
       repositoryPath: '.docs/work-items/WI-0008/work-item.json',
+      fullPath: join(process.cwd(), '.docs/work-items/WI-0008/work-item.json'),
       tracked: true,
       objectKind: 'file',
       ref: 'WI-0008#work-item.json#work-item/WI-0008',

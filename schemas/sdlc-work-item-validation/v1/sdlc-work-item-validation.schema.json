@@ -78,7 +78,6 @@
           {
             "path": ".docs/work-items/WI-0008/work-item.json",
             "schema": "sdlc/stat/v1",
-            "requestedPath": ".docs/work-items/WI-0008/work-item.json",
             "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
             "tracked": true,
             "objectKind": "file",
@@ -94,8 +93,8 @@
         [
           {
           "schema": "sdlc/stat/v1",
-          "requestedPath": ".docs/work-items/WI-0008/work-item.json",
           "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+          "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
           "tracked": true,
           "objectKind": "file",
           "ref": "WI-0008#work-item.json#work-item/WI-0008",
@@ -134,8 +133,8 @@
       "required": [
         "path",
         "schema",
-        "requestedPath",
         "repositoryPath",
+        "fullPath",
         "tracked",
         "objectKind",
         "ref",
@@ -168,20 +167,20 @@
             "https://schemas.handschuh.dev/sdlc/stat/v1"
           ]
         },
-        "requestedPath": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The repository-relative path represented by this validated object.",
-          "examples": [
-            ".docs/work-items/WI-0008/work-item.json"
-          ]
-        },
         "repositoryPath": {
           "type": "string",
           "minLength": 1,
           "description": "The normalized repository-relative object path.",
           "examples": [
             ".docs/work-items/WI-0008/work-item.json"
+          ]
+        },
+        "fullPath": {
+          "type": "string",
+          "pattern": "^/.+$",
+          "description": "The absolute filesystem path resolved for this validated object.",
+          "examples": [
+            "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json"
           ]
         },
         "tracked": {
@@ -271,8 +270,8 @@
         {
           "path": ".docs/work-items/WI-0008/work-item.json",
             "schema": "sdlc/stat/v1",
-            "requestedPath": ".docs/work-items/WI-0008/work-item.json",
             "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+            "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
             "tracked": true,
             "objectKind": "file",
             "ref": "WI-0008#work-item.json#work-item/WI-0008",
@@ -296,8 +295,8 @@
         {
           "path": ".docs/work-items/WI-0008/work-item.json",
           "schema": "sdlc/stat/v1",
-          "requestedPath": ".docs/work-items/WI-0008/work-item.json",
           "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+          "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
           "tracked": true,
           "objectKind": "file",
           "ref": "WI-0008#work-item.json#work-item/WI-0008",

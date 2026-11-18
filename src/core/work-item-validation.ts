@@ -11,8 +11,8 @@ export const WORK_ITEM_VALIDATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/w
 export interface WorkItemObjectValidation {
   readonly path: string;
   readonly schema: 'sdlc/stat/v1';
-  readonly requestedPath: string;
   readonly repositoryPath: string;
+  readonly fullPath: string;
   readonly tracked: boolean;
   readonly objectKind: 'file';
   readonly ref: string | null;
@@ -79,8 +79,8 @@ async function trackedPath(repositoryRoot: string, repositoryPath: string): Prom
 
 interface StatIdentity {
   readonly schema: 'sdlc/stat/v1';
-  readonly requestedPath: string;
   readonly repositoryPath: string;
+  readonly fullPath: string;
   readonly tracked: boolean;
   readonly objectKind: 'file';
   readonly ref: string | null;
@@ -91,8 +91,8 @@ interface StatIdentity {
 async function statIdentity(repositoryRoot: string, repositoryPath: string, workItemId: string, objectType: WorkItemObjectValidation['objectType'], ref: string): Promise<StatIdentity> {
   return {
     schema: 'sdlc/stat/v1',
-    requestedPath: repositoryPath,
     repositoryPath,
+    fullPath: resolve(repositoryRoot, repositoryPath),
     tracked: await trackedPath(repositoryRoot, repositoryPath),
     objectKind: 'file',
     ref,
@@ -150,8 +150,8 @@ export async function validateWorkItem(repositoryRoot: string, workItemId: strin
       objects.push({
         path: finding,
         schema: 'sdlc/stat/v1',
-        requestedPath: finding,
         repositoryPath: finding,
+        fullPath: resolve(repositoryRoot, finding),
         tracked: false,
         objectKind: 'file',
         ref: null,
