@@ -1,0 +1,117 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0002",
+  "status": "planned",
+  "title": "Add sdlc work-item and task listing commands",
+  "type": "feature",
+  "objective": "Add read-only sdlc work-item list and sdlc task list <work-item-id> commands that enumerate canonical work-item and task records deterministically.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation and commit of the work item on the current repository."
+    }
+  },
+  "baseline": "f866e557427943915625b164be38e6de75f27e27",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/WI-0002 to add the following commands: sdlc work-item list [ list .docs/work-items/* ] sdlc task list <work-item-id> [ list .docs/work-items/tasks ] Commit the work item upon completion.",
+    "sha256": "0bf74b0594bb3427d15179a5a83afd6288e91568a9b4d05469fdcf4a4977f268"
+  },
+  "scope": [
+    {
+      "name": "work-item-discovery-command",
+      "description": "Add sdlc work-item list to enumerate work-item directories and their canonical work-item.json records under .docs/work-items/.",
+      "reason": "Users need a deterministic top-level inventory before selecting a work item."
+    },
+    {
+      "name": "task-discovery-command",
+      "description": "Add sdlc task list <work-item-id> to enumerate the selected work item’s task envelopes from its declared stepsPath directory.",
+      "reason": "Users need a deterministic task inventory scoped to one work item without executing or mutating tasks."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "task-execution",
+      "description": "Do not execute, mutate, approve, or transition work items or tasks while listing them.",
+      "reason": "The requested commands are read-only discovery surfaces.",
+      "forbiddenFileWrites": [
+        ".docs/work-items/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0002 is limited to local filesystem discovery and terminal serialization.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0002_REQ_001",
+        "name": "list-work-items",
+        "description": "sdlc work-item list must enumerate valid work-item records below .docs/work-items/ in deterministic order and report stable identity, lifecycle status, title, and record path without modifying files.",
+        "reason": "A top-level inventory is the entry point for selecting a work item and must be reproducible across runs.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0002_REQ_001_AC_001",
+            "description": "Running sdlc work-item list returns a zero exit code, lists WI-0001 and WI-0002 in natural work-item order, and does not write to .docs/work-items/."
+          },
+          {
+            "id": "WI-0002_REQ_001_AC_002",
+            "description": "The command reports each discovered work item’s ID, title, status, and repository-relative work-item.json path."
+          }
+        ]
+      },
+      {
+        "id": "WI-0002_REQ_002",
+        "name": "list-work-item-tasks",
+        "description": "sdlc task list <work-item-id> must resolve the selected work item’s stepsPath and enumerate its valid task envelopes in deterministic order without executing or modifying them.",
+        "reason": "Task discovery must remain scoped to the selected work item and use the canonical task directory declared by work-item.json.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0002_REQ_002_AC_001",
+            "description": "Running sdlc task list WI-0001 lists the four WI-0001 task UIDs, task types, processing statuses, and task paths in order."
+          },
+          {
+            "id": "WI-0002_REQ_002_AC_002",
+            "description": "An unknown work-item ID returns a stable non-zero result and an actionable error without writing files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0002_REQ_003",
+        "name": "discovery-cli-tests",
+        "description": "Both discovery commands must have focused deterministic tests covering successful listing, ordering, malformed or missing records, and read-only behavior.",
+        "reason": "Filesystem discovery is a user-visible boundary and must fail clearly rather than silently skipping invalid selection input.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0002_REQ_003_AC_001",
+            "description": "The focused test suite covers both command routes and completes successfully with yarn test."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0002/steps/"
+}

@@ -1,0 +1,206 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0002
+taskUid: WI-0002-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0002-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate sdlc work-item and task discovery commands
+objective: Validate the implemented discovery routes, deterministic output, error handling, and read-only filesystem boundary.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0002/steps/WI-0002-10000000-implementation.yaml
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+  informational:
+    - README.md
+dependsOn:
+  - WI-0002-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0002/steps/WI-0002-20000000-validation.yaml
+  commitSubject: 'WI-0002: feat(cli): list work items and tasks'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0002/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate both discovery commands against real WI-0001 records and deterministic temporary fixtures.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0002|10000000#result/R-001
+        purpose: Identify the implementation result and its owned discovery surfaces.
+        required: true
+      - id: INPUT-WORK-ITEM-001
+        kind: requirement
+        ref: WI-0002#work-item.json#requirement/WI-0002_REQ_001
+        purpose: Identify the work-item listing acceptance boundary.
+        required: true
+      - id: INPUT-TASK-001
+        kind: requirement
+        ref: WI-0002#work-item.json#requirement/WI-0002_REQ_002
+        purpose: Identify the selected task listing acceptance boundary.
+        required: true
+    targets:
+      - id: TARGET-WORK-ITEM-LIST-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0002|10000000#result/R-001
+        purpose: Validate the work-item discovery command implementation.
+        required: true
+      - id: TARGET-TASK-LIST-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0002|10000000#result/R-001
+        purpose: Validate the selected task discovery command implementation.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-WORK-ITEM-LIST'
+      - '#test-case/TC-TASK-LIST'
+      - '#test-case/TC-DISCOVERY-ERRORS'
+    procedures:
+      - id: VAL-DISCOVERY-001
+        sequence: 1
+        name: validate-discovery-cli
+        description: Run the typecheck, build, focused test suite, and fresh-process command smoke checks.
+        reason: Confirm both command routes execute successfully and preserve deterministic terminal behavior.
+        targetRefs:
+          - '#target/TARGET-WORK-ITEM-LIST-001'
+          - '#target/TARGET-TASK-LIST-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-LIST'
+          - '#test-case/TC-TASK-LIST'
+          - '#test-case/TC-DISCOVERY-ERRORS'
+        method:
+          executionMode: executable
+          target: sdlc CLI discovery command boundary
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc work-item list.
+            - Run sdlc task list WI-0001.
+            - Run sdlc task list for an unknown work-item ID.
+          command: yarn test
+          paths:
+            - src/
+            - tests/
+            - .docs/work-items/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+      - id: VAL-SCHEMA-001
+        sequence: 2
+        name: validate-discovery-records
+        description: Validate WI-0002 and its task envelopes against the repository-local schemas.
+        reason: Ensure the command contract and task records remain schema-valid while implementation is developed.
+        targetRefs:
+          - '#target/TARGET-WORK-ITEM-LIST-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: WI-0002 work-item and task artifact tree
+          steps:
+            - Validate work-item.json with work-item v2.
+            - Validate each task envelope with task-envelope v1.
+            - Validate each nested task payload with its selected task schema.
+          command: schema-validate
+          paths:
+            - .docs/work-items/WI-0002/work-item.json
+            - .docs/work-items/WI-0002/steps/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: static
+        required: true
+    nonGoals:
+      - Do not treat static schema validation as proof of runtime command correctness.
+      - Do not mutate work-item or task lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: WI-0002 validation is planned but has not been executed because the discovery commands are not implemented yet.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-DISCOVERY-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: Runtime discovery validation is deferred until the implementation task is executed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The executable discovery validation procedure is declared but not yet run.
+      - id: EXEC-VAL-002
+        procedureRef: '#procedure/VAL-SCHEMA-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: WI-0002 schema validation is deferred until the work-item and task records are materialized.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The static schema validation procedure is declared but not yet run.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - No runtime or CLI-audit evidence exists for the requested discovery commands yet.
+      - The command behavior, output format, and unknown-ID error path remain to be implemented and tested.
+    nonClaims:
+      - This planned validation result does not claim that either command currently exists.
+      - This result does not approve or release WI-0002.

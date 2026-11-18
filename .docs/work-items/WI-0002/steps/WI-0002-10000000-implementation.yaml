@@ -1,0 +1,134 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0002
+taskUid: WI-0002-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement sdlc work-item and task discovery commands
+objective: Add deterministic read-only command routing and filesystem discovery for work items and selected work-item tasks.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0001/work-item.json
+    - .docs/work-items/WI-0001/steps/
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+  informational:
+    - README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0002/steps/WI-0002-10000000-implementation.yaml
+    - src/
+    - tests/
+    - README.md
+  commitSubject: 'WI-0002: feat(cli): list work items and tasks'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement the sdlc work-item list and sdlc task list <work-item-id> discovery surfaces.
+    changeTypes:
+      - production-code
+      - test-code
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0002#work-item.json#requirement/WI-0002_REQ_001
+        purpose: Define top-level work-item discovery behavior and deterministic output.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0002#work-item.json#requirement/WI-0002_REQ_002
+        purpose: Define selected work-item task discovery behavior and error handling.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0002#work-item.json#requirement/WI-0002_REQ_003
+        purpose: Define focused test coverage for both command routes.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The sdlc CLI exposes deterministic read-only work-item and selected-task inventory commands.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-LIST'
+          - '#test-case/TC-TASK-LIST'
+      - id: OBJ-002
+        statement: The discovery boundaries reject invalid selection input clearly and remain covered by focused tests.
+        inputRefs:
+          - INPUT-REQ-003
+        testCaseRefs:
+          - '#test-case/TC-DISCOVERY-ERRORS'
+    ownedPaths:
+      - src/
+      - tests/
+      - README.md
+    nonGoals:
+      - Do not add domain-specific commands or provider integrations.
+      - Do not execute or mutate discovered work items or tasks.
+      - Do not add HTTP, container, credential, persistence, or deployment behavior.
+    steps:
+      - Add reusable filesystem discovery services for work-item.json records and task envelopes under stepsPath.
+      - Add work-item and nested task command routing with stable human-readable and machine-readable output boundaries.
+      - Add focused tests for ordering, successful discovery, invalid records, unknown IDs, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: WI-0002 records the planned implementation boundary; application command changes have not yet been made.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the planned sdlc discovery command contract and implementation ownership.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0002/steps/WI-0002-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The sdlc work-item and task discovery commands are not implemented by this preparation record.
+      - No runtime, CLI-audit, or unit evidence exists for WI-0002 yet.
