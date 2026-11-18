@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0018",
-  "status": "planned",
+  "status": "implemented",
   "title": "Migrate task-local references and task identifier formatting",
   "type": "feature",
   "objective": "Make task-local references deterministic JSON-path-like selectors rooted at intent or result, replace pipe-separated task identifiers with hyphen-separated task UIDs, add a sdlc ref migrate-task-local-up --path <path> command to migrate existing usages, and deliver a local version 0.3.0 release candidate with complete unit-test coverage.",
