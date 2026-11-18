@@ -4,7 +4,7 @@ taskUid: WI-0014-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement CWD-based operative-root resolution
 objective: Route repository-dependent CLI commands through an encapsulated operative-root resolver, add separate-repository regression coverage, and bump the package minor version.
 references:
@@ -59,7 +59,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -121,24 +121,60 @@ task:
       - Route repository-dependent handlers through the resolver and preserve package-path version lookup.
       - Add separate temporary Git repository coverage, update the version assertion, and verify the compiled launcher.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Implemented an encapsulated CWD-based operative-root resolver, routed repository-dependent commands through it, added separate nested-repository coverage, and bumped the package version to 0.2.0.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded operative-root, regression, and minor-release implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added the replaceable operative-root boundary and routed repository-dependent command handlers through its resolved repository root.
           objectiveRefs:
             - OBJ-001
+          paths:
+            - src/core/operative-root.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: test-code
+          summary: Added nested separate-Git-repository and no-repository CLI coverage and updated the version assertion.
+          objectiveRefs:
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0014/steps/WI-0014-10000000-implementation.yaml
-      testImplementations: []
+            - tests/cli.test.ts
+        - id: CHANGE-003
+          type: configuration
+          summary: Bumped the package minor version from 0.1.0 to 0.2.0.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - package.json
+      testImplementations:
+        - testCaseRef: '#test-case/TC-OPERATIVE-ROOT-SEPARATE-REPOSITORY'
+          path: tests/cli.test.ts
+          selector: resolves repository-dependent commands from a nested CWD repository
+        - testCaseRef: '#test-case/TC-OPERATIVE-ROOT-NESTED-DIRECTORY'
+          path: tests/cli.test.ts
+          selector: resolves repository-dependent commands from a nested CWD repository
+        - testCaseRef: '#test-case/TC-OPERATIVE-ROOT-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: resolves repository-dependent commands from a nested CWD repository
+        - testCaseRef: '#test-case/TC-OPERATIVE-ROOT-VERSION'
+          path: tests/cli.test.ts
+          selector: prints the package version for -v
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-OPERATIVE-ROOT-SEPARATE-REPOSITORY'
+            - '#test-case/TC-OPERATIVE-ROOT-NESTED-DIRECTORY'
+            - '#test-case/TC-OPERATIVE-ROOT-READ-ONLY'
+            - '#test-case/TC-OPERATIVE-ROOT-VERSION'
+          command: yarn typecheck && yarn test && yarn build
+          status: passed
+          result: Typecheck, build, and all 30 CLI tests passed, including separate nested Git repository routing, no-repository errors, read-only behavior, help outside a repository, and version 0.2.0.
     limitations:
-      - Repository-dependent commands still use the installed sdlc repository because the operative-root boundary has not yet been implemented.
+      - The operative root is resolved from the nearest Git repository containing process.cwd(); explicit repository info path selection remains unchanged.

@@ -5,10 +5,10 @@ import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, sta
 import { validateReference } from '../core/reference.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
+import { resolveOperativeRoot } from '../core/operative-root.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
-
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+type OperativeRootSupplier = () => Promise<string>;
 
 export function printHelp(): void {
   console.log('Usage: sdlc [options]');
@@ -135,13 +135,13 @@ function optionValue(args: readonly string[], name: string): { value?: string; d
   return { duplicate: false, value };
 }
 
-async function handleWorkItemValidation(args: readonly string[]): Promise<number | undefined> {
+async function handleWorkItemValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   if (args[0] !== 'work-item' || args[1] !== 'validate') return undefined;
   const selected = optionValue(args.slice(2), '--work-item');
   if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
   if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
   if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item validate --work-item <work-item> [--json]');
-  const report = await validateWorkItem(repositoryRoot, selected.value);
+  const report = await validateWorkItem(await getOperativeRoot(), selected.value);
   printWorkItemValidation(report, jsonRequested(args));
   return report.valid ? 0 : 1;
 }
@@ -161,7 +161,7 @@ async function handleRepositoryInfo(args: readonly string[]): Promise<number | u
   }
 }
 
-async function handleDiscovery(args: readonly string[]): Promise<number | undefined> {
+async function handleDiscovery(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   const [first, second] = args;
   if (first === 'work-item' && (second === '--help' || second === '-h')) return commandHelp('work-item list');
   if (first === 'task' && (second === '--help' || second === '-h')) return commandHelp('task list');
@@ -171,7 +171,7 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
     const selected = optionValue(args.slice(2), '--work-item');
     if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
     if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-    const report = await discoverWorkItems(repositoryRoot);
+    const report = await discoverWorkItems(await getOperativeRoot());
     if (!selected.value) {
       printWorkItems(report, jsonRequested(args));
       return report.findings.length > 0 ? 1 : 0;
@@ -187,7 +187,7 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
     if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
     if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
     if (!selected.value) throw new DiscoveryError('Usage: sdlc task list --work-item <work-item> [--json]');
-    const report = await discoverTasks(repositoryRoot, selected.value);
+    const report = await discoverTasks(await getOperativeRoot(), selected.value);
     printTasks(selected.value, report, jsonRequested(args));
     return report.findings.length > 0 ? 1 : 0;
   }
@@ -197,14 +197,14 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
     if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
     if (!selected.value) throw new DiscoveryError('Usage: sdlc task next --work-item <work-item> [--json]');
     if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
-    const task = await discoverNextTask(repositoryRoot, selected.value);
+    const task = await discoverNextTask(await getOperativeRoot(), selected.value);
     printNextTask(selected.value, task, jsonRequested(args));
     return 0;
   }
   return undefined;
 }
 
-async function handleStat(args: readonly string[]): Promise<number | undefined> {
+async function handleStat(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   if (args[0] !== 'stat') return undefined;
   if (args[1] === '--help' || args[1] === '-h') {
     console.log('Usage: sdlc stat --path <file-path>');
@@ -230,12 +230,12 @@ async function handleStat(args: readonly string[]): Promise<number | undefined> 
     }
   }
   if (!pathValue) throw new DiscoveryError('Usage: sdlc stat --path <file-path>');
-  const result = await statTrackedPath(repositoryRoot, pathValue);
+  const result = await statTrackedPath(await getOperativeRoot(), pathValue);
   console.log(JSON.stringify(result, null, 2));
   return 0;
 }
 
-async function handleReference(args: readonly string[]): Promise<number | undefined> {
+async function handleReference(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   if (args[0] !== 'ref') return undefined;
   if (args[1] !== 'validate') throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
   if (args[2] === '--help' || args[2] === '-h') {
@@ -262,7 +262,7 @@ async function handleReference(args: readonly string[]): Promise<number | undefi
     }
   }
   if (!ref) throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
-  const result = await validateReference(repositoryRoot, ref);
+  const result = await validateReference(await getOperativeRoot(), ref);
   console.log(JSON.stringify(result, null, 2));
   return result.valid ? 0 : 1;
 }
@@ -281,15 +281,16 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   }
 
   try {
-    const referenceResult = await handleReference(args);
+    const getOperativeRoot = (): Promise<string> => resolveOperativeRoot();
+    const referenceResult = await handleReference(args, getOperativeRoot);
     if (referenceResult !== undefined) return referenceResult;
     const repositoryInfoResult = await handleRepositoryInfo(args);
     if (repositoryInfoResult !== undefined) return repositoryInfoResult;
-    const workItemValidationResult = await handleWorkItemValidation(args);
+    const workItemValidationResult = await handleWorkItemValidation(args, getOperativeRoot);
     if (workItemValidationResult !== undefined) return workItemValidationResult;
-    const statResult = await handleStat(args);
+    const statResult = await handleStat(args, getOperativeRoot);
     if (statResult !== undefined) return statResult;
-    const discoveryResult = await handleDiscovery(args);
+    const discoveryResult = await handleDiscovery(args, getOperativeRoot);
     if (discoveryResult !== undefined) return discoveryResult;
   } catch (error) {
     console.error(error instanceof DiscoveryError ? error.message : 'Discovery failed');

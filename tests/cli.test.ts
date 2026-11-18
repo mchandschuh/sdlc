@@ -1,11 +1,15 @@
+import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { promisify } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
+
+const execFileAsync = promisify(execFile);
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -29,7 +33,57 @@ describe('CLI interface', () => {
 
     await expect(main([argument])).resolves.toBe(0);
 
-    expect(output).toEqual(['0.1.0']);
+    expect(output).toEqual(['0.2.0']);
+  });
+
+  it('resolves repository-dependent commands from a nested CWD repository', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-operative-root-'));
+    const nested = join(root, 'nested');
+    await mkdir(nested, { recursive: true });
+    await writeFile(join(root, 'README.md'), 'separate repository\n');
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'add', '--', 'README.md']);
+
+    const originalCwd = process.cwd();
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    try {
+      process.chdir(nested);
+      await expect(main(['stat', '--path', 'README.md', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+
+    const report = JSON.parse(output.join('\n')) as { repositoryPath: string; fullPath: string; tracked: boolean };
+    expect(report.repositoryPath).toBe('README.md');
+    expect(report.fullPath).toBe(join(root, 'README.md'));
+    expect(report.tracked).toBe(true);
+  });
+
+  it('fails repository-dependent commands outside any Git repository', async () => {
+    const originalCwd = process.cwd();
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    try {
+      process.chdir(tmpdir());
+      await expect(main(['stat', '--path', 'README.md'])).resolves.toBe(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    expect(errors.at(-1)).toContain('No Git repository found from path');
+  });
+
+  it('prints repository-dependent command help without requiring a Git repository', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(tmpdir());
+      await expect(main(['stat', '--help'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    expect(output.join('\n')).toContain('Usage: sdlc stat --path <file-path>');
   });
 
   it('prints help when no option is supplied', async () => {
