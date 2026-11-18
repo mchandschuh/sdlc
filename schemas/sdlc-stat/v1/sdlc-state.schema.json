@@ -12,6 +12,9 @@
     "repositoryPath",
     "tracked",
     "objectKind",
+    "ref",
+    "objectType",
+    "objectSchemaPath",
     "stat"
   ],
   "properties": {
