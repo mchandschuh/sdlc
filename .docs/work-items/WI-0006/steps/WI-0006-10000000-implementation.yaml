@@ -1,0 +1,137 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0006
+taskUid: WI-0006-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Restore unscoped work-item listing
+objective: Restore sdlc work-item list and sdlc work-item list --json without changing selected task-list option behavior.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0003/work-item.json
+    - .docs/work-items/WI-0003/steps/WI-0003-10000000-implementation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0006/steps/WI-0006-10000000-implementation.yaml
+    - src/cli/
+    - tests/
+  commitSubject: 'WI-0006: fix(cli): restore unscoped work-item list'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Restore unscoped plain and JSON work-item listing while preserving explicit task-list selection.
+    changeTypes:
+      - production-code
+      - test-code
+    changeIntent: bugfix
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_001
+        purpose: Define unscoped plain work-item listing behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_002
+        purpose: Define unscoped JSON work-item listing behavior.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_003
+        purpose: Preserve explicit task-list selection behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_004
+        purpose: Define executable regression coverage.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The work-item list route enumerates all discovered records for plain and JSON invocations without a selector.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-LIST-UNSCOPED'
+          - '#test-case/TC-WORK-ITEM-LIST-JSON'
+      - id: OBJ-002
+        statement: The selected task-list route and discovery error behavior remain unchanged.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-TASK-LIST-PRESERVED'
+          - '#test-case/TC-WORK-ITEM-LIST-ERRORS'
+    ownedPaths:
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not change work-item or task discovery ordering, report schemas, or filesystem mutation boundaries.
+      - Do not change the task list --work-item <work-item> contract.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Route work-item list without a selector to discover all work items and retain JSON output behavior.
+      - Update work-item list help and stable missing-option handling without changing task list errors.
+      - Add focused tests for plain and JSON unscoped listing, preserved task selection, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded regression repair for unscoped work-item listing.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0006/steps/WI-0006-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The unscoped work-item list regression remains present until implementation is processed.

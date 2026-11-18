@@ -1,0 +1,170 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0006
+taskUid: WI-0006-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0006-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate unscoped work-item listing
+objective: Validate plain and JSON unscoped work-item listing, preserved task-list selection, deterministic output, and read-only behavior.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0006/work-item.json
+    - .docs/work-items/WI-0006/steps/WI-0006-10000000-implementation.yaml
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0003/work-item.json
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0006-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0006/steps/WI-0006-20000000-validation.yaml
+  commitSubject: 'WI-0006: fix(cli): restore unscoped work-item list'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0006/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate unscoped work-item list forms and preserve selected task-list behavior with focused and fresh-process checks.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0006|10000000#result/R-001
+        purpose: Identify the implementation result and its owned CLI/test surfaces.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_001
+        purpose: Identify plain unscoped listing acceptance conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_002
+        purpose: Identify JSON unscoped listing acceptance conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0006#work-item.json#requirement/WI-0006_REQ_003
+        purpose: Identify the preserved task-list option boundary.
+        required: true
+    targets:
+      - id: TARGET-WORK-ITEM-LIST-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0006|10000000#result/R-001
+        purpose: Validate the corrected work-item list routing and tests.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-WORK-ITEM-LIST-UNSCOPED'
+      - '#test-case/TC-WORK-ITEM-LIST-JSON'
+      - '#test-case/TC-TASK-LIST-PRESERVED'
+      - '#test-case/TC-WORK-ITEM-LIST-ERRORS'
+    procedures:
+      - id: VAL-WORK-ITEM-LIST-001
+        sequence: 1
+        name: validate-unscoped-work-item-list
+        description: Run package checks and fresh-process plain and JSON work-item listing audits while preserving task-list selection behavior.
+        reason: Prove that the regression is fixed at the CLI boundary without changing discovery semantics.
+        targetRefs:
+          - '#target/TARGET-WORK-ITEM-LIST-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-LIST-UNSCOPED'
+          - '#test-case/TC-WORK-ITEM-LIST-JSON'
+          - '#test-case/TC-TASK-LIST-PRESERVED'
+          - '#test-case/TC-WORK-ITEM-LIST-ERRORS'
+        method:
+          executionMode: executable
+          target: sdlc work-item list and sdlc task list command boundaries
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc work-item list.
+            - Run sdlc work-item list --json and parse the report.
+            - Run sdlc task list --work-item WI-0001 --json.
+            - Confirm the work-item records remain unchanged.
+          command: yarn test
+          paths:
+            - src/cli/main.ts
+            - tests/cli.test.ts
+            - .docs/work-items/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim provider, persistence, deployment, or production evidence.
+      - Do not mutate work-item or task lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-WORK-ITEM-LIST-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The unscoped work-item listing validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The unscoped work-item list validation has not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the bug is fixed.
+      - This result does not approve or release WI-0006.

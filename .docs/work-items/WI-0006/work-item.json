@@ -1,0 +1,131 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0006",
+  "status": "planned",
+  "title": "Restore unscoped work-item listing",
+  "type": "bugfix-coordination",
+  "objective": "Restore sdlc work-item list and sdlc work-item list --json as unscoped top-level inventory commands while preserving explicit --work-item selection behavior for task listing.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "dc59b79545e9528662f6d7f703952dcb4fc013d5",
+  "request": {
+    "source": "conversation",
+    "text": "we broke sdlc work-item list -- it's expected a --work-item <work-item-id>\n\nit should be:\n\nsdlc work-item list\nsdlc work-item list --json\n\nPrepare a .docs/work-items/ to fix this bug\n\nCommit the work item.\n\nProcess the new work item, committing per task.",
+    "sha256": "76c58ec1f16fc2d00008568612bec450447027b57c537214dc48abac8961bfe7"
+  },
+  "scope": [
+    {
+      "name": "unscoped-work-item-list",
+      "description": "Restore sdlc work-item list as an unscoped inventory command that lists all valid work-item records below .docs/work-items/.",
+      "reason": "WI-0003 accidentally made the top-level inventory route require a selector that is only appropriate for task listing."
+    },
+    {
+      "name": "json-work-item-list",
+      "description": "Restore sdlc work-item list --json with the existing machine-readable report shape and zero exit code.",
+      "reason": "Automation needs the unscoped work-item inventory without a required work-item ID."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "task-list-contract",
+      "description": "Do not remove or weaken the explicit --work-item <work-item-id> requirement for sdlc task list.",
+      "reason": "Task listing remains scoped to one selected work item.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "discovery-semantics",
+      "description": "Do not change work-item discovery ordering, report schemas, filesystem boundaries, malformed-record findings, or read-only behavior.",
+      "reason": "This bugfix restores the intended argument boundary only.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0006 is limited to local CLI routing and regression coverage.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0006_REQ_001",
+        "name": "plain-work-item-list",
+        "description": "sdlc work-item list must enumerate all valid work-item records without requiring --work-item <work-item-id>.",
+        "reason": "The top-level work-item command is an inventory surface, not a selected-record query.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0006_REQ_001_AC_001",
+            "description": "Running sdlc work-item list returns exit code zero and lists the repository work items in the existing deterministic order."
+          },
+          {
+            "id": "WI-0006_REQ_001_AC_002",
+            "description": "The command does not require, infer, or reject the absence of a work-item selector."
+          }
+        ]
+      },
+      {
+        "id": "WI-0006_REQ_002",
+        "name": "json-work-item-list",
+        "description": "sdlc work-item list --json must return the existing machine-readable work-item report without requiring a selector.",
+        "reason": "JSON consumers must be able to discover all work items from the top-level command.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0006_REQ_002_AC_001",
+            "description": "Running sdlc work-item list --json returns exit code zero, valid JSON, schema sdlc-work-item-list/v1, and the complete discovered item set."
+          }
+        ]
+      },
+      {
+        "id": "WI-0006_REQ_003",
+        "name": "task-list-regression-boundary",
+        "description": "The fix must preserve sdlc task list --work-item <work-item-id> selection and stable invalid-option behavior.",
+        "reason": "WI-0003 established the explicit named option for selected task discovery and this bugfix must not regress it.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0006_REQ_003_AC_001",
+            "description": "Focused tests continue to pass for task listing with --work-item WI-0001 and for missing or duplicate task-list selectors."
+          }
+        ]
+      },
+      {
+        "id": "WI-0006_REQ_004",
+        "name": "regression-coverage",
+        "description": "Focused tests must cover both unscoped work-item-list forms and preserve read-only deterministic discovery behavior.",
+        "reason": "The regression was introduced at the CLI routing boundary and needs executable coverage at that boundary.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0006_REQ_004_AC_001",
+            "description": "yarn test passes with explicit plain and JSON unscoped work-item-list coverage and no mutation of discovered records."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0003",
+  "stepsPath": ".docs/work-items/WI-0006/steps/"
+}
