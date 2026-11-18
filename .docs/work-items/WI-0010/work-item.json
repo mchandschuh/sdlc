@@ -1,0 +1,140 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0010",
+  "status": "planned",
+  "title": "Validate all objects in a work item",
+  "type": "feature",
+  "objective": "Add sdlc work-item validate --work-item <work-item> to validate the selected work-item record and every task envelope and nested task payload declared by its stepsPath.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing of half the work item, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "bd1c4707a73fda36cdc9c22cc5d71839a5a1eb46",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a work item for sdlc work-item validate --work-item that validates all objects in the work item. commit the work item.\n\nProcess half of the new work-item, commit per task, then stop processing.",
+    "sha256": "cbf7c4d99519d0da07969272ded691be57f0731dfbcc2e01f5722e347deb1713"
+  },
+  "scope": [
+    {
+      "name": "work-item-validation-command",
+      "description": "Add sdlc work-item validate --work-item <work-item> as a read-only command that validates every object in the selected work-item artifact tree.",
+      "reason": "Operators need one command boundary to validate a complete work item rather than invoking separate schema checks manually."
+    },
+    {
+      "name": "complete-object-coverage",
+      "description": "Validate work-item.json with work-item v2, every task envelope with task-envelope v1, and every nested task intent/result with its selected task schema.",
+      "reason": "A work item is an artifact tree whose task payloads may be structurally valid only when validated against their selected task contracts."
+    },
+    {
+      "name": "validation-response",
+      "description": "Persist a closed response schema for complete, partial, and failed work-item object validation results.",
+      "reason": "CLI JSON response objects require durable versioned schemas and actionable per-object findings."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "lifecycle-mutation",
+      "description": "Do not change work-item or task lifecycle state, processingStatus, task results, or validation records while validating.",
+      "reason": "The command is a read-only validation boundary.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "semantic-approval",
+      "description": "Do not approve, release, execute, repair, or semantically resolve the selected work item or its tasks.",
+      "reason": "Schema/object validation is evidence of structural conformance, not approval or production readiness.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0010 is limited to local artifact discovery, schema validation, and response serialization.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0010_REQ_001",
+        "name": "complete-work-item-object-validation",
+        "description": "sdlc work-item validate --work-item <work-item> must validate the selected work-item.json and every task envelope under its declared stepsPath.",
+        "reason": "The command must cover the complete object tree represented by one work item.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0010_REQ_001_AC_001",
+            "description": "The validator checks work-item.json against work-item v2 and each discovered YAML task envelope against task-envelope v1."
+          },
+          {
+            "id": "WI-0010_REQ_001_AC_002",
+            "description": "The validator checks each task intent and result against the task-specific schema selected by task.taskSchema, intentSchema, and resultSchema."
+          }
+        ]
+      },
+      {
+        "id": "WI-0010_REQ_002",
+        "name": "validation-response",
+        "description": "The command must return a stable response identifying the work item, validation status, object counts, and per-object findings.",
+        "reason": "Automation and operators need actionable results when one object in the artifact tree fails validation.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0010_REQ_002_AC_001",
+            "description": "A persisted closed response schema covers valid, invalid, and operationally failed validation results with summary counts and object findings."
+          },
+          {
+            "id": "WI-0010_REQ_002_AC_002",
+            "description": "A fully valid work item returns exit code zero; any invalid object returns a non-zero result without mutating artifacts."
+          }
+        ]
+      },
+      {
+        "id": "WI-0010_REQ_003",
+        "name": "selector-and-read-only-boundary",
+        "description": "The command must require --work-item <work-item>, preserve stable selector errors, and leave all validated files unchanged.",
+        "reason": "Validation must be scoped, repeatable, and safe to run before processing or review.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0010_REQ_003_AC_001",
+            "description": "Focused tests cover valid work-item validation, missing/duplicate/invalid/unknown selectors, malformed-object findings, and unchanged artifact bytes."
+          }
+        ]
+      },
+      {
+        "id": "WI-0010_REQ_004",
+        "name": "work-item-validation-evidence",
+        "description": "The implementation must include representative validation of an existing complete work item and a fixture containing an invalid object.",
+        "reason": "The command needs evidence for both complete success and actionable partial failure behavior.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0010_REQ_004_AC_001",
+            "description": "yarn test and fresh-process work-item validation checks pass for a valid work item and an invalid temporary artifact tree."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0002",
+  "stepsPath": ".docs/work-items/WI-0010/steps/"
+}

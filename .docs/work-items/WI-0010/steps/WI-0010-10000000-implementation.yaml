@@ -1,0 +1,144 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0010
+taskUid: WI-0010-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement complete work-item validation
+objective: Add sdlc work-item validate --work-item <work-item> with complete work-item/task object validation, persisted response schema, and read-only tests.
+references:
+  required:
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - .docs/work-items/WI-0009/work-item.json
+  informational:
+    - .docs/work-items/WI-0008/work-item.json
+    - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0010/steps/WI-0010-10000000-implementation.yaml
+    - schemas/sdlc-work-item-validation/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: 'WI-0010: feat(cli): validate work-item objects'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement read-only complete validation of work-item and task objects with actionable structured results.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0010#work-item.json#requirement/WI-0010_REQ_001
+        purpose: Define complete object-tree validation coverage.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0010#work-item.json#requirement/WI-0010_REQ_002
+        purpose: Define validation response and findings.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0010#work-item.json#requirement/WI-0010_REQ_003
+        purpose: Define selector and read-only behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0010#work-item.json#requirement/WI-0010_REQ_004
+        purpose: Define valid and invalid fixture evidence.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The command validates work-item.json, all task envelopes, and all selected nested task payloads for one work item.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-VALIDATE-COMPLETE'
+          - '#test-case/TC-WORK-ITEM-VALIDATE-RESULT'
+      - id: OBJ-002
+        statement: Validation remains scoped, read-only, and actionable for invalid selectors and malformed objects.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-VALIDATE-ERRORS'
+          - '#test-case/TC-WORK-ITEM-VALIDATE-READ-ONLY'
+    ownedPaths:
+      - schemas/sdlc-work-item-validation/
+      - src/core/
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not mutate artifacts, execute tasks, approve work items, or change lifecycle state.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Add reusable complete work-item validation over the declared work-item and task object tree.
+      - Add the closed selected-work-item validation response schema and CLI routing/output.
+      - Add focused tests for complete success, malformed object findings, selector errors, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded complete work-item validation implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0010/steps/WI-0010-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The work-item validate command and response schema are not yet implemented.
