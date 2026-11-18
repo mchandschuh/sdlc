@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0008",
-  "status": "planned",
+  "status": "implemented",
   "title": "Enrich stat output with object references",
   "type": "feature",
   "objective": "Add ref, objectType, and objectSchemaPath to sdlc stat output so recognized SDLC objects expose their canonical reference and persisted schema while ordinary files remain explicitly non-object.",

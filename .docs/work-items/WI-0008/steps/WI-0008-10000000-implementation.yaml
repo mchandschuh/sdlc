@@ -4,7 +4,7 @@ taskUid: WI-0008-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Enrich stat output with object references
 objective: Add ref, objectType, and objectSchemaPath to sdlc stat output and update the persisted stat contract and tests.
 references:
@@ -59,7 +59,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -120,24 +120,63 @@ task:
       - Classify work-item and task artifact paths and construct canonical local references with repository-relative schema paths.
       - Add focused tests for generic files, work-item objects, task objects, response validation, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Enriched stat responses with canonical object references, object types, and persisted object schema paths while preserving generic-file behavior.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded stat object-reference enrichment plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Classified tracked work-item and task artifact paths and added ref, objectType, and objectSchemaPath fields to stat output.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0008/steps/WI-0008-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/discovery.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Extended the closed sdlc/stat/v1 response schema with nullable generic-file fields and recognized object examples.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added generic-file, work-item, task-envelope, response-schema, and read-only stat coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-STAT-WORK-ITEM-OBJECT'
+          path: tests/cli.test.ts
+          selector: returns object identity and schema metadata for a work-item record
+        - testCaseRef: '#test-case/TC-STAT-TASK-OBJECT'
+          path: tests/cli.test.ts
+          selector: returns object identity and schema metadata for task envelopes
+        - testCaseRef: '#test-case/TC-STAT-GENERIC-FILE'
+          path: tests/cli.test.ts
+          selector: returns one stable stat envelope for tracked text, JSON, and YAML files
+        - testCaseRef: '#test-case/TC-STAT-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: returns one stable stat envelope for tracked text, JSON, and YAML files
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-STAT-OBJECT-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-STAT-WORK-ITEM-OBJECT'
+            - '#test-case/TC-STAT-TASK-OBJECT'
+            - '#test-case/TC-STAT-GENERIC-FILE'
+            - '#test-case/TC-STAT-READ-ONLY'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all twenty-one CLI, discovery, and stat tests, including generic, work-item, and task object metadata coverage.
     limitations:
-      - Stat currently reports generic file metadata only and does not expose object references or object schema paths.
+      - Stat constructs local object references from recognized repository paths but does not resolve semantic entities.
+      - The enrichment does not establish provider, persistence, deployment, or production evidence.

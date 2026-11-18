@@ -42,11 +42,20 @@ export interface FileStatReport {
   readonly repositoryPath: string;
   readonly tracked: true;
   readonly objectKind: 'file';
+  readonly ref: string | null;
+  readonly objectType: 'file' | 'work-item' | 'task';
+  readonly objectSchemaPath: string | null;
   readonly stat: {
     readonly size: number;
     readonly mtime: string;
     readonly mode: number;
   };
+}
+
+interface StatObjectMetadata {
+  readonly ref: string | null;
+  readonly objectType: FileStatReport['objectType'];
+  readonly objectSchemaPath: string | null;
 }
 
 function repositoryRelative(repositoryRoot: string, path: string): string {
@@ -83,18 +92,55 @@ export async function statTrackedPath(repositoryRoot: string, requestedPath: str
   }
   const metadata = await statFile(candidate);
   if (!metadata.isFile()) throw new DiscoveryError(`Path is not a file: ${requestedPath}`);
+  const object = await statObjectMetadata(repositoryRoot, repositoryPath);
   return {
     schema: 'sdlc/stat/v1',
     requestedPath,
     repositoryPath,
     tracked: true,
     objectKind: 'file',
+    ...object,
     stat: {
       size: metadata.size,
       mtime: metadata.mtime.toISOString(),
       mode: metadata.mode,
     },
   };
+}
+
+async function statObjectMetadata(repositoryRoot: string, repositoryPath: string): Promise<StatObjectMetadata> {
+  const generic: StatObjectMetadata = {
+    ref: null,
+    objectType: 'file',
+    objectSchemaPath: null,
+  };
+  const workItemMatch = /^\.docs\/work-items\/([A-Z]{1,10}-[0-9]+)\/work-item\.json$/u.exec(repositoryPath);
+  if (workItemMatch) {
+    const workItemId = workItemMatch[1]!;
+    return {
+      ref: `${workItemId}#work-item.json#work-item/${workItemId}`,
+      objectType: 'work-item',
+      objectSchemaPath: 'schemas/work-item/v2/work-item.schema.json',
+    };
+  }
+  const taskMatch = /^\.docs\/work-items\/([A-Z]{1,10}-[0-9]+)\/steps\/([^/]+\.ya?ml)$/u.exec(repositoryPath);
+  if (!taskMatch) return generic;
+  try {
+    const taskPath = join(repositoryRoot, repositoryPath);
+    const document = YAML.parse(await readFile(taskPath, 'utf8')) as Record<string, unknown>;
+    const taskUid = typeof document.taskUid === 'string' ? document.taskUid : '';
+    const taskType = typeof document.taskType === 'string' ? document.taskType : '';
+    if (!TASK_UID.test(taskUid) || !taskType || !document.task || typeof document.task !== 'object') return generic;
+    const workItemId = taskMatch[1]!;
+    const taskPathFromWorkItem = `steps/${taskMatch[2]!}`;
+    return {
+      ref: `${workItemId}#${taskPathFromWorkItem}#task/${taskUid}`,
+      objectType: 'task',
+      objectSchemaPath: 'schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json',
+    };
+  } catch {
+    return generic;
+  }
 }
 
 async function workItemsDirectory(repositoryRoot: string): Promise<string> {

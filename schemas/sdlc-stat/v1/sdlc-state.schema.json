@@ -59,6 +59,45 @@
         "file"
       ]
     },
+    "ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "description": "The canonical work-item-local reference for a recognized SDLC object, or null when the tracked file is not a recognized object.",
+      "examples": [
+        null,
+        "WI-0008#work-item.json#work-item/WI-0008",
+        "WI-0007#steps/WI-0007-10000000-implementation.yaml#task/WI-0007-10000000"
+      ]
+    },
+    "objectType": {
+      "enum": [
+        "file",
+        "work-item",
+        "task"
+      ],
+      "description": "The recognized SDLC object type, or file for an ordinary tracked file.",
+      "examples": [
+        "file",
+        "work-item",
+        "task"
+      ]
+    },
+    "objectSchemaPath": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+      "description": "Repository-relative path to the persisted schema for a recognized object, or null for an ordinary tracked file.",
+      "examples": [
+        null,
+        "schemas/work-item/v2/work-item.schema.json",
+        "schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json"
+      ]
+    },
     "stat": {
       "$ref": "#/$defs/FileStat",
       "description": "Bounded filesystem metadata for the tracked file.",
@@ -123,6 +162,39 @@
       "repositoryPath": "README.md",
       "tracked": true,
       "objectKind": "file",
+      "ref": null,
+      "objectType": "file",
+      "objectSchemaPath": null,
+      "stat": {
+        "size": 1024,
+        "mtime": "2026-11-18T00:00:00.000Z",
+        "mode": 33188
+      }
+    },
+    {
+      "schema": "sdlc/stat/v1",
+      "requestedPath": ".docs/work-items/WI-0008/work-item.json",
+      "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+      "tracked": true,
+      "objectKind": "file",
+      "ref": "WI-0008#work-item.json#work-item/WI-0008",
+      "objectType": "work-item",
+      "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
+      "stat": {
+        "size": 1024,
+        "mtime": "2026-11-18T00:00:00.000Z",
+        "mode": 33188
+      }
+    },
+    {
+      "schema": "sdlc/stat/v1",
+      "requestedPath": ".docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
+      "repositoryPath": ".docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
+      "tracked": true,
+      "objectKind": "file",
+      "ref": "WI-0007#steps/WI-0007-10000000-implementation.yaml#task/WI-0007-10000000",
+      "objectType": "task",
+      "objectSchemaPath": "schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
       "stat": {
         "size": 1024,
         "mtime": "2026-11-18T00:00:00.000Z",

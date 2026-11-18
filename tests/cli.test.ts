@@ -120,6 +120,27 @@ describe('discovery commands', () => {
       expect(report.objectKind).toBe('file');
       expect(report.stat).toEqual(expect.objectContaining({ size: expect.any(Number), mtime: expect.any(String), mode: expect.any(Number) }));
     }
+    expect(reports[0]).toEqual(expect.objectContaining({ ref: null, objectType: 'file', objectSchemaPath: null }));
+    expect(reports[1]).toEqual(expect.objectContaining({ ref: null, objectType: 'file', objectSchemaPath: null }));
+    expect(reports[2]).toEqual(expect.objectContaining({
+      ref: 'WI-0001#work-item.json#work-item/WI-0001',
+      objectType: 'work-item',
+      objectSchemaPath: 'schemas/work-item/v2/work-item.schema.json',
+    }));
+  });
+
+  it('returns object identity and schema metadata for task envelopes', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['stat', '--path', '.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml'])).resolves.toBe(0);
+
+    const report = JSON.parse(output.join('\n')) as Record<string, unknown>;
+    expect(report).toEqual(expect.objectContaining({
+      ref: 'WI-0007#steps/WI-0007-10000000-implementation.yaml#task/WI-0007-10000000',
+      objectType: 'task',
+      objectSchemaPath: 'schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json',
+    }));
   });
 
   it('rejects invalid stat options and untracked or escaping paths', async () => {
