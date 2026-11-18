@@ -67,7 +67,7 @@ describe('discovery commands', () => {
 
     expect(reports.map((report) => Object.keys(report))).toEqual([Object.keys(reports[0]!), Object.keys(reports[0]!), Object.keys(reports[0]!)]);
     for (const report of reports) {
-      expect(report.schema).toBe('sdlc-stat/v1');
+      expect(report.schema).toBe('sdlc/stat/v1');
       expect(report.tracked).toBe(true);
       expect(report.objectKind).toBe('file');
       expect(report.stat).toEqual(expect.objectContaining({ size: expect.any(Number), mtime: expect.any(String), mode: expect.any(Number) }));

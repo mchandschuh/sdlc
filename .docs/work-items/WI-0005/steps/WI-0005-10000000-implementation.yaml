@@ -4,9 +4,9 @@ taskUid: WI-0005-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Add and align the persisted sdlc stat schema
-objective: Persist schemas/sdlc/stat/v1/sdlc-stat.schema.json and align the stat runtime identifier and tests with it.
+objective: Persist schemas/sdlc-stat/v1/sdlc-state.schema.json and align the stat runtime identifier and tests with it.
 references:
   required:
     - .cline/README.md
@@ -24,7 +24,7 @@ governance:
   schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
   ownedPaths:
     - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
-    - schemas/sdlc/stat/
+    - schemas/sdlc-stat/
     - src/core/
     - tests/
     - .cline/README.md
@@ -57,12 +57,12 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
   intent:
-    summary: Persist and select the sdlc/stat/v1 JSON Schema for the existing stat response envelope.
+    summary: Persist the https://schemas.handschuh.dev/sdlc/stat/v1 JSON Schema at schemas/sdlc-stat/v1/sdlc-state.schema.json and select sdlc/stat/v1 for the existing stat response envelope.
     changeTypes:
       - production-code
       - test-code
@@ -99,7 +99,7 @@ task:
         testCaseRefs:
           - '#test-case/TC-STAT-RUNTIME'
     ownedPaths:
-      - schemas/sdlc/stat/
+      - schemas/sdlc-stat/
       - src/core/
       - tests/
       - .cline/README.md
@@ -107,29 +107,63 @@ task:
       - Do not change the stat response fields or path behavior beyond schema identifier alignment.
       - Do not add provider, HTTP, persistence, deployment, or release behavior.
     steps:
-      - Add the closed schemas/sdlc/stat/v1/sdlc-stat.schema.json contract with representative examples.
-      - Change the stat runtime identifier and tests from sdlc-stat/v1 to sdlc/stat/v1.
+      - Add the closed schemas/sdlc-stat/v1/sdlc-state.schema.json contract with representative examples.
+      - Change the stat runtime identifier and tests to sdlc/stat/v1 and validate it against the persisted https://schemas.handschuh.dev/sdlc/stat/v1 schema.
       - Update the schema convention example if needed and add representative schema validation coverage.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: WI-0005 records the planned persisted schema repair; schema and runtime alignment changes have not yet been made.
+      summary: Persisted and aligned the sdlc/stat/v1 stat response schema at schemas/sdlc-stat/v1/sdlc-state.schema.json.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded ownership for the missed sdlc/stat/v1 persisted schema and runtime alignment.
+        - id: CHANGE-001
+          type: schema
+          summary: Added the closed schemas/sdlc-stat/v1/sdlc-state.schema.json contract with representative examples.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
-      testImplementations: []
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
+        - id: CHANGE-002
+          type: production-code
+          summary: Aligned the stat runtime response identifier with the sdlc/stat/v1 contract selected by the persisted schema.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - src/core/discovery.ts
+        - id: CHANGE-003
+          type: test-code
+          summary: Updated stat response assertions to select the persisted schema identifier.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+        - id: CHANGE-004
+          type: documentation
+          summary: Corrected the schema convention example to the canonical high-level-object path and filename.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - .cline/README.md
+      testImplementations:
+        - testCaseRef: '#test-case/TC-STAT-SCHEMA'
+          path: tests/cli.test.ts
+          selector: returns stat responses using the persisted schema identifier
+        - testCaseRef: '#test-case/TC-STAT-RUNTIME'
+          path: tests/cli.test.ts
+          selector: returns one stable stat envelope for tracked text, JSON, and YAML files
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-STAT-SCHEMA-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-STAT-SCHEMA'
+            - '#test-case/TC-STAT-RUNTIME'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all eighteen stat and discovery tests with the persisted schema identifier.
     limitations:
-      - The persisted sdlc/stat/v1 schema is not yet present.
-      - No runtime, CLI-audit, or schema-instance evidence exists for the repaired contract yet.
+      - Schema alignment does not establish provider, persistence, deployment, or production evidence.

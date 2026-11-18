@@ -1,10 +1,10 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0005",
-  "status": "planned",
+  "status": "implemented",
   "title": "Persist the missing sdlc stat schema",
   "type": "feature",
-  "objective": "Add the persisted schemas/sdlc/stat/v1/sdlc-stat.schema.json contract for the sdlc stat response and align the implementation with that durable schema.",
+  "objective": "Add the persisted schemas/sdlc-stat/v1/sdlc-state.schema.json contract for the sdlc stat response and align the implementation with that durable schema.",
   "repository": {
     "root": "/home/michael/src/github/sdlc",
     "authority": "local"
@@ -28,13 +28,13 @@
   "scope": [
     {
       "name": "persist-stat-schema",
-      "description": "Add schemas/sdlc/stat/v1/sdlc-stat.schema.json for the stable sdlc stat JSON response envelope.",
+      "description": "Add schemas/sdlc-stat/v1/sdlc-state.schema.json for the stable sdlc stat JSON response envelope.",
       "reason": "The schema-first convention requires every output object to have a persisted versioned schema."
     },
     {
       "name": "align-stat-contract",
       "description": "Align the stat runtime identifier, representative fixtures, and validation evidence with the persisted sdlc/stat/v1 contract.",
-      "reason": "The implementation currently exposes the response identifier inline and must select the durable repository/type/version contract."
+      "reason": "The implementation currently exposes the response identifier inline and must select the durable high-level-object/version contract."
     }
   ],
   "nonGoals": [
@@ -70,12 +70,12 @@
       {
         "id": "WI-0005_REQ_001",
         "name": "persisted-stat-schema",
-        "description": "A closed JSON Schema 2020-12 document must be persisted at schemas/sdlc/stat/v1/sdlc-stat.schema.json with the stable sdlc/stat/v1 identifier and the complete stat response shape.",
+        "description": "A closed JSON Schema 2020-12 document must be persisted at schemas/sdlc-stat/v1/sdlc-state.schema.json with the stable sdlc/stat/v1 identifier and the complete stat response shape.",
         "reason": "WI-0004 introduced the stat response but missed the persisted schema required by the repository convention in .cline/README.md.",
         "acceptanceCriteria": [
           {
             "id": "WI-0005_REQ_001_AC_001",
-            "description": "The schema exists at schemas/sdlc/stat/v1/sdlc-stat.schema.json, declares $id https://schemas.handschuh.dev/sdlc/stat/v1, is closed, and validates a representative sdlc stat response."
+            "description": "The schema exists at schemas/sdlc-stat/v1/sdlc-state.schema.json, declares $id https://schemas.handschuh.dev/sdlc/stat/v1, is closed, and validates a representative sdlc stat response."
           },
           {
             "id": "WI-0005_REQ_001_AC_002",

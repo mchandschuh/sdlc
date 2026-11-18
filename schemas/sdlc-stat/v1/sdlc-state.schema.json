@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/stat/v1",
+  "title": "SDLC Stat v1",
+  "description": "Stable JSON response envelope for read-only inspection of one Git-tracked repository file, regardless of the file's object type.",
+  "$comment": "The stat command reports repository-relative identity, Git tracking state, a normalized file object kind, and bounded filesystem metadata. It does not interpret domain-specific file contents or authorize mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "requestedPath",
+    "repositoryPath",
+    "tracked",
+    "objectKind",
+    "stat"
+  ],
+  "properties": {
+    "schema": {
+      "anyOf": [
+        {
+          "const": "sdlc/stat/v1"
+        },
+        {
+          "const": "https://schemas.handschuh.dev/sdlc/stat/v1"
+        }
+      ],
+      "description": "The stable response contract identifier. Runtime output uses sdlc/stat/v1; the canonical persisted schema URI is also accepted for schema-aware consumers.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/stat/v1"
+      ]
+    },
+    "requestedPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The caller-provided repository-relative path.",
+      "examples": [
+        "README.md"
+      ]
+    },
+    "repositoryPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+      "description": "The normalized repository-relative path resolved for the stat operation.",
+      "examples": [
+        "README.md"
+      ]
+    },
+    "tracked": {
+      "const": true,
+      "description": "Whether the requested path is tracked by the repository's Git index.",
+      "examples": [
+        true
+      ]
+    },
+    "objectKind": {
+      "const": "file",
+      "description": "The normalized object category for a stat response. File contents may be any supported object type, but the response envelope remains stable.",
+      "examples": [
+        "file"
+      ]
+    },
+    "stat": {
+      "$ref": "#/$defs/FileStat",
+      "description": "Bounded filesystem metadata for the tracked file.",
+      "examples": [
+        {
+          "size": 1024,
+          "mtime": "2026-11-18T00:00:00.000Z",
+          "mode": 33188
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "FileStat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "size",
+        "mtime",
+        "mode"
+      ],
+      "description": "Filesystem metadata intentionally limited to stable numeric size/mode and an ISO timestamp.",
+      "properties": {
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes.",
+          "examples": [
+            1024
+          ]
+        },
+        "mtime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Filesystem modification timestamp in ISO 8601 format.",
+          "examples": [
+            "2026-11-18T00:00:00.000Z"
+          ]
+        },
+        "mode": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Numeric filesystem mode reported by the local runtime.",
+          "examples": [
+            33188
+          ]
+        }
+      },
+      "examples": [
+        {
+          "size": 1024,
+          "mtime": "2026-11-18T00:00:00.000Z",
+          "mode": 33188
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "sdlc/stat/v1",
+      "requestedPath": "README.md",
+      "repositoryPath": "README.md",
+      "tracked": true,
+      "objectKind": "file",
+      "stat": {
+        "size": 1024,
+        "mtime": "2026-11-18T00:00:00.000Z",
+        "mode": 33188
+      }
+    }
+  ]
+}

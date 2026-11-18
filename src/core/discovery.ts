@@ -37,7 +37,7 @@ export class DiscoveryError extends Error {
 }
 
 export interface FileStatReport {
-  readonly schema: 'sdlc-stat/v1';
+  readonly schema: 'sdlc/stat/v1';
   readonly requestedPath: string;
   readonly repositoryPath: string;
   readonly tracked: true;
@@ -84,7 +84,7 @@ export async function statTrackedPath(repositoryRoot: string, requestedPath: str
   const metadata = await statFile(candidate);
   if (!metadata.isFile()) throw new DiscoveryError(`Path is not a file: ${requestedPath}`);
   return {
-    schema: 'sdlc-stat/v1',
+    schema: 'sdlc/stat/v1',
     requestedPath,
     repositoryPath,
     tracked: true,
