@@ -1,0 +1,132 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0003
+taskUid: WI-0003-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Normalize sdlc work-item and task list options
+objective: Replace positional work-item selection with the explicit --work-item <work-item> option for both discovery commands.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0002/steps/WI-0002-20000000-validation.yaml
+  informational:
+    - README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0003/steps/WI-0003-10000000-implementation.yaml
+    - src/
+    - tests/
+    - README.md
+  commitSubject: 'WI-0003: feat(cli): normalize work-item options'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Update both discovery command routes and tests to use --work-item <work-item> selection.
+    changeTypes:
+      - production-code
+      - test-code
+      - documentation
+    changeIntent: compatibility
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0003#work-item.json#requirement/WI-0003_REQ_001
+        purpose: Define the work-item command’s explicit option syntax.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0003#work-item.json#requirement/WI-0003_REQ_002
+        purpose: Define the task command’s explicit option syntax.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0003#work-item.json#requirement/WI-0003_REQ_003
+        purpose: Define regression coverage for the normalized option contract.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Both discovery commands parse --work-item <work-item> consistently and preserve their existing discovery output.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-OPTION'
+          - '#test-case/TC-TASK-OPTION'
+      - id: OBJ-002
+        statement: Invalid option forms produce stable errors and remain covered by focused tests.
+        inputRefs:
+          - INPUT-REQ-003
+        testCaseRefs:
+          - '#test-case/TC-OPTION-ERRORS'
+    ownedPaths:
+      - src/
+      - tests/
+      - README.md
+    nonGoals:
+      - Do not change discovery ordering, JSON report schemas, or filesystem mutation boundaries.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Update command routing and option parsing for work-item list and task list.
+      - Update command help, README examples, and stable error messages.
+      - Update focused tests for valid --work-item selection, missing/duplicate values, and unchanged output.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: WI-0003 records the planned option-syntax migration; application command changes have not yet been made.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the normalized --work-item command contract and implementation ownership.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0003/steps/WI-0003-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The --work-item syntax migration is not implemented by this preparation record.
+      - No runtime, CLI-audit, or unit evidence exists for WI-0003 yet.

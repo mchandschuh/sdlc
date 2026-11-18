@@ -1,0 +1,197 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0003
+taskUid: WI-0003-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0003-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate normalized work-item option syntax
+objective: Validate the explicit --work-item option forms, stable errors, unchanged discovery output, and read-only behavior.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0003/work-item.json
+    - .docs/work-items/WI-0003/steps/WI-0003-10000000-implementation.yaml
+  informational:
+    - README.md
+dependsOn:
+  - WI-0003-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0003/steps/WI-0003-20000000-validation.yaml
+  commitSubject: 'WI-0003: feat(cli): normalize work-item options'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0003/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the normalized --work-item option contract with focused unit and fresh-process CLI checks.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0003|10000000#result/R-001
+        purpose: Identify the option-syntax implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0003#work-item.json#requirement/WI-0003_REQ_001
+        purpose: Identify work-item option acceptance conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0003#work-item.json#requirement/WI-0003_REQ_002
+        purpose: Identify task option acceptance conditions.
+        required: true
+    targets:
+      - id: TARGET-OPTION-CLI-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0003|10000000#result/R-001
+        purpose: Validate both normalized command routes and their error paths.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-WORK-ITEM-OPTION'
+      - '#test-case/TC-TASK-OPTION'
+      - '#test-case/TC-OPTION-ERRORS'
+    procedures:
+      - id: VAL-OPTION-001
+        sequence: 1
+        name: validate-option-cli
+        description: Run the package checks and fresh-process option syntax smoke tests.
+        reason: Confirm named-option parsing, stable errors, and unchanged discovery output.
+        targetRefs:
+          - '#target/TARGET-OPTION-CLI-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-WORK-ITEM-OPTION'
+          - '#test-case/TC-TASK-OPTION'
+          - '#test-case/TC-OPTION-ERRORS'
+        method:
+          executionMode: executable
+          target: sdlc option parsing and discovery command boundary
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc work-item list --work-item WI-0001.
+            - Run sdlc task list --work-item WI-0001.
+            - Run missing, duplicate, and unknown --work-item cases.
+          command: yarn test
+          paths:
+            - src/
+            - tests/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+      - id: VAL-OPTION-SCHEMA-001
+        sequence: 2
+        name: validate-option-records
+        description: Validate WI-0003 and its task envelopes against repository-local schemas.
+        reason: Keep the option migration contract and task records structurally valid.
+        targetRefs:
+          - '#target/TARGET-OPTION-CLI-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: WI-0003 work-item and task artifact tree
+          steps:
+            - Validate work-item.json with work-item v2.
+            - Validate both task envelopes with task-envelope v1.
+            - Validate both nested task payloads with their selected schemas.
+          command: schema-validate
+          paths:
+            - .docs/work-items/WI-0003/work-item.json
+            - .docs/work-items/WI-0003/steps/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: static
+        required: true
+    nonGoals:
+      - Do not claim release, deployment, provider, persistence, or production evidence.
+      - Do not mutate work-item or task lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: WI-0003 option validation is planned and has not been executed because the syntax migration is not implemented yet.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-OPTION-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: Option parsing validation is deferred until the implementation task is executed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The executable option validation procedure is declared but not yet run.
+      - id: EXEC-VAL-002
+        procedureRef: '#procedure/VAL-OPTION-SCHEMA-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: WI-0003 schema validation is deferred until the work-item and task records are materialized.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The static option-contract schema validation procedure is declared but not yet run.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - No runtime or CLI-audit evidence exists for the normalized option syntax yet.
+      - Backward compatibility for the old positional task-list form remains an implementation decision to validate explicitly.
+    nonClaims:
+      - This planned validation result does not claim that the option migration currently exists.
+      - This result does not approve or release WI-0003.

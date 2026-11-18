@@ -1,0 +1,117 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0003",
+  "status": "planned",
+  "title": "Normalize work-item and task list option syntax",
+  "type": "feature",
+  "objective": "Update the sdlc work-item and task listing commands to use the explicit --work-item <work-item> option form consistently.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation and commit of the next work item on the current repository."
+    }
+  },
+  "baseline": "902b520d60004743934cae051d8f8ad3de228a24",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/*\n\nupdate sdlc work-item to use --work-item <work-item> and update sdlc task list <work-item> to use sdlc task list --work-item <work-item>\n\nCommit the work item.",
+    "sha256": "58477a4417b902f94eb16d0918eca2a992a9c117a20f05036d52c5a0ea6e4fa1"
+  },
+  "scope": [
+    {
+      "name": "work-item-option-syntax",
+      "description": "Change sdlc work-item list to accept and document --work-item <work-item> as its explicit selection option.",
+      "reason": "The work-item command should use the same named-option convention as other work-item-aware CLI commands."
+    },
+    {
+      "name": "task-option-syntax",
+      "description": "Change sdlc task list to accept and document --work-item <work-item> instead of a positional work-item argument.",
+      "reason": "Consistent named options make command invocation and future option extension unambiguous."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "discovery-semantics",
+      "description": "Do not change work-item/task discovery ordering, output schemas, filesystem boundaries, or read-only behavior beyond the argument contract.",
+      "reason": "WI-0003 is limited to option syntax normalization.",
+      "forbiddenFileWrites": [
+        ".docs/work-items/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "execution-and-release",
+      "description": "Do not execute or mutate discovered tasks, add provider/runtime behavior, deploy, publish, or approve a release.",
+      "reason": "This is a CLI contract change only.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0003_REQ_001",
+        "name": "work-item-option-contract",
+        "description": "sdlc work-item list must use --work-item <work-item> as its explicit work-item option form and report missing or invalid values clearly.",
+        "reason": "The command contract must be explicit and consistent with named-option CLI conventions.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0003_REQ_001_AC_001",
+            "description": "The command help documents sdlc work-item list --work-item <work-item>, and a valid option invocation returns the selected work item without modifying records."
+          },
+          {
+            "id": "WI-0003_REQ_001_AC_002",
+            "description": "Missing, duplicate, or unknown --work-item values return stable non-zero errors."
+          }
+        ]
+      },
+      {
+        "id": "WI-0003_REQ_002",
+        "name": "task-option-contract",
+        "description": "sdlc task list must use --work-item <work-item> as its explicit selection option and report missing or invalid values clearly.",
+        "reason": "Task listing should have one consistent named-option interface for selecting a work item.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0003_REQ_002_AC_001",
+            "description": "The command help documents sdlc task list --work-item <work-item>, and a valid option invocation lists the selected task records in the existing deterministic order."
+          },
+          {
+            "id": "WI-0003_REQ_002_AC_002",
+            "description": "Missing, duplicate, or unknown --work-item values return stable non-zero errors without changing task files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0003_REQ_003",
+        "name": "option-regression-coverage",
+        "description": "Focused tests must cover both command option parsers, valid selection, invalid selection, and unchanged discovery output.",
+        "reason": "Argument syntax changes can silently break existing command routing and must preserve discovery semantics.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0003_REQ_003_AC_001",
+            "description": "yarn test passes with coverage for both --work-item command routes and their stable error paths."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0003/steps/"
+}
