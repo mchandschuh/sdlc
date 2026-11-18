@@ -1,0 +1,144 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0008",
+  "status": "planned",
+  "title": "Enrich stat output with object references",
+  "type": "feature",
+  "objective": "Add ref, objectType, and objectSchemaPath to sdlc stat output so recognized SDLC objects expose their canonical reference and persisted schema while ordinary files remain explicitly non-object.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation and commit of the new work item on the current repository."
+    }
+  },
+  "baseline": "aebf0211efbb1b407017c15f6c12e5e2532c1d3a",
+  "request": {
+    "source": "conversation",
+    "text": "we need to add ref and objectType and objectSchemaPath to stat output. Prepare a new .docs/work-item and commit the work item",
+    "sha256": "ee4e1aa24b795f5663cf6689d8fc92158b9032aa031771691121cebdb5262900"
+  },
+  "scope": [
+    {
+      "name": "stat-object-identity",
+      "description": "Add ref and objectType fields to the stat response for recognized SDLC work-item and task artifacts, with explicit null behavior for ordinary files.",
+      "reason": "Stat consumers need to distinguish a generic tracked file from a recognized SDLC object and identify that object canonically."
+    },
+    {
+      "name": "stat-object-schema",
+      "description": "Add objectSchemaPath to identify the repository-relative persisted schema selected for a recognized object, with explicit null behavior when no object schema applies.",
+      "reason": "Consumers need to resolve the exact persisted object contract associated with stat output."
+    },
+    {
+      "name": "stat-reference-coverage",
+      "description": "Cover representative generic files, work-item records, and task envelopes with focused and fresh-process stat tests.",
+      "reason": "The new fields cross object classification and reference conventions and must preserve existing stat behavior."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "semantic-object-resolution",
+      "description": "Do not resolve referenced entities, repositories, work items, tasks, or files beyond classifying the directly inspected repository path and constructing its canonical local reference.",
+      "reason": "Stat remains a local read-only inspection command; semantic reference resolution belongs to other command boundaries.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "stat-metadata-change",
+      "description": "Do not change path containment, Git tracking checks, objectKind behavior, filesystem metadata fields, response schema identifier, or read-only semantics beyond adding the requested fields.",
+      "reason": "WI-0008 enriches the existing response without changing its established inspection behavior.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "The work item is limited to local path classification and response serialization.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0008_REQ_001",
+        "name": "stat-object-fields",
+        "description": "sdlc stat output must include ref, objectType, and objectSchemaPath fields in its persisted response contract.",
+        "reason": "Consumers need a stable object identity and schema selection boundary in addition to filesystem metadata.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0008_REQ_001_AC_001",
+            "description": "The sdlc/stat/v1 schema requires ref, objectType, and objectSchemaPath and remains closed."
+          },
+          {
+            "id": "WI-0008_REQ_001_AC_002",
+            "description": "Runtime stat output includes the three fields without removing or renaming existing response keys."
+          }
+        ]
+      },
+      {
+        "id": "WI-0008_REQ_002",
+        "name": "recognized-object-mapping",
+        "description": "Stat must classify recognized work-item and task artifact paths with canonical local refs, object types, and repository-relative persisted schema paths.",
+        "reason": "Recognized SDLC artifacts already have stable path conventions, reference grammars, and persisted schemas.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0008_REQ_002_AC_001",
+            "description": "A tracked .docs/work-items/<id>/work-item.json response identifies the work-item object, uses a valid work-item-local ref, and selects schemas/work-item/v2/work-item.schema.json."
+          },
+          {
+            "id": "WI-0008_REQ_002_AC_002",
+            "description": "A tracked task envelope response identifies the task object, uses a valid work-item-local or task-qualified ref consistent with the inspected path, and selects schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json."
+          }
+        ]
+      },
+      {
+        "id": "WI-0008_REQ_003",
+        "name": "generic-file-boundary",
+        "description": "Tracked files that are not recognized SDLC objects must remain valid stat responses with explicit null object-specific fields.",
+        "reason": "README.md, package.json, and other ordinary files have no canonical SDLC object reference or object schema.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0008_REQ_003_AC_001",
+            "description": "A tracked ordinary file response uses objectType file and has ref and objectSchemaPath set to null without changing existing path, tracking, or stat metadata."
+          }
+        ]
+      },
+      {
+        "id": "WI-0008_REQ_004",
+        "name": "stat-reference-tests",
+        "description": "Focused tests must cover generic files, work-item objects, task objects, response schema validation, and read-only behavior through the public stat command.",
+        "reason": "The response additions must remain stable across recognized and unrecognized tracked paths.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0008_REQ_004_AC_001",
+            "description": "yarn test passes with representative generic, work-item, and task stat cases and the inspected files remain unchanged."
+          },
+          {
+            "id": "WI-0008_REQ_004_AC_002",
+            "description": "Representative successful stat responses validate against schemas/sdlc-stat/v1/sdlc-state.schema.json."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0005",
+  "stepsPath": ".docs/work-items/WI-0008/steps/"
+}

@@ -1,0 +1,143 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0008
+taskUid: WI-0008-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Enrich stat output with object references
+objective: Add ref, objectType, and objectSchemaPath to sdlc stat output and update the persisted stat contract and tests.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+  informational:
+    - .docs/work-items/WI-0005/work-item.json
+    - .docs/work-items/WI-0007/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0008/steps/WI-0008-10000000-implementation.yaml
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - src/core/
+    - tests/
+  commitSubject: 'WI-0008: feat(stat): expose object references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Enrich stat responses with canonical object reference, object type, and persisted object schema path while preserving generic file behavior.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_001
+        purpose: Define the new stat response fields and persisted contract.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_002
+        purpose: Define recognized work-item and task object mapping.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_003
+        purpose: Define generic-file null behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_004
+        purpose: Define stat regression coverage.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Stat returns the new object identity fields and selects the correct persisted schema for recognized SDLC objects.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-STAT-WORK-ITEM-OBJECT'
+          - '#test-case/TC-STAT-TASK-OBJECT'
+      - id: OBJ-002
+        statement: Stat preserves generic-file behavior and read-only semantics while returning explicit null object fields when no object applies.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-STAT-GENERIC-FILE'
+          - '#test-case/TC-STAT-READ-ONLY'
+    ownedPaths:
+      - schemas/sdlc-stat/v1/sdlc-state.schema.json
+      - src/core/
+      - tests/
+    nonGoals:
+      - Do not resolve semantic entities or perform provider, HTTP, persistence, deployment, or release behavior.
+      - Do not change existing stat path validation, Git tracking, filesystem metadata, or response schema identifier behavior.
+    steps:
+      - Define ref, objectType, and objectSchemaPath in the persisted stat response schema with nullable generic-file behavior.
+      - Classify work-item and task artifact paths and construct canonical local references with repository-relative schema paths.
+      - Add focused tests for generic files, work-item objects, task objects, response validation, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded stat object-reference enrichment plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0008/steps/WI-0008-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - Stat currently reports generic file metadata only and does not expose object references or object schema paths.

@@ -1,0 +1,180 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0008
+taskUid: WI-0008-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0008-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate stat object-reference output
+objective: Validate stat ref, objectType, and objectSchemaPath behavior across generic files, work-item records, and task envelopes.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0008/work-item.json
+    - .docs/work-items/WI-0008/steps/WI-0008-10000000-implementation.yaml
+  informational:
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+dependsOn:
+  - WI-0008-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0008/steps/WI-0008-20000000-validation.yaml
+  commitSubject: 'WI-0008: feat(stat): expose object references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0008/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate stat object references and schema paths through focused tests, fresh-process CLI checks, response validation, and repository audits.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0008|10000000#result/R-001
+        purpose: Identify the stat object-reference implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_001
+        purpose: Identify the response field contract.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_002
+        purpose: Identify recognized object mapping conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_003
+        purpose: Identify generic-file behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0008#work-item.json#requirement/WI-0008_REQ_004
+        purpose: Identify focused stat test and read-only conditions.
+        required: true
+    targets:
+      - id: TARGET-STAT-OBJECT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0008|10000000#result/R-001
+        purpose: Validate the enriched stat implementation and response contract.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-STAT-WORK-ITEM-OBJECT'
+      - '#test-case/TC-STAT-TASK-OBJECT'
+      - '#test-case/TC-STAT-GENERIC-FILE'
+      - '#test-case/TC-STAT-READ-ONLY'
+    procedures:
+      - id: VAL-STAT-OBJECT-001
+        sequence: 1
+        name: validate-stat-object-output
+        description: Run package checks, stat CLI audits for generic/work-item/task paths, response-schema validation, and read-only checks.
+        reason: Prove that stat object identity enrichment is stable across recognized and ordinary tracked files.
+        targetRefs:
+          - '#target/TARGET-STAT-OBJECT-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-STAT-WORK-ITEM-OBJECT'
+          - '#test-case/TC-STAT-TASK-OBJECT'
+          - '#test-case/TC-STAT-GENERIC-FILE'
+          - '#test-case/TC-STAT-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc stat response and persisted stat schema
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc stat --path README.md.
+            - Run sdlc stat --path .docs/work-items/WI-0008/work-item.json.
+            - Run sdlc stat --path .docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml.
+            - Validate each representative response against schemas/sdlc-stat/v1/sdlc-state.schema.json.
+            - Confirm inspected files remain unchanged.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
+            - src/core/discovery.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim semantic entity resolution or provider, persistence, deployment, or production evidence.
+      - Do not mutate inspected files or work-item/task lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-STAT-OBJECT-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The stat object-reference validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The stat object-reference output and representative validation have not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the new fields currently exist.
+      - This result does not approve or release WI-0008.
