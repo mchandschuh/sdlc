@@ -26,6 +26,8 @@
       "minLength": 1,
       "description": "The direct reference string supplied to the validator.",
       "examples": [
+        "WI-0003",
+        "WI-0003-50000000",
         "#outcome/O-001",
         "WI-0003|50000000#outcome/O-001"
       ]
@@ -49,6 +51,10 @@
           {
             "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
             "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+          },
+          {
+            "schemaId": "https://schemas.handschuh.dev/sdlc/work-item-id/v1",
+            "path": "schemas/common/v1/sdlc-work-item-id.schema.json"
           }
         ]
       },
@@ -119,12 +125,12 @@
   "examples": [
     {
       "schema": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
-      "ref": "#outcome/O-001",
+      "ref": "WI-0003",
       "valid": true,
       "matches": [
         {
-          "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
-          "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+          "schemaId": "https://schemas.handschuh.dev/sdlc/work-item-id/v1",
+          "path": "schemas/common/v1/sdlc-work-item-id.schema.json"
         }
       ],
       "findings": []

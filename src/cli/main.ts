@@ -8,6 +8,7 @@ import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } fro
 import { resolveOperativeRoot } from '../core/operative-root.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 type OperativeRootSupplier = () => Promise<string>;
 
 export function printHelp(): void {
@@ -235,7 +236,7 @@ async function handleStat(args: readonly string[], getOperativeRoot: OperativeRo
   return 0;
 }
 
-async function handleReference(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
+async function handleReference(args: readonly string[], schemaRoot: string): Promise<number | undefined> {
   if (args[0] !== 'ref') return undefined;
   if (args[1] !== 'validate') throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
   if (args[2] === '--help' || args[2] === '-h') {
@@ -262,7 +263,7 @@ async function handleReference(args: readonly string[], getOperativeRoot: Operat
     }
   }
   if (!ref) throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
-  const result = await validateReference(await getOperativeRoot(), ref);
+  const result = await validateReference(schemaRoot, ref);
   console.log(JSON.stringify(result, null, 2));
   return result.valid ? 0 : 1;
 }
@@ -282,7 +283,7 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
 
   try {
     const getOperativeRoot = (): Promise<string> => resolveOperativeRoot();
-    const referenceResult = await handleReference(args, getOperativeRoot);
+    const referenceResult = await handleReference(args, packageRoot);
     if (referenceResult !== undefined) return referenceResult;
     const repositoryInfoResult = await handleRepositoryInfo(args);
     if (repositoryInfoResult !== undefined) return repositoryInfoResult;

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-uid/v1",
+  "title": "SDLC Task UID v1",
+  "x-sdlc-reference-type": true,
+  "description": "The canonical repository-local identity of one materialized task envelope. It combines a WorkItemId with the task's eight-digit order key using a hyphen separator.",
+  "$comment": "TaskUid has the form {WorkItemId}-{OrderKey}, for example WI-0001-80000000. The host may resolve the UID to a task envelope when a command performs semantic resolution; sdlc ref validate checks only this direct reference shape.",
+  "type": "string",
+  "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$",
+  "examples": [
+    "WI-0001-80000000",
+    "WI-0003-10000000",
+    "GH-0042-19000000"
+  ]
+}

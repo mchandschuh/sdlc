@@ -3,10 +3,18 @@
   "$id": "https://schemas.handschuh.dev/sdlc/any-reference/v1",
   "title": "SDLC Any Reference v1",
   "x-sdlc-reference-type": true,
-  "description": "A string containing any supported SDLC reference scope: a task-local reference, a work-item-local reference, a task-qualified reference, or a globally qualified repository reference.",
-  "$comment": "SdlcAnyReference is a syntactic union of task-local, work-item-local, task-qualified, and global references. Use #<entity-kind>/<entity-id> for the current task, {WorkItemId}#{filename}#{entity-kind}/{entity-id} for a work-item artifact, {TaskIdentifier}#<entity-kind>/<entity-id> for another task, and either global form from SdlcReference across repositories. Host validation must resolve the selected scope and entity; this schema validates only the string form.",
+  "description": "A string containing any supported SDLC reference scope: a bare work-item ID, bare task UID, task-local reference, work-item-local reference, task-qualified reference, or globally qualified repository reference.",
+  "$comment": "SdlcAnyReference is a syntactic union of bare identities, task-local, work-item-local, task-qualified, and global references. Use {WorkItemId} for a bare work-item identity, {TaskUid} for a bare canonical task identity, #<entity-kind>/<entity-id> for the current task, {WorkItemId}#{filename}#{entity-kind}/{entity-id} for a work-item artifact, {TaskIdentifier}#<entity-kind>/<entity-id> for another task, and either global form from SdlcReference across repositories. Host validation must resolve the selected scope and entity when semantic resolution is requested; this schema validates only the string form.",
   "type": "string",
   "oneOf": [
+    {
+      "pattern": "^[A-Z]{1,10}-[0-9]+$",
+      "description": "A bare work-item identity."
+    },
+    {
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$",
+      "description": "A bare canonical task identity."
+    },
     {
       "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A task-local reference resolved against the current task payload or result.",
@@ -48,6 +56,8 @@
     }
   ],
   "examples": [
+    "WI-0002",
+    "WI-0003-50000000",
     "#outcome/O-001",
     "WI-0002#work-item.json#work-item/WI-0002",
     "WI-0003|50000000#outcome/O-001",

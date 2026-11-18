@@ -4,7 +4,7 @@ taskUid: WI-0015-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Register bare work-item and task UID references
 objective: Extend the schema-driven direct reference registry and dynamic tests so bare work-item IDs and canonical task UIDs validate without changing qualified reference behavior.
 references:
@@ -13,11 +13,13 @@ references:
     - package.json
     - tests/cli.test.ts
     - schemas/common/v1/sdlc-work-item-id.schema.json
+    - schemas/common/v1/sdlc-task-uid.schema.json
     - schemas/common/v1/sdlc-task-identifier.schema.json
     - schemas/common/v1/sdlc-any-reference.schema.json
     - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
     - .docs/work-items/WI-0015/work-item.json
     - .docs/work-items/WI-0007/work-item.json
+    - src/cli/main.ts
   informational:
     - src/core/reference.ts
     - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
@@ -31,6 +33,7 @@ governance:
     - schemas/common/v1/
     - schemas/sdlc-ref/v1/
     - tests/
+    - src/cli/
   commitSubject: 'WI-0015: feat(ref): validate bare work-item and task IDs'
   commitBody:
     requiredSections:
@@ -60,7 +63,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -70,6 +73,7 @@ task:
       - schema
       - test-code
       - documentation
+      - production-code
     changeIntent: feature
     inputs:
       - id: INPUT-REQ-001
@@ -122,24 +126,71 @@ task:
       - Update the reference registry convention and validation response examples.
       - Add explicit bare-ID assertions while retaining dynamic marked-schema example coverage.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Registered bare WorkItemId and canonical task UID schemas as direct references, extended the generic and delivery reference contracts, kept reference validation on the installed schema registry, and added dynamic and explicit regression coverage.
       changes:
-        - id: CHANGE-PLAN-001
+        - id: CHANGE-001
+          type: schema
+          summary: Marked WorkItemId, added TaskUid, and extended the generic and delivery reference grammars with bare identity forms.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - schemas/common/v1/sdlc-work-item-id.schema.json
+            - schemas/common/v1/sdlc-task-uid.schema.json
+            - schemas/common/v1/sdlc-any-reference.schema.json
+            - schemas/sdlc-task-delivery/v1/sdlc-delivery-any-reference.schema.json
+        - id: CHANGE-002
+          type: production-code
+          summary: Kept ref validate tied to the installed package schema registry so it works from repositories with unrelated schemas, while repository-dependent commands retain CWD resolution.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - src/cli/main.ts
+        - id: CHANGE-003
           type: documentation
-          summary: Recorded the bounded schema-registry and dynamic-test implementation plan for bare identity references.
+          summary: Documented bare identity reference forms and updated the persisted ref-validation response examples.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - .cline/README.md
+            - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+        - id: CHANGE-004
+          type: test-code
+          summary: Added explicit bare WorkItemId/task UID tests, outside-repository registry coverage, and retained dynamic marked-schema example coverage.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0015/steps/WI-0015-10000000-implementation.yaml
-      testImplementations: []
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-BARE-WORK-ITEM-REFERENCE'
+          path: tests/cli.test.ts
+          selector: validates bare identity reference WI-0001
+        - testCaseRef: '#test-case/TC-BARE-TASK-REFERENCE'
+          path: tests/cli.test.ts
+          selector: validates bare identity reference WI-0001-80000000
+        - testCaseRef: '#test-case/TC-BARE-REFERENCE-DYNAMIC-COVERAGE'
+          path: tests/cli.test.ts
+          selector: validates every example from every schema-registered reference type dynamically
+        - testCaseRef: '#test-case/TC-BARE-REFERENCE-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: uses the installed reference schema registry outside a repository
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-BARE-WORK-ITEM-REFERENCE'
+            - '#test-case/TC-BARE-TASK-REFERENCE'
+            - '#test-case/TC-BARE-REFERENCE-DYNAMIC-COVERAGE'
+            - '#test-case/TC-BARE-REFERENCE-READ-ONLY'
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Typecheck and build passed; all 33 tests passed, including dynamic marked-schema examples, explicit bare identities, existing qualified references, and reference validation outside a repository.
     limitations:
-      - sdlc ref validate currently rejects bare WorkItemId and canonical task UID inputs because no marked direct reference schemas cover those forms.
+      - sdlc ref validate remains syntactic and does not prove that a bare ID names an existing work-item or task; semantic resolution remains outside this command.

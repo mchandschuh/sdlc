@@ -123,6 +123,35 @@ describe('CLI interface', () => {
     expect(invalid.findings).toContain('No registered reference schema matched the supplied reference.');
   });
 
+  it.each([
+    ['WI-0001', 'https://schemas.handschuh.dev/sdlc/work-item-id/v1'],
+    ['WI-0001-80000000', 'https://schemas.handschuh.dev/sdlc/task-uid/v1'],
+  ])('validates bare identity reference %s', async (ref, schemaId) => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'validate', '--ref', ref])).resolves.toBe(0);
+
+    const report = JSON.parse(output.join('\n')) as { valid: boolean; matches: Array<{ schemaId: string }> };
+    expect(report.valid).toBe(true);
+    expect(report.matches.some((match) => match.schemaId === schemaId)).toBe(true);
+  });
+
+  it('uses the installed reference schema registry outside a repository', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(tmpdir());
+      await expect(main(['ref', 'validate', '--ref', 'WI-0001'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.join('\n')) as { valid: boolean; matches: Array<{ schemaId: string }> };
+    expect(report.valid).toBe(true);
+    expect(report.matches.some((match) => match.schemaId === 'https://schemas.handschuh.dev/sdlc/work-item-id/v1')).toBe(true);
+  });
+
   it('discovers repository information from nested files and directories', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

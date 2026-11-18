@@ -40,6 +40,10 @@ The marked schema must also:
 - have a stable `$id` under `https://schemas.handschuh.dev/sdlc/`; and
 - provide at least one valid root-level `examples` value.
 
+Identifier schemas may be marked when their standalone identity forms are
+accepted by direct reference validation. The canonical bare work-item form is
+`WI-0001`; the canonical bare task form is `WI-0001-80000000`.
+
 The reference validator and its tests must discover marked schemas recursively
 under `schemas/`; they must not maintain a hardcoded filename or type list. Each
 root example is an executable fixture for the dynamic reference-validation test,
