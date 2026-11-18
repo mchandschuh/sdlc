@@ -4,7 +4,7 @@ taskUid: WI-0014-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0014-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate CWD-based operative-root behavior
 objective: Validate repository selection from the current working directory, command routing, encapsulation, read-only behavior, and the 0.2.0 minor release.
 references:
@@ -62,7 +62,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -96,7 +96,7 @@ task:
         required: true
     targets:
       - id: TARGET-OPERATIVE-ROOT-001
-        kind: implementation
+        kind: taskResult
         taskType: implementation
         ref: WI-0014|10000000#result/R-001
         purpose: Validate the operative-root implementation and command routing.
@@ -145,24 +145,40 @@ task:
       - Do not claim remote, provider, deployment, persistence, or production evidence.
       - Do not mutate the selected repository or treat version output as a published release.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: CWD-based operative-root resolution passed package checks, complete CLI tests, fresh-process separate-repository checks, version verification, read-only comparisons, work-item validation, and skill-local task schema validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-OPERATIVE-ROOT-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, all 30 tests, fresh-process nested separate-repository stat, version 0.2.0, read-only state comparison, WI-0014 validation, and task-record schema checks passed.
+          assertions:
+            - yarn typecheck passed.
+            - yarn build passed.
+            - yarn test passed all 30 tests.
+            - A fresh-process stat command from a nested directory in a separate Git repository resolved that repository and tracked README.md there.
+            - The fresh-process version command from /tmp reported 0.2.0.
+            - The temporary repository status and Git configuration hashes were unchanged.
+            - sdlc work-item validate --work-item WI-0014 --json returned exit code zero with three valid objects and no findings.
+            - The work item, both task envelopes, and both nested task payloads passed the skill-local schema validator.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The operative-root validation procedure is declared but has not yet been executed.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: CWD-based operative-root routing and version 0.2.0 passed focused, fresh-process, read-only, and schema-backed validation.
+            command: yarn typecheck && yarn build && yarn test && node ./bin/cli.js work-item validate --work-item WI-0014 --json
+          - kind: test
+            source: Validation execution EXEC-VAL-001
+            claim: A separate nested Git repository was selected by the compiled CLI and remained unchanged.
+            command: node ./bin/cli.js stat --path README.md --json from a temporary nested repository
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - CWD-based operative-root behavior and the 0.2.0 version bump have not yet been executed or verified.
+      - This evidence establishes local CLI behavior and task-record contract validation only; it does not establish a published release, remote-provider behavior, deployment, persistence, or production readiness.
+      - The PATH-installed schema-validate command remains incompatible with the repository's existing draft-07 schema reference; the skill-local validator used by the implementation environment passed all WI-0014 instance checks.
     nonClaims:
-      - This planned result does not claim that commands operate outside the sdlc repository.
       - This result does not claim a published release.
+      - This result does not claim production readiness or remote-provider behavior.
