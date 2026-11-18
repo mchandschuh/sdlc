@@ -321,8 +321,15 @@
           ]
         },
         "sha256": {
-          "$ref": "#/$defs/Sha256",
-          "description": "The SHA-256 digest of the exact result representation reviewed.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The SHA-256 digest of the exact result representation reviewed, or null when the result has not yet been executed or materialized.",
           "examples": [
             "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
           ]
@@ -353,8 +360,15 @@
           ]
         },
         "sha256": {
-          "$ref": "#/$defs/Sha256",
-          "description": "The SHA-256 digest of the exact policy document resolved for this review.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The SHA-256 digest of the exact policy document resolved for this review, or null when no policy document is available.",
           "examples": [
             "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
           ]
