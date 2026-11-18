@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0010",
-  "status": "planned",
+  "status": "implemented",
   "title": "Validate all objects in a work item",
   "type": "feature",
   "objective": "Add sdlc work-item validate --work-item <work-item> to validate the selected work-item record and every task envelope and nested task payload declared by its stepsPath.",

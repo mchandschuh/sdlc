@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
+import { validateWorkItem } from '../src/core/work-item-validation.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -270,6 +271,34 @@ describe('discovery commands', () => {
 
     await expect(main(args)).resolves.toBe(1);
     expect(errors[0]).toBe(expected);
+  });
+
+  it('validates every object in a complete work item', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'validate', '--work-item', 'WI-0008', '--json'])).resolves.toBe(0);
+
+    const report = JSON.parse(output.join('\n')) as { schema: string; valid: boolean; workItemId: string; objectCount: number; invalidObjectCount: number };
+    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/work-item-validation/v1');
+    expect(report.valid).toBe(true);
+    expect(report.workItemId).toBe('WI-0008');
+    expect(report.objectCount).toBe(3);
+    expect(report.invalidObjectCount).toBe(0);
+  });
+
+  it('reports malformed work-item objects without mutating the fixture', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-work-item-validation-'));
+    const workItem = join(root, '.docs', 'work-items', 'WI-0098');
+    await mkdir(join(workItem, 'steps'), { recursive: true });
+    const workItemPath = join(workItem, 'work-item.json');
+    await writeFile(workItemPath, JSON.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/work-item/v2', workItemId: 'WI-0098', status: 'planned', title: 'Fixture', objective: 'Fixture', repository: { root, authority: 'local' }, context: { mergeTarget: { branch: 'main' }, branch: { name: 'main', created: false, rationale: 'fixture' } }, request: { source: 'test', text: 'fixture', sha256: 'fixture' }, scope: [], nonGoals: [], requirements: { items: [] }, stepsPath: '.docs/work-items/WI-0098/steps/' }));
+    await writeFile(join(workItem, 'steps', 'WI-0098-10000000.yaml'), 'not: a valid task envelope\n');
+    const before = await readFile(workItemPath, 'utf8');
+    const report = await validateWorkItem(root, 'WI-0098');
+    expect(report.valid).toBe(false);
+    expect(report.invalidObjectCount).toBeGreaterThan(0);
+    expect(await readFile(workItemPath, 'utf8')).toBe(before);
   });
 
   it('lists all work items without a selector in plain and JSON forms', async () => {

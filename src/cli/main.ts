@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
+import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
@@ -82,6 +83,19 @@ function printNextTask(workItemId: string, task: TaskSummary | null, json: boole
   }
 }
 
+function printWorkItemValidation(report: WorkItemValidationReport, json: boolean): void {
+  if (json) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+  console.log(`Work item validation for ${report.workItemId}: ${report.valid ? 'passed' : 'failed'}`);
+  console.log(`  Objects: ${report.validObjectCount}/${report.objectCount} valid`);
+  for (const object of report.objects) {
+    console.log(`  ${object.valid ? 'PASS' : 'FAIL'} ${object.objectType} ${object.path}`);
+    for (const finding of object.findings) console.error(`Finding: ${finding}`);
+  }
+}
+
 function optionValue(args: readonly string[], name: string): { value?: string; duplicate: boolean; unknown?: string } {
   let value: string | undefined;
   for (let index = 0; index < args.length; index += 1) {
@@ -105,6 +119,17 @@ function optionValue(args: readonly string[], name: string): { value?: string; d
     return { duplicate: false, value, unknown: argument };
   }
   return { duplicate: false, value };
+}
+
+async function handleWorkItemValidation(args: readonly string[]): Promise<number | undefined> {
+  if (args[0] !== 'work-item' || args[1] !== 'validate') return undefined;
+  const selected = optionValue(args.slice(2), '--work-item');
+  if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+  if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item validate --work-item <work-item> [--json]');
+  const report = await validateWorkItem(repositoryRoot, selected.value);
+  printWorkItemValidation(report, jsonRequested(args));
+  return report.valid ? 0 : 1;
 }
 
 async function handleDiscovery(args: readonly string[]): Promise<number | undefined> {
@@ -229,6 +254,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   try {
     const referenceResult = await handleReference(args);
     if (referenceResult !== undefined) return referenceResult;
+    const workItemValidationResult = await handleWorkItemValidation(args);
+    if (workItemValidationResult !== undefined) return workItemValidationResult;
     const statResult = await handleStat(args);
     if (statResult !== undefined) return statResult;
     const discoveryResult = await handleDiscovery(args);

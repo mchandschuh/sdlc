@@ -4,7 +4,7 @@ taskUid: WI-0010-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement complete work-item validation
 objective: Add sdlc work-item validate --work-item <work-item> with complete work-item/task object validation, persisted response schema, and read-only tests.
 references:
@@ -59,7 +59,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -121,24 +121,64 @@ task:
       - Add the closed selected-work-item validation response schema and CLI routing/output.
       - Add focused tests for complete success, malformed object findings, selector errors, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Implemented complete read-only work-item validation across work-item.json, task envelopes, and selected nested task payload schemas.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded complete work-item validation implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added schema-backed work-item object-tree validation and work-item validate CLI routing/output.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0010/steps/WI-0010-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/work-item-validation.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Added the closed work-item validation response schema with per-object findings and summary counts.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added complete-valid, malformed-object, selector-error, and read-only validation coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-VALIDATE-COMPLETE'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-WORK-ITEM-VALIDATE-RESULT'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-WORK-ITEM-VALIDATE-ERRORS'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-WORK-ITEM-VALIDATE-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: reports malformed work-item objects without mutating the fixture
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-WORK-ITEM-VALIDATE-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-WORK-ITEM-VALIDATE-COMPLETE'
+            - '#test-case/TC-WORK-ITEM-VALIDATE-RESULT'
+            - '#test-case/TC-WORK-ITEM-VALIDATE-ERRORS'
+            - '#test-case/TC-WORK-ITEM-VALIDATE-READ-ONLY'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all twenty-five CLI, discovery, stat, reference, task-next, and work-item-validation tests.
     limitations:
-      - The work-item validate command and response schema are not yet implemented.
+      - Validation is structural/schema-backed and does not approve, execute, or semantically resolve the selected work item.
+      - The command does not establish provider, persistence, deployment, or production evidence.
