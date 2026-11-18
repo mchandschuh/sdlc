@@ -123,11 +123,11 @@ task:
   result:
     status: implemented
     implementation:
-      summary: Implemented complete read-only work-item validation across work-item.json, task envelopes, and selected nested task payload schemas.
+      summary: Implemented complete read-only work-item validation across work-item.json, task envelopes, and selected nested task payload schemas, with stat-compatible identity fields on every object result.
       changes:
         - id: CHANGE-001
           type: production-code
-          summary: Added schema-backed work-item object-tree validation and work-item validate CLI routing/output.
+          summary: Added schema-backed work-item object-tree validation and work-item validate CLI routing/output with schema, requestedPath, repositoryPath, tracked, objectKind, ref, objectType, and objectSchemaPath fields on each object result.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
@@ -136,7 +136,7 @@ task:
             - src/cli/main.ts
         - id: CHANGE-002
           type: schema
-          summary: Added the closed work-item validation response schema with per-object findings and summary counts.
+          summary: Added the closed work-item validation response schema with stat-compatible per-object identity fields, validation findings, and summary counts.
           objectiveRefs:
             - OBJ-001
             - OBJ-002

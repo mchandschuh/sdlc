@@ -77,7 +77,14 @@
         "examples": [
           {
             "path": ".docs/work-items/WI-0008/work-item.json",
+            "schema": "sdlc/stat/v1",
+            "requestedPath": ".docs/work-items/WI-0008/work-item.json",
+            "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+            "tracked": true,
+            "objectKind": "file",
+            "ref": "WI-0008#work-item.json#work-item/WI-0008",
             "objectType": "work-item",
+            "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
             "valid": true,
             "findings": []
           }
@@ -86,7 +93,14 @@
       "examples": [
         [
           {
+          "schema": "sdlc/stat/v1",
+          "requestedPath": ".docs/work-items/WI-0008/work-item.json",
+          "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+          "tracked": true,
+          "objectKind": "file",
+          "ref": "WI-0008#work-item.json#work-item/WI-0008",
             "path": ".docs/work-items/WI-0008/work-item.json",
+          "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
             "objectType": "work-item",
             "valid": true,
             "findings": []
@@ -119,7 +133,14 @@
       "additionalProperties": false,
       "required": [
         "path",
+        "schema",
+        "requestedPath",
+        "repositoryPath",
+        "tracked",
+        "objectKind",
+        "ref",
         "objectType",
+        "objectSchemaPath",
         "valid",
         "findings"
       ],
@@ -133,8 +154,65 @@
             ".docs/work-items/WI-0008/work-item.json"
           ]
         },
+        "schema": {
+          "anyOf": [
+            {
+              "const": "sdlc/stat/v1"
+            },
+            {
+              "const": "https://schemas.handschuh.dev/sdlc/stat/v1"
+            }
+          ],
+          "description": "The stat response contract identifier used for the object identity fields.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/stat/v1"
+          ]
+        },
+        "requestedPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The repository-relative path represented by this validated object.",
+          "examples": [
+            ".docs/work-items/WI-0008/work-item.json"
+          ]
+        },
+        "repositoryPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The normalized repository-relative object path.",
+          "examples": [
+            ".docs/work-items/WI-0008/work-item.json"
+          ]
+        },
+        "tracked": {
+          "type": "boolean",
+          "description": "Whether the object path is tracked by the repository Git index.",
+          "examples": [
+            true
+          ]
+        },
+        "objectKind": {
+          "const": "file",
+          "description": "The stat-compatible normalized object category.",
+          "examples": [
+            "file"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The canonical object reference, or null when no reference could be constructed.",
+          "examples": [
+            "WI-0008#work-item.json#work-item/WI-0008",
+            "WI-0008#steps/WI-0008-10000000-implementation.yaml#task/WI-0008-10000000",
+            null
+          ]
+        },
         "objectType": {
           "enum": [
+            "file",
             "work-item",
             "task"
           ],
@@ -142,6 +220,19 @@
           "examples": [
             "work-item",
             "task"
+          ]
+        },
+        "objectSchemaPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+",
+          "description": "Repository-relative path to the selected object schema, or null when none applies.",
+          "examples": [
+            "schemas/work-item/v2/work-item.schema.json",
+            "schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json",
+            null
           ]
         },
         "taskUid": {
@@ -179,7 +270,14 @@
       "examples": [
         {
           "path": ".docs/work-items/WI-0008/work-item.json",
+            "schema": "sdlc/stat/v1",
+            "requestedPath": ".docs/work-items/WI-0008/work-item.json",
+            "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+            "tracked": true,
+            "objectKind": "file",
+            "ref": "WI-0008#work-item.json#work-item/WI-0008",
           "objectType": "work-item",
+            "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
           "valid": true,
           "findings": []
         }
@@ -197,7 +295,14 @@
       "objects": [
         {
           "path": ".docs/work-items/WI-0008/work-item.json",
+          "schema": "sdlc/stat/v1",
+          "requestedPath": ".docs/work-items/WI-0008/work-item.json",
+          "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+          "tracked": true,
+          "objectKind": "file",
+          "ref": "WI-0008#work-item.json#work-item/WI-0008",
           "objectType": "work-item",
+          "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
           "valid": true,
           "findings": []
         }
