@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0011",
-  "status": "planned",
+  "status": "implemented",
   "title": "Normalize stat path fields",
   "type": "bugfix-coordination",
   "objective": "Update the existing sdlc/stat/v1 contract to remove requestedPath, retain repositoryPath as the repository-relative path, and add fullPath as the resolved absolute path; align work-item validation object results and tests with the same identity shape.",
