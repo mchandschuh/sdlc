@@ -4,7 +4,7 @@ taskUid: WI-0002-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement sdlc work-item and task discovery commands
 objective: Add deterministic read-only command routing and filesystem discovery for work items and selected work-item tasks.
 references:
@@ -110,25 +110,60 @@ task:
       - Add work-item and nested task command routing with stable human-readable and machine-readable output boundaries.
       - Add focused tests for ordering, successful discovery, invalid records, unknown IDs, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: WI-0002 records the planned implementation boundary; application command changes have not yet been made.
+      summary: Implemented deterministic read-only sdlc work-item and task discovery commands with focused tests.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the planned sdlc discovery command contract and implementation ownership.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added filesystem discovery services for work-item.json records and canonical YAML task envelopes.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0002/steps/WI-0002-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/discovery.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: test-code
+          summary: Added focused tests for deterministic work-item/task listing, malformed records, unknown IDs, and read-only behavior.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+        - id: CHANGE-003
+          type: configuration
+          summary: Added the yaml runtime dependency used to parse canonical task envelopes.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - package.json
+            - yarn.lock
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-LIST'
+          path: tests/cli.test.ts
+          selector: lists work items from the repository in deterministic order
+        - testCaseRef: '#test-case/TC-TASK-LIST'
+          path: tests/cli.test.ts
+          selector: lists selected work-item tasks from its declared steps path
+        - testCaseRef: '#test-case/TC-DISCOVERY-ERRORS'
+          path: tests/cli.test.ts
+          selector: reports malformed records and unknown work-item IDs without throwing from the CLI
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-DISCOVERY-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-WORK-ITEM-LIST'
+            - '#test-case/TC-TASK-LIST'
+            - '#test-case/TC-DISCOVERY-ERRORS'
+          command: yarn test
+          status: passed
+          result: The focused Vitest suite passed all ten CLI and discovery tests.
     limitations:
-      - The sdlc work-item and task discovery commands are not implemented by this preparation record.
-      - No runtime, CLI-audit, or unit evidence exists for WI-0002 yet.
+      - Discovery is local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.
+      - The commands report malformed records but do not repair them.
