@@ -1,0 +1,135 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0005
+taskUid: WI-0005-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Add and align the persisted sdlc stat schema
+objective: Persist schemas/sdlc/stat/v1/sdlc-stat.schema.json and align the stat runtime identifier and tests with it.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0004/work-item.json
+    - .docs/work-items/WI-0004/steps/WI-0004-10000000-implementation.yaml
+    - .docs/work-items/WI-0004/steps/WI-0004-20000000-validation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/common/v1/sdlc-reference.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
+    - schemas/sdlc/stat/
+    - src/core/
+    - tests/
+    - .cline/README.md
+  commitSubject: 'WI-0005: feat(schema): persist sdlc stat contract'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Persist and select the sdlc/stat/v1 JSON Schema for the existing stat response envelope.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+      - documentation
+    changeIntent: compatibility
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0005#work-item.json#requirement/WI-0005_REQ_001
+        purpose: Define the persisted schema location and complete response contract.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0005#work-item.json#requirement/WI-0005_REQ_002
+        purpose: Define runtime and test identifier alignment.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0005#work-item.json#requirement/WI-0005_REQ_003
+        purpose: Preserve traceability to the WI-0004 omission.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: A persisted closed sdlc/stat/v1 schema describes and validates the stat response envelope.
+        inputRefs:
+          - INPUT-REQ-001
+        testCaseRefs:
+          - '#test-case/TC-STAT-SCHEMA'
+      - id: OBJ-002
+        statement: The stat runtime and tests select sdlc/stat/v1 without changing response semantics.
+        inputRefs:
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-STAT-RUNTIME'
+    ownedPaths:
+      - schemas/sdlc/stat/
+      - src/core/
+      - tests/
+      - .cline/README.md
+    nonGoals:
+      - Do not change the stat response fields or path behavior beyond schema identifier alignment.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Add the closed schemas/sdlc/stat/v1/sdlc-stat.schema.json contract with representative examples.
+      - Change the stat runtime identifier and tests from sdlc-stat/v1 to sdlc/stat/v1.
+      - Update the schema convention example if needed and add representative schema validation coverage.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: WI-0005 records the planned persisted schema repair; schema and runtime alignment changes have not yet been made.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded ownership for the missed sdlc/stat/v1 persisted schema and runtime alignment.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The persisted sdlc/stat/v1 schema is not yet present.
+      - No runtime, CLI-audit, or schema-instance evidence exists for the repaired contract yet.

@@ -1,0 +1,155 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0005
+taskUid: WI-0005-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0005-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate the persisted sdlc stat schema
+objective: Validate the persisted schema, representative stat response, runtime identifier alignment, and full repository schema audit.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - schemas/sdlc/stat/v1/sdlc-stat.schema.json
+    - .docs/work-items/WI-0005/work-item.json
+    - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0005-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0005/steps/WI-0005-20000000-validation.yaml
+  commitSubject: 'WI-0005: feat(schema): persist sdlc stat contract'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0005/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the persisted sdlc/stat/v1 schema and its alignment with sdlc stat output.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0005|10000000#result/R-001
+        purpose: Identify the schema implementation and runtime alignment result.
+        required: true
+      - id: INPUT-SCHEMA-001
+        kind: artifact
+        ref: WI-0005#work-item.json#requirement/WI-0005_REQ_001
+        purpose: Identify the persisted schema acceptance boundary.
+        required: true
+    targets:
+      - id: TARGET-STAT-SCHEMA-001
+        kind: artifact
+        ref: WI-0005|10000000#result/R-001
+        purpose: Validate the persisted schema and representative stat output.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-STAT-SCHEMA'
+      - '#test-case/TC-STAT-RUNTIME'
+    procedures:
+      - id: VAL-STAT-SCHEMA-001
+        sequence: 1
+        name: validate-stat-schema
+        description: Validate the persisted schema, representative stat response, runtime identifier, and complete schema registry.
+        reason: Prove that the previously missed stat contract is now durable, selected by runtime, and included in the schema audit.
+        targetRefs:
+          - '#target/TARGET-STAT-SCHEMA-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-STAT-SCHEMA'
+          - '#test-case/TC-STAT-RUNTIME'
+        method:
+          executionMode: executable
+          target: sdlc/stat/v1 schema and sdlc stat response
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc stat --path README.md and capture the representative JSON response.
+            - Validate the response against schemas/sdlc/stat/v1/sdlc-stat.schema.json.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc/stat/v1/sdlc-stat.schema.json
+            - src/core/discovery.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim production deployment, provider behavior, or persistence beyond the schema artifact.
+      - Do not mutate the stat target or work-item lifecycle during validation.
+  result:
+    status: implemented-unproven
+    summary: WI-0005 schema validation is planned and has not been executed because the persisted schema is not yet implemented.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-STAT-SCHEMA-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: Schema alignment validation is deferred until the implementation task is executed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The persisted stat schema validation procedure is declared but not yet run.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The sdlc/stat/v1 persisted schema and representative validation are not yet available.
+      - WI-0004’s response contract remains the source of the omission until WI-0005 implementation is processed.
+    nonClaims:
+      - This planned validation result does not claim that the stat schema currently exists.
+      - This result does not approve or release WI-0005.
