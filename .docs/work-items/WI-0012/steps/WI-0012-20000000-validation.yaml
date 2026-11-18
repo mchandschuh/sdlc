@@ -1,0 +1,178 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0012
+taskUid: WI-0012-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0012-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate repository information discovery
+objective: Validate ancestor Git discovery, repository metadata response, selector errors, outside-repository behavior, and read-only semantics.
+references:
+  required:
+    - package.json
+    - src/core/discovery.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-repository/v1/sdlc-repository-info.schema.json
+    - .docs/work-items/WI-0012/work-item.json
+    - .docs/work-items/WI-0012/steps/WI-0012-10000000-implementation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0012-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0012/steps/WI-0012-20000000-validation.yaml
+  commitSubject: 'WI-0012: feat(cli): discover repository info'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0012/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate repository info from nested files, directories, repository roots, and outside-repository paths through focused and fresh-process checks.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0012|10000000#result/R-001
+        purpose: Identify the repository-info implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_001
+        purpose: Identify ancestor repository discovery conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_002
+        purpose: Identify repository metadata response conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_003
+        purpose: Identify selector and read-only conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_004
+        purpose: Identify fresh-process coverage conditions.
+        required: true
+    targets:
+      - id: TARGET-REPOSITORY-INFO-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0012|10000000#result/R-001
+        purpose: Validate repository ancestor discovery and response metadata.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-REPOSITORY-INFO-NESTED'
+      - '#test-case/TC-REPOSITORY-INFO-METADATA'
+      - '#test-case/TC-REPOSITORY-INFO-ERRORS'
+      - '#test-case/TC-REPOSITORY-INFO-READ-ONLY'
+    procedures:
+      - id: VAL-REPOSITORY-INFO-001
+        sequence: 1
+        name: validate-repository-info
+        description: Run package checks, nested/repository-root/outside-path CLI audits, response-schema validation, selector checks, and read-only checks.
+        reason: Prove that repository info walks ancestors correctly and reports stable local metadata without mutation.
+        targetRefs:
+          - '#target/TARGET-REPOSITORY-INFO-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-REPOSITORY-INFO-NESTED'
+          - '#test-case/TC-REPOSITORY-INFO-METADATA'
+          - '#test-case/TC-REPOSITORY-INFO-ERRORS'
+          - '#test-case/TC-REPOSITORY-INFO-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc repository info command and ancestor Git discovery
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc repository info --path README.md.
+            - Run sdlc repository info --path src/core.
+            - Run sdlc repository info --path /tmp/outside.
+            - Validate successful responses against schemas/sdlc-repository/v1/sdlc-repository-info.schema.json.
+            - Confirm repository files and Git metadata remain unchanged.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc-repository/v1/sdlc-repository-info.schema.json
+            - src/core/discovery.ts
+            - src/cli/main.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim repository mutation, remote-network behavior, provider, persistence, deployment, or production evidence.
+      - Do not mutate repository files or Git metadata during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-REPOSITORY-INFO-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The repository-info validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The repository info command and ancestor discovery validation have not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the command currently exists.
+      - This result does not approve or release WI-0012.

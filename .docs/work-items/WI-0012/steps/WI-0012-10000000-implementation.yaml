@@ -1,0 +1,142 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0012
+taskUid: WI-0012-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement repository information discovery
+objective: Add sdlc repository info --path <path> with ancestor Git discovery, persisted response schema, and read-only tests.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0002/work-item.json
+    - .docs/work-items/WI-0011/work-item.json
+  informational:
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0012/steps/WI-0012-10000000-implementation.yaml
+    - schemas/sdlc-repository/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: 'WI-0012: feat(cli): discover repository info'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement read-only repository ancestor discovery and stable repository info output.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_001
+        purpose: Define ancestor Git repository discovery behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_002
+        purpose: Define repository information response fields.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_003
+        purpose: Define path selector errors and read-only behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0012#work-item.json#requirement/WI-0012_REQ_004
+        purpose: Define fresh-process repository-info coverage.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Repository info discovers the nearest Git repository from nested files/directories and reports stable local metadata.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-REPOSITORY-INFO-NESTED'
+          - '#test-case/TC-REPOSITORY-INFO-METADATA'
+      - id: OBJ-002
+        statement: Repository info preserves selector errors and read-only filesystem/Git behavior.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-REPOSITORY-INFO-ERRORS'
+          - '#test-case/TC-REPOSITORY-INFO-READ-ONLY'
+    ownedPaths:
+      - schemas/sdlc-repository/
+      - src/core/
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not initialize repositories, mutate Git metadata, contact remotes, or infer unavailable provider metadata.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Add ancestor directory traversal and local Git metadata discovery.
+      - Add the closed repository-info response schema and command routing/output.
+      - Add focused and fresh-process tests for nested paths, repository roots, outside paths, selector errors, and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded repository-info implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0012/steps/WI-0012-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The repository info command and response schema are not yet implemented.

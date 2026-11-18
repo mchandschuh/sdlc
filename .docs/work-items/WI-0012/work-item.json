@@ -1,0 +1,140 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0012",
+  "status": "planned",
+  "title": "Discover repository information from any path",
+  "type": "feature",
+  "objective": "Add sdlc repository info --path <path> to walk from the supplied path through its parents until a Git repository is found and return stable local repository information.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "7b7e68ccfcae6a1c9a3b8e8bcb5d36c4b2c81e16",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/* to retrieve repository information for any path. Based on the path, recursively check the current and parent directories until a git repository is found and then return information about the repository. sdlc repository info --path Commit the work item.\n\nProcess the new work item, commit per task.",
+    "sha256": "a1d6bdc9619a0203c1e98df28d73b1bf87b269df3ae5d55db948d6503c3ac1e4"
+  },
+  "scope": [
+    {
+      "name": "repository-ancestor-discovery",
+      "description": "Walk from the supplied path through its current and parent directories until a Git repository boundary is found.",
+      "reason": "Callers may provide a file, nested directory, repository root, or path beneath a repository and should not need to know the repository root first."
+    },
+    {
+      "name": "repository-info-command",
+      "description": "Add sdlc repository info --path <path> with stable plain and JSON output for the discovered repository.",
+      "reason": "Consumers need a single read-only command to identify the repository associated with an arbitrary local path."
+    },
+    {
+      "name": "repository-response-contract",
+      "description": "Persist a closed versioned response schema for the inspected path, discovered repository root, Git directory, bare status, and origin metadata.",
+      "reason": "CLI JSON response objects require durable schemas and explicit metadata semantics."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "repository-mutation",
+      "description": "Do not initialize repositories, write Git configuration, change remotes, checkout branches, or mutate repository files.",
+      "reason": "The command is read-only discovery and metadata inspection.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "remote-network-resolution",
+      "description": "Do not contact remote providers or infer unavailable repository metadata from network services.",
+      "reason": "Repository info must remain deterministic and local to the discovered Git repository.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0012 is limited to local path traversal and Git inspection.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0012_REQ_001",
+        "name": "ancestor-repository-discovery",
+        "description": "The command must inspect the supplied path and recursively check its current and parent directories until it finds a Git repository.",
+        "reason": "Repository association must work for files and directories at arbitrary nesting levels.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0012_REQ_001_AC_001",
+            "description": "A file path nested inside the repository discovers the repository root and returns zero."
+          },
+          {
+            "id": "WI-0012_REQ_001_AC_002",
+            "description": "A repository directory path and a path outside any repository return stable results, with the latter returning a non-zero error."
+          }
+        ]
+      },
+      {
+        "id": "WI-0012_REQ_002",
+        "name": "repository-info-response",
+        "description": "The command must return stable plain and JSON information for the inspected path and discovered repository.",
+        "reason": "Callers need repository root, Git directory, bare status, and local origin information without parsing ad hoc command output.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0012_REQ_002_AC_001",
+            "description": "The persisted response schema covers inspected fullPath, repositoryRoot, gitDir, isBare, and origin metadata with explicit nullable behavior."
+          },
+          {
+            "id": "WI-0012_REQ_002_AC_002",
+            "description": "JSON output identifies the discovered repository root as an absolute path and includes the local Git metadata without changing repository state."
+          }
+        ]
+      },
+      {
+        "id": "WI-0012_REQ_003",
+        "name": "selector-and-read-only-boundary",
+        "description": "The command must require --path <path>, reject missing/duplicate/invalid paths consistently, and not mutate files or Git metadata.",
+        "reason": "Repository discovery must be scoped, repeatable, and safe to call from arbitrary path contexts.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0012_REQ_003_AC_001",
+            "description": "Focused tests cover missing and duplicate path options, nested file discovery, directory discovery, outside-repository errors, and unchanged Git state."
+          }
+        ]
+      },
+      {
+        "id": "WI-0012_REQ_004",
+        "name": "repository-info-validation",
+        "description": "The implementation must include representative fresh-process validation for nested paths, repository root paths, and no-repository paths.",
+        "reason": "The command crosses filesystem traversal and Git command boundaries and needs executable coverage for each outcome.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0012_REQ_004_AC_001",
+            "description": "yarn test and fresh-process repository info checks pass for valid nested paths, valid repository directories, and invalid outside paths."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0002",
+  "stepsPath": ".docs/work-items/WI-0012/steps/"
+}
