@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
 import { resolveReference } from '../core/reference-resolution.js';
+import { migrateTaskLocalReferences } from '../core/task-local-migration.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 import { resolveOperativeRoot } from '../core/operative-root.js';
@@ -24,6 +25,7 @@ export function printHelp(): void {
   console.log('  task next        Select the next unprocessed task');
   console.log('  ref validate     Validate one schema-registered reference');
   console.log('  ref resolve      Resolve a repository-local reference to document data');
+  console.log('  ref migrate-task-local-up  Migrate recognized task-local references under a path');
   console.log('  stat              Inspect one tracked file path');
 }
 
@@ -240,7 +242,21 @@ async function handleStat(args: readonly string[], getOperativeRoot: OperativeRo
 
 async function handleReference(args: readonly string[], schemaRoot: string): Promise<number | undefined> {
   if (args[0] !== 'ref') return undefined;
-  if (args[1] !== 'validate' && args[1] !== 'resolve') throw new DiscoveryError('Usage: sdlc ref <validate|resolve> --ref <reference>');
+  if (args[1] === 'migrate-task-local-up') {
+    if (args[2] === '--help' || args[2] === '-h') {
+      console.log('Usage: sdlc ref migrate-task-local-up --path <path> [--json]');
+      console.log('Rewrite recognized legacy task-local/task-qualified references under a repository-relative path.');
+      return 0;
+    }
+    const selected = optionValue(args.slice(2), '--path');
+    if (selected.duplicate) throw new DiscoveryError('Duplicate --path option.');
+    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+    if (!selected.value) throw new DiscoveryError('Usage: sdlc ref migrate-task-local-up --path <path>');
+    const report = await migrateTaskLocalReferences(await resolveOperativeRoot(), selected.value);
+    console.log(JSON.stringify(report, null, 2));
+    return report.findings.length === 0 ? 0 : 1;
+  }
+  if (args[1] !== 'validate' && args[1] !== 'resolve') throw new DiscoveryError('Usage: sdlc ref <validate|resolve|migrate-task-local-up>');
   const command = args[1];
   if (args[2] === '--help' || args[2] === '-h') {
     console.log(command === 'validate' ? 'Usage: sdlc ref validate --ref <reference>' : 'Usage: sdlc ref resolve --ref <reference> [--depth [positive-integer]]');

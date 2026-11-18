@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1",
+  "title": "SDLC Task-Local Migration Response v1",
+  "description": "Stable machine-readable result for a path-scoped migration of recognized legacy task-local and task-qualified references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "path", "changedFiles", "files", "replacements", "findings"],
+  "properties": {
+    "schema": {"const": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1", "description": "Response schema identifier.", "examples": ["https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1"]},
+    "path": {"type": "string", "minLength": 1, "description": "Repository-relative path selected for migration.", "examples": [".docs/work-items/WI-0018/steps/"]},
+    "changedFiles": {"type": "array", "uniqueItems": true, "description": "Repository-relative files whose bytes changed.", "items": {"type": "string", "minLength": 1}, "examples": [[".docs/work-items/WI-0018/steps/task.yaml"]]},
+    "files": {"type": "array", "description": "Deterministically ordered file-level migration results.", "items": {"$ref": "#/$defs/File"}, "examples": [[{"path": "task.yaml", "changed": false, "replacements": []}]]},
+    "replacements": {"type": "array", "description": "Aggregated source-to-target replacements and occurrence counts.", "items": {"$ref": "#/$defs/Replacement"}, "examples": [[{"from": "#objective/OBJ-001", "to": "#intent/objectives/OBJ-001", "count": 1}]]},
+    "findings": {"type": "array", "description": "Stable migration findings; empty means no migration error was recorded.", "items": {"type": "string", "minLength": 1}, "examples": [[]]}
+  },
+  "$defs": {
+    "Replacement": {
+      "type": "object",
+      "description": "One recognized source reference and its canonical replacement.",
+      "additionalProperties": false,
+      "required": ["from", "to", "count"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1, "description": "Recognized legacy reference text.", "examples": ["#objective/OBJ-001"]},
+        "to": {"type": "string", "minLength": 1, "description": "Canonical replacement reference text.", "examples": ["#intent/objectives/OBJ-001"]},
+        "count": {"type": "integer", "minimum": 1, "description": "Number of occurrences replaced.", "examples": [1]}
+      },
+      "examples": [{"from": "#objective/OBJ-001", "to": "#intent/objectives/OBJ-001", "count": 1}]
+    },
+    "File": {
+      "type": "object",
+      "description": "Migration result for one selected file.",
+      "additionalProperties": false,
+      "required": ["path", "changed", "replacements"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "description": "Repository-relative file path.", "examples": ["task.yaml"]},
+        "changed": {"type": "boolean", "description": "Whether the file bytes were changed.", "examples": [false]},
+        "replacements": {"type": "array", "description": "Replacements made in this file.", "items": {"$ref": "#/$defs/Replacement"}, "examples": [[]]}
+      },
+      "examples": [{"path": "task.yaml", "changed": false, "replacements": []}]
+    }
+  },
+  "examples": [{"schema": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1", "path": "task.yaml", "changedFiles": [], "files": [{"path": "task.yaml", "changed": false, "replacements": []}], "replacements": [], "findings": []}]
+}

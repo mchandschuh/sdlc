@@ -4,7 +4,7 @@ taskUid: WI-0018-30000000
 orderKey: '30000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement task-local reference migration command
 objective: Add sdlc ref migrate-task-local-up --path <path> to safely migrate recognized old task-local/task-qualified references into explicit intent/result and hyphen-qualified forms.
 references:
@@ -49,7 +49,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -91,19 +91,49 @@ task:
       - Add stable JSON migration result and error behavior with explicit changed-file/replacement reporting.
       - Add no-op, rewrite, nested-scope, malformed-content, and full-test-gate coverage.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Added path-scoped task-local reference migration with deterministic replacement reporting, safe containment checks, atomic file updates, and a stable response schema.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded task-local migration implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Implemented deterministic recognized-reference migration and repository path containment.
           objectiveRefs: [OBJ-005, OBJ-006]
-          paths: [.docs/work-items/WI-0018/steps/WI-0018-30000000-migration-implementation.yaml]
-      testImplementations: []
+          paths: [src/core/task-local-migration.ts]
+        - id: CHANGE-002
+          type: production-code
+          summary: Added sdlc ref migrate-task-local-up --path <path> CLI routing and stable JSON output.
+          objectiveRefs: [OBJ-005]
+          paths: [src/cli/main.ts]
+        - id: CHANGE-003
+          type: schema
+          summary: Added the task-local migration response schema with file and replacement contracts.
+          objectiveRefs: [OBJ-005, OBJ-006]
+          paths: [schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json]
+        - id: CHANGE-004
+          type: test-code
+          summary: Added rewrite, no-op, nested-scope, unrelated-identifier, and unsafe-path coverage.
+          objectiveRefs: [OBJ-005, OBJ-006]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-MIGRATE-NO-OP'
+          path: tests/cli.test.ts
+          selector: is a no-op for canonical content and rejects unsafe migration paths
+        - testCaseRef: '#test-case/TC-MIGRATE-REWRITE'
+          path: tests/cli.test.ts
+          selector: migrates recognized task-local references within the selected path and reports replacements
+        - testCaseRef: '#test-case/TC-MIGRATE-SCOPE'
+          path: tests/cli.test.ts
+          selector: migrates recognized task-local references within the selected path and reports replacements
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-005, OBJ-006]
-      tests: []
+      tests:
+        - id: EXEC-MIGRATE-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-MIGRATE-NO-OP', '#test-case/TC-MIGRATE-REWRITE', '#test-case/TC-MIGRATE-SCOPE']
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Path-scoped migration tests passed and the complete 41-test suite passed.
     limitations:
-      - migrate-task-local-up does not yet exist.
+      - Migration recognizes only bounded task-local/task-qualified selector forms; arbitrary identifiers remain unchanged.

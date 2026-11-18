@@ -221,6 +221,73 @@ describe('CLI interface', () => {
     expect((JSON.parse(output.at(-1)!) as { valid: boolean }).valid).toBe(false);
   });
 
+  it('migrates recognized task-local references within the selected path and reports replacements', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-task-local-migration-'));
+    const selected = join(root, 'nested');
+    await mkdir(selected, { recursive: true });
+    await writeFile(join(root, 'outside.yaml'), 'ref: "WI-0099|10000000#result/R-001"\n');
+    const target = join(selected, 'WI-0099-10000000-task.yaml');
+    await writeFile(target, [
+      'taskUid: WI-0099-10000000',
+      'references:',
+      '  - "#objective/OBJ-001"',
+      '  - "WI-0099|10000000#result/R-001"',
+      '  - "WI-0099-10000000#result/R-002"',
+      '  - "OBJ-001"',
+      '  - "WI-0099|10000000"',
+      'malformed: [',
+      '',
+    ].join('\n'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-task-local-up', '--path', 'nested', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+
+    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; replacements: Array<{ from: string; to: string; count: number }> };
+    expect(report.changedFiles).toEqual(['nested/WI-0099-10000000-task.yaml']);
+    expect(report.replacements).toEqual(expect.arrayContaining([
+      { from: '#objective/OBJ-001', to: '#intent/objectives/OBJ-001', count: 1 },
+      { from: 'WI-0099|10000000#result/R-001', to: 'WI-0099-10000000#result/results/R-001', count: 1 },
+      { from: 'WI-0099-10000000#result/R-002', to: 'WI-0099-10000000#result/results/R-002', count: 1 },
+      { from: 'WI-0099|10000000', to: 'WI-0099-10000000', count: 1 },
+    ]));
+    expect(await readFile(target, 'utf8')).toContain('#intent/objectives/OBJ-001');
+    expect(await readFile(target, 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
+    expect(await readFile(join(root, 'outside.yaml'), 'utf8')).toContain('WI-0099|10000000#result/R-001');
+    expect(await readFile(target, 'utf8')).toContain('OBJ-001');
+  });
+
+  it('is a no-op for canonical content and rejects unsafe migration paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-task-local-migration-safe-'));
+    await writeFile(join(root, 'canonical.yaml'), 'ref: "#intent/objectives/OBJ-001"\nvalue: "OBJ-001"\n');
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const before = await readFile(join(root, 'canonical.yaml'), 'utf8');
+    const output: string[] = [];
+    const errors: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-task-local-up', '--path', 'canonical.yaml', '--json'])).resolves.toBe(0);
+      await expect(main(['ref', 'migrate-task-local-up', '--path', '../outside'])).resolves.toBe(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; files: Array<{ changed: boolean }> };
+    expect(report.changedFiles).toEqual([]);
+    expect(report.files).toEqual([{ path: 'canonical.yaml', changed: false, replacements: [] }]);
+    expect(await readFile(join(root, 'canonical.yaml'), 'utf8')).toBe(before);
+    expect(errors.at(-1)).toContain('Path must remain within the repository');
+  });
+
   it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-reference-depth-'));
     await mkdir(join(root, '.docs', 'work-items', 'WI-0099'), { recursive: true });
