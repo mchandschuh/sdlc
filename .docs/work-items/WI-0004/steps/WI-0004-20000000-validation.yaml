@@ -1,0 +1,199 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0004
+taskUid: WI-0004-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0004-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate sdlc stat path inspection
+objective: Validate stat path parsing, tracked-file response shape, object-type neutrality, stable errors, and read-only behavior.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0004/work-item.json
+    - .docs/work-items/WI-0004/steps/WI-0004-10000000-implementation.yaml
+  informational:
+    - README.md
+dependsOn:
+  - WI-0004-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0004/steps/WI-0004-20000000-validation.yaml
+  commitSubject: 'WI-0004: feat(cli): stat tracked paths'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0004/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate sdlc stat --path <file-path> across tracked file/object fixtures with one stable JSON response shape.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0004|10000000#result/R-001
+        purpose: Identify the stat command implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0004#work-item.json#requirement/WI-0004_REQ_001
+        purpose: Identify path option and error acceptance conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0004#work-item.json#requirement/WI-0004_REQ_002
+        purpose: Identify stable JSON response acceptance conditions.
+        required: true
+    targets:
+      - id: TARGET-STAT-CLI-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0004|10000000#result/R-001
+        purpose: Validate the stat command implementation and response envelope.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-STAT-FILE'
+      - '#test-case/TC-STAT-OBJECT-NEUTRAL'
+      - '#test-case/TC-STAT-ERRORS'
+      - '#test-case/TC-STAT-READ-ONLY'
+    procedures:
+      - id: VAL-STAT-001
+        sequence: 1
+        name: validate-stat-cli
+        description: Run package checks and fresh-process stat command checks across multiple tracked file/object fixtures.
+        reason: Confirm the new command’s path contract, invariant JSON shape, errors, and read-only behavior.
+        targetRefs:
+          - '#target/TARGET-STAT-CLI-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-STAT-FILE'
+          - '#test-case/TC-STAT-OBJECT-NEUTRAL'
+          - '#test-case/TC-STAT-ERRORS'
+          - '#test-case/TC-STAT-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc stat CLI boundary
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc stat --path against at least two tracked object/file fixtures.
+            - Compare response top-level keys and types across fixtures.
+            - Run missing, duplicate, unknown, absolute, and escaping path cases.
+          command: yarn test
+          paths:
+            - src/
+            - tests/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+      - id: VAL-STAT-SCHEMA-001
+        sequence: 2
+        name: validate-stat-records
+        description: Validate WI-0004 and its task envelopes against repository-local schemas.
+        reason: Keep the stat command contract and task records structurally valid.
+        targetRefs:
+          - '#target/TARGET-STAT-CLI-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: WI-0004 work-item and task artifact tree
+          steps:
+            - Validate work-item.json with work-item v2.
+            - Validate both task envelopes with task-envelope v1.
+            - Validate both nested task payloads with their selected schemas.
+          command: schema-validate
+          paths:
+            - .docs/work-items/WI-0004/work-item.json
+            - .docs/work-items/WI-0004/steps/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: static
+        required: true
+    nonGoals:
+      - Do not claim provider, persistence, deployment, or production evidence.
+      - Do not mutate work-item or task lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: WI-0004 stat validation is planned and has not been executed because the stat command is not implemented yet.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-STAT-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: Stat command validation is deferred until the implementation task is executed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The executable stat validation procedure is declared but not yet run.
+      - id: EXEC-VAL-002
+        procedureRef: '#procedure/VAL-STAT-SCHEMA-001'
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: WI-0004 schema validation is deferred until the work-item and task records are materialized.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The static stat-contract schema validation procedure is declared but not yet run.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - No runtime or CLI-audit evidence exists for sdlc stat yet.
+      - The invariant stat JSON envelope and tracked-path semantics remain to be implemented and tested.
+    nonClaims:
+      - This planned validation result does not claim that sdlc stat currently exists.
+      - This result does not approve or release WI-0004.

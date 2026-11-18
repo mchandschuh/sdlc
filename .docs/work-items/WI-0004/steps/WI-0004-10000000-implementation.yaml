@@ -1,0 +1,135 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0004
+taskUid: WI-0004-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement sdlc stat path inspection
+objective: Add the sdlc stat --path <file-path> command and invariant JSON response envelope for tracked file paths.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - README.md
+    - .docs/work-items/WI-0003/work-item.json
+  informational:
+    - schemas/common/v1/sdlc-reference.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0004/steps/WI-0004-10000000-implementation.yaml
+    - src/
+    - tests/
+    - README.md
+  commitSubject: 'WI-0004: feat(cli): stat tracked paths'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement sdlc stat --path <file-path> with one invariant JSON response structure across tracked file/object types.
+    changeTypes:
+      - production-code
+      - test-code
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0004#work-item.json#requirement/WI-0004_REQ_001
+        purpose: Define the stat command path option and stable error behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0004#work-item.json#requirement/WI-0004_REQ_002
+        purpose: Define the invariant JSON response envelope.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0004#work-item.json#requirement/WI-0004_REQ_003
+        purpose: Define read-only and object-neutral test coverage.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The sdlc CLI returns one stable JSON stat envelope for valid tracked file paths regardless of object type.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-STAT-FILE'
+          - '#test-case/TC-STAT-OBJECT-NEUTRAL'
+      - id: OBJ-002
+        statement: Stat path validation and read-only behavior are deterministic and covered by focused tests.
+        inputRefs:
+          - INPUT-REQ-003
+        testCaseRefs:
+          - '#test-case/TC-STAT-ERRORS'
+          - '#test-case/TC-STAT-READ-ONLY'
+    ownedPaths:
+      - src/
+      - tests/
+      - README.md
+    nonGoals:
+      - Do not mutate the inspected file, work-item records, or Git metadata.
+      - Do not introduce object-specific top-level response schemas.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Add tracked-path resolution and stat response shaping behind a small reusable service.
+      - Add sdlc stat --path <file-path> routing, help, JSON output, and stable option/path errors.
+      - Add fixtures and focused tests proving object-type-neutral response keys and read-only behavior.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: WI-0004 records the planned stat command boundary; application stat implementation has not yet been made.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the tracked-path stat command contract and implementation ownership.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0004/steps/WI-0004-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The sdlc stat command is not implemented by this preparation record.
+      - No runtime, CLI-audit, or unit evidence exists for WI-0004 yet.

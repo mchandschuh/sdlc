@@ -1,0 +1,125 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0004",
+  "status": "planned",
+  "title": "Add sdlc stat path inspection command",
+  "type": "feature",
+  "objective": "Add a read-only sdlc stat --path <file-path> command that returns one stable JSON structure for any tracked file path regardless of object type.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation and commit of the next work item on the current repository."
+    }
+  },
+  "baseline": "ae4eab7be8568dce6a655ede098cf48b5d200906",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new sdlc command:\n\nsdlc stat --path <file-path>\n\nthis stat's a file path tracked by the sdlc app/conventions. It doesn't matter what type of object it is, it returns the same json structure.\n\nWrite a new .docs/work-items/* -- commit the work item.",
+    "sha256": "618e31406f2e08d30a68477bf3e03af02bf132f86f04fe977797698176f79957"
+  },
+  "scope": [
+    {
+      "name": "stat-command",
+      "description": "Add sdlc stat --path <file-path> as a read-only tracked-path inspection command.",
+      "reason": "Users need one command boundary for inspecting files tracked by the sdlc application conventions."
+    },
+    {
+      "name": "stable-stat-envelope",
+      "description": "Return the same top-level JSON response structure for every supported file/object type, including path identity, tracking state, object kind, and bounded stat metadata.",
+      "reason": "Consumers must be able to parse stat responses without type-specific response branching."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "tracked-file-mutation",
+      "description": "Do not write, update, format, migrate, or repair the requested file or its tracking records.",
+      "reason": "The stat command is an observational read-only boundary.",
+      "forbiddenFileWrites": [
+        ".docs/work-items/",
+        ".git/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "object-specific-contracts",
+      "description": "Do not create separate response schemas or command routes for individual file/object types in this work item.",
+      "reason": "The requested behavior requires one invariant JSON structure regardless of object type.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0004 is limited to local tracked-path inspection and terminal serialization.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0004_REQ_001",
+        "name": "stat-path-option",
+        "description": "sdlc stat must accept --path <file-path> as its explicit path option and provide stable missing, duplicate, invalid, and unknown option errors.",
+        "reason": "The command must have a deterministic and extensible CLI contract.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0004_REQ_001_AC_001",
+            "description": "The command help documents sdlc stat --path <file-path>, and a valid path invocation returns exit code zero for a tracked file."
+          },
+          {
+            "id": "WI-0004_REQ_001_AC_002",
+            "description": "Missing, duplicate, unknown, absolute, and repository-escaping path inputs return stable non-zero errors without writing files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0004_REQ_002",
+        "name": "stable-stat-json",
+        "description": "Valid sdlc stat output must use one stable JSON structure regardless of the inspected file/object type.",
+        "reason": "Downstream consumers need one response envelope even when inspected content varies.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0004_REQ_002_AC_001",
+            "description": "JSON output contains a stable schema identifier, requested path, repository-relative path, tracking state, object kind, and bounded stat metadata for each supported file/object fixture."
+          },
+          {
+            "id": "WI-0004_REQ_002_AC_002",
+            "description": "The response top-level keys and JSON types remain identical across at least two different tracked file/object types."
+          }
+        ]
+      },
+      {
+        "id": "WI-0004_REQ_003",
+        "name": "stat-read-only-tests",
+        "description": "Focused tests must cover valid tracked paths, object-type neutrality, option errors, path containment, deterministic output, and unchanged filesystem bytes.",
+        "reason": "The command is observational and must not mutate tracked files or records while reporting their state.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0004_REQ_003_AC_001",
+            "description": "yarn test passes with focused stat command coverage and the test fixtures are unchanged after command execution."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0004/steps/"
+}
