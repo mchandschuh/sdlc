@@ -4,7 +4,7 @@ taskUid: WI-0003-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0003-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate normalized work-item option syntax
 objective: Validate the explicit --work-item option forms, stable errors, unchanged discovery output, and read-only behavior.
 references:
@@ -62,7 +62,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -162,36 +162,49 @@ task:
       - Do not claim release, deployment, provider, persistence, or production evidence.
       - Do not mutate work-item or task lifecycle state during validation.
   result:
-    status: implemented-unproven
-    summary: WI-0003 option validation is planned and has not been executed because the syntax migration is not implemented yet.
+    status: passed
+    summary: The normalized --work-item syntax passed focused tests, fresh-process CLI audit, and schema-backed record validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-OPTION-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: Option parsing validation is deferred until the implementation task is executed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: The package checks, named-option command routes, help output, and positional rejection behavior passed.
+          assertions:
+            - The focused suite passed all fifteen tests.
+            - sdlc work-item list --work-item WI-0001 returned the selected work item.
+            - sdlc task list --work-item WI-0001 returned four tasks in deterministic order.
+            - The old positional task-list form returned exit code 1 with a stable error.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The executable option validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The normalized --work-item syntax passed fresh-process CLI audit.
+            command: yarn test && node ./bin/cli.js work-item list --work-item WI-0001 --json && node ./bin/cli.js task list --work-item WI-0001 --json
       - id: EXEC-VAL-002
         procedureRef: '#procedure/VAL-OPTION-SCHEMA-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: WI-0003 schema validation is deferred until the work-item and task records are materialized.
-        evidenceTier: inspection
+          outcome: passed
+          summary: WI-0003 records, task envelopes, nested payloads, and the repository schema registry validated successfully.
+          assertions:
+            - WI-0003 work-item.json passed work-item v2.
+            - Both WI-0003 task envelopes passed task-envelope v1.
+            - Both nested task payloads passed their selected schemas.
+            - The complete schema audit passed.
+        evidenceTier: static
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The static option-contract schema validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-002
+            claim: The WI-0003 option-contract work-item and task tree passed repository-local schema validation.
+            command: schema-validate --root schemas --schema schemas/work-item/v2/work-item.schema.json --document .docs/work-items/WI-0003/work-item.json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - No runtime or CLI-audit evidence exists for the normalized option syntax yet.
-      - Backward compatibility for the old positional task-list form remains an implementation decision to validate explicitly.
+      - The migration intentionally rejects the old positional task-list form rather than retaining it as an alias.
+      - Discovery is local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned validation result does not claim that the option migration currently exists.
       - This result does not approve or release WI-0003.
+      - This result does not establish production readiness.
