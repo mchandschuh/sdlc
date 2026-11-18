@@ -4,7 +4,7 @@ taskUid: WI-0006-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0006-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate unscoped work-item listing
 objective: Validate plain and JSON unscoped work-item listing, preserved task-list selection, deterministic output, and read-only behavior.
 references:
@@ -64,7 +64,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -147,24 +147,33 @@ task:
       - Do not claim provider, persistence, deployment, or production evidence.
       - Do not mutate work-item or task lifecycle state during validation.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: The unscoped work-item listing regression passed focused tests, fresh-process plain and JSON CLI audits, preserved task-list selection checks, read-only checks, and schema-backed record validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-WORK-ITEM-LIST-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Plain and JSON unscoped work-item listing returned zero, selected task listing remained successful, missing task selection remained a stable failure, and the work-item records were unchanged.
+          assertions:
+            - The focused suite passed all eighteen tests.
+            - sdlc work-item list returned zero and listed WI-0001.
+            - sdlc work-item list --json returned schema sdlc-work-item-list/v1 and included WI-0001.
+            - sdlc task list --work-item WI-0001 --json returned zero.
+            - sdlc task list without --work-item returned one with the stable usage error.
+            - The discovered WI-0001 work-item record hash was unchanged.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The unscoped work-item listing validation procedure is declared but not yet executed.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The unscoped work-item list regression and preserved task-list boundary passed fresh-process CLI audit.
+            command: yarn test && node ./bin/cli.js work-item list && node ./bin/cli.js work-item list --json && node ./bin/cli.js task list --work-item WI-0001 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The unscoped work-item list validation has not yet been executed.
+      - Discovery is local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned result does not claim that the bug is fixed.
       - This result does not approve or release WI-0006.
+      - This result does not establish production readiness.
