@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0015",
-  "status": "planned",
+  "status": "implemented",
   "title": "Validate bare work-item and task IDs as references",
   "type": "feature",
   "objective": "Make sdlc ref validate accept bare repository-local work-item IDs such as WI-0001 and canonical task UIDs such as WI-0001-80000000 through the dynamic reference-schema registry.",
