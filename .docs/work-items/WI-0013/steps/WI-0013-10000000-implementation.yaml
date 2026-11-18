@@ -1,0 +1,147 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0013
+taskUid: WI-0013-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement complete work-item and reference validation
+objective: Add sdlc validate --work-item <work-item-id> with declared-schema validation, dynamic reference-type coverage, and local reference target resolution.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/work-item-validation.ts
+    - src/core/reference.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0010/work-item.json
+  informational:
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-reference.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0013/steps/WI-0013-10000000-implementation.yaml
+    - schemas/sdlc-work-item-validation/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: 'WI-0013: feat(cli): validate work-item references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement complete declared-schema and reference-target validation for one work-item tree.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_001
+        purpose: Define complete declared-schema validation coverage.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_002
+        purpose: Define reference shape and target resolution coverage.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_003
+        purpose: Define dynamic registered-reference test coverage.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_004
+        purpose: Define the complete validation response contract.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Work-item validation checks every declared object and reports per-object schema findings.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-VALIDATE-COMPLETE-OBJECTS'
+          - '#test-case/TC-VALIDATE-OBJECT-FINDINGS'
+      - id: OBJ-002
+        statement: Work-item validation resolves local references to actual documents/properties and dynamically covers all registered reference types.
+        inputRefs:
+          - INPUT-REQ-002
+          - INPUT-REQ-003
+        testCaseRefs:
+          - '#test-case/TC-VALIDATE-REFERENCE-RESOLUTION'
+          - '#test-case/TC-VALIDATE-DYNAMIC-REFERENCES'
+    ownedPaths:
+      - schemas/sdlc-work-item-validation/
+      - src/core/
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not mutate work-item/task artifacts, execute tasks, approve work, or contact providers.
+      - Do not replace sdlc ref validate; reuse its dynamic schema registry and syntax coverage.
+    steps:
+      - Extend complete work-item validation with reference discovery and local target resolution.
+      - Expand the persisted validation response schema for per-reference findings and reference counts.
+      - Add exhaustive tests for valid/resolvable references, missing targets, malformed references, and dynamic registry examples.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded complete object and reference resolution implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0013/steps/WI-0013-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The validate command does not yet resolve references to actual work-item objects/properties.

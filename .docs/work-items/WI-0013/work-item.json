@@ -1,0 +1,145 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0013",
+  "status": "planned",
+  "title": "Validate work-item objects and references",
+  "type": "feature",
+  "objective": "Add sdlc validate --work-item <work-item-id> to validate every object in a work-item directory against its declared schema and verify every reference resolves to an actual object or property.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "7080845f2e0ab8c0720f25a3c605ef7b744f25ed",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/* to implement `sdlc validate --work-item <work-item-id>` that validates all objects in the directory according to their declared schemas and also validates that every reference in every document is resolvable and points to an actual object/property. Ensure the tests are thorough and handle cases as documented in the 'sdlc ref validate --ref {ref}' unit tests which should be using dynamic discovery to ensure we've tested all reference types.. Commit the new work item.\n\nProcess the new work item, commit per task.",
+    "sha256": "2a97ffa2b769c38388495d45b00a6640e52a7377095c46f5358b28229764f6e4"
+  },
+  "scope": [
+    {
+      "name": "work-item-validation-command",
+      "description": "Add sdlc validate --work-item <work-item-id> as a read-only complete validation command for one work-item artifact tree.",
+      "reason": "Operators need one boundary that combines declared-schema validation with semantic reference resolution."
+    },
+    {
+      "name": "object-schema-validation",
+      "description": "Validate work-item.json, every task envelope, and every selected task payload against their declared repository-local schemas.",
+      "reason": "Object-tree structure and task-specific payload contracts must be checked together."
+    },
+    {
+      "name": "reference-resolution",
+      "description": "Discover references in every document, validate each reference shape using the dynamic registered reference types, and resolve each reference to an actual object or property in the selected work-item tree.",
+      "reason": "Syntactic ref validation alone does not prove that referenced objects or properties exist."
+    },
+    {
+      "name": "dynamic-reference-coverage",
+      "description": "Extend the existing dynamically discovered reference-type test strategy so every marked reference schema example is exercised through the complete work-item validation boundary where applicable.",
+      "reason": "Future reference types must not be omitted from validation coverage."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "lifecycle-mutation",
+      "description": "Do not change work-item or task lifecycle state, processingStatus, task results, or validation records while validating.",
+      "reason": "The command is a read-only validation boundary.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "semantic-approval",
+      "description": "Do not approve, release, execute, repair, or semantically resolve the selected work item beyond checking local reference targets exist.",
+      "reason": "Reference resolution proves local addressability, not correctness, approval, or production readiness.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0013 is limited to local artifact discovery, schema validation, and reference resolution.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0013_REQ_001",
+        "name": "complete-declared-schema-validation",
+        "description": "sdlc validate --work-item <work-item-id> must validate the work-item record, every task envelope, and every selected nested task payload against its declared schema.",
+        "reason": "All objects in the work-item directory must conform to the contract they declare."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0013_REQ_001_AC_001",
+            "description": "A valid complete work item returns zero and reports every discovered object as schema-valid."
+          },
+          {
+            "id": "WI-0013_REQ_001_AC_002",
+            "description": "A malformed work-item/task/payload object returns actionable per-object findings and a non-zero result."
+          }
+        ]
+      },
+      {
+        "id": "WI-0013_REQ_002",
+        "name": "reference-target-resolution",
+        "description": "Every reference in every work-item document must be validated against supported reference schemas and resolved to an actual object or property in the selected work-item tree when its scope is local to that tree.",
+        "reason": "References must identify real objects/properties rather than merely matching a string pattern.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0013_REQ_002_AC_001",
+            "description": "Valid local references such as work-item, task-qualified, task-local, objective, test-case, requirement, and result references resolve to existing documents/properties."
+          },
+          {
+            "id": "WI-0013_REQ_002_AC_002",
+            "description": "Missing documents, missing properties, malformed selectors, and references outside the selected work-item scope produce actionable findings."
+          }
+        ]
+      },
+      {
+        "id": "WI-0013_REQ_003",
+        "name": "dynamic-reference-coverage",
+        "description": "Tests must dynamically discover every schema marked x-sdlc-reference-type: true and exercise its root examples through the appropriate validation boundary.",
+        "reason": "The existing sdlc ref validate tests establish a future-proof reference-type discovery convention that complete validation must preserve."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0013_REQ_003_AC_001",
+            "description": "The test suite discovers all marked reference schemas recursively, validates every root example syntactically, and includes resolvable local examples in complete work-item validation fixtures."
+          }
+        ]
+      },
+      {
+        "id": "WI-0013_REQ_004",
+        "name": "validation-response",
+        "description": "The command must return a closed persisted response schema with object counts, reference counts, validity, per-object findings, and per-reference resolution findings.",
+        "reason": "Automation needs to distinguish schema failures from unresolved references and identify the exact object or reference at fault."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0013_REQ_004_AC_001",
+            "description": "A valid complete work-item response passes the persisted validation response schema and reports zero invalid objects and unresolved references."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0010",
+  "stepsPath": ".docs/work-items/WI-0013/steps/"
+}

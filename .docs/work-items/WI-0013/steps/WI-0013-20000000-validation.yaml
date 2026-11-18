@@ -1,0 +1,183 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0013
+taskUid: WI-0013-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0013-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate work-item objects and references
+objective: Validate complete declared-schema checks, reference discovery, target resolution, dynamic reference-type coverage, and actionable findings.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/work-item-validation.ts
+    - src/core/reference.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - .docs/work-items/WI-0013/work-item.json
+    - .docs/work-items/WI-0013/steps/WI-0013-10000000-implementation.yaml
+  informational:
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-reference.schema.json
+dependsOn:
+  - WI-0013-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0013/steps/WI-0013-20000000-validation.yaml
+  commitSubject: 'WI-0013: feat(cli): validate work-item references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0013/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate complete work-item schema and reference resolution behavior with dynamic coverage for all registered reference types.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0013|10000000#result/R-001
+        purpose: Identify the complete validation implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_001
+        purpose: Identify complete object schema-validation conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_002
+        purpose: Identify reference target-resolution conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_003
+        purpose: Identify dynamic reference registry coverage conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0013#work-item.json#requirement/WI-0013_REQ_004
+        purpose: Identify response and finding conditions.
+        required: true
+    targets:
+      - id: TARGET-WORK-ITEM-REFERENCE-VALIDATE-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0013|10000000#result/R-001
+        purpose: Validate complete object and reference resolution behavior.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-VALIDATE-COMPLETE-OBJECTS'
+      - '#test-case/TC-VALIDATE-OBJECT-FINDINGS'
+      - '#test-case/TC-VALIDATE-REFERENCE-RESOLUTION'
+      - '#test-case/TC-VALIDATE-DYNAMIC-REFERENCES'
+    procedures:
+      - id: VAL-WORK-ITEM-REFERENCE-001
+        sequence: 1
+        name: validate-work-item-objects-and-references
+        description: Run package checks, complete valid/invalid object validation, reference target resolution, dynamic reference registry coverage, response-schema validation, and read-only checks.
+        reason: Prove that every object is schema-valid and every reference resolves to an actual local object/property where applicable.
+        targetRefs:
+          - '#target/TARGET-WORK-ITEM-REFERENCE-VALIDATE-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-VALIDATE-COMPLETE-OBJECTS'
+          - '#test-case/TC-VALIDATE-OBJECT-FINDINGS'
+          - '#test-case/TC-VALIDATE-REFERENCE-RESOLUTION'
+          - '#test-case/TC-VALIDATE-DYNAMIC-REFERENCES'
+        method:
+          executionMode: executable
+          target: sdlc validate work-item object tree and references
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc validate --work-item WI-0010.
+            - Run sdlc validate against a temporary invalid object/reference fixture.
+            - Validate successful and unsuccessful responses against schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json.
+            - Confirm all validated artifacts remain unchanged.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+            - src/core/reference.ts
+            - src/core/work-item-validation.ts
+            - src/cli/main.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim approval, task execution, lifecycle mutation, provider, persistence, deployment, or production evidence.
+      - Do not mutate selected work-item objects or task records during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-WORK-ITEM-REFERENCE-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The complete work-item object and reference validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Reference target resolution and dynamic complete-validation coverage have not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the command currently exists.
+      - This result does not approve or release WI-0013.
