@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { discoverTasks, discoverWorkItems, DiscoveryError, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
+import { discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
@@ -15,6 +15,7 @@ export function printHelp(): void {
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
   console.log('  task list        List the selected work-item task records');
+  console.log('  stat              Inspect one tracked file path');
 }
 
 async function version(): Promise<string> {
@@ -114,6 +115,37 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
   return undefined;
 }
 
+async function handleStat(args: readonly string[]): Promise<number | undefined> {
+  if (args[0] !== 'stat') return undefined;
+  if (args[1] === '--help' || args[1] === '-h') {
+    console.log('Usage: sdlc stat --path <file-path>');
+    console.log('Inspect one repository-tracked file and return a stable JSON stat envelope.');
+    return 0;
+  }
+  let pathValue: string | undefined;
+  for (let index = 1; index < args.length; index += 1) {
+    const argument = args[index]!;
+    if (argument === '--json') continue;
+    if (argument === '--path') {
+      const value = args[++index];
+      if (!value || value.startsWith('-')) throw new DiscoveryError('--path requires a file path.');
+      if (pathValue !== undefined) throw new DiscoveryError('Duplicate --path option.');
+      pathValue = value;
+    } else if (argument.startsWith('--path=')) {
+      const value = argument.slice('--path='.length);
+      if (!value) throw new DiscoveryError('--path requires a file path.');
+      if (pathValue !== undefined) throw new DiscoveryError('Duplicate --path option.');
+      pathValue = value;
+    } else {
+      throw new DiscoveryError(`Unknown option: ${argument}`);
+    }
+  }
+  if (!pathValue) throw new DiscoveryError('Usage: sdlc stat --path <file-path>');
+  const result = await statTrackedPath(repositoryRoot, pathValue);
+  console.log(JSON.stringify(result, null, 2));
+  return 0;
+}
+
 export async function main(args: readonly string[] = process.argv.slice(2)): Promise<number> {
   const [first] = args;
 
@@ -128,6 +160,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   }
 
   try {
+    const statResult = await handleStat(args);
+    if (statResult !== undefined) return statResult;
     const discoveryResult = await handleDiscovery(args);
     if (discoveryResult !== undefined) return discoveryResult;
   } catch (error) {

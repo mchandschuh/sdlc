@@ -1,10 +1,13 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { readFile, readdir, stat as statFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
+import { promisify } from 'node:util';
 import YAML from 'yaml';
 
 const WORK_ITEM_ID = /^[A-Z]{1,10}-[0-9]+$/u;
 const TASK_UID = /^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u;
+const execFileAsync = promisify(execFile);
 
 export interface WorkItemSummary {
   readonly workItemId: string;
@@ -33,6 +36,19 @@ export class DiscoveryError extends Error {
   }
 }
 
+export interface FileStatReport {
+  readonly schema: 'sdlc-stat/v1';
+  readonly requestedPath: string;
+  readonly repositoryPath: string;
+  readonly tracked: true;
+  readonly objectKind: 'file';
+  readonly stat: {
+    readonly size: number;
+    readonly mtime: string;
+    readonly mode: number;
+  };
+}
+
 function repositoryRelative(repositoryRoot: string, path: string): string {
   return relative(repositoryRoot, path).split(sep).join('/');
 }
@@ -50,6 +66,35 @@ function containedPath(repositoryRoot: string, path: string): string {
 function recordObject(value: unknown, path: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new DiscoveryError(`Invalid JSON object: ${path}`);
   return value as Record<string, unknown>;
+}
+
+export async function statTrackedPath(repositoryRoot: string, requestedPath: string): Promise<FileStatReport> {
+  if (!requestedPath || requestedPath.startsWith('-')) throw new DiscoveryError('--path requires a relative file path.');
+  const root = resolve(repositoryRoot);
+  const candidate = resolve(root, requestedPath);
+  const repositoryPath = relative(root, candidate).split(sep).join('/');
+  if (!repositoryPath || repositoryPath === '..' || repositoryPath.startsWith('../') || candidate.startsWith(`${root}${sep}`) === false) {
+    throw new DiscoveryError(`Path must remain within the repository: ${requestedPath}`);
+  }
+  try {
+    await execFileAsync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', repositoryPath], { encoding: 'utf8' });
+  } catch {
+    throw new DiscoveryError(`Path is not tracked by sdlc: ${requestedPath}`);
+  }
+  const metadata = await statFile(candidate);
+  if (!metadata.isFile()) throw new DiscoveryError(`Path is not a file: ${requestedPath}`);
+  return {
+    schema: 'sdlc-stat/v1',
+    requestedPath,
+    repositoryPath,
+    tracked: true,
+    objectKind: 'file',
+    stat: {
+      size: metadata.size,
+      mtime: metadata.mtime.toISOString(),
+      mode: metadata.mode,
+    },
+  };
 }
 
 async function workItemsDirectory(repositoryRoot: string): Promise<string> {
