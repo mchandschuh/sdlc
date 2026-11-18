@@ -4,7 +4,7 @@ taskUid: WI-0011-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0011-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate normalized stat paths
 objective: Validate repositoryPath/fullPath semantics, requestedPath removal, stat object identity preservation, and work-item validation object alignment.
 references:
@@ -66,7 +66,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -154,24 +154,32 @@ task:
       - Do not claim semantic resolution, approval, execution, provider, persistence, deployment, or production evidence.
       - Do not mutate inspected files or lifecycle state during validation.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Stat and work-item validation path normalization passed focused tests, fresh-process response checks, schema validation, read-only checks, and complete repository audits.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-PATH-CONTRACT-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Stat and work-item validation responses emitted repositoryPath and absolute fullPath without requestedPath, while preserving object identity and read-only behavior.
+          assertions:
+            - The focused suite passed all twenty-five tests.
+            - Generic and work-item stat responses validated against the existing sdlc/stat/v1 schema.
+            - Work-item validation objects validated against the work-item-validation response schema.
+            - No requestedPath field remained in the affected persisted response schemas.
+            - The complete repository schema audit passed.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The normalized stat path validation procedure is declared but not yet executed.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: WI-0011 path normalization passed fresh-process stat and work-item validation CLI audit.
+            command: yarn test && node ./bin/cli.js stat --path README.md && node ./bin/cli.js work-item validate --work-item WI-0008 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The repositoryPath/fullPath contract correction has not yet been validated.
+      - Path normalization does not establish semantic object resolution or provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned result does not claim that requestedPath has been removed.
       - This result does not approve or release WI-0011.
+      - This result does not establish production readiness.
