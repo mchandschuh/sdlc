@@ -1,0 +1,109 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-30000000
+orderKey: '30000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement task-local reference migration command
+objective: Add sdlc ref migrate-task-local-up --path <path> to safely migrate recognized old task-local/task-qualified references into explicit intent/result and hyphen-qualified forms.
+references:
+  required:
+    - .cline/README.md
+    - src/cli/main.ts
+    - src/core/reference-resolution.ts
+    - src/core/reference.ts
+    - tests/cli.test.ts
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - .docs/work-items/WI-0018/work-item.json
+  informational:
+    - .docs/work-items/WI-0018/steps/WI-0018-20000000-task-id-implementation.yaml
+    - .docs/work-items/WI-0018/steps/WI-0018-21000000-task-id-validation.yaml
+dependsOn:
+  - WI-0018-21000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - src/core/
+    - src/cli/
+    - tests/
+    - .cline/README.md
+    - .docs/work-items/WI-0018/steps/WI-0018-30000000-migration-implementation.yaml
+  commitSubject: 'WI-0018: feat(ref): migrate task-local references'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement path-scoped migration of recognized task-local/task-qualified references with deterministic replacement reporting and complete unit-test coverage.
+    changeTypes: [production-code, test-code, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_004
+        purpose: Define migration behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_005
+        purpose: Define migration response/write boundaries.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_006
+        purpose: Define per-task test gates.
+        required: true
+    objectives:
+      - id: OBJ-005
+        statement: migrate-task-local-up rewrites recognized references only under the requested path and reports changed files/replacements deterministically.
+        inputRefs: [INPUT-REQ-004, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-MIGRATE-NO-OP', '#test-case/TC-MIGRATE-REWRITE', '#test-case/TC-MIGRATE-SCOPE']
+      - id: OBJ-006
+        statement: Migration preserves unrelated identifiers/content and is committed only after the complete unit-test suite passes.
+        inputRefs: [INPUT-REQ-005, INPUT-REQ-006]
+        testCaseRefs: ['#test-case/TC-MIGRATE-SAFETY', '#test-case/TC-MIGRATE-TEST-GATE']
+    ownedPaths: [src/core/, src/cli/, tests/, .cline/README.md]
+    nonGoals:
+      - Do not rewrite arbitrary local IDs without recognized reference context.
+      - Do not migrate paths outside the requested path or contact remote repositories.
+    steps:
+      - Add path-scoped migration parsing and replacement logic for old local/task-qualified forms.
+      - Add stable JSON migration result and error behavior with explicit changed-file/replacement reporting.
+      - Add no-op, rewrite, nested-scope, malformed-content, and full-test-gate coverage.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded task-local migration implementation plan.
+          objectiveRefs: [OBJ-005, OBJ-006]
+          paths: [.docs/work-items/WI-0018/steps/WI-0018-30000000-migration-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-005, OBJ-006]
+      tests: []
+    limitations:
+      - migrate-task-local-up does not yet exist.

@@ -1,0 +1,123 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-21000000
+orderKey: '21000000'
+parentTaskUid: WI-0018-20000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate hyphen task identifier formatting
+objective: Validate schema/runtime/record conversion to hyphen task identifiers and require a 100% passing unit-test gate.
+references:
+  required:
+    - .docs/work-items/WI-0018/work-item.json
+    - .docs/work-items/WI-0018/steps/WI-0018-20000000-task-id-implementation.yaml
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
+    - src/core/reference-resolution.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+dependsOn:
+  - WI-0018-20000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0018/steps/WI-0018-21000000-task-id-validation.yaml
+    - .docs/work-items/WI-0018/work-item.json
+  commitSubject: 'WI-0018: test(ref): validate hyphen task identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate hyphen task identifiers across schemas, runtime, persisted records, qualified references, and the complete unit-test suite.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0018|20000000#result/R-001
+        purpose: Identify hyphen formatting implementation.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_003
+        purpose: Identify canonical task identifier conditions.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_006
+        purpose: Identify test gate conditions.
+        required: true
+    targets:
+      - id: TARGET-HYPHEN-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0018|20000000#result/R-001
+        purpose: Validate task identifier conversion.
+        required: true
+    objectiveRefs: ['#objective/OBJ-003', '#objective/OBJ-004']
+    testCaseRefs: ['#test-case/TC-HYPHEN-SCHEMAS', '#test-case/TC-HYPHEN-RUNTIME', '#test-case/TC-HYPHEN-RECORDS', '#test-case/TC-HYPHEN-TEST-GATE']
+    procedures:
+      - id: VAL-HYPHEN-001
+        sequence: 1
+        name: validate-hyphen-task-identifiers
+        description: Run complete package tests and schema/fixture audits for hyphen task identifiers.
+        reason: Prove the formatting migration is complete and committed only with all tests passing.
+        targetRefs: ['#target/TARGET-HYPHEN-001']
+        objectiveRefs: ['#objective/OBJ-003', '#objective/OBJ-004']
+        testCaseRefs: ['#test-case/TC-HYPHEN-SCHEMAS', '#test-case/TC-HYPHEN-RUNTIME', '#test-case/TC-HYPHEN-RECORDS', '#test-case/TC-HYPHEN-TEST-GATE']
+        method:
+          executionMode: executable
+          target: task identifier schemas, runtime, records, and tests
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Validate representative task/reference records.
+            - Confirm pipe forms are migration-only or rejected.
+            - Validate task artifacts.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim migration command behavior or task-local semantic migration in this task.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-HYPHEN-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until implementation task processing.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Hyphen task identifier validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The hyphen task identifier implementation has not yet been validated.
+    nonClaims:
+      - This planned result does not claim pipe-to-hyphen migration completion.

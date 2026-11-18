@@ -1,0 +1,105 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-20000000
+orderKey: '20000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Replace pipe task identifiers with hyphen UIDs
+objective: Update task identifier schemas, runtime parsing, reference patterns, records, fixtures, and tests from WorkItemId|StepId to WorkItemId-StepId.
+references:
+  required:
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
+    - src/core/reference-resolution.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0018/work-item.json
+  informational:
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - .docs/work-items/WI-0016/work-item.json
+dependsOn:
+  - WI-0018-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/
+    - schemas/sdlc-ref/
+    - src/core/
+    - tests/
+    - .docs/work-items/
+    - .docs/work-items/WI-0018/steps/WI-0018-20000000-task-id-implementation.yaml
+  commitSubject: 'WI-0018: feat(ref): use hyphen task identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Replace pipe-separated task identifiers with canonical hyphen-separated task UIDs throughout schemas, runtime, records, and tests.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_003
+        purpose: Define canonical hyphen task identifiers.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_006
+        purpose: Define complete unit-test gate.
+        required: true
+    objectives:
+      - id: OBJ-003
+        statement: Task identifiers and qualified references use hyphens consistently across all local schemas, runtime parsing, work-item records, and tests.
+        inputRefs: [INPUT-REQ-003]
+        testCaseRefs: ['#test-case/TC-HYPHEN-SCHEMAS', '#test-case/TC-HYPHEN-RUNTIME', '#test-case/TC-HYPHEN-RECORDS']
+      - id: OBJ-004
+        statement: The complete unit-test suite passes before this task commit.
+        inputRefs: [INPUT-REQ-006]
+        testCaseRefs: ['#test-case/TC-HYPHEN-TEST-GATE']
+    ownedPaths: [schemas/, src/, tests/, .docs/work-items/]
+    nonGoals:
+      - Do not implement the migration command in this task.
+      - Do not silently accept pipe references as canonical runtime output.
+    steps:
+      - Update task identifier and qualified-reference schemas to hyphen grammar.
+      - Update runtime parsers, fixtures, work-item records, and tests.
+      - Run the complete unit-test suite and schema checks before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the hyphen task-identifier migration plan.
+          objectiveRefs: [OBJ-003, OBJ-004]
+          paths: [.docs/work-items/WI-0018/steps/WI-0018-20000000-task-id-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-003, OBJ-004]
+      tests: []
+    limitations:
+      - Existing pipe-separated task references remain until this task is processed.

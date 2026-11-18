@@ -1,0 +1,107 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement explicit task-local JSON paths
+objective: Define and implement explicit intent/result-rooted task-local references and deterministic task-context resolution without schema inference.
+references:
+  required:
+    - .cline/README.md
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0018/work-item.json
+  informational:
+    - schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
+    - .docs/work-items/WI-0016/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/
+    - src/core/
+    - tests/
+    - .cline/README.md
+    - .docs/work-items/WI-0018/steps/WI-0018-10000000-task-local-implementation.yaml
+  commitSubject: 'WI-0018: feat(ref): make task-local references explicit'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement explicit #intent/<collection>/<id> and #result/<collection>/<id> references, deterministic task-local resolution, and complete unit-test coverage.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_001
+        purpose: Define explicit task-local paths.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_002
+        purpose: Define task-local context resolution.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_006
+        purpose: Define per-task test gates.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Task-local and task-qualified references use explicit intent/result JSON-path-like selectors and resolve deterministically against task context.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-LOCAL-EXPLICIT-PATH', '#test-case/TC-LOCAL-TASK-CONTEXT']
+      - id: OBJ-002
+        statement: The full unit-test suite passes before this task commit and old ambiguous unrooted local forms are covered as rejected or migration-only inputs.
+        inputRefs: [INPUT-REQ-006]
+        testCaseRefs: ['#test-case/TC-LOCAL-TEST-GATE']
+    ownedPaths: [schemas/common/v1/, src/core/, tests/, .cline/README.md]
+    nonGoals:
+      - Do not change task ID separators in this section.
+      - Do not add migration writes in this section.
+    steps:
+      - Update task-local/task-qualified schemas and documentation to require intent/result roots.
+      - Update resolver parsing and deterministic JSON-path-like task selection.
+      - Add exhaustive unit tests and run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the explicit task-local path implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0018/steps/WI-0018-10000000-task-local-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - Existing unrooted task-local references are not yet migrated.

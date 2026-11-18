@@ -1,0 +1,129 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-31000000
+orderKey: '31000000'
+parentTaskUid: WI-0018-30000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate task-local reference migration
+objective: Validate path-scoped migration, replacements, safety/no-op behavior, response contracts, and the complete unit-test gate.
+references:
+  required:
+    - .docs/work-items/WI-0018/work-item.json
+    - .docs/work-items/WI-0018/steps/WI-0018-30000000-migration-implementation.yaml
+    - src/cli/main.ts
+    - src/core/reference-resolution.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - .docs/work-items/WI-0018/steps/WI-0018-21000000-task-id-validation.yaml
+dependsOn:
+  - WI-0018-30000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0018/steps/WI-0018-31000000-migration-validation.yaml
+    - .docs/work-items/WI-0018/work-item.json
+  commitSubject: 'WI-0018: test(ref): validate task-local migration'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate task-local migration no-op/rewrite/scope/safety behavior and require a completely passing unit-test suite before commit.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0018|30000000#result/R-001
+        purpose: Identify migration implementation.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_004
+        purpose: Identify migration rewrite conditions.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_005
+        purpose: Identify migration safety and response conditions.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0018#work-item.json#requirement/WI-0018_REQ_006
+        purpose: Identify test gate conditions.
+        required: true
+    targets:
+      - id: TARGET-MIGRATE-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0018|30000000#result/R-001
+        purpose: Validate migration implementation and tests.
+        required: true
+    objectiveRefs: ['#objective/OBJ-005', '#objective/OBJ-006']
+    testCaseRefs: ['#test-case/TC-MIGRATE-NO-OP', '#test-case/TC-MIGRATE-REWRITE', '#test-case/TC-MIGRATE-SCOPE', '#test-case/TC-MIGRATE-SAFETY', '#test-case/TC-MIGRATE-TEST-GATE']
+    procedures:
+      - id: VAL-MIGRATE-001
+        sequence: 1
+        name: validate-task-local-migration
+        description: Run complete package checks and migration command tests for no-op, rewrite, nested scope, malformed content, unsafe path, and read-only/error behavior.
+        reason: Prove migration is controlled, deterministic, safe, and committed only with all tests passing.
+        targetRefs: ['#target/TARGET-MIGRATE-001']
+        objectiveRefs: ['#objective/OBJ-005', '#objective/OBJ-006']
+        testCaseRefs: ['#test-case/TC-MIGRATE-NO-OP', '#test-case/TC-MIGRATE-REWRITE', '#test-case/TC-MIGRATE-SCOPE', '#test-case/TC-MIGRATE-SAFETY', '#test-case/TC-MIGRATE-TEST-GATE']
+        method:
+          executionMode: executable
+          target: sdlc ref migrate-task-local-up command
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run migration on a no-op file and verify unchanged bytes.
+            - Run migration on old task-local/task-qualified fixtures and verify exact replacements.
+            - Verify nested directory scope, unsafe path rejection, malformed content, and unrelated identifier preservation.
+            - Validate task artifacts and migration response examples.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim remote resolution, production readiness, or migration of unrecognized arbitrary identifiers.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-MIGRATE-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until migration implementation task processing.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Task-local migration validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The migration command and its complete test gate have not yet been validated.
+    nonClaims:
+      - This planned result does not claim existing records are migrated.
