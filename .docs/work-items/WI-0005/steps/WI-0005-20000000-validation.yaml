@@ -4,7 +4,7 @@ taskUid: WI-0005-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0005-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate the persisted sdlc stat schema
 objective: Validate the persisted schema, representative stat response, runtime identifier alignment, and full repository schema audit.
 references:
@@ -13,7 +13,7 @@ references:
     - package.json
     - src/core/discovery.ts
     - tests/cli.test.ts
-    - schemas/sdlc/stat/v1/sdlc-stat.schema.json
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
     - .docs/work-items/WI-0005/work-item.json
     - .docs/work-items/WI-0005/steps/WI-0005-10000000-implementation.yaml
   informational:
@@ -64,12 +64,12 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
   intent:
-    summary: Validate the persisted sdlc/stat/v1 schema and its alignment with sdlc stat output.
+    summary: Validate the persisted https://schemas.handschuh.dev/sdlc/stat/v1 schema at schemas/sdlc-stat/v1/sdlc-state.schema.json and its alignment with sdlc/stat/v1 output.
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
@@ -115,11 +115,11 @@ task:
             - Run yarn build.
             - Run yarn test.
             - Run sdlc stat --path README.md and capture the representative JSON response.
-            - Validate the response against schemas/sdlc/stat/v1/sdlc-stat.schema.json.
+            - Validate the response against schemas/sdlc-stat/v1/sdlc-state.schema.json.
             - Run the complete repository schema audit.
           command: yarn test
           paths:
-            - schemas/sdlc/stat/v1/sdlc-stat.schema.json
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
             - src/core/discovery.ts
             - tests/cli.test.ts
         expected:
@@ -131,25 +131,31 @@ task:
       - Do not claim production deployment, provider behavior, or persistence beyond the schema artifact.
       - Do not mutate the stat target or work-item lifecycle during validation.
   result:
-    status: implemented-unproven
-    summary: WI-0005 schema validation is planned and has not been executed because the persisted schema is not yet implemented.
+    status: passed
+    summary: The persisted sdlc/stat/v1 schema passed representative stat validation, runtime alignment checks, focused tests, and the complete schema audit.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-STAT-SCHEMA-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: Schema alignment validation is deferred until the implementation task is executed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: The sdlc/stat/v1 response validated against schemas/sdlc-stat/v1/sdlc-state.schema.json, whose persisted $id is https://schemas.handschuh.dev/sdlc/stat/v1 and whose contract accepts the runtime selector.
+          assertions:
+            - The focused suite passed all eighteen tests.
+            - The live README.md stat response validated against the persisted schema.
+            - The response schema identifier was sdlc/stat/v1.
+            - The complete repository schema audit passed.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The persisted stat schema validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The persisted stat schema and runtime alignment passed fresh-process validation.
+            command: yarn test && node ./bin/cli.js stat --path README.md
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The sdlc/stat/v1 persisted schema and representative validation are not yet available.
-      - WI-0004’s response contract remains the source of the omission until WI-0005 implementation is processed.
+      - Schema alignment does not establish provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned validation result does not claim that the stat schema currently exists.
       - This result does not approve or release WI-0005.
+      - This result does not establish production readiness.
