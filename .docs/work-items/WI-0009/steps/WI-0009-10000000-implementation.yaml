@@ -4,7 +4,7 @@ taskUid: WI-0009-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement next-task selection
 objective: Add sdlc task next --work-item <work-item> with deterministic unprocessed-task selection, stable response schema, and read-only tests.
 references:
@@ -57,7 +57,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -120,24 +120,64 @@ task:
       - Add the closed selected/no-next-task response schema and human-readable/JSON output.
       - Add focused tests for mixed processing statuses, no-next-task, invalid selectors, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Implemented read-only task-next selection for unprocessed tasks with selected and exhausted response states.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded next-task selection implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added discoverNextTask selection and task next CLI routing with deterministic unprocessed-task behavior.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0009/steps/WI-0009-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/discovery.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Added the closed selected/no-next-task response schema.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added mixed-status selection, exhausted work-item, selector error, and read-only coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-TASK-NEXT-SELECT'
+          path: tests/cli.test.ts
+          selector: selects the first unprocessed task and reports no task when exhausted
+        - testCaseRef: '#test-case/TC-TASK-NEXT-EMPTY'
+          path: tests/cli.test.ts
+          selector: selects the first unprocessed task and reports no task when exhausted
+        - testCaseRef: '#test-case/TC-TASK-NEXT-ERRORS'
+          path: tests/cli.test.ts
+          selector: rejects invalid task-next selectors
+        - testCaseRef: '#test-case/TC-TASK-NEXT-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: selects the first unprocessed task and reports no task when exhausted
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-TASK-NEXT-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-TASK-NEXT-SELECT'
+            - '#test-case/TC-TASK-NEXT-EMPTY'
+            - '#test-case/TC-TASK-NEXT-ERRORS'
+            - '#test-case/TC-TASK-NEXT-READ-ONLY'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all twenty-three CLI, discovery, stat, reference, and task-next tests.
     limitations:
-      - The task next command and response schema are not yet implemented.
+      - Task next selects work but does not execute, lock, or mutate tasks.
+      - The command does not establish provider, persistence, deployment, or production evidence.

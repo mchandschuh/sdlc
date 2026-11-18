@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
+import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
@@ -16,6 +16,7 @@ export function printHelp(): void {
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
   console.log('  task list        List the selected work-item task records');
+  console.log('  task next        Select the next unprocessed task');
   console.log('  ref validate     Validate one schema-registered reference');
   console.log('  stat              Inspect one tracked file path');
 }
@@ -60,6 +61,25 @@ function commandHelp(command: 'work-item list' | 'task list'): number {
     console.log('List canonical task envelopes below the selected work item stepsPath.');
   }
   return 0;
+}
+
+function printNextTask(workItemId: string, task: TaskSummary | null, json: boolean): void {
+  const response = {
+    schema: 'https://schemas.handschuh.dev/sdlc/task-next/v1',
+    workItemId,
+    selection: task ? 'selected' : 'none',
+    task,
+  } as const;
+  if (json) {
+    console.log(JSON.stringify(response, null, 2));
+    return;
+  }
+  if (task) {
+    console.log(`Next task for ${workItemId}:`);
+    console.log(`  ${task.taskUid}  ${task.taskType.padEnd(14)} ${task.processingStatus.padEnd(22)} ${task.path}`);
+  } else {
+    console.log(`No task requires processing for ${workItemId}.`);
+  }
 }
 
 function optionValue(args: readonly string[], name: string): { value?: string; duplicate: boolean; unknown?: string } {
@@ -116,6 +136,16 @@ async function handleDiscovery(args: readonly string[]): Promise<number | undefi
     const report = await discoverTasks(repositoryRoot, selected.value);
     printTasks(selected.value, report, jsonRequested(args));
     return report.findings.length > 0 ? 1 : 0;
+  }
+  if (first === 'task' && second === 'next') {
+    const selected = optionValue(args.slice(2), '--work-item');
+    if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+    if (!selected.value) throw new DiscoveryError('Usage: sdlc task next --work-item <work-item> [--json]');
+    if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
+    const task = await discoverNextTask(repositoryRoot, selected.value);
+    printNextTask(selected.value, task, jsonRequested(args));
+    return 0;
   }
   return undefined;
 }

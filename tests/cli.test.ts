@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../src/cli/main.js';
-import { discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
+import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -193,6 +193,60 @@ describe('discovery commands', () => {
       'WI-0001-40000000',
     ]);
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml');
+  });
+
+  it('selects the first unprocessed task and reports no task when exhausted', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-next-task-'));
+    const workItems = join(root, '.docs', 'work-items', 'WI-0099', 'steps');
+    await mkdir(workItems, { recursive: true });
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0099', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Fixture', stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    const task = (uid: string, status: string) => [
+      'schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1',
+      `workItemId: WI-0099`,
+      `taskUid: ${uid}`,
+      `orderKey: '${uid.slice(-8)}'`,
+      'parentTaskUid: null',
+      'taskType: implementation',
+      `processingStatus: ${status}`,
+      'title: Fixture task',
+      'objective: Fixture task',
+      'references:',
+      '  required: []',
+      '  informational: []',
+      'dependsOn: []',
+      'task:',
+      '  status: planned',
+      '  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+      '  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent',
+      '  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result',
+      '  intent: {}',
+      '  result: {}',
+      '',
+    ].join('\n');
+    await writeFile(join(workItems, 'WI-0099-10000000.yaml'), task('WI-0099-10000000', 'processing_completed'));
+    await writeFile(join(workItems, 'WI-0099-20000000.yaml'), task('WI-0099-20000000', 'unprocessed'));
+    await writeFile(join(workItems, 'WI-0099-30000000.yaml'), task('WI-0099-30000000', 'processing_blocked'));
+
+    const selected = await discoverNextTask(root, 'WI-0099');
+    expect(selected?.taskUid).toBe('WI-0099-20000000');
+    const selectedBytes = await readFile(join(workItems, 'WI-0099-20000000.yaml'), 'utf8');
+    expect(await readFile(join(workItems, 'WI-0099-20000000.yaml'), 'utf8')).toBe(selectedBytes);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    output.length = 0;
+    await expect(main(['task', 'next', '--work-item', 'WI-0008', '--json'])).resolves.toBe(0);
+    const none = JSON.parse(output.join('\n')) as { selection: string; task: null };
+    expect(none.selection).toBe('none');
+    expect(none.task).toBeNull();
+  });
+
+  it('rejects invalid task-next selectors', async () => {
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    await expect(main(['task', 'next'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Usage: sdlc task next --work-item <work-item> [--json]');
+    await expect(main(['task', 'next', '--work-item', 'WI-0001', '--work-item', 'WI-0002'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Duplicate --work-item option.');
   });
 
   it('documents the work-item inventory and normalized task option forms in command help', async () => {

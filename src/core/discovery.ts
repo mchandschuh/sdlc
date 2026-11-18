@@ -219,3 +219,8 @@ export async function discoverTasks(repositoryRoot: string, workItemId: string):
 
   return { items, findings };
 }
+
+export async function discoverNextTask(repositoryRoot: string, workItemId: string): Promise<TaskSummary | null> {
+  const report = await discoverTasks(repositoryRoot, workItemId);
+  return report.items.find((task) => task.processingStatus === 'unprocessed') ?? null;
+}

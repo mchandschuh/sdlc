@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0009",
-  "status": "planned",
+  "status": "implemented",
   "title": "Select the next task requiring processing",
   "type": "feature",
   "objective": "Add sdlc task next --work-item <work-item> as a deterministic read-only command that returns the first task whose processingStatus is unprocessed.",
