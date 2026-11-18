@@ -1,0 +1,145 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0014",
+  "status": "planned",
+  "title": "Resolve the CLI operative root from the current repository",
+  "type": "feature",
+  "objective": "Make repository-dependent sdlc commands operate on the Git repository associated with the current working directory instead of the repository that contains the installed CLI, while keeping root resolution behind a replaceable boundary and releasing the change as version 0.2.0.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "567b40d0cc713f0966907624bd7472771ac4e514",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/* to make the sdlc command line tool operate on the Git repository associated with the current working directory rather than assuming the sdlc repository. Encapsulate operative-root resolution for future replacement, add regression coverage, bump the minor package version, commit the work item, then process the new work item and commit per task.",
+    "sha256": "fbfcfe5fd602bdc00fcca5f53afb4216e36ae0341fcf0944c1bd5c98e28340fb"
+  },
+  "scope": [
+    {
+      "name": "operative-root-resolution",
+      "description": "Resolve the operative repository root from the current working directory by using a dedicated replaceable application boundary.",
+      "reason": "Repository-dependent commands must target the caller's repository and must not derive operational data from the installed CLI location."
+    },
+    {
+      "name": "repository-command-routing",
+      "description": "Route work-item, task, reference, and stat commands through the resolved operative root while preserving package metadata lookup and explicit repository-info path behavior.",
+      "reason": "All repository-dependent command surfaces need consistent root semantics without changing version lookup or explicit path discovery."
+    },
+    {
+      "name": "cwd-regression-coverage",
+      "description": "Add focused and fresh-process-compatible tests proving commands inspect a separate repository selected by the current working directory, including nested directories and no-repository errors.",
+      "reason": "The prior hard-coded root behavior can pass tests run from the sdlc repository unless a separate repository is exercised."
+    },
+    {
+      "name": "minor-release",
+      "description": "Bump the package minor version from 0.1.0 to 0.2.0 and verify the compiled launcher reports the new version.",
+      "reason": "The user requested a minor release for this behavior change before 1.0.0."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "repository-selection-options",
+      "description": "Do not add a new command-line option for overriding the operative repository root.",
+      "reason": "This change establishes CWD-based default behavior; future override mechanisms can be added independently.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "package-location-operation",
+      "description": "Do not use the caller repository to locate the installed package metadata needed by --version.",
+      "reason": "Version lookup must continue to work when the installed CLI is invoked from any repository or directory.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "repository-mutation",
+      "description": "Do not initialize, modify, commit, checkout, or otherwise mutate the caller repository as part of root resolution or command execution.",
+      "reason": "Operative-root discovery and the affected commands are read-only.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0014_REQ_001",
+        "name": "cwd-operative-root",
+        "description": "Repository-dependent commands must resolve and use the nearest Git repository containing the current working directory rather than the repository containing the installed CLI module.",
+        "reason": "The CLI is intended to work in any repository.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0014_REQ_001_AC_001",
+            "description": "A repository-dependent command invoked from a separate repository reports and reads paths relative to that separate repository."
+          },
+          {
+            "id": "WI-0014_REQ_001_AC_002",
+            "description": "A command invoked from a nested directory resolves the containing repository root, while a command outside any Git repository returns a stable non-zero error."
+          }
+        ]
+      },
+      {
+        "id": "WI-0014_REQ_002",
+        "name": "replaceable-root-boundary",
+        "description": "Operative-root resolution must be encapsulated behind a dedicated function or module so a future root-selection policy can replace it without changing every command handler.",
+        "reason": "Root-selection policy is an application concern and should not be coupled to individual command implementations.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0014_REQ_002_AC_001",
+            "description": "Repository-dependent command handlers obtain their repository root through the shared operative-root boundary and do not derive it from the installed module path."
+          }
+        ]
+      },
+      {
+        "id": "WI-0014_REQ_003",
+        "name": "command-boundary-regression",
+        "description": "Tests must cover operative-root resolution, affected command routing, explicit repository-info behavior, read-only operation, and package-version behavior.",
+        "reason": "The change crosses CLI dispatch, Git discovery, filesystem paths, and package metadata boundaries.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0014_REQ_003_AC_001",
+            "description": "The test suite proves a separate repository is selected from the CWD and confirms inspected files and repository state remain unchanged."
+          },
+          {
+            "id": "WI-0014_REQ_003_AC_002",
+            "description": "Existing commands and explicit repository info path selection retain their documented behavior."
+          }
+        ]
+      },
+      {
+        "id": "WI-0014_REQ_004",
+        "name": "minor-release-version",
+        "description": "The package version must be bumped from 0.1.0 to 0.2.0 and the built launcher must report 0.2.0.",
+        "reason": "The user requested a minor version release for the cross-repository CLI behavior change.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0014_REQ_004_AC_001",
+            "description": "Package metadata, version tests, and a fresh compiled CLI invocation consistently report version 0.2.0."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0012",
+  "stepsPath": ".docs/work-items/WI-0014/steps/"
+}

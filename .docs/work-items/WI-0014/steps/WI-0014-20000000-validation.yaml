@@ -1,0 +1,168 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0014
+taskUid: WI-0014-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0014-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate CWD-based operative-root behavior
+objective: Validate repository selection from the current working directory, command routing, encapsulation, read-only behavior, and the 0.2.0 minor release.
+references:
+  required:
+    - package.json
+    - src/core/operative-root.ts
+    - src/core/repository.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0014/work-item.json
+    - .docs/work-items/WI-0014/steps/WI-0014-10000000-implementation.yaml
+  informational:
+    - README.md
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0014-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0014/work-item.json
+    - .docs/work-items/WI-0014/steps/WI-0014-20000000-validation.yaml
+  commitSubject: 'WI-0014: test(cli): validate operative root resolution'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: version
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - --version
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the implementation through focused tests, compiled CLI checks from a separate repository, response/version checks, and read-only comparisons.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0014|10000000#result/R-001
+        purpose: Identify the operative-root implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_001
+        purpose: Identify CWD repository-selection conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_002
+        purpose: Identify root-resolution encapsulation conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_003
+        purpose: Identify command, regression, and read-only conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_004
+        purpose: Identify version 0.2.0 conditions.
+        required: true
+    targets:
+      - id: TARGET-OPERATIVE-ROOT-001
+        kind: implementation
+        taskType: implementation
+        ref: WI-0014|10000000#result/R-001
+        purpose: Validate the operative-root implementation and command routing.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-OPERATIVE-ROOT-SEPARATE-REPOSITORY'
+      - '#test-case/TC-OPERATIVE-ROOT-NESTED-DIRECTORY'
+      - '#test-case/TC-OPERATIVE-ROOT-READ-ONLY'
+      - '#test-case/TC-OPERATIVE-ROOT-VERSION'
+    procedures:
+      - id: VAL-OPERATIVE-ROOT-001
+        sequence: 1
+        name: validate-operative-root-resolution
+        description: Run package checks and fresh-process or focused CLI checks from a separate Git repository and nested directory, then verify version and unchanged repository state.
+        reason: Prove that repository-dependent commands use the CWD repository rather than the installed sdlc repository and preserve the read-only boundary.
+        targetRefs:
+          - '#target/TARGET-OPERATIVE-ROOT-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-OPERATIVE-ROOT-SEPARATE-REPOSITORY'
+          - '#test-case/TC-OPERATIVE-ROOT-NESTED-DIRECTORY'
+          - '#test-case/TC-OPERATIVE-ROOT-READ-ONLY'
+          - '#test-case/TC-OPERATIVE-ROOT-VERSION'
+        method:
+          executionMode: executable
+          target: sdlc repository-dependent command routing and operative-root boundary
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run the compiled CLI stat command from a separate temporary Git repository and nested directory.
+            - Run the compiled CLI version command and confirm 0.2.0.
+            - Confirm the selected repository files and Git metadata remain unchanged.
+            - Validate the work item and task envelopes against their repository-local schemas.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim remote, provider, deployment, persistence, or production evidence.
+      - Do not mutate the selected repository or treat version output as a published release.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-OPERATIVE-ROOT-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The operative-root validation procedure is declared but has not yet been executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - CWD-based operative-root behavior and the 0.2.0 version bump have not yet been executed or verified.
+    nonClaims:
+      - This planned result does not claim that commands operate outside the sdlc repository.
+      - This result does not claim a published release.

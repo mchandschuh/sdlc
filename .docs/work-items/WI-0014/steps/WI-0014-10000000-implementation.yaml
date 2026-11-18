@@ -1,0 +1,144 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0014
+taskUid: WI-0014-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement CWD-based operative-root resolution
+objective: Route repository-dependent CLI commands through an encapsulated operative-root resolver, add separate-repository regression coverage, and bump the package minor version.
+references:
+  required:
+    - package.json
+    - src/cli/main.ts
+    - src/core/repository.ts
+    - tests/cli.test.ts
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0014/work-item.json
+    - .docs/work-items/WI-0012/work-item.json
+  informational:
+    - README.md
+    - src/core/discovery.ts
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0014/work-item.json
+    - .docs/work-items/WI-0014/steps/WI-0014-10000000-implementation.yaml
+    - src/core/
+    - src/cli/
+    - tests/
+    - package.json
+  commitSubject: 'WI-0014: feat(cli): resolve operative root from cwd'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement a replaceable CWD-based operative-root boundary for repository-dependent CLI commands and release version 0.2.0.
+    changeTypes:
+      - production-code
+      - test-code
+      - configuration
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_001
+        purpose: Define CWD-based operative-root behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_002
+        purpose: Define the replaceable root-resolution boundary.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_003
+        purpose: Define command and read-only regression coverage.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0014#work-item.json#requirement/WI-0014_REQ_004
+        purpose: Define the minor release version requirement.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Repository-dependent CLI commands use the nearest Git repository associated with the current working directory through one encapsulated operative-root resolver.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-OPERATIVE-ROOT-SEPARATE-REPOSITORY'
+          - '#test-case/TC-OPERATIVE-ROOT-NESTED-DIRECTORY'
+      - id: OBJ-002
+        statement: Tests prove separate-repository routing, no-repository errors, read-only behavior, retained explicit repository-info behavior, and version 0.2.0.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-OPERATIVE-ROOT-READ-ONLY'
+          - '#test-case/TC-OPERATIVE-ROOT-VERSION'
+    ownedPaths:
+      - src/core/
+      - src/cli/
+      - tests/
+      - package.json
+    nonGoals:
+      - Do not add an operative-root override option or change explicit repository info path semantics.
+      - Do not mutate the selected repository or use the selected repository to locate installed package metadata.
+    steps:
+      - Add the dedicated operative-root resolver that derives the repository from process.cwd() through repository discovery.
+      - Route repository-dependent handlers through the resolver and preserve package-path version lookup.
+      - Add separate temporary Git repository coverage, update the version assertion, and verify the compiled launcher.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded operative-root, regression, and minor-release implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0014/steps/WI-0014-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - Repository-dependent commands still use the installed sdlc repository because the operative-root boundary has not yet been implemented.
