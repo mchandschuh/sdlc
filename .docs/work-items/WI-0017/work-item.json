@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0017",
-  "status": "planned",
+  "status": "implemented",
   "title": "Add depth-limited flat reference expansion",
   "type": "feature",
   "objective": "Extend sdlc ref resolve with an optional --depth switch that recursively resolves references found in resolved data into one flat references map, defaults to depth 1, and never resolves the same reference more than once.",

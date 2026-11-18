@@ -4,7 +4,7 @@ taskUid: WI-0017-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0017-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate depth-limited flat reference expansion
 objective: Validate depth parsing, flat recursive references, global deduplication, response contracts, nested CWD behavior, and read-only semantics for sdlc ref resolve.
 references:
@@ -49,7 +49,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -102,20 +102,36 @@ task:
       - Do not claim remote/global resolution, task-local context inference, mutation, persistence, deployment, or production evidence.
       - Do not treat the flat references map as a complete semantic graph beyond the requested depth.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Depth-limited flat reference expansion passed package checks, default/explicit depth behavior, bounded rounds, global deduplication, flat response checks, malformed-depth errors, response schema validation, complete WI-0017 validation, and read-only audits.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-DEPTH-001'
-        status: inconclusive
-        observed: {outcome: not-run, summary: Validation is deferred until the implementation task is processed.}
-        evidenceTier: inspection
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, all 37 tests, depth 1/2/3 behavior, malformed-depth errors, flat response checks, response-schema validation, WI-0017 validation, and read-only audits passed.
+          assertions:
+            - Omitted depth, bare --depth, and --depth 1 produced equivalent empty references maps.
+            - Depth 2 added first-round references under one root references map.
+            - Depth 3 scanned another round without adding duplicate or cyclic references.
+            - Expanded reference entries did not contain nested references properties.
+            - Zero, non-numeric, and duplicate depth options returned stable non-zero errors.
+            - All 37 tests passed.
+            - The v2 resolution schema validated depth responses.
+            - sdlc work-item validate --work-item WI-0017 --json returned three valid objects and no findings.
+        evidenceTier: cli-audit
         evidence:
-          - {kind: record, source: Validation task plan, claim: Depth-limited flat reference expansion validation is declared but has not yet been executed.}
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Depth-limited flat reference expansion passed package, depth, flatness, deduplication, response-schema, complete-object, and read-only audits.
+            command: yarn typecheck && yarn build && yarn test && node ./bin/cli.js ref resolve --ref WI-0007 --depth 2 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - Depth parsing, recursive reference rounds, deduplication, and flat response behavior have not yet been verified.
+      - Expansion remains bounded to locally resolvable references and the requested depth; unsupported task-local/global references are not expanded.
+      - Evidence establishes local CLI/schema behavior only and does not establish remote resolution, persistence, deployment, or production readiness.
     nonClaims:
-      - This planned result does not claim that depth expansion currently exists.
       - This result does not claim remote/global or task-local contextual resolution.
+      - This result does not claim release publication or production readiness.
