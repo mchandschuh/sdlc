@@ -1,0 +1,118 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0011",
+  "status": "planned",
+  "title": "Normalize stat path fields",
+  "type": "bugfix-coordination",
+  "objective": "Update the existing sdlc/stat/v1 contract to remove requestedPath, retain repositoryPath as the repository-relative path, and add fullPath as the resolved absolute path; align work-item validation object results and tests with the same identity shape.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "e12a1c4fb8419e5a1ebce033a73b3104f41fef85",
+  "request": {
+    "source": "conversation",
+    "text": "Update sdlc work-item validate to use similar properties sdlc/stat/v1, except for the stat property, for the objects array. Commit changes.",
+    "sha256": "d1d7212ed0909f756054ea8ad6767494ccd3cf157f6d984bb6063479206140ea"
+  },
+  "scope": [
+    {
+      "name": "stat-path-contract",
+      "description": "Update the existing sdlc/stat/v1 response in place by removing requestedPath, retaining repositoryPath as repository-relative, and adding fullPath as the resolved absolute path.",
+      "reason": "The current requestedPath/repositoryPath pair is ambiguous because repositoryPath does not contain repository-root information and both values are usually identical."
+    },
+    {
+      "name": "validation-object-alignment",
+      "description": "Apply the same path and object identity shape to work-item validation objects, excluding only the stat metadata object.",
+      "reason": "Stat and work-item validation should expose consistent object identity fields to consumers."
+    },
+    {
+      "name": "contract-regression-tests",
+      "description": "Update focused and response-schema tests for repository-relative and absolute path semantics and removal of requestedPath.",
+      "reason": "The field rename/removal changes a persisted v1 contract and must be executable and explicit."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "schema-version-bump",
+      "description": "Do not create sdlc/stat/v2 or change the existing sdlc/stat/v1 identifier.",
+      "reason": "The requested change is an in-place correction to the current contract."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "repository-root-response",
+      "description": "Do not add a separate repositoryRoot field; fullPath is the resolved absolute file path and repositoryPath is the repository-relative path.",
+      "reason": "The requested contract distinguishes the file path forms without exposing a separate repository-root metadata field."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "stat-semantics",
+      "description": "Do not change Git tracking, containment, object classification, object references, filesystem metadata, or read-only behavior beyond the path-field correction.",
+      "reason": "WI-0011 is a response-contract normalization rather than a stat behavior redesign."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0011_REQ_001",
+        "name": "stat-path-fields",
+        "description": "sdlc/stat/v1 must remove requestedPath, retain repositoryPath as repository-relative, and add fullPath as an absolute resolved path.",
+        "reason": "The current field naming is ambiguous and does not expose the resolved full path.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0011_REQ_001_AC_001",
+            "description": "The persisted sdlc/stat/v1 schema requires repositoryPath and fullPath, does not define requestedPath, and remains closed."
+          },
+          {
+            "id": "WI-0011_REQ_001_AC_002",
+            "description": "Runtime stat output reports repositoryPath relative to the repository root and fullPath as an absolute filesystem path."
+          }
+        ]
+      },
+      {
+        "id": "WI-0011_REQ_002",
+        "name": "validation-object-path-alignment",
+        "description": "Each work-item validation object must use repositoryPath and fullPath with the stat-compatible object identity fields and must not emit requestedPath.",
+        "reason": "Validation object results should use the same path semantics as stat output.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0011_REQ_002_AC_001",
+            "description": "Valid work-item validation responses contain repositoryPath and absolute fullPath for every object and contain no requestedPath field."
+          }
+        ]
+      },
+      {
+        "id": "WI-0011_REQ_003",
+        "name": "path-regression-tests",
+        "description": "Focused tests must assert relative repositoryPath, absolute fullPath, removed requestedPath, and unchanged object/reference/schema behavior.",
+        "reason": "The change modifies a persisted v1 response contract used by stat and work-item validation consumers.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0011_REQ_003_AC_001",
+            "description": "yarn test passes with generic-file, work-item, task, and work-item-validation object path assertions."
+          },
+          {
+            "id": "WI-0011_REQ_003_AC_002",
+            "description": "Representative stat and work-item validation responses pass their persisted schemas and all repository schema audits pass."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0008",
+  "stepsPath": ".docs/work-items/WI-0011/steps/"
+}

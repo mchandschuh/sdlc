@@ -1,0 +1,138 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0011
+taskUid: WI-0011-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Normalize stat path fields
+objective: Update sdlc/stat/v1 and work-item validation object results to use repositoryPath and fullPath without requestedPath.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/core/discovery.ts
+    - src/core/work-item-validation.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+  informational:
+    - .docs/work-items/WI-0008/work-item.json
+    - .docs/work-items/WI-0010/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0011/steps/WI-0011-10000000-implementation.yaml
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - src/core/
+    - tests/
+  commitSubject: 'WI-0011: fix(contract): normalize stat paths'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Normalize existing stat v1 and work-item validation path fields without creating a new schema version.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+    changeIntent: bugfix
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_001
+        purpose: Define the in-place stat path contract correction.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_002
+        purpose: Define aligned validation object identity fields.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_003
+        purpose: Define regression coverage for the field correction.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Stat and work-item validation use repositoryPath for repository-relative paths and fullPath for absolute paths without requestedPath.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-PATH-CONTRACT'
+          - '#test-case/TC-VALIDATION-PATH-CONTRACT'
+      - id: OBJ-002
+        statement: Existing object references, object types, object schema paths, metadata, and read-only behavior remain unchanged.
+        inputRefs:
+          - INPUT-REQ-003
+        testCaseRefs:
+          - '#test-case/TC-OBJECT-IDENTITY-PRESERVED'
+          - '#test-case/TC-PATH-READ-ONLY'
+    ownedPaths:
+      - schemas/sdlc-stat/v1/sdlc-state.schema.json
+      - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+      - src/core/
+      - tests/
+    nonGoals:
+      - Do not create a new stat schema version or change sdlc/stat/v1.
+      - Do not change object reference construction or filesystem/stat semantics beyond path fields.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - Replace requestedPath with fullPath in the existing stat response while retaining repositoryPath as relative.
+      - Apply the same path-field correction to work-item validation objects and response examples.
+      - Update focused tests and representative schema validation for stat and work-item validation responses.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded stat path-field normalization plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0011/steps/WI-0011-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The requestedPath/fullPath contract correction has not yet been implemented.

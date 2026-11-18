@@ -1,0 +1,177 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0011
+taskUid: WI-0011-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0011-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate normalized stat paths
+objective: Validate repositoryPath/fullPath semantics, requestedPath removal, stat object identity preservation, and work-item validation object alignment.
+references:
+  required:
+    - package.json
+    - src/core/discovery.ts
+    - src/core/work-item-validation.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-stat/v1/sdlc-state.schema.json
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - .docs/work-items/WI-0011/work-item.json
+    - .docs/work-items/WI-0011/steps/WI-0011-10000000-implementation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0011-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0011/steps/WI-0011-20000000-validation.yaml
+  commitSubject: 'WI-0011: fix(contract): normalize stat paths'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0011/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the in-place stat path contract and aligned work-item validation object fields through focused and fresh-process checks.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0011|10000000#result/R-001
+        purpose: Identify the stat path normalization implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_001
+        purpose: Identify stat repositoryPath/fullPath acceptance conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_002
+        purpose: Identify aligned validation object path conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0011#work-item.json#requirement/WI-0011_REQ_003
+        purpose: Identify regression and read-only conditions.
+        required: true
+    targets:
+      - id: TARGET-PATH-CONTRACT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0011|10000000#result/R-001
+        purpose: Validate the normalized path contract and response fields.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-PATH-CONTRACT'
+      - '#test-case/TC-VALIDATION-PATH-CONTRACT'
+      - '#test-case/TC-OBJECT-IDENTITY-PRESERVED'
+      - '#test-case/TC-PATH-READ-ONLY'
+    procedures:
+      - id: VAL-PATH-CONTRACT-001
+        sequence: 1
+        name: validate-normalized-stat-paths
+        description: Run package checks, fresh-process stat and work-item validation checks, response-schema validation, object identity checks, and read-only checks.
+        reason: Prove that repository-relative and absolute paths are explicit and requestedPath is removed without changing object identity or stat semantics.
+        targetRefs:
+          - '#target/TARGET-PATH-CONTRACT-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-PATH-CONTRACT'
+          - '#test-case/TC-VALIDATION-PATH-CONTRACT'
+          - '#test-case/TC-OBJECT-IDENTITY-PRESERVED'
+          - '#test-case/TC-PATH-READ-ONLY'
+        method:
+          executionMode: executable
+          target: sdlc stat and work-item validate response contracts
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc stat --path README.md.
+            - Run sdlc stat --path .docs/work-items/WI-0008/work-item.json.
+            - Run sdlc work-item validate --work-item WI-0008 --json.
+            - Confirm responses contain repositoryPath and absolute fullPath but no requestedPath.
+            - Validate representative responses against their persisted schemas.
+            - Confirm inspected files remain unchanged.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - schemas/sdlc-stat/v1/sdlc-state.schema.json
+            - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+            - src/core/discovery.ts
+            - src/core/work-item-validation.ts
+            - tests/cli.test.ts
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim semantic resolution, approval, execution, provider, persistence, deployment, or production evidence.
+      - Do not mutate inspected files or lifecycle state during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-PATH-CONTRACT-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The normalized stat path validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The repositoryPath/fullPath contract correction has not yet been validated.
+    nonClaims:
+      - This planned result does not claim that requestedPath has been removed.
+      - This result does not approve or release WI-0011.
