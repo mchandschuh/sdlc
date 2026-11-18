@@ -1,0 +1,152 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0016",
+  "status": "planned",
+  "title": "Resolve references to documents and data",
+  "type": "feature",
+  "objective": "Add sdlc ref resolve --ref <ref> to resolve supported repository-local references and return the absolute file path of the containing document together with the referenced data.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation, processing, and per-task commits on the current repository."
+    }
+  },
+  "baseline": "81b2cf9000a69b3427c5762272fcc44c3a8c899e",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/* to support `sdlc ref resolve --ref <ref>` -- the success response should include the full file path to the document that contains the referenced data as well as the referenced data itself. Commit the work item. Process the new work item, commit per task.",
+    "sha256": "6785b1140b9d38069fa9b41adf1d36ceea5df6b38adc9939b448b0bbfd98a9c3"
+  },
+  "scope": [
+    {
+      "name": "reference-resolution-command",
+      "description": "Add sdlc ref resolve --ref <ref> with a stable JSON response for successful and unsuccessful resolution.",
+      "reason": "Consumers need a command boundary that turns a supported reference string into the document path and data it addresses."
+    },
+    {
+      "name": "repository-local-resolution",
+      "description": "Resolve bare work-item IDs, bare task UIDs, work-item-local references, and task-qualified references against the operative CWD repository.",
+      "reason": "These forms contain enough local identity and selector information to locate a document without external provider access."
+    },
+    {
+      "name": "selector-data-extraction",
+      "description": "Resolve entity selectors within JSON work-item documents and YAML task envelopes, returning the selected object or property as data.",
+      "reason": "A path alone is insufficient; callers need the actual referenced value."
+    },
+    {
+      "name": "resolution-contract-coverage",
+      "description": "Persist a closed versioned resolution response schema and add dynamic/reference-form regression coverage for successful, missing, malformed, and unsupported references.",
+      "reason": "The result is a new CLI response object and must have explicit durable semantics and executable coverage."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "mutation",
+      "description": "Do not write, normalize, repair, or otherwise mutate referenced documents or repository metadata.",
+      "reason": "Reference resolution is a read-only lookup operation.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    },
+    {
+      "name": "cross-repository-network-resolution",
+      "description": "Do not contact remote providers or infer a global repository reference's contents from the network.",
+      "reason": "Resolution must remain local and deterministic; unsupported repository identities must produce actionable findings."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "task-local-context-inference",
+      "description": "Do not infer a current task context for a task-local reference when the command receives only --ref.",
+      "reason": "A task-local selector has no document identity without an explicit current-task context."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "version-release",
+      "description": "Do not bump the package version as part of this resolution feature.",
+      "reason": "The user requested the command and task commits, not a release-version change."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0016_REQ_001",
+        "name": "resolution-success-response",
+        "description": "A successful sdlc ref resolve response must include the supplied ref, the absolute fullPath of the containing document, its repository-relative path and format, and the referenced data.",
+        "reason": "Callers need both the physical document location and the value addressed by the reference.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0016_REQ_001_AC_001",
+            "description": "Resolving a bare work-item ID returns the absolute work-item.json path and the complete work-item object as data."
+          },
+          {
+            "id": "WI-0016_REQ_001_AC_002",
+            "description": "Resolving a task-qualified or work-item-local selector returns the absolute YAML/JSON path and the selected object or property as data."
+          }
+        ]
+      },
+      {
+        "id": "WI-0016_REQ_002",
+        "name": "supported-local-reference-forms",
+        "description": "The command must resolve bare WorkItemId, bare TaskUid, work-item-local, and task-qualified references against the operative CWD repository.",
+        "reason": "These are the repository-local forms that identify a document and optional entity selector without external context.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0016_REQ_002_AC_001",
+            "description": "Representative bare work-item, bare task, work-item-local, and task-qualified references resolve successfully in the sdlc repository."
+          },
+          {
+            "id": "WI-0016_REQ_002_AC_002",
+            "description": "The same repository-local forms resolve from a nested CWD in a repository other than the sdlc repository when the target records are present there."
+          }
+        ]
+      },
+      {
+        "id": "WI-0016_REQ_003",
+        "name": "actionable-resolution-errors",
+        "description": "Malformed, missing, task-local-without-context, unsupported-global, missing-document, and missing-selector references must return non-zero results with actionable findings and no fabricated data.",
+        "reason": "Resolution failure must be distinguishable from successful resolution and must not silently select the wrong document."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0016_REQ_003_AC_001",
+            "description": "Failure responses identify the failure category and relevant ref/path context while preserving the closed response schema."
+          }
+        ]
+      },
+      {
+        "id": "WI-0016_REQ_004",
+        "name": "read-only-resolution-contract",
+        "description": "Resolution must be read-only, use the existing operative-root boundary for repository files, use the installed schema registry for syntax classification, and validate its response schema and task artifacts.",
+        "reason": "The command crosses package and repository boundaries and must preserve the established CWD/package-root separation."
+        ,"acceptanceCriteria": [
+          {
+            "id": "WI-0016_REQ_004_AC_001",
+            "description": "Tests confirm referenced files and Git state remain unchanged, successful and failed responses pass the persisted resolution schema, and all task records pass local schema validation."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0007",
+  "stepsPath": ".docs/work-items/WI-0016/steps/"
+}

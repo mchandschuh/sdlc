@@ -1,0 +1,154 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0016
+taskUid: WI-0016-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement reference resolution
+objective: Add sdlc ref resolve --ref <ref> with repository-local document and selector resolution, referenced data output, persisted response schemas, and regression tests.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/cli/main.ts
+    - src/core/reference.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - schemas/common/v1/sdlc-any-reference.schema.json
+    - schemas/common/v1/sdlc-work-item-id.schema.json
+    - schemas/common/v1/sdlc-task-uid.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - .docs/work-items/WI-0016/work-item.json
+    - .docs/work-items/WI-0007/work-item.json
+  informational:
+    - schemas/common/v1/sdlc-work-item-local-reference.schema.json
+    - schemas/common/v1/sdlc-task-qualified-reference.schema.json
+    - schemas/common/v1/sdlc-reference.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0016/steps/WI-0016-10000000-implementation.yaml
+    - schemas/sdlc-ref/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+    - .cline/README.md
+  commitSubject: 'WI-0016: feat(ref): resolve references to document data'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement read-only local reference resolution with absolute document paths and selected data output while preserving package schema registry and CWD operative-root boundaries.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0016#work-item.json#requirement/WI-0016_REQ_001
+        purpose: Define the successful resolution response contents.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0016#work-item.json#requirement/WI-0016_REQ_002
+        purpose: Define supported repository-local reference forms.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0016#work-item.json#requirement/WI-0016_REQ_003
+        purpose: Define actionable resolution failures.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0016#work-item.json#requirement/WI-0016_REQ_004
+        purpose: Define read-only, root-boundary, and response-contract behavior.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: sdlc ref resolve returns the absolute containing document path, repository path, format, and referenced data for supported local reference forms.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-RESOLVE-WORK-ITEM'
+          - '#test-case/TC-RESOLVE-TASK'
+          - '#test-case/TC-RESOLVE-SELECTOR'
+      - id: OBJ-002
+        statement: Resolution failures, package/CWD root separation, response schemas, dynamic reference compatibility, and read-only behavior are covered.
+        inputRefs:
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-RESOLVE-ERRORS'
+          - '#test-case/TC-RESOLVE-READ-ONLY'
+          - '#test-case/TC-RESOLVE-CONTRACT'
+    ownedPaths:
+      - schemas/sdlc-ref/
+      - src/core/
+      - src/cli/
+      - tests/
+      - .cline/README.md
+    nonGoals:
+      - Do not mutate records, infer task-local context, or perform remote/global repository access.
+      - Do not replace ref validate; reuse its syntax classification and installed schema registry.
+    steps:
+      - Add the closed resolution response schema and resolver for supported bare/local/task-qualified forms.
+      - Add CLI routing, stable error handling, and full-path/data output.
+      - Add representative and dynamic regression tests, including nested CWD and read-only checks.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded local-reference resolution and response-contract implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0016/steps/WI-0016-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - sdlc ref resolve does not yet exist and no reference data is currently returned by the CLI.
