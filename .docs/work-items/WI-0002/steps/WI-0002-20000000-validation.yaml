@@ -4,7 +4,7 @@ taskUid: WI-0002-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0002-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate sdlc work-item and task discovery commands
 objective: Validate the implemented discovery routes, deterministic output, error handling, and read-only filesystem boundary.
 references:
@@ -63,7 +63,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -171,36 +171,49 @@ task:
       - Do not treat static schema validation as proof of runtime command correctness.
       - Do not mutate work-item or task lifecycle state during validation.
   result:
-    status: implemented-unproven
-    summary: WI-0002 validation is planned but has not been executed because the discovery commands are not implemented yet.
+    status: passed
+    summary: The sdlc discovery commands passed focused tests, fresh-process CLI audit, and schema-backed record validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-DISCOVERY-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: Runtime discovery validation is deferred until the implementation task is executed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: yarn typecheck, yarn build, yarn test, work-item listing, task listing, and unknown-ID handling passed.
+          assertions:
+            - The focused suite passed all ten tests.
+            - sdlc work-item list returned WI-0001 and WI-0002 in deterministic order.
+            - sdlc task list WI-0001 returned four task UIDs in deterministic order.
+            - Unknown work-item IDs returned exit code 1 with a stable error.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The executable discovery validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The discovery commands and their focused tests passed fresh-process CLI audit.
+            command: yarn test && node ./bin/cli.js work-item list --json && node ./bin/cli.js task list WI-0001 --json
       - id: EXEC-VAL-002
         procedureRef: '#procedure/VAL-SCHEMA-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: WI-0002 schema validation is deferred until the work-item and task records are materialized.
-        evidenceTier: inspection
+          outcome: passed
+          summary: WI-0002 records, task envelopes, nested payloads, and the repository schema registry validated successfully.
+          assertions:
+            - WI-0002 work-item.json passed work-item v2.
+            - Both WI-0002 task envelopes passed task-envelope v1.
+            - Both nested task payloads passed their selected schemas.
+            - The complete schema audit passed.
+        evidenceTier: static
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The static schema validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-002
+            claim: The WI-0002 work-item and task artifact tree passed repository-local schema validation.
+            command: schema-validate --root schemas --schema schemas/work-item/v2/work-item.schema.json --document .docs/work-items/WI-0002/work-item.json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - No runtime or CLI-audit evidence exists for the requested discovery commands yet.
-      - The command behavior, output format, and unknown-ID error path remain to be implemented and tested.
+      - Discovery is local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.
+      - The commands report malformed records but do not repair them.
     nonClaims:
-      - This planned validation result does not claim that either command currently exists.
       - This result does not approve or release WI-0002.
+      - This result does not establish production readiness.
