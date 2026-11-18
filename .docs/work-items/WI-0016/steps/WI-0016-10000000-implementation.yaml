@@ -4,7 +4,7 @@ taskUid: WI-0016-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement reference resolution
 objective: Add sdlc ref resolve --ref <ref> with repository-local document and selector resolution, referenced data output, persisted response schemas, and regression tests.
 references:
@@ -65,7 +65,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -131,24 +131,78 @@ task:
       - Add CLI routing, stable error handling, and full-path/data output.
       - Add representative and dynamic regression tests, including nested CWD and read-only checks.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Implemented sdlc ref resolve with repository-local bare, work-item-local, and task-qualified resolution, absolute and repository-relative document paths, selected data output, structured failures, and read-only regression coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded local-reference resolution and response-contract implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added the repository-local reference resolver and ref resolve CLI routing with package syntax registry and CWD operative-root separation.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0016/steps/WI-0016-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/reference-resolution.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Added the closed reference-resolution response contract for document paths, formats, selected data, and actionable findings.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-ref/v1/sdlc-ref-resolution.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added bare, task-qualified, work-item-local, unsupported-scope, response-schema, and read-only resolution coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+        - id: CHANGE-004
+          type: documentation
+          summary: Exposed the ref resolve command in CLI help and documented its response boundary through the persisted schema.
+          objectiveRefs:
+            - OBJ-002
+          paths:
+            - src/cli/main.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-RESOLVE-WORK-ITEM'
+          path: tests/cli.test.ts
+          selector: resolves bare work-item and task references to absolute documents and data
+        - testCaseRef: '#test-case/TC-RESOLVE-TASK'
+          path: tests/cli.test.ts
+          selector: resolves bare work-item and task references to absolute documents and data
+        - testCaseRef: '#test-case/TC-RESOLVE-SELECTOR'
+          path: tests/cli.test.ts
+          selector: resolves work-item-local and task-qualified selectors and reports unsupported scopes
+        - testCaseRef: '#test-case/TC-RESOLVE-ERRORS'
+          path: tests/cli.test.ts
+          selector: resolves work-item-local and task-qualified selectors and reports unsupported scopes
+        - testCaseRef: '#test-case/TC-RESOLVE-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: resolves bare work-item and task references to absolute documents and data
+        - testCaseRef: '#test-case/TC-RESOLVE-CONTRACT'
+          path: schemas/sdlc-ref/v1/sdlc-ref-resolution.schema.json
+          selector: response envelope examples
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-RESOLVE-WORK-ITEM'
+            - '#test-case/TC-RESOLVE-TASK'
+            - '#test-case/TC-RESOLVE-SELECTOR'
+            - '#test-case/TC-RESOLVE-ERRORS'
+            - '#test-case/TC-RESOLVE-READ-ONLY'
+            - '#test-case/TC-RESOLVE-CONTRACT'
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Typecheck, build, all 35 tests, representative success/failure response validation, and the reference-resolution schema authoring audit passed.
     limitations:
-      - sdlc ref resolve does not yet exist and no reference data is currently returned by the CLI.
+      - Task-local and global references remain explicitly unsupported without current-task or repository identity context; ref resolve is read-only and local.

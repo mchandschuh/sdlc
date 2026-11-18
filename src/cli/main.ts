@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
+import { resolveReference } from '../core/reference-resolution.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 import { resolveOperativeRoot } from '../core/operative-root.js';
@@ -22,6 +23,7 @@ export function printHelp(): void {
   console.log('  task list        List the selected work-item task records');
   console.log('  task next        Select the next unprocessed task');
   console.log('  ref validate     Validate one schema-registered reference');
+  console.log('  ref resolve      Resolve a repository-local reference to document data');
   console.log('  stat              Inspect one tracked file path');
 }
 
@@ -238,10 +240,11 @@ async function handleStat(args: readonly string[], getOperativeRoot: OperativeRo
 
 async function handleReference(args: readonly string[], schemaRoot: string): Promise<number | undefined> {
   if (args[0] !== 'ref') return undefined;
-  if (args[1] !== 'validate') throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
+  if (args[1] !== 'validate' && args[1] !== 'resolve') throw new DiscoveryError('Usage: sdlc ref <validate|resolve> --ref <reference>');
+  const command = args[1];
   if (args[2] === '--help' || args[2] === '-h') {
-    console.log('Usage: sdlc ref validate --ref <reference>');
-    console.log('Validate one reference against recursively discovered schema-registered reference types.');
+    console.log(`Usage: sdlc ref ${command} --ref <reference>`);
+    console.log(command === 'validate' ? 'Validate one reference against recursively discovered schema-registered reference types.' : 'Resolve one repository-local reference to its containing document and selected data.');
     return 0;
   }
   let ref: string | undefined;
@@ -262,8 +265,10 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
       throw new DiscoveryError(`Unknown option: ${argument}`);
     }
   }
-  if (!ref) throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
-  const result = await validateReference(schemaRoot, ref);
+  if (!ref) throw new DiscoveryError(`Usage: sdlc ref ${command} --ref <reference>`);
+  const result = command === 'validate'
+    ? await validateReference(schemaRoot, ref)
+    : await resolveReference(await resolveOperativeRoot(), schemaRoot, ref);
   console.log(JSON.stringify(result, null, 2));
   return result.valid ? 0 : 1;
 }

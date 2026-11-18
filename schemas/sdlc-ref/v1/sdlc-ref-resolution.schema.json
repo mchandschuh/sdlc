@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/ref/resolution/v1",
+  "title": "SDLC Reference Resolution v1",
+  "description": "Closed JSON response envelope for resolving one supported repository-local reference to its containing document and selected data.",
+  "$comment": "Resolution is read-only and local to the operative repository. Bare work-item IDs, bare task UIDs, work-item-local references, and task-qualified references may resolve. Task-local references require current-task context; global references require a repository identity not supplied by this command and are reported as unsupported.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "ref", "valid", "resolution", "findings"],
+  "properties": {
+    "schema": {"const": "https://schemas.handschuh.dev/sdlc/ref/resolution/v1", "description": "The canonical resolution response schema identifier.", "examples": ["https://schemas.handschuh.dev/sdlc/ref/resolution/v1"]},
+    "ref": {"type": "string", "minLength": 1, "description": "The reference supplied to the resolver.", "examples": ["WI-0003", "WI-0003|50000000#objective/OBJ-001"]},
+    "valid": {"type": "boolean", "description": "Whether the reference resolved to a document and data.", "examples": [true, false]},
+    "resolution": {
+      "type": ["object", "null"],
+      "description": "The resolved document location and referenced data, or null when resolution fails.",
+      "additionalProperties": false,
+      "required": ["fullPath", "repositoryPath", "format", "data"],
+      "properties": {
+        "fullPath": {"type": "string", "pattern": "^/.+$", "description": "Absolute path to the containing document.", "examples": ["/home/michael/src/github/sdlc/.docs/work-items/WI-0007/work-item.json"]},
+        "repositoryPath": {"type": "string", "minLength": 1, "description": "Repository-relative path to the containing document.", "examples": [".docs/work-items/WI-0007/work-item.json"]},
+        "format": {"type": "string", "enum": ["json", "yaml"], "description": "Serialization format of the containing document.", "examples": ["json", "yaml"]},
+        "data": {"description": "The object or property selected by the reference.", "examples": [{"workItemId": "WI-0007"}, {"id": "WI-0007_REQ_001"}]}
+      },
+      "examples": [{"fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0007/work-item.json", "repositoryPath": ".docs/work-items/WI-0007/work-item.json", "format": "json", "data": {"workItemId": "WI-0007"}}, null]
+    },
+    "findings": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "Actionable resolution findings; empty for success.", "examples": [[], ["Task-local references require an explicit current-task context and cannot be resolved by this command."]]}
+  },
+  "examples": [
+    {"schema": "https://schemas.handschuh.dev/sdlc/ref/resolution/v1", "ref": "WI-0007", "valid": true, "resolution": {"fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0007/work-item.json", "repositoryPath": ".docs/work-items/WI-0007/work-item.json", "format": "json", "data": {"workItemId": "WI-0007"}}, "findings": []},
+    {"schema": "https://schemas.handschuh.dev/sdlc/ref/resolution/v1", "ref": "#objective/OBJ-001", "valid": false, "resolution": null, "findings": ["Task-local references require an explicit current-task context and cannot be resolved by this command."]}
+  ]
+}

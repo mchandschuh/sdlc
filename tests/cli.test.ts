@@ -152,6 +152,49 @@ describe('CLI interface', () => {
     expect(report.matches.some((match) => match.schemaId === 'https://schemas.handschuh.dev/sdlc/work-item-id/v1')).toBe(true);
   });
 
+  it('resolves bare work-item and task references to absolute documents and data', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007'])).resolves.toBe(0);
+    const workItem = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { fullPath: string; repositoryPath: string; format: string; data: { workItemId: string } } };
+    expect(workItem.valid).toBe(true);
+    expect(workItem.resolution.fullPath).toBe(join(process.cwd(), '.docs/work-items/WI-0007/work-item.json'));
+    expect(workItem.resolution.repositoryPath).toBe('.docs/work-items/WI-0007/work-item.json');
+    expect(workItem.resolution.format).toBe('json');
+    expect(workItem.resolution.data.workItemId).toBe('WI-0007');
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007-10000000'])).resolves.toBe(0);
+    const task = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { fullPath: string; repositoryPath: string; format: string; data: { taskUid: string } } };
+    expect(task.valid).toBe(true);
+    expect(task.resolution.fullPath).toBe(join(process.cwd(), '.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml'));
+    expect(task.resolution.repositoryPath).toBe('.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml');
+    expect(task.resolution.format).toBe('yaml');
+    expect(task.resolution.data.taskUid).toBe('WI-0007-10000000');
+  });
+
+  it('resolves work-item-local and task-qualified selectors and reports unsupported scopes', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007#work-item.json#requirement/WI-0007_REQ_001'])).resolves.toBe(0);
+    const requirement = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { data: { id: string } } };
+    expect(requirement.valid).toBe(true);
+    expect(requirement.resolution.data.id).toBe('WI-0007_REQ_001');
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007|10000000#result/R-001'])).resolves.toBe(0);
+    const result = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { repositoryPath: string; data: { status: string } } };
+    expect(result.valid).toBe(true);
+    expect(result.resolution.repositoryPath).toContain('WI-0007-10000000-implementation.yaml');
+    expect(result.resolution.data.status).toBeDefined();
+
+    await expect(main(['ref', 'resolve', '--ref', '#objective/OBJ-001'])).resolves.toBe(1);
+    const local = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: null; findings: string[] };
+    expect(local.valid).toBe(false);
+    expect(local.resolution).toBeNull();
+    expect(local.findings[0]).toContain('current-task context');
+  });
+
   it('discovers repository information from nested files and directories', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
