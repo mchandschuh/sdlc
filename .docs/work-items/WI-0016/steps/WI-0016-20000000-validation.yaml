@@ -4,7 +4,7 @@ taskUid: WI-0016-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0016-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate reference resolution
 objective: Validate successful document/data resolution, actionable failures, operative-root behavior, response schemas, and read-only semantics for sdlc ref resolve.
 references:
@@ -69,7 +69,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -158,24 +158,42 @@ task:
       - Do not claim remote repository resolution, semantic approval, mutation, persistence, deployment, or production evidence.
       - Do not claim task-local resolution without an explicit current-task context.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Reference resolution passed package checks, local document/data resolution cases, actionable failure cases, nested CWD operative-root checks, response-schema validation, complete WI-0016 object validation, and read-only audits.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-RESOLVE-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, all 35 tests, representative resolution successes/failures, nested temporary-repository resolution, response schema checks, WI-0016 validation, and read-only comparisons passed.
+          assertions:
+            - yarn typecheck passed.
+            - yarn build passed.
+            - yarn test passed all 35 tests.
+            - Bare work-item, bare task, work-item-local, and task-qualified references returned absolute paths, repository paths, formats, and referenced data.
+            - Task-local references returned structured unsupported-context findings.
+            - Unsupported global references returned structured findings without fabricated data.
+            - A nested CWD in a temporary repository resolved the local task document and left Git state unchanged.
+            - Successful and failed responses passed sdlc-ref-resolution/v1.
+            - sdlc work-item validate --work-item WI-0016 --json returned three valid objects and no findings.
+            - The implementation and validation task artifacts passed the skill-local schema validator.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Reference resolution validation is declared but has not yet been executed.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Reference resolution passed package, success/error, response-schema, complete-object, nested-CWD, and read-only CLI audits.
+            command: yarn typecheck && yarn build && yarn test && node ./bin/cli.js work-item validate --work-item WI-0016 --json
+          - kind: test
+            source: Validation execution EXEC-VAL-001
+            claim: Nested temporary-repository task resolution selected the CWD repository and preserved its Git state.
+            command: node /home/michael/src/github/sdlc/bin/cli.js ref resolve --ref WI-0099-10000000 --json from a nested temporary repository
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - Reference resolution behavior, response schema, and read-only semantics have not yet been verified.
+      - Task-local references remain unsupported without current-task context, and global references remain unsupported without a locally addressable repository identity.
+      - The evidence establishes local CLI behavior and schema contracts only; it does not establish remote resolution, persistence, deployment, or production readiness.
     nonClaims:
-      - This planned result does not claim that sdlc ref resolve currently exists.
       - This result does not claim cross-repository or task-local resolution.
+      - This result does not claim release publication or production readiness.
