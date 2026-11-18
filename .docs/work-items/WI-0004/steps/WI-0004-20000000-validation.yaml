@@ -4,7 +4,7 @@ taskUid: WI-0004-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0004-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate sdlc stat path inspection
 objective: Validate stat path parsing, tracked-file response shape, object-type neutrality, stable errors, and read-only behavior.
 references:
@@ -62,7 +62,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -164,36 +164,49 @@ task:
       - Do not claim provider, persistence, deployment, or production evidence.
       - Do not mutate work-item or task lifecycle state during validation.
   result:
-    status: implemented-unproven
-    summary: WI-0004 stat validation is planned and has not been executed because the stat command is not implemented yet.
+    status: passed
+    summary: The sdlc stat command passed focused tests, fresh-process CLI audit, object-neutral response checks, error-path checks, and schema-backed record validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-STAT-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: Stat command validation is deferred until the implementation task is executed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Package checks, stat command smoke paths, object-neutral response checks, path errors, and read-only tests passed.
+          assertions:
+            - The focused suite passed all eighteen tests.
+            - README.md, package.json, and WI-0001 work-item.json produced the same top-level stat JSON keys and types.
+            - Missing, duplicate, absolute, escaping, and untracked path cases returned non-zero errors.
+            - The inspected README.md bytes were unchanged.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The executable stat validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: The sdlc stat command passed fresh-process CLI audit across tracked file/object fixtures.
+            command: yarn test && node ./bin/cli.js stat --path README.md
       - id: EXEC-VAL-002
         procedureRef: '#procedure/VAL-STAT-SCHEMA-001'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: WI-0004 schema validation is deferred until the work-item and task records are materialized.
-        evidenceTier: inspection
+          outcome: passed
+          summary: WI-0004 records, task envelopes, nested payloads, and the repository schema registry validated successfully.
+          assertions:
+            - WI-0004 work-item.json passed work-item v2.
+            - Both WI-0004 task envelopes passed task-envelope v1.
+            - Both nested task payloads passed their selected schemas.
+            - The complete schema audit passed.
+        evidenceTier: static
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The static stat-contract schema validation procedure is declared but not yet run.
+          - kind: command
+            source: Validation execution EXEC-VAL-002
+            claim: The WI-0004 stat command contract and task tree passed repository-local schema validation.
+            command: schema-validate --root schemas --schema schemas/work-item/v2/work-item.schema.json --document .docs/work-items/WI-0004/work-item.json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - No runtime or CLI-audit evidence exists for sdlc stat yet.
-      - The invariant stat JSON envelope and tracked-path semantics remain to be implemented and tested.
+      - Stat reports filesystem metadata and Git tracking state only; it does not interpret domain-specific object semantics.
+      - The command does not establish provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned validation result does not claim that sdlc stat currently exists.
       - This result does not approve or release WI-0004.
+      - This result does not establish production readiness.
