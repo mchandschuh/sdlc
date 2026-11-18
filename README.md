@@ -6,10 +6,11 @@ Schema-first SDLC process definitions and, eventually, a CLI built on top of
 ## Current seed
 
 This repository contains the SDLC type system under [`schemas/`](./schemas) and
-the initial TypeScript/ESM CLI plumbing for the `nodejs-cli-pattern` skill.
-The CLI is intentionally a small runtime boundary: it currently exposes stable
-help and version behavior while leaving command registration and application
-services for later work.
+the initial TypeScript/ESM plumbing for the `sdlc` CLI. The implementation
+follows the conventions from the `nodejs-cli-pattern` skill. The CLI is
+intentionally a small runtime boundary: it currently exposes stable help and
+version behavior while leaving command registration and application services
+for later work.
 
 The initial seed does **not** include the previous SDLC implementation, CLI,
 tests, CUE definitions, generated output, or LangGraph runtime code. The
@@ -27,6 +28,10 @@ yarn build
 node ./bin/cli.js --help
 node ./bin/cli.js --version
 yarn test
+
+# After local registration:
+sdlc --help
+sdlc --version
 ```
 
 The short aliases `-h` and `-v` are equivalent to `--help` and `--version`.

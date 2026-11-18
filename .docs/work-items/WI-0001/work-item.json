@@ -2,9 +2,9 @@
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0001",
   "status": "implemented",
-  "title": "Prepare the nodejs-cli-pattern skill app plumbing",
+  "title": "Prepare the sdlc app plumbing",
   "type": "feature",
-  "objective": "Create the initial TypeScript/ESM Node.js CLI application plumbing for the nodejs-cli-pattern skill, including stable help/version flags and a bounded release task.",
+  "objective": "Create the initial TypeScript/ESM Node.js CLI plumbing for the sdlc application, using the nodejs-cli-pattern skill conventions and including stable help/version flags plus a bounded release task.",
   "repository": {
     "root": "/home/michael/src/github/sdlc",
     "authority": "local"
@@ -28,7 +28,7 @@
   "scope": [
     {
       "name": "cli-application-plumbing",
-      "description": "Add the package metadata, TypeScript build configuration, compiled launcher, CLI entrypoint, and focused tests for the nodejs-cli-pattern application.",
+      "description": "Add the package metadata, TypeScript build configuration, compiled launcher, CLI entrypoint, and focused tests for the sdlc application.",
       "reason": "The repository needs a buildable application boundary before future skill-specific commands can be added."
     },
     {

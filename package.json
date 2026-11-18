@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-cli-pattern",
+  "name": "sdlc",
   "version": "0.1.0",
-  "description": "TypeScript Node.js CLI plumbing for the nodejs-cli-pattern skill.",
+  "description": "TypeScript Node.js CLI plumbing for sdlc, following the nodejs-cli-pattern skill conventions.",
   "type": "module",
   "private": true,
   "engines": {
@@ -9,7 +9,7 @@
   },
   "packageManager": "yarn@1.22.22",
   "bin": {
-    "nodejs-cli-pattern": "./bin/cli.js"
+    "sdlc": "./bin/cli.js"
   },
   "scripts": {
     "build": "tsc",

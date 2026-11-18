@@ -12,7 +12,7 @@ describe('CLI interface', () => {
 
     await expect(main([argument])).resolves.toBe(0);
 
-    expect(output.join('\n')).toContain('Usage: nodejs-cli-pattern [options]');
+    expect(output.join('\n')).toContain('Usage: sdlc [options]');
     expect(output.join('\n')).toContain('-h, --help');
     expect(output.join('\n')).toContain('-v, --version');
   });
@@ -32,7 +32,7 @@ describe('CLI interface', () => {
 
     await expect(main([])).resolves.toBe(0);
 
-    expect(output.join('\n')).toContain('Usage: nodejs-cli-pattern [options]');
+    expect(output.join('\n')).toContain('Usage: sdlc [options]');
   });
 
   it('fails with a stable message for an unknown option', async () => {
@@ -43,7 +43,7 @@ describe('CLI interface', () => {
 
     expect(errors).toEqual([
       'Unknown option: --unknown',
-      'Run "nodejs-cli-pattern --help" to see available options.',
+      'Run "sdlc --help" to see available options.',
     ]);
   });
 });

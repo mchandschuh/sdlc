@@ -5,7 +5,7 @@ orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
 processingStatus: processing_completed
-title: Implement the nodejs-cli-pattern CLI plumbing
+title: Implement the sdlc CLI plumbing
 objective: Create the buildable TypeScript/ESM package boundary and stable help/version CLI behavior.
 references:
   required:

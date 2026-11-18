@@ -56,7 +56,7 @@ task:
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
   intent:
-    summary: Build and smoke-test a local release candidate for the compiled nodejs-cli-pattern CLI.
+    summary: Build and smoke-test a local release candidate for the compiled sdlc CLI.
     deliveryTypes:
       - package
       - release
@@ -121,11 +121,11 @@ task:
       - id: ART-001
         kind: binary
         path: dist/cli/main.js
-        checksum: sha256:96b66a5b95835394121656ab89508c92fee98b7f00477e3454297baac720c814
+        checksum: sha256:b17cf9cb5040c1ca61a8dbc922a3234d6bdbf84eeee4e63b1822b2de5f217035
       - id: ART-002
         kind: manifest
         path: package.json
-        checksum: sha256:084892982c1668914f0ac72158e60fc5cde2dee523418681f5fd6d2e5d8736af
+        checksum: sha256:92484c7a7e559e06e52485fe0fc7671637df74afe70872cd71b80aa66746e383
     executions:
       - id: EXEC-RELEASE-001
         procedureRef: '#procedure/PROC-001'

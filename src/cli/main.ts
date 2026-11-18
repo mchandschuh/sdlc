@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
 export function printHelp(): void {
-  console.log('Usage: nodejs-cli-pattern [options]');
+  console.log('Usage: sdlc [options]');
   console.log('\nOptions:');
   console.log('  -h, --help       Show this help message');
   console.log('  -v, --version    Show the package version');
@@ -30,6 +30,6 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   }
 
   console.error(`Unknown option: ${first}`);
-  console.error('Run "nodejs-cli-pattern --help" to see available options.');
+  console.error('Run "sdlc --help" to see available options.');
   return 2;
 }
