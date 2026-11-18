@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0007",
-  "status": "planned",
+  "status": "implemented",
   "title": "Add schema-driven reference validation",
   "type": "feature",
   "objective": "Add sdlc ref validate --ref <any-ref> with schema-driven support for every registered direct SDLC reference type and dynamic regression coverage for future reference schemas.",

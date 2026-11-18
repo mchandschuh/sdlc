@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
+import { validateReference } from '../core/reference.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
@@ -15,6 +16,7 @@ export function printHelp(): void {
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
   console.log('  task list        List the selected work-item task records');
+  console.log('  ref validate     Validate one schema-registered reference');
   console.log('  stat              Inspect one tracked file path');
 }
 
@@ -149,6 +151,38 @@ async function handleStat(args: readonly string[]): Promise<number | undefined> 
   return 0;
 }
 
+async function handleReference(args: readonly string[]): Promise<number | undefined> {
+  if (args[0] !== 'ref') return undefined;
+  if (args[1] !== 'validate') throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
+  if (args[2] === '--help' || args[2] === '-h') {
+    console.log('Usage: sdlc ref validate --ref <reference>');
+    console.log('Validate one reference against recursively discovered schema-registered reference types.');
+    return 0;
+  }
+  let ref: string | undefined;
+  for (let index = 2; index < args.length; index += 1) {
+    const argument = args[index]!;
+    if (argument === '--json') continue;
+    if (argument === '--ref') {
+      const value = args[++index];
+      if (!value || value.startsWith('-')) throw new DiscoveryError('--ref requires a reference.');
+      if (ref !== undefined) throw new DiscoveryError('Duplicate --ref option.');
+      ref = value;
+    } else if (argument.startsWith('--ref=')) {
+      const value = argument.slice('--ref='.length);
+      if (!value) throw new DiscoveryError('--ref requires a reference.');
+      if (ref !== undefined) throw new DiscoveryError('Duplicate --ref option.');
+      ref = value;
+    } else {
+      throw new DiscoveryError(`Unknown option: ${argument}`);
+    }
+  }
+  if (!ref) throw new DiscoveryError('Usage: sdlc ref validate --ref <reference>');
+  const result = await validateReference(repositoryRoot, ref);
+  console.log(JSON.stringify(result, null, 2));
+  return result.valid ? 0 : 1;
+}
+
 export async function main(args: readonly string[] = process.argv.slice(2)): Promise<number> {
   const [first] = args;
 
@@ -163,6 +197,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   }
 
   try {
+    const referenceResult = await handleReference(args);
+    if (referenceResult !== undefined) return referenceResult;
     const statResult = await handleStat(args);
     if (statResult !== undefined) return statResult;
     const discoveryResult = await handleDiscovery(args);

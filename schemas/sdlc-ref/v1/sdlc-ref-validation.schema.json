@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
+  "title": "SDLC Reference Validation v1",
+  "description": "Closed JSON response envelope for validating one direct SDLC reference string against the repository's schema-registered reference types.",
+  "$comment": "The command performs syntactic JSON Schema-pattern validation only. It does not resolve repositories, work items, tasks, files, or entities. The schema registry is discovered from schemas marked with x-sdlc-reference-type: true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ref",
+    "valid",
+    "matches",
+    "findings"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
+      "description": "The canonical persisted response schema identifier.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/ref/validation/v1"
+      ]
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The direct reference string supplied to the validator.",
+      "examples": [
+        "#outcome/O-001",
+        "WI-0003|50000000#outcome/O-001"
+      ]
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "Whether at least one registered reference schema matches the supplied reference.",
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "matches": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Registered reference schemas whose syntax matches the supplied reference.",
+      "items": {
+        "$ref": "#/$defs/ReferenceMatch",
+        "description": "One matching registered reference schema.",
+        "examples": [
+          {
+            "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
+            "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+          }
+        ]
+      },
+      "examples": [
+        [
+          {
+            "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
+            "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+          }
+        ],
+        []
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "description": "Stable validation findings. The array is empty for a valid reference.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "One validation finding.",
+        "examples": [
+          "No registered reference schema matched the supplied reference."
+        ]
+      },
+      "examples": [
+        [],
+        [
+          "No registered reference schema matched the supplied reference."
+        ]
+      ]
+    }
+  },
+  "$defs": {
+    "ReferenceMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaId",
+        "path"
+      ],
+      "description": "A registered reference schema selected by the validator.",
+      "properties": {
+        "schemaId": {
+          "type": "string",
+          "format": "uri",
+          "description": "The stable URI identifier of the matching reference schema.",
+          "examples": [
+            "https://schemas.handschuh.dev/sdlc/task-local-reference/v1"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The repository-relative path of the matching schema.",
+          "examples": [
+            "schemas/common/v1/sdlc-task-local-reference.schema.json"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
+          "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
+      "ref": "#outcome/O-001",
+      "valid": true,
+      "matches": [
+        {
+          "schemaId": "https://schemas.handschuh.dev/sdlc/task-local-reference/v1",
+          "path": "schemas/common/v1/sdlc-task-local-reference.schema.json"
+        }
+      ],
+      "findings": []
+    },
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
+      "ref": "not-a-reference",
+      "valid": false,
+      "matches": [],
+      "findings": [
+        "No registered reference schema matched the supplied reference."
+      ]
+    }
+  ]
+}

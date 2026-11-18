@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -49,6 +49,54 @@ describe('CLI interface', () => {
       'Unknown option: --unknown',
       'Run "sdlc --help" to see available options.',
     ]);
+  });
+
+  it('documents and validates reference command errors', async () => {
+    const output: string[] = [];
+    const errors: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+
+    await expect(main(['ref', 'validate', '--help'])).resolves.toBe(0);
+    expect(output.join('\n')).toContain('Usage: sdlc ref validate --ref <reference>');
+    await expect(main(['ref', 'validate'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Usage: sdlc ref validate --ref <reference>');
+    await expect(main(['ref', 'validate', '--ref', '#not-a-reference'])).resolves.toBe(1);
+    const invalid = JSON.parse(output.at(-1)!) as { valid: boolean; findings: string[] };
+    expect(invalid.valid).toBe(false);
+    expect(invalid.findings).toContain('No registered reference schema matched the supplied reference.');
+  });
+
+  it('validates every example from every schema-registered reference type dynamically', async () => {
+    async function schemaFiles(directory: string): Promise<string[]> {
+      const entries = (await readdir(directory, { withFileTypes: true })).sort((left, right) => left.name.localeCompare(right.name, undefined, { numeric: true }));
+      const files: string[] = [];
+      for (const entry of entries) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) files.push(...await schemaFiles(path));
+        else if (entry.isFile() && entry.name.endsWith('.schema.json')) files.push(path);
+      }
+      return files;
+    }
+
+    const schemas = [] as Array<{ id: string; examples: string[] }>;
+    for (const path of await schemaFiles(join(process.cwd(), 'schemas'))) {
+      const schema = JSON.parse(await readFile(path, 'utf8')) as { ['x-sdlc-reference-type']?: boolean; $id?: string; examples?: unknown };
+      if (schema['x-sdlc-reference-type'] === true) schemas.push({ id: schema.$id!, examples: schema.examples as string[] });
+    }
+    expect(schemas.length).toBeGreaterThan(0);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    for (const schema of schemas) {
+      expect(schema.examples.length, `${schema.id} must provide examples`).toBeGreaterThan(0);
+      for (const example of schema.examples) {
+        output.length = 0;
+        await expect(main(['ref', 'validate', '--ref', example])).resolves.toBe(0);
+        const report = JSON.parse(output.join('\n')) as { valid: boolean; matches: Array<{ schemaId: string }> };
+        expect(report.valid).toBe(true);
+        expect(report.matches.some((match) => match.schemaId === schema.id)).toBe(true);
+      }
+    }
   });
 });
 
