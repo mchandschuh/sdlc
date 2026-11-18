@@ -1,0 +1,149 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0007",
+  "status": "planned",
+  "title": "Add schema-driven reference validation",
+  "type": "feature",
+  "objective": "Add sdlc ref validate --ref <any-ref> with schema-driven support for every registered direct SDLC reference type and dynamic regression coverage for future reference schemas.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on the main branch and the user requested preparation and commit of the new work item on the current repository."
+    }
+  },
+  "baseline": "8e7603725b760de54686372b2bfbe5103bfb37c2",
+  "request": {
+    "source": "conversation",
+    "text": "prepare a new .docs/work-items/* for:\n\nsdlc ref validate --ref <any-ref>\n\nWe need to support all reference types that sdlc supports. We also need to have a unit test that dynamically resolves all reference types from the schemas directory and verifies they all work via sdlc ref validate to handle future cases where we add refs. if necessary, use schema metadata or similar to indicate it's a ref type. Mark this convention in .cline/README.md\n\nCommit the new work item.",
+    "sha256": "7c89c8ea7e8168346462d8e9cdd425d3812e4be7d5c401340fbd71f661756ed2"
+  },
+  "scope": [
+    {
+      "name": "reference-validation-command",
+      "description": "Add sdlc ref validate --ref <any-ref> as a read-only command that validates one direct reference string against the registered reference schemas.",
+      "reason": "Consumers need one command boundary for checking whether a reference uses a supported SDLC reference grammar."
+    },
+    {
+      "name": "schema-driven-reference-registry",
+      "description": "Identify supported direct reference schemas with root x-sdlc-reference-type metadata and discover them recursively from schemas/.",
+      "reason": "A schema-driven registry prevents a hardcoded reference-type list from becoming stale when new reference schemas are added."
+    },
+    {
+      "name": "dynamic-reference-coverage",
+      "description": "Add a unit test that discovers every marked reference schema and validates every root example through the public ref command boundary.",
+      "reason": "Future marked reference schemas and examples must automatically receive executable coverage."
+    },
+    {
+      "name": "reference-validation-contract",
+      "description": "Persist and select a closed versioned JSON response schema for successful and unsuccessful ref validation results.",
+      "reason": "The repository convention requires serialized CLI response objects to have durable schemas."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "reference-resolution",
+      "description": "Do not resolve repositories, work items, tasks, files, or entities beyond validating the supplied string against registered JSON Schemas.",
+      "reason": "This work item establishes syntactic reference validation; semantic host resolution remains a separate boundary.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "reference-object-validation",
+      "description": "Do not make object wrappers such as task-result references accepted by the string --ref option unless the command explicitly expands its input contract beyond a reference string.",
+      "reason": "sdlc ref validate --ref <any-ref> is a direct string validation command; object contracts remain validated by their owning task schemas.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "provider-and-production-runtime",
+      "description": "Do not add provider calls, HTTP services, persistence, deployment, or production release behavior.",
+      "reason": "WI-0007 is limited to local schema discovery, CLI validation, and regression evidence.",
+      "forbiddenFileWrites": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ],
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0007_REQ_001",
+        "name": "reference-validation-cli",
+        "description": "sdlc ref validate --ref <any-ref> must accept a reference string, validate it against the supported marked reference schemas, and report a stable machine-readable result.",
+        "reason": "A single command boundary is needed for callers and automation to check reference syntax consistently.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0007_REQ_001_AC_001",
+            "description": "The command help documents sdlc ref validate --ref <any-ref>, and valid examples from every marked reference schema return exit code zero."
+          },
+          {
+            "id": "WI-0007_REQ_001_AC_002",
+            "description": "Missing, duplicate, malformed, and unsupported reference inputs return stable non-zero results without modifying repository files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0007_REQ_002",
+        "name": "reference-schema-registry",
+        "description": "Every supported direct string reference schema must declare root x-sdlc-reference-type: true, use type string, and provide at least one root example.",
+        "reason": "Explicit schema metadata is the durable registry boundary for command support and dynamic test discovery.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0007_REQ_002_AC_001",
+            "description": "All current direct reference schemas are marked, including acceptance-criterion, any-reference, objective, global, task-local, task-qualified, work-item-local, and delivery-any-reference contracts."
+          },
+          {
+            "id": "WI-0007_REQ_002_AC_002",
+            "description": "The README documents the marker, required schema shape, root examples, recursive discovery rule, and distinction from object wrapper schemas."
+          }
+        ]
+      },
+      {
+        "id": "WI-0007_REQ_003",
+        "name": "dynamic-reference-test",
+        "description": "The unit test must recursively discover all schemas marked x-sdlc-reference-type: true and verify every root example through sdlc ref validate.",
+        "reason": "Future marked schemas and examples must be covered without editing a hardcoded test list.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0007_REQ_003_AC_001",
+            "description": "The test derives its schema set from the schemas directory, invokes the command for every discovered root example, and fails when a marked schema has no valid executable example."
+          },
+          {
+            "id": "WI-0007_REQ_003_AC_002",
+            "description": "yarn test passes with coverage for every currently marked reference schema and example."
+          }
+        ]
+      },
+      {
+        "id": "WI-0007_REQ_004",
+        "name": "reference-validation-schema",
+        "description": "The command response must use a persisted closed JSON Schema 2020-12 contract at schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json.",
+        "reason": "CLI response objects require durable versioned schemas under the repository convention.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0007_REQ_004_AC_001",
+            "description": "The response schema declares a stable $id under https://schemas.handschuh.dev/sdlc/ref/validation/v1, is discovered by the complete schema audit, and validates representative successful and unsuccessful results."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0002",
+  "stepsPath": ".docs/work-items/WI-0007/steps/"
+}

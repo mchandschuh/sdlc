@@ -28,6 +28,26 @@ This applies to, at minimum:
 6. Validate the schema itself and at least one representative instance before
    committing the feature.
 
+### Reference schema registry convention
+
+Every standalone string schema that is supported by `sdlc ref validate --ref
+<reference>` **must** declare the root metadata property
+`"x-sdlc-reference-type": true`.
+
+The marked schema must also:
+
+- have `type: "string"`;
+- have a stable `$id` under `https://schemas.handschuh.dev/sdlc/`; and
+- provide at least one valid root-level `examples` value.
+
+The reference validator and its tests must discover marked schemas recursively
+under `schemas/`; they must not maintain a hardcoded filename or type list. Each
+root example is an executable fixture for the dynamic reference-validation test,
+so adding a new marked reference schema and example automatically expands that
+test's coverage. A schema that only wraps a reference inside an object is not a
+direct `<reference>` type unless the command explicitly supports that whole
+object form and the schema is marked accordingly.
+
 An inline TypeScript interface, a string such as `sdlc-example/v1`, a README
 example, or an unversioned ad hoc JSON shape is not a substitute for a persisted
 schema. If an object has multiple versions, persist each version separately and

@@ -1,0 +1,149 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0007
+taskUid: WI-0007-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement schema-driven reference validation
+objective: Add sdlc ref validate --ref <any-ref>, mark supported direct reference schemas, persist the response schema, and add dynamic reference-example coverage.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/common/v1/
+    - schemas/sdlc-task-delivery/v1/sdlc-delivery-any-reference.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+  informational:
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - .docs/work-items/WI-0002/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml
+    - .cline/README.md
+    - schemas/common/v1/
+    - schemas/sdlc-task-delivery/v1/
+    - schemas/sdlc-ref/v1/
+    - src/
+    - tests/
+  commitSubject: 'WI-0007: feat(cli): validate schema-registered references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement a schema-driven sdlc ref validate command and dynamically test every marked reference schema example.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_001
+        purpose: Define the ref validate command contract and stable errors.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_002
+        purpose: Define the schema metadata registry convention.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_003
+        purpose: Define dynamic reference-schema and example coverage.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_004
+        purpose: Define the persisted response schema boundary.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: sdlc ref validate accepts valid examples from every marked direct reference schema and rejects unsupported or malformed values with stable results.
+        inputRefs:
+          - INPUT-REQ-001
+          - INPUT-REQ-002
+        testCaseRefs:
+          - '#test-case/TC-REF-CLI'
+          - '#test-case/TC-REF-ERRORS'
+      - id: OBJ-002
+        statement: The repository's marked reference schemas, root examples, response schema, and README convention remain synchronized and dynamically covered.
+        inputRefs:
+          - INPUT-REQ-002
+          - INPUT-REQ-003
+          - INPUT-REQ-004
+        testCaseRefs:
+          - '#test-case/TC-REF-DYNAMIC-SCHEMAS'
+    ownedPaths:
+      - .cline/README.md
+      - schemas/common/v1/
+      - schemas/sdlc-task-delivery/v1/
+      - schemas/sdlc-ref/v1/
+      - src/
+      - tests/
+    nonGoals:
+      - Do not perform semantic repository, work-item, task, file, or entity resolution.
+      - Do not treat object wrapper schemas as direct string reference types without an explicit command contract.
+      - Do not add provider, HTTP, persistence, deployment, or release behavior.
+    steps:
+      - 'Mark each supported direct string reference schema with root x-sdlc-reference-type: true and ensure it has executable root examples.'
+      - Add the closed sdlc ref validation response schema and implement schema discovery plus --ref parsing and validation.
+      - Add focused command/error tests and a dynamic test that invokes the command for every marked schema example.
+      - Document the reference registry convention in .cline/README.md.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded schema-driven reference validation implementation plan.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - .docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests: []
+    limitations:
+      - The ref validate command and marked reference registry are not yet implemented.

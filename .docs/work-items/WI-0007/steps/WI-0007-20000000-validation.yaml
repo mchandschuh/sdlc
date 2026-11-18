@@ -1,0 +1,176 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0007
+taskUid: WI-0007-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0007-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate schema-driven reference validation
+objective: Validate sdlc ref validate across every marked reference schema example, stable invalid-input behavior, response schema coverage, and repository schema integrity.
+references:
+  required:
+    - .cline/README.md
+    - package.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - schemas/common/v1/
+    - schemas/sdlc-task-delivery/v1/sdlc-delivery-any-reference.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - .docs/work-items/WI-0007/work-item.json
+    - .docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml
+  informational:
+    - schemas/work-item/v2/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+dependsOn:
+  - WI-0007-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0007/steps/WI-0007-20000000-validation.yaml
+  commitSubject: 'WI-0007: feat(cli): validate schema-registered references'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-schema
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - --schema
+        - schemas/work-item/v2/work-item.schema.json
+        - --document
+        - .docs/work-items/WI-0007/work-item.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate schema-registered reference examples through sdlc ref validate and verify the command's persisted response contract.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0007|10000000#result/R-001
+        purpose: Identify the reference validation implementation result.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_001
+        purpose: Identify the command and error acceptance boundary.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_002
+        purpose: Identify the marked reference-schema registry boundary.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_003
+        purpose: Identify dynamic schema/example coverage requirements.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0007#work-item.json#requirement/WI-0007_REQ_004
+        purpose: Identify the persisted response-schema acceptance boundary.
+        required: true
+    targets:
+      - id: TARGET-REF-VALIDATION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0007|10000000#result/R-001
+        purpose: Validate the command, marked schemas, dynamic tests, and response contract.
+        required: true
+    objectiveRefs:
+      - '#objective/OBJ-001'
+      - '#objective/OBJ-002'
+    testCaseRefs:
+      - '#test-case/TC-REF-CLI'
+      - '#test-case/TC-REF-ERRORS'
+      - '#test-case/TC-REF-DYNAMIC-SCHEMAS'
+    procedures:
+      - id: VAL-REF-001
+        sequence: 1
+        name: validate-reference-command-and-registry
+        description: Run package checks, dynamic marked-schema example coverage, fresh-process ref validation, invalid-input checks, and response-schema validation.
+        reason: Prove that every schema-registered direct reference type is supported without a hardcoded test list.
+        targetRefs:
+          - '#target/TARGET-REF-VALIDATION-001'
+        objectiveRefs:
+          - '#objective/OBJ-001'
+          - '#objective/OBJ-002'
+        testCaseRefs:
+          - '#test-case/TC-REF-CLI'
+          - '#test-case/TC-REF-ERRORS'
+          - '#test-case/TC-REF-DYNAMIC-SCHEMAS'
+        method:
+          executionMode: executable
+          target: sdlc ref validate command and schemas directory
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run sdlc ref validate --help.
+            - Run sdlc ref validate --ref for representative valid and invalid values.
+            - Validate the response against schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json.
+            - Run the complete repository schema audit.
+          command: yarn test
+          paths:
+            - .cline/README.md
+            - schemas/
+            - src/
+            - tests/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim semantic resolution of repositories, work items, tasks, files, or entities.
+      - Do not mutate work-item, task, schema, or reference records during validation.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-REF-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The schema-driven reference validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The reference validation command and dynamic marked-schema coverage have not yet been executed.
+    nonClaims:
+      - This planned result does not claim that the command currently exists.
+      - This result does not approve or release WI-0007.
