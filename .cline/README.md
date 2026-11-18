@@ -40,6 +40,11 @@ The marked schema must also:
 - have a stable `$id` under `https://schemas.handschuh.dev/sdlc/`; and
 - provide at least one valid root-level `examples` value.
 
+Canonical task-local references use explicit task JSON paths rooted at `intent`
+or `result`, for example `#intent/objectives/OBJ-001` and
+`#result/implementation/changes/CHANGE-001`. The envelope's `task` property is
+elided because the local reference is already scoped to the current task.
+
 Identifier schemas may be marked when their standalone identity forms are
 accepted by direct reference validation. The canonical bare work-item form is
 `WI-0001`; the canonical bare task form is `WI-0001-80000000`.

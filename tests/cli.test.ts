@@ -192,7 +192,22 @@ describe('CLI interface', () => {
     const local = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: null; findings: string[] };
     expect(local.valid).toBe(false);
     expect(local.resolution).toBeNull();
-    expect(local.findings[0]).toContain('current-task context');
+    expect(local.findings[0]).toContain('migration');
+  });
+
+  it('resolves explicit task-local intent/result JSON paths and rejects unrooted local paths', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007|10000000#result/implementation/changes/CHANGE-001'])).resolves.toBe(0);
+    const qualified = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { data: { id: string } } };
+    expect(qualified.valid).toBe(true);
+    expect(qualified.resolution.data.id).toBe('CHANGE-001');
+
+    await expect(main(['ref', 'resolve', '--ref', '#objective/OBJ-001'])).resolves.toBe(1);
+    const legacy = JSON.parse(output.at(-1)!) as { valid: boolean; findings: string[] };
+    expect(legacy.valid).toBe(false);
+    expect(legacy.findings[0]).toContain('migration');
   });
 
   it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {

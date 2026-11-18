@@ -4,7 +4,7 @@ taskUid: WI-0018-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement explicit task-local JSON paths
 objective: Define and implement explicit intent/result-rooted task-local references and deterministic task-context resolution without schema inference.
 references:
@@ -47,7 +47,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -89,19 +89,49 @@ task:
       - Update resolver parsing and deterministic JSON-path-like task selection.
       - Add exhaustive unit tests and run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Added explicit intent/result-rooted task-local v2 references, deterministic task-context path selection, legacy migration-only findings, and complete unit-test coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the explicit task-local path implementation plan.
+        - id: CHANGE-001
+          type: schema
+          summary: Added the v2 explicit task-local reference schema and updated any/task-qualified reference contracts.
+          objectiveRefs: [OBJ-001]
+          paths: [schemas/common/v1/sdlc-task-local-reference-v2.schema.json, schemas/common/v1/sdlc-any-reference.schema.json, schemas/common/v1/sdlc-task-qualified-reference.schema.json]
+        - id: CHANGE-002
+          type: production-code
+          summary: Added deterministic intent/result path parsing and task-context selection while preserving legacy forms for migration handling.
           objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0018/steps/WI-0018-10000000-task-local-implementation.yaml]
-      testImplementations: []
+          paths: [src/core/reference-resolution.ts]
+        - id: CHANGE-003
+          type: test-code
+          summary: Added explicit task-local success/failure tests and passed the complete unit-test suite.
+          objectiveRefs: [OBJ-002]
+          paths: [tests/cli.test.ts]
+        - id: CHANGE-004
+          type: documentation
+          summary: Documented canonical task-local intent/result path syntax.
+          objectiveRefs: [OBJ-001]
+          paths: [.cline/README.md]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-LOCAL-EXPLICIT-PATH'
+          path: tests/cli.test.ts
+          selector: resolves explicit task-local intent/result JSON paths and rejects unrooted local paths
+        - testCaseRef: '#test-case/TC-LOCAL-TASK-CONTEXT'
+          path: tests/cli.test.ts
+          selector: resolves work-item-local and task-qualified selectors and reports unsupported scopes
+        - testCaseRef: '#test-case/TC-LOCAL-TEST-GATE'
+          path: tests/cli.test.ts
+          selector: CLI interface test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      tests:
+        - id: EXEC-LOCAL-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-LOCAL-EXPLICIT-PATH', '#test-case/TC-LOCAL-TASK-CONTEXT', '#test-case/TC-LOCAL-TEST-GATE']
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Typecheck, build, and all 38 tests passed.
     limitations:
-      - Existing unrooted task-local references are not yet migrated.
+      - Legacy unrooted task-local references remain migration-only until the migration section is processed.

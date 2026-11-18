@@ -4,7 +4,7 @@ taskUid: WI-0018-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0018-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate explicit task-local JSON paths
 objective: Validate explicit intent/result-rooted local references, task-qualified context, rejected ambiguity, response schemas, and a 100% passing unit-test gate.
 references:
@@ -42,7 +42,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -105,23 +105,30 @@ task:
     nonGoals:
       - Do not claim task ID separator migration or migration command behavior.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Explicit task-local path semantics passed the complete package suite and deterministic resolution/error checks.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-LOCAL-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until implementation task processing.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, and all 38 tests passed with explicit task-local paths, legacy migration-only findings, and task-qualified compatibility checks.
+          assertions:
+            - Explicit #intent/objectives/OBJ-001-style paths resolved deterministically.
+            - Unrooted task-local forms returned migration-specific findings.
+            - The full unit-test suite passed 38 tests before the task commit.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Explicit task-local path validation is planned.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Explicit task-local path semantics and the complete test gate passed.
+            command: yarn typecheck && yarn build && yarn test
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The explicit task-local path implementation has not yet been validated.
+      - Legacy unrooted task-local forms remain migration-only until the migration section is processed.
+      - Evidence is local CLI/schema evidence and does not establish remote or production behavior.
     nonClaims:
-      - This planned result does not claim task-local syntax completion.
+      - This result does not claim task ID separator migration or migration command completion.

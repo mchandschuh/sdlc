@@ -32,7 +32,7 @@ interface ParsedDocument {
   readonly value: unknown;
 }
 
-type Selector = { readonly kind: string; readonly id: string };
+type Selector = { readonly root: 'intent' | 'result'; readonly path: readonly string[]; readonly id: string; readonly legacy?: boolean };
 
 function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null, references: Readonly<Record<string, ReferenceResolution>> = {}): ReferenceResolutionReport {
   return {
@@ -58,20 +58,49 @@ function containedPath(repositoryRoot: string, requestedPath: string): string {
   return candidate;
 }
 
-function parseSelector(kind: string, id: string): Selector {
-  return { kind, id };
+function parseSelector(root: 'intent' | 'result', path: readonly string[], id: string, legacy = false): Selector {
+  return { root, path, id, legacy };
 }
 
 function selectorReference(ref: string): { readonly workItemId: string; readonly filename: string; readonly selector: Selector } | undefined {
+  const explicit = /^([A-Z]{1,10}-[0-9]+)#([^#]+)#(intent|result)\/(.+)$/u.exec(ref);
+  if (explicit) {
+    const segments = explicit[4]!.split('/');
+    const id = segments.pop();
+    if (!id || segments.length === 0 || segments.some((segment) => !/^[A-Za-z][A-Za-z0-9_-]*$/u.test(segment))) return undefined;
+    return { workItemId: explicit[1]!, filename: explicit[2]!, selector: parseSelector(explicit[3] as 'intent' | 'result', segments, id) };
+  }
   const match = /^([A-Z]{1,10}-[0-9]+)#([^#]+)#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
   if (!match) return undefined;
-  return { workItemId: match[1]!, filename: match[2]!, selector: parseSelector(match[3]!, match[4]!) };
+  return { workItemId: match[1]!, filename: match[2]!, selector: parseSelector('result', [match[3]!], match[4]!, true) };
+}
+
+function taskLocalReference(ref: string): Selector | undefined {
+  const match = /^#(intent|result)\/(.+)$/u.exec(ref);
+  if (!match) return undefined;
+  const segments = match[2]!.split('/');
+  const id = segments.pop();
+  if (!id || segments.length === 0 || segments.some((segment) => !/^[A-Za-z][A-Za-z0-9_-]*$/u.test(segment))) return undefined;
+  return parseSelector(match[1] as 'intent' | 'result', segments, id);
 }
 
 function taskQualifiedReference(ref: string): { readonly workItemId: string; readonly orderKey: string; readonly selector: Selector } | undefined {
-  const match = /^([A-Z]{1,10}-[0-9]+)\|([0-9]{2,8})#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
+  const explicit = /^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#(intent|result)\/(.+)$/u.exec(ref);
+  if (explicit) {
+    const segments = explicit[4]!.split('/');
+    const id = segments.pop();
+    if (!id || segments.length === 0 || segments.some((segment) => !/^[A-Za-z][A-Za-z0-9_-]*$/u.test(segment))) return undefined;
+    return { workItemId: explicit[1]!, orderKey: explicit[2]!, selector: parseSelector(explicit[3] as 'intent' | 'result', segments, id) };
+  }
+  const match = /^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
   if (!match) return undefined;
-  return { workItemId: match[1]!, orderKey: match[2]!, selector: parseSelector(match[3]!, match[4]!) };
+  return { workItemId: match[1]!, orderKey: match[2]!, selector: parseSelector('result', [match[3]!], match[4]!, true) };
+}
+
+function legacyTaskLocalReference(ref: string): Selector | undefined {
+  const match = /^#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
+  if (!match) return undefined;
+  return parseSelector('result', [match[1]!], match[2]!);
 }
 
 function taskUidReference(ref: string): { readonly workItemId: string; readonly orderKey: string } | undefined {
@@ -121,10 +150,22 @@ function findById(value: unknown, id: string): unknown {
 
 function selectData(document: unknown, selector: Selector, workItemId: string, taskUid?: string): unknown {
   const object = objectValue(document);
-  if (selector.kind === 'work-item' && selector.id === workItemId) return document;
-  if (selector.kind === 'task' && taskUid !== undefined && selector.id === taskUid) return document;
-  if (selector.kind === 'result' && object?.task && objectValue(object.task)?.result !== undefined && /^R-[A-Z0-9]+(?:-[A-Z0-9]+)*$/u.test(selector.id)) return objectValue(object.task)!.result;
-  return findById(document, selector.id);
+  if (selector.legacy) {
+    if (selector.path[0] === 'result' && object?.task && objectValue(object.task)?.result !== undefined) return objectValue(object.task)!.result;
+    if (selector.path[0] === 'task' && taskUid !== undefined && selector.id === taskUid) return document;
+    return findById(document, selector.id);
+  }
+  if (selector.root === 'intent' || selector.root === 'result') {
+    const task = objectValue(object?.task);
+    let current: unknown = task?.[selector.root];
+    for (const segment of selector.path) {
+      const currentObject = objectValue(current);
+      if (!currentObject || !(segment in currentObject)) return undefined;
+      current = currentObject[segment];
+    }
+    return findById(current, selector.id);
+  }
+  return undefined;
 }
 
 function success(ref: string, document: ParsedDocument, data: unknown): ReferenceResolutionReport {
@@ -185,17 +226,30 @@ async function resolveLocal(repositoryRoot: string, ref: string): Promise<Refere
   if (local) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${local.workItemId}/${local.filename}`);
     const data = selectData(document.value, local.selector, local.workItemId);
-    if (data === undefined) return report(ref, [`Selector not found in ${document.repositoryPath}: ${local.selector.kind}/${local.selector.id}`]);
+    if (data === undefined) return report(ref, [`Selector not found in ${document.repositoryPath}: ${local.selector.root}/${local.selector.path.join('/')}/${local.selector.id}`]);
     return success(ref, document, data);
   }
+
+  const localTask = taskLocalReference(ref);
+  if (localTask) return report(ref, ['Task-local references require an explicit current-task document context and cannot be resolved by this command root alone.']);
+
+  const legacyLocalTask = legacyTaskLocalReference(ref);
+  if (legacyLocalTask) return report(ref, ['Legacy task-local references require migration to an explicit intent/result path before resolution.']);
 
   const qualified = taskQualifiedReference(ref);
   if (qualified) {
     const resolved = await taskDocument(repositoryRoot, qualified.workItemId, qualified.orderKey);
     if (!resolved) return report(ref, [`Task document not found for task reference: ${ref}`]);
     const data = selectData(resolved.document.value, qualified.selector, qualified.workItemId, resolved.taskUid);
-    if (data === undefined) return report(ref, [`Selector not found in ${resolved.document.repositoryPath}: ${qualified.selector.kind}/${qualified.selector.id}`]);
+    if (data === undefined) return report(ref, [`Selector not found in ${resolved.document.repositoryPath}: ${qualified.selector.root}/${qualified.selector.path.join('/')}/${qualified.selector.id}`]);
     return success(ref, resolved.document, data);
+  }
+
+  const legacyQualified = ref.match(/^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#result\/([A-Za-z][A-Za-z0-9._:-]*)$/u);
+  if (legacyQualified) {
+    const resolved = await taskDocument(repositoryRoot, legacyQualified[1]!, legacyQualified[2]!);
+    if (!resolved) return report(ref, [`Task document not found for task reference: ${ref}`]);
+    return success(ref, resolved.document, objectValue(resolved.document.value)?.task && objectValue(objectValue(resolved.document.value)!.task)?.result);
   }
 
   if (ref.startsWith('#')) return report(ref, ['Task-local references require an explicit current-task context and cannot be resolved by this command.']);
