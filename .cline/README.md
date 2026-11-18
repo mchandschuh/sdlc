@@ -17,8 +17,8 @@ This applies to, at minimum:
 ### Required practice
 
 1. Add the schema before or with the code that introduces the object.
-2. Store it below an appropriate domain/version path, for example:
-   `schemas/sdlc-stat/v1/sdlc-stat.schema.json`.
+2. Store it below the canonical high-level-object/version path, for example:
+   `schemas/sdlc-stat/v1/sdlc-state.schema.json`.
 3. Give the schema a stable versioned `$id` under
    `https://schemas.handschuh.dev/sdlc/`.
 4. Use JSON Schema 2020-12 and keep the contract closed unless an explicit
