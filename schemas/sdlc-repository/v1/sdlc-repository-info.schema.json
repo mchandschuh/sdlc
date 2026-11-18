@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/repository/info/v1",
+  "title": "SDLC Repository Info v1",
+  "description": "Closed JSON response envelope for discovering the nearest local Git repository from an arbitrary path.",
+  "$comment": "Discovery walks the supplied path and its parents until a .git boundary is found. Metadata is local-only and read-only; origin may be null when no origin is configured.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fullPath",
+    "repositoryRoot",
+    "gitDir",
+    "isBare",
+    "origin"
+  ],
+  "properties": {
+    "schema": {
+      "const": "https://schemas.handschuh.dev/sdlc/repository/info/v1",
+      "description": "The canonical persisted repository-info response schema identifier.",
+      "examples": [
+        "https://schemas.handschuh.dev/sdlc/repository/info/v1"
+      ]
+    },
+    "fullPath": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute path supplied to repository discovery.",
+      "examples": [
+        "/home/michael/src/github/sdlc/src/core/discovery.ts"
+      ]
+    },
+    "repositoryRoot": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute root directory of the nearest discovered Git repository.",
+      "examples": [
+        "/home/michael/src/github/sdlc"
+      ]
+    },
+    "gitDir": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute Git directory associated with the discovered repository.",
+      "examples": [
+        "/home/michael/src/github/sdlc/.git"
+      ]
+    },
+    "isBare": {
+      "type": "boolean",
+      "description": "Whether the discovered repository is bare.",
+      "examples": [
+        false
+      ]
+    },
+    "origin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The local remote.origin.url value, or null when no origin is configured.",
+      "examples": [
+        "git@github.com:mchandschuh/sdlc.git",
+        null
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/repository/info/v1",
+      "fullPath": "/home/michael/src/github/sdlc/src/core/discovery.ts",
+      "repositoryRoot": "/home/michael/src/github/sdlc",
+      "gitDir": "/home/michael/src/github/sdlc/.git",
+      "isBare": false,
+      "origin": "git@github.com:mchandschuh/sdlc.git"
+    }
+  ]
+}

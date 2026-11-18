@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0012",
-  "status": "planned",
+  "status": "implemented",
   "title": "Discover repository information from any path",
   "type": "feature",
   "objective": "Add sdlc repository info --path <path> to walk from the supplied path through its parents until a Git repository is found and return stable local repository information.",

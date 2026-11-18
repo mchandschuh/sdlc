@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
+import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 
@@ -16,6 +17,7 @@ export function printHelp(): void {
   console.log('  -v, --version    Show the package version');
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
+  console.log('  repository info   Find the nearest Git repository');
   console.log('  task list        List the selected work-item task records');
   console.log('  task next        Select the next unprocessed task');
   console.log('  ref validate     Validate one schema-registered reference');
@@ -96,6 +98,18 @@ function printWorkItemValidation(report: WorkItemValidationReport, json: boolean
   }
 }
 
+function printRepositoryInfo(report: RepositoryInfoReport, json: boolean): void {
+  if (json) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+  console.log(`Repository: ${report.repositoryRoot}`);
+  console.log(`  Path: ${report.fullPath}`);
+  console.log(`  Git directory: ${report.gitDir}`);
+  console.log(`  Bare: ${report.isBare}`);
+  console.log(`  Origin: ${report.origin ?? 'none'}`);
+}
+
 function optionValue(args: readonly string[], name: string): { value?: string; duplicate: boolean; unknown?: string } {
   let value: string | undefined;
   for (let index = 0; index < args.length; index += 1) {
@@ -130,6 +144,21 @@ async function handleWorkItemValidation(args: readonly string[]): Promise<number
   const report = await validateWorkItem(repositoryRoot, selected.value);
   printWorkItemValidation(report, jsonRequested(args));
   return report.valid ? 0 : 1;
+}
+
+async function handleRepositoryInfo(args: readonly string[]): Promise<number | undefined> {
+  if (args[0] !== 'repository' || args[1] !== 'info') return undefined;
+  const selected = optionValue(args.slice(2), '--path');
+  if (selected.duplicate) throw new DiscoveryError('Duplicate --path option.');
+  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+  if (!selected.value) throw new DiscoveryError('Usage: sdlc repository info --path <path> [--json]');
+  try {
+    const report = await repositoryInfo(selected.value);
+    printRepositoryInfo(report, jsonRequested(args));
+    return 0;
+  } catch (error) {
+    throw new DiscoveryError(error instanceof Error ? error.message : 'Repository discovery failed');
+  }
 }
 
 async function handleDiscovery(args: readonly string[]): Promise<number | undefined> {
@@ -254,6 +283,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   try {
     const referenceResult = await handleReference(args);
     if (referenceResult !== undefined) return referenceResult;
+    const repositoryInfoResult = await handleRepositoryInfo(args);
+    if (repositoryInfoResult !== undefined) return repositoryInfoResult;
     const workItemValidationResult = await handleWorkItemValidation(args);
     if (workItemValidationResult !== undefined) return workItemValidationResult;
     const statResult = await handleStat(args);

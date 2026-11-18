@@ -4,7 +4,7 @@ taskUid: WI-0012-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement repository information discovery
 objective: Add sdlc repository info --path <path> with ancestor Git discovery, persisted response schema, and read-only tests.
 references:
@@ -57,7 +57,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -119,24 +119,63 @@ task:
       - Add the closed repository-info response schema and command routing/output.
       - Add focused and fresh-process tests for nested paths, repository roots, outside paths, selector errors, and read-only behavior.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Implemented ancestor Git repository discovery and stable repository info output with local metadata.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded repository-info implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added parent-directory Git boundary discovery, local repository metadata collection, and repository info CLI routing/output.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0012/steps/WI-0012-10000000-implementation.yaml
-      testImplementations: []
+            - src/core/repository.ts
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Added the closed repository-info response schema for inspected path and local Git metadata.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-repository/v1/sdlc-repository-info.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added nested-file, directory, metadata, outside-path, selector-error, and read-only coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-REPOSITORY-INFO-NESTED'
+          path: tests/cli.test.ts
+          selector: discovers repository information from nested files and directories
+        - testCaseRef: '#test-case/TC-REPOSITORY-INFO-METADATA'
+          path: tests/cli.test.ts
+          selector: discovers repository information from nested files and directories
+        - testCaseRef: '#test-case/TC-REPOSITORY-INFO-ERRORS'
+          path: tests/cli.test.ts
+          selector: rejects repository info paths without a repository and missing selectors
+        - testCaseRef: '#test-case/TC-REPOSITORY-INFO-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: discovers repository information from nested files and directories
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-REPOSITORY-INFO-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-REPOSITORY-INFO-NESTED'
+            - '#test-case/TC-REPOSITORY-INFO-METADATA'
+            - '#test-case/TC-REPOSITORY-INFO-ERRORS'
+            - '#test-case/TC-REPOSITORY-INFO-READ-ONLY'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all twenty-seven CLI, discovery, stat, reference, task-next, work-item-validation, and repository-info tests.
     limitations:
-      - The repository info command and response schema are not yet implemented.
+      - Repository info is local read-only metadata and does not establish remote-network, provider, persistence, deployment, or production evidence.

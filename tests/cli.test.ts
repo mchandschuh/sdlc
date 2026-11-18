@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
+import { repositoryInfo } from '../src/core/repository.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -66,6 +67,30 @@ describe('CLI interface', () => {
     const invalid = JSON.parse(output.at(-1)!) as { valid: boolean; findings: string[] };
     expect(invalid.valid).toBe(false);
     expect(invalid.findings).toContain('No registered reference schema matched the supplied reference.');
+  });
+
+  it('discovers repository information from nested files and directories', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    await expect(main(['repository', 'info', '--path', 'src/core/discovery.ts', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; fullPath: string; repositoryRoot: string; gitDir: string; isBare: boolean; origin: string | null };
+    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/repository/info/v1');
+    expect(report.fullPath).toBe(join(process.cwd(), 'src/core/discovery.ts'));
+    expect(report.repositoryRoot).toBe(process.cwd());
+    expect(report.gitDir).toBe(join(process.cwd(), '.git'));
+    expect(report.isBare).toBe(false);
+    expect(report.origin).toBeTruthy();
+    const directoryReport = await repositoryInfo(join(process.cwd(), 'src/core'));
+    expect(directoryReport.repositoryRoot).toBe(process.cwd());
+  });
+
+  it('rejects repository info paths without a repository and missing selectors', async () => {
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    await expect(main(['repository', 'info'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Usage: sdlc repository info --path <path> [--json]');
+    await expect(main(['repository', 'info', '--path', '/tmp'])).resolves.toBe(1);
+    expect(errors.at(-1)).toContain('No Git repository found from path');
   });
 
   it('validates every example from every schema-registered reference type dynamically', async () => {
