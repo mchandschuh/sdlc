@@ -4,7 +4,7 @@ taskUid: WI-0009-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0009-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate next-task selection
 objective: Validate sdlc task next selection, exhausted work items, selector errors, deterministic ordering, response schema, and read-only behavior.
 references:
@@ -64,7 +64,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -155,24 +155,36 @@ task:
       - Do not claim task execution, lifecycle mutation, locking, provider, persistence, deployment, or production evidence.
       - Do not mutate task or work-item records during validation.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Task-next selection passed focused tests, fresh-process exhausted-work-item and selector audits, selected/no-next response-schema validation, read-only checks, and the complete schema audit.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-TASK-NEXT-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Task next selected the first unprocessed task in a mixed-status fixture, returned selection none for exhausted WI-0008, rejected a missing selector, and preserved task records.
+          assertions:
+            - The focused suite passed all twenty-three tests.
+            - A mixed-status fixture selected the first task with processingStatus unprocessed and skipped completed and blocked tasks.
+            - sdlc task next --work-item WI-0008 --json returned exit code zero, selection none, and task null.
+            - sdlc task next --work-item WI-0008 returned a stable no-task human-readable result.
+            - Missing --work-item returned exit code one with the stable usage error.
+            - Selected and no-next-task response instances passed schemas/sdlc-task-next/v1/sdlc-task-next.schema.json.
+            - Task selection did not mutate task files.
+            - The complete repository schema audit passed.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The task-next validation procedure is declared but not yet executed.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Task next passed mixed-status selection, exhausted-work-item, selector-error, and read-only CLI audit.
+            command: yarn test && node ./bin/cli.js task next --work-item WI-0008 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The task next command and representative selection validation have not yet been executed.
+      - Task next selects work but does not execute, lock, or mutate tasks.
+      - The command does not establish provider, persistence, deployment, or production evidence.
     nonClaims:
-      - This planned result does not claim that the command currently exists.
       - This result does not approve or release WI-0009.
+      - This result does not establish production readiness.
