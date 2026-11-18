@@ -195,6 +195,57 @@ describe('CLI interface', () => {
     expect(local.findings[0]).toContain('current-task context');
   });
 
+  it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-reference-depth-'));
+    await mkdir(join(root, '.docs', 'work-items', 'WI-0099'), { recursive: true });
+    await mkdir(join(root, '.docs', 'work-items', 'WI-0100'), { recursive: true });
+    await mkdir(join(root, '.docs', 'work-items', 'WI-0101'), { recursive: true });
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0099', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', sourceWorkItem: 'WI-0100', repeated: 'WI-0100', cycle: 'WI-0099' }));
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0100', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0100', sourceWorkItem: 'WI-0101', repeated: 'WI-0101', cycle: 'WI-0099' }));
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0101', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0101', sourceWorkItem: 'WI-0099' }));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'add', '--', '.docs']);
+
+    const originalCwd = process.cwd();
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const run = async (extra: string[] = []) => {
+      output.length = 0;
+      process.chdir(root);
+      await expect(main(['ref', 'resolve', '--ref', 'WI-0099', '--json', ...extra])).resolves.toBe(0);
+      return JSON.parse(output.join('\n')) as { schema: string; resolution: { references: Record<string, { references?: unknown }> } };
+    };
+    try {
+      const omitted = await run();
+      const bare = await run(['--depth']);
+      const one = await run(['--depth', '1']);
+      expect(bare).toEqual(omitted);
+      expect(one).toEqual(omitted);
+      expect(omitted.schema).toBe('https://schemas.handschuh.dev/sdlc/ref/resolution/v2');
+      expect(Object.keys(omitted.resolution.references)).toEqual([]);
+
+      const two = await run(['--depth', '2']);
+      expect(Object.keys(two.resolution.references)).toEqual(['WI-0100']);
+      expect(two.resolution.references['WI-0100']!.references).toBeUndefined();
+
+      const three = await run(['--depth', '3']);
+      expect(Object.keys(three.resolution.references)).toEqual(['WI-0100', 'WI-0101']);
+      expect(three.resolution.references['WI-0099']).toBeUndefined();
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('rejects malformed and duplicate depth options', async () => {
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007', '--depth', '0'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('--depth requires a positive integer.');
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007', '--depth', '2', '--depth', '3'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Duplicate --depth option.');
+  });
+
   it('discovers repository information from nested files and directories', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

@@ -4,7 +4,7 @@ import YAML from 'yaml';
 import { discoverTasks, DiscoveryError } from './discovery.js';
 import { validateReference } from './reference.js';
 
-export const REFERENCE_RESOLUTION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/resolution/v1';
+export const REFERENCE_RESOLUTION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/resolution/v2';
 
 export interface ReferenceResolution {
   readonly fullPath: string;
@@ -13,11 +13,15 @@ export interface ReferenceResolution {
   readonly data: unknown;
 }
 
+export interface ExpandedReferenceResolution extends ReferenceResolution {
+  readonly references: Readonly<Record<string, ReferenceResolution>>;
+}
+
 export interface ReferenceResolutionReport {
   readonly schema: typeof REFERENCE_RESOLUTION_SCHEMA;
   readonly ref: string;
   readonly valid: boolean;
-  readonly resolution: ReferenceResolution | null;
+  readonly resolution: ExpandedReferenceResolution | null;
   readonly findings: readonly string[];
 }
 
@@ -30,12 +34,12 @@ interface ParsedDocument {
 
 type Selector = { readonly kind: string; readonly id: string };
 
-function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null): ReferenceResolutionReport {
+function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null, references: Readonly<Record<string, ReferenceResolution>> = {}): ReferenceResolutionReport {
   return {
     schema: REFERENCE_RESOLUTION_SCHEMA,
     ref,
     valid: findings.length === 0 && resolution !== null,
-    resolution,
+    resolution: resolution ? { ...resolution, references } : null,
     findings,
   };
 }
@@ -132,6 +136,30 @@ function success(ref: string, document: ParsedDocument, data: unknown): Referenc
   });
 }
 
+function withoutReferences(resolution: ExpandedReferenceResolution): ReferenceResolution {
+  const { references: _references, ...document } = resolution;
+  return document;
+}
+
+async function referenceStrings(value: unknown, schemaRoot: string, cache: Map<string, boolean>, output: string[]): Promise<void> {
+  if (typeof value === 'string') {
+    let valid = cache.get(value);
+    if (valid === undefined) {
+      valid = (await validateReference(schemaRoot, value)).valid;
+      cache.set(value, valid);
+    }
+    if (valid) output.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) await referenceStrings(item, schemaRoot, cache, output);
+    return;
+  }
+  const object = objectValue(value);
+  if (!object) return;
+  for (const child of Object.values(object)) await referenceStrings(child, schemaRoot, cache, output);
+}
+
 async function taskDocument(repositoryRoot: string, workItemId: string, orderKey: string): Promise<{ document: ParsedDocument; taskUid: string } | undefined> {
   const tasks = await discoverTasks(repositoryRoot, workItemId);
   const task = tasks.items.find((candidate) => candidate.taskUid === `${workItemId}-${orderKey}` || candidate.taskUid.endsWith(`-${orderKey}`));
@@ -175,11 +203,38 @@ async function resolveLocal(repositoryRoot: string, ref: string): Promise<Refere
   return report(ref, [`Reference form is not supported for local resolution: ${ref}`]);
 }
 
-export async function resolveReference(repositoryRoot: string, schemaRoot: string, ref: string): Promise<ReferenceResolutionReport> {
+export async function resolveReference(repositoryRoot: string, schemaRoot: string, ref: string, depth = 1): Promise<ReferenceResolutionReport> {
   const syntax = await validateReference(schemaRoot, ref);
   if (!syntax.valid) return report(ref, syntax.findings);
   try {
-    return await resolveLocal(repositoryRoot, ref);
+    const root = await resolveLocal(repositoryRoot, ref);
+    if (!root.resolution || depth <= 1 || !root.valid) return root;
+
+    const references: Record<string, ReferenceResolution> = {};
+    const seen = new Set<string>([ref]);
+    const syntaxCache = new Map<string, boolean>([[ref, true]]);
+    const findings = [...root.findings];
+    let frontier: unknown[] = [root.resolution.data];
+
+    for (let round = 1; round < depth; round += 1) {
+      const candidates: string[] = [];
+      for (const value of frontier) await referenceStrings(value, schemaRoot, syntaxCache, candidates);
+      const next: unknown[] = [];
+      for (const candidate of candidates) {
+        if (seen.has(candidate)) continue;
+        seen.add(candidate);
+        const child = await resolveReference(repositoryRoot, schemaRoot, candidate, 1);
+        if (!child.resolution) {
+          findings.push(...child.findings.map((finding) => `Referenced ${candidate}: ${finding}`));
+          continue;
+        }
+        references[candidate] = withoutReferences(child.resolution);
+        next.push(child.resolution.data);
+      }
+      frontier = next;
+      if (frontier.length === 0) break;
+    }
+    return report(ref, findings, root.resolution, references);
   } catch (error) {
     return report(ref, [error instanceof Error ? error.message : `Unable to resolve reference: ${ref}`]);
   }

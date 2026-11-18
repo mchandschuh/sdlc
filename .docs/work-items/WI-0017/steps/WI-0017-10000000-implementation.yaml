@@ -4,7 +4,7 @@ taskUid: WI-0017-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement depth-limited flat reference expansion
 objective: Add optional depth parsing and bounded flat recursive reference expansion to sdlc ref resolve with response-schema and regression coverage.
 references:
@@ -16,6 +16,7 @@ references:
     - src/core/reference.ts
     - tests/cli.test.ts
     - schemas/sdlc-ref/v1/sdlc-ref-resolution.schema.json
+    - schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
     - .docs/work-items/WI-0017/work-item.json
     - .docs/work-items/WI-0016/work-item.json
   informational:
@@ -50,7 +51,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -81,19 +82,71 @@ task:
       - Scan data recursively for syntactically supported reference strings, resolve breadth-first rounds, and store results in one flat map with a global seen set.
       - Extend the response schema and add focused/dynamic tests for depth behavior and read-only operation.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Added depth parsing with default/flag-only depth 1, breadth-first flat reference expansion, global deduplication/cycle safety, v2 response schema, and regression coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded depth, flat-reference, deduplication, and response-contract implementation plan.
-          objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0017/steps/WI-0017-10000000-implementation.yaml]
-      testImplementations: []
+        - id: CHANGE-001
+          type: production-code
+          summary: Added positive depth parsing, breadth-first reference expansion, global seen-set deduplication, and flat child entries without nested references maps.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - src/cli/main.ts
+            - src/core/reference-resolution.ts
+        - id: CHANGE-002
+          type: schema
+          summary: Added the v2 depth-aware response schema with root references map and non-nested child resolution contract.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
+        - id: CHANGE-003
+          type: test-code
+          summary: Added default/explicit depth, nested temporary graph, duplicate/cycle, malformed depth, and read-only coverage.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-DEPTH-DEFAULT'
+          path: tests/cli.test.ts
+          selector: applies depth defaults and expands a flat deduplicated reference map by rounds
+        - testCaseRef: '#test-case/TC-DEPTH-FLAT-MAP'
+          path: tests/cli.test.ts
+          selector: applies depth defaults and expands a flat deduplicated reference map by rounds
+        - testCaseRef: '#test-case/TC-DEPTH-DEDUPLICATION'
+          path: tests/cli.test.ts
+          selector: applies depth defaults and expands a flat deduplicated reference map by rounds
+        - testCaseRef: '#test-case/TC-DEPTH-ERRORS'
+          path: tests/cli.test.ts
+          selector: rejects malformed and duplicate depth options
+        - testCaseRef: '#test-case/TC-DEPTH-CONTRACT'
+          path: schemas/sdlc-ref/v2/sdlc-ref-resolution.schema.json
+          selector: root references and non-nested child resolution contract
+        - testCaseRef: '#test-case/TC-DEPTH-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: applies depth defaults and expands a flat deduplicated reference map by rounds
     verification:
-      status: not-run
-      objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      status: passed
+      objectiveRefs:
+        - OBJ-001
+        - OBJ-002
+      tests:
+        - id: EXEC-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-DEPTH-DEFAULT'
+            - '#test-case/TC-DEPTH-FLAT-MAP'
+            - '#test-case/TC-DEPTH-DEDUPLICATION'
+            - '#test-case/TC-DEPTH-ERRORS'
+            - '#test-case/TC-DEPTH-CONTRACT'
+            - '#test-case/TC-DEPTH-READ-ONLY'
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Typecheck, build, all 37 tests, depth response schema validation, and nested graph expansion checks passed.
     limitations:
-      - ref resolve currently has no depth option and returns no references field.
+      - Expansion remains limited to locally resolvable references; unsupported task-local/global references produce findings and are not added to references.

@@ -243,11 +243,13 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
   if (args[1] !== 'validate' && args[1] !== 'resolve') throw new DiscoveryError('Usage: sdlc ref <validate|resolve> --ref <reference>');
   const command = args[1];
   if (args[2] === '--help' || args[2] === '-h') {
-    console.log(`Usage: sdlc ref ${command} --ref <reference>`);
-    console.log(command === 'validate' ? 'Validate one reference against recursively discovered schema-registered reference types.' : 'Resolve one repository-local reference to its containing document and selected data.');
+    console.log(command === 'validate' ? 'Usage: sdlc ref validate --ref <reference>' : 'Usage: sdlc ref resolve --ref <reference> [--depth [positive-integer]]');
+    console.log(command === 'validate' ? 'Validate one reference against recursively discovered schema-registered reference types.' : 'Resolve one repository-local reference to its containing document and selected data, with optional flat reference expansion.');
     return 0;
   }
   let ref: string | undefined;
+  let depth = 1;
+  let depthSelected = false;
   for (let index = 2; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') continue;
@@ -256,6 +258,22 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
       if (!value || value.startsWith('-')) throw new DiscoveryError('--ref requires a reference.');
       if (ref !== undefined) throw new DiscoveryError('Duplicate --ref option.');
       ref = value;
+    } else if (command === 'resolve' && argument === '--depth') {
+      if (depthSelected) throw new DiscoveryError('Duplicate --depth option.');
+      depthSelected = true;
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith('-')) continue;
+      if (!/^[1-9][0-9]*$/u.test(value)) throw new DiscoveryError('--depth requires a positive integer.');
+      depth = Number(value);
+      if (!Number.isSafeInteger(depth)) throw new DiscoveryError('--depth is too large.');
+      index += 1;
+    } else if (command === 'resolve' && argument.startsWith('--depth=')) {
+      if (depthSelected) throw new DiscoveryError('Duplicate --depth option.');
+      depthSelected = true;
+      const value = argument.slice('--depth='.length);
+      if (!/^[1-9][0-9]*$/u.test(value)) throw new DiscoveryError('--depth requires a positive integer.');
+      depth = Number(value);
+      if (!Number.isSafeInteger(depth)) throw new DiscoveryError('--depth is too large.');
     } else if (argument.startsWith('--ref=')) {
       const value = argument.slice('--ref='.length);
       if (!value) throw new DiscoveryError('--ref requires a reference.');
@@ -268,7 +286,7 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
   if (!ref) throw new DiscoveryError(`Usage: sdlc ref ${command} --ref <reference>`);
   const result = command === 'validate'
     ? await validateReference(schemaRoot, ref)
-    : await resolveReference(await resolveOperativeRoot(), schemaRoot, ref);
+    : await resolveReference(await resolveOperativeRoot(), schemaRoot, ref, depth);
   console.log(JSON.stringify(result, null, 2));
   return result.valid ? 0 : 1;
 }
