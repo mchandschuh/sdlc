@@ -4,7 +4,7 @@ taskUid: WI-0018-40000000
 orderKey: '40000000'
 parentTaskUid: null
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Produce the WI-0018 0.3.0 release candidate
 objective: Bump the package minor version to 0.3.0, build the compiled CLI, and verify the local release candidate without publishing or deploying it.
 references:
@@ -42,7 +42,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -104,20 +104,35 @@ task:
       - Do not deploy the application or install it into production.
       - Do not mutate the work-item lifecycle directly.
   result:
-    status: blocked
-    summary: The 0.3.0 release candidate is blocked until all prior WI-0018 implementation and validation tasks pass.
+    status: delivered
+    summary: The local 0.3.0 release candidate was built, smoke-tested, and verified with the complete unit-test suite after all prior WI-0018 tasks passed.
     artifacts:
-      - id: ART-PLANNED-001
+      - id: ART-001
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:674c2ee7ccbc7976a9fdd3a5c1d647df31dc2d97854b68124c5e63ad7311df03
+      - id: ART-002
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:a14666a943eaec0c59d423f6695135c3940596f78d1210457730b72ce51cc6e7
     executions:
-      - id: EXEC-RELEASE-PLANNED
+      - id: EXEC-RELEASE-001
         procedureRef: '#procedure/PROC-001'
         result:
-          status: blocked
-          summary: Release build is deferred until the preceding WI-0018 tasks complete.
+          status: passed
+          summary: yarn build completed successfully and produced the compiled CLI entrypoint.
         command: yarn build
+      - id: EXEC-RELEASE-002
+        procedureRef: '#procedure/PROC-002'
+        result:
+          status: passed
+          summary: The compiled launcher reported version 0.3.0 and exited successfully.
+        command: node ./bin/cli.js --version
+      - id: EXEC-RELEASE-003
+        procedureRef: '#procedure/PROC-003'
+        result:
+          status: passed
+          summary: The complete unit-test suite passed 41 tests.
+        command: yarn test
     limitations:
-      - Release preparation remains pending all prior WI-0018 task validation.
-      - The planned artifact checksum is a placeholder and is not delivery evidence.
+      - The release candidate is local and is not published, deployed, or installed into production.
