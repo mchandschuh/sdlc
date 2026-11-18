@@ -1,0 +1,123 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0018
+taskUid: WI-0018-40000000
+orderKey: '40000000'
+parentTaskUid: null
+taskType: delivery
+processingStatus: unprocessed
+title: Produce the WI-0018 0.3.0 release candidate
+objective: Bump the package minor version to 0.3.0, build the compiled CLI, and verify the local release candidate without publishing or deploying it.
+references:
+  required:
+    - package.json
+    - bin/cli.js
+    - src/cli/main.ts
+    - .docs/work-items/WI-0018/work-item.json
+    - .docs/work-items/WI-0018/steps/WI-0018-31000000-migration-validation.yaml
+  informational:
+    - README.md
+    - tsconfig.json
+dependsOn:
+  - WI-0018-31000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0018/steps/WI-0018-40000000-release.yaml
+  commitSubject: 'WI-0018: chore(release): prepare version 0.3.0'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: build-release-candidate
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: smoke-release-candidate
+      executable: node
+      arguments: [./bin/cli.js, --version]
+      expectedExitCode: 0
+    - id: test-release-candidate
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare and smoke-test a local 0.3.0 release candidate after all WI-0018 implementation and validation tasks pass.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0018|31000000#result/R-001
+        purpose: Confirm migration validation passed before release preparation.
+        required: true
+      - id: INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the repository revision from which the release candidate is built.
+        required: true
+    artifacts:
+      - id: ART-001
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI entrypoint used by the bin launcher.
+        required: true
+      - id: ART-002
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.3.0.
+        required: true
+    procedures:
+      - id: PROC-001
+        sequence: 1
+        name: build-release-candidate
+        description: Compile the TypeScript source into the dist directory.
+        steps: [Run yarn build., Confirm dist/cli/main.js exists.]
+        command: yarn build
+        expected:
+          result: The TypeScript build completes successfully and produces the compiled CLI entrypoint.
+        required: true
+      - id: PROC-002
+        sequence: 2
+        name: smoke-release-candidate
+        description: Run the compiled launcher through its version flag.
+        steps: [Run node ./bin/cli.js --version., Confirm the output is 0.3.0.]
+        command: node ./bin/cli.js --version
+        expected:
+          result: The compiled launcher reports version 0.3.0 and exits successfully.
+        required: true
+      - id: PROC-003
+        sequence: 3
+        name: test-release-candidate
+        description: Run the complete unit-test suite for the release candidate.
+        steps: [Run yarn test., Confirm all tests pass.]
+        command: yarn test
+        expected:
+          result: The complete unit-test suite passes.
+        required: true
+    nonGoals:
+      - Do not publish the package to a registry.
+      - Do not deploy the application or install it into production.
+      - Do not mutate the work-item lifecycle directly.
+  result:
+    status: blocked
+    summary: The 0.3.0 release candidate is blocked until all prior WI-0018 implementation and validation tasks pass.
+    artifacts:
+      - id: ART-PLANNED-001
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: EXEC-RELEASE-PLANNED
+        procedureRef: '#procedure/PROC-001'
+        result:
+          status: blocked
+          summary: Release build is deferred until the preceding WI-0018 tasks complete.
+        command: yarn build
+    limitations:
+      - Release preparation remains pending all prior WI-0018 task validation.
+      - The planned artifact checksum is a placeholder and is not delivery evidence.
