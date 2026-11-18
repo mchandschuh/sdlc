@@ -4,7 +4,7 @@ taskUid: WI-0003-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Normalize sdlc work-item and task list options
 objective: Replace positional work-item selection with the explicit --work-item <work-item> option for both discovery commands.
 references:
@@ -108,25 +108,58 @@ task:
       - Update command help, README examples, and stable error messages.
       - Update focused tests for valid --work-item selection, missing/duplicate values, and unchanged output.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: WI-0003 records the planned option-syntax migration; application command changes have not yet been made.
+      summary: Normalized both discovery commands to require --work-item <work-item> and added regression coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the normalized --work-item command contract and implementation ownership.
+        - id: CHANGE-001
+          type: production-code
+          summary: Updated work-item and task list parsing, help, and stable errors for --work-item selection.
           objectiveRefs:
             - OBJ-001
             - OBJ-002
           paths:
-            - .docs/work-items/WI-0003/steps/WI-0003-10000000-implementation.yaml
-      testImplementations: []
+            - src/cli/main.ts
+        - id: CHANGE-002
+          type: test-code
+          summary: Added regression tests for named-option selection, help, duplicate values, and positional rejection.
+          objectiveRefs:
+            - OBJ-001
+            - OBJ-002
+          paths:
+            - tests/cli.test.ts
+        - id: CHANGE-003
+          type: documentation
+          summary: Updated CLI usage examples to show explicit --work-item selection.
+          objectiveRefs:
+            - OBJ-001
+          paths:
+            - README.md
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-OPTION'
+          path: tests/cli.test.ts
+          selector: lists work items with --work-item WI-0001
+        - testCaseRef: '#test-case/TC-TASK-OPTION'
+          path: tests/cli.test.ts
+          selector: lists selected tasks with --work-item WI-0001
+        - testCaseRef: '#test-case/TC-OPTION-ERRORS'
+          path: tests/cli.test.ts
+          selector: rejects invalid normalized option forms
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - OBJ-001
         - OBJ-002
-      tests: []
+      tests:
+        - id: EXEC-OPTION-001
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/TC-WORK-ITEM-OPTION'
+            - '#test-case/TC-TASK-OPTION'
+            - '#test-case/TC-OPTION-ERRORS'
+          command: yarn test
+          status: passed
+          result: The focused suite passed all fifteen CLI, discovery, and option-syntax tests.
     limitations:
-      - The --work-item syntax migration is not implemented by this preparation record.
-      - No runtime, CLI-audit, or unit evidence exists for WI-0003 yet.
+      - The migration intentionally rejects the old positional task-list form rather than preserving it as an alias.
+      - Discovery remains local filesystem behavior and does not establish provider, persistence, deployment, or production evidence.

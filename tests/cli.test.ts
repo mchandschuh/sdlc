@@ -57,11 +57,11 @@ describe('discovery commands', () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
-    await expect(main(['work-item', 'list', '--json'])).resolves.toBe(0);
+    await expect(main(['work-item', 'list', '--work-item', 'WI-0001', '--json'])).resolves.toBe(0);
 
     const report = JSON.parse(output.join('\n')) as { schema: string; items: Array<{ workItemId: string; path: string }> };
     expect(report.schema).toBe('sdlc-work-item-list/v1');
-    expect(report.items.map((item) => item.workItemId)).toEqual(['WI-0001', 'WI-0002']);
+    expect(report.items.map((item) => item.workItemId)).toEqual(['WI-0001']);
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/work-item.json');
   });
 
@@ -69,7 +69,7 @@ describe('discovery commands', () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
-    await expect(main(['task', 'list', 'WI-0001', '--json'])).resolves.toBe(0);
+    await expect(main(['task', 'list', '--work-item', 'WI-0001', '--json'])).resolves.toBe(0);
 
     const report = JSON.parse(output.join('\n')) as { schema: string; workItemId: string; items: Array<{ taskUid: string; path: string }> };
     expect(report.schema).toBe('sdlc-task-list/v1');
@@ -81,6 +81,30 @@ describe('discovery commands', () => {
       'WI-0001-40000000',
     ]);
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml');
+  });
+
+  it('documents the normalized work-item option forms in command help', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'list', '--help'])).resolves.toBe(0);
+    await expect(main(['task', 'list', '--help'])).resolves.toBe(0);
+
+    expect(output).toContain('Usage: sdlc work-item list --work-item <work-item> [--json]');
+    expect(output).toContain('Usage: sdlc task list --work-item <work-item> [--json]');
+  });
+
+  it.each([
+    [['work-item', 'list'], 'Usage: sdlc work-item list --work-item <work-item> [--json]'],
+    [['task', 'list'], 'Usage: sdlc task list --work-item <work-item> [--json]'],
+    [['task', 'list', '--work-item', 'WI-0001', '--work-item', 'WI-0002'], 'Duplicate --work-item option.'],
+    [['task', 'list', 'WI-0001'], 'Unknown option: WI-0001'],
+  ] as const)('rejects invalid normalized option form %j', async (args, expected) => {
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+
+    await expect(main(args)).resolves.toBe(1);
+    expect(errors[0]).toBe(expected);
   });
 
   it('discovers fixture records and preserves their bytes', async () => {
@@ -115,7 +139,7 @@ describe('discovery commands', () => {
     const errors: string[] = [];
     vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
 
-    await expect(main(['task', 'list', 'WI-9999'])).resolves.toBe(1);
+    await expect(main(['task', 'list', '--work-item', 'WI-9999'])).resolves.toBe(1);
     expect(errors).toEqual(['Work item not found: WI-9999']);
 
     const root = await mkdtemp(join(tmpdir(), 'sdlc-malformed-'));

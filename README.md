@@ -32,6 +32,8 @@ yarn test
 # After local registration:
 sdlc --help
 sdlc --version
+sdlc work-item list --work-item WI-0001
+sdlc task list --work-item WI-0001
 ```
 
 The short aliases `-h` and `-v` are equivalent to `--help` and `--version`.

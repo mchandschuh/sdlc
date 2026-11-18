@@ -14,7 +14,7 @@ export function printHelp(): void {
   console.log('  -v, --version    Show the package version');
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
-  console.log('  task list <id>   List the selected work-item task records');
+  console.log('  task list        List the selected work-item task records');
 }
 
 async function version(): Promise<string> {
@@ -50,32 +50,65 @@ function printTasks(workItemId: string, report: DiscoveryReport<TaskSummary>, js
 
 function commandHelp(command: 'work-item list' | 'task list'): number {
   if (command === 'work-item list') {
-    console.log('Usage: sdlc work-item list [--json]');
+    console.log('Usage: sdlc work-item list --work-item <work-item> [--json]');
     console.log('List canonical work-item.json records below .docs/work-items/.');
   } else {
-    console.log('Usage: sdlc task list <work-item-id> [--json]');
+    console.log('Usage: sdlc task list --work-item <work-item> [--json]');
     console.log('List canonical task envelopes below the selected work item stepsPath.');
   }
   return 0;
 }
 
+function optionValue(args: readonly string[], name: string): { value?: string; duplicate: boolean; unknown?: string } {
+  let value: string | undefined;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!;
+    if (argument === '--json') continue;
+    if (argument === name) {
+      const next = args[index + 1];
+      if (!next || next.startsWith('-')) throw new DiscoveryError(`${name} requires a value.`);
+      if (value !== undefined) return { duplicate: true };
+      value = next;
+      index += 1;
+      continue;
+    }
+    if (argument.startsWith(`${name}=`)) {
+      const next = argument.slice(name.length + 1);
+      if (!next) throw new DiscoveryError(`${name} requires a value.`);
+      if (value !== undefined) return { duplicate: true };
+      value = next;
+      continue;
+    }
+    return { duplicate: false, value, unknown: argument };
+  }
+  return { duplicate: false, value };
+}
+
 async function handleDiscovery(args: readonly string[]): Promise<number | undefined> {
-  const [first, second, third] = args;
+  const [first, second] = args;
   if (first === 'work-item' && (second === '--help' || second === '-h')) return commandHelp('work-item list');
   if (first === 'task' && (second === '--help' || second === '-h')) return commandHelp('task list');
+  if (first === 'work-item' && second === 'list' && (args.includes('--help') || args.includes('-h'))) return commandHelp('work-item list');
+  if (first === 'task' && second === 'list' && (args.includes('--help') || args.includes('-h'))) return commandHelp('task list');
   if (first === 'work-item' && second === 'list') {
-    if (third && third !== '--json') throw new DiscoveryError(`Unknown option: ${third}`);
+    const selected = optionValue(args.slice(2), '--work-item');
+    if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+    if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item list --work-item <work-item> [--json]');
+    if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
     const report = await discoverWorkItems(repositoryRoot);
-    printWorkItems(report, jsonRequested(args));
-    return report.findings.length > 0 ? 1 : 0;
+    if (!report.items.some((item) => item.workItemId === selected.value)) throw new DiscoveryError(`Work item not found: ${selected.value}`);
+    const selectedReport = { ...report, items: report.items.filter((item) => item.workItemId === selected.value) };
+    printWorkItems(selectedReport, jsonRequested(args));
+    return selectedReport.findings.length > 0 ? 1 : 0;
   }
   if (first === 'task' && second === 'list') {
-    const workItemId = third && !third.startsWith('--') ? third : undefined;
-    if (!workItemId) throw new DiscoveryError('Usage: sdlc task list <work-item-id> [--json]');
-    const extra = args.slice(3).filter((arg) => arg !== '--json');
-    if (extra.length > 0) throw new DiscoveryError(`Unknown option: ${extra[0]}`);
-    const report = await discoverTasks(repositoryRoot, workItemId);
-    printTasks(workItemId, report, jsonRequested(args));
+    const selected = optionValue(args.slice(2), '--work-item');
+    if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+    if (!selected.value) throw new DiscoveryError('Usage: sdlc task list --work-item <work-item> [--json]');
+    const report = await discoverTasks(repositoryRoot, selected.value);
+    printTasks(selected.value, report, jsonRequested(args));
     return report.findings.length > 0 ? 1 : 0;
   }
   return undefined;
