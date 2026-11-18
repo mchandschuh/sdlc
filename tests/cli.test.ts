@@ -182,7 +182,7 @@ describe('CLI interface', () => {
     expect(requirement.valid).toBe(true);
     expect(requirement.resolution.data.id).toBe('WI-0007_REQ_001');
 
-    await expect(main(['ref', 'resolve', '--ref', 'WI-0007|10000000#result/R-001'])).resolves.toBe(0);
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007-10000000#result/R-001'])).resolves.toBe(0);
     const result = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { repositoryPath: string; data: { status: string } } };
     expect(result.valid).toBe(true);
     expect(result.resolution.repositoryPath).toContain('WI-0007-10000000-implementation.yaml');
@@ -199,7 +199,7 @@ describe('CLI interface', () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
-    await expect(main(['ref', 'resolve', '--ref', 'WI-0007|10000000#result/implementation/changes/CHANGE-001'])).resolves.toBe(0);
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0007-10000000#result/implementation/changes/CHANGE-001'])).resolves.toBe(0);
     const qualified = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { data: { id: string } } };
     expect(qualified.valid).toBe(true);
     expect(qualified.resolution.data.id).toBe('CHANGE-001');
@@ -208,6 +208,17 @@ describe('CLI interface', () => {
     const legacy = JSON.parse(output.at(-1)!) as { valid: boolean; findings: string[] };
     expect(legacy.valid).toBe(false);
     expect(legacy.findings[0]).toContain('migration');
+  });
+
+  it('accepts canonical hyphen task identifiers and rejects pipe-separated task references', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'validate', '--ref', 'WI-0007-10000000#result/R-001'])).resolves.toBe(0);
+    expect((JSON.parse(output.at(-1)!) as { valid: boolean }).valid).toBe(true);
+
+    await expect(main(['ref', 'validate', '--ref', 'WI-0007|10000000#result/R-001'])).resolves.toBe(1);
+    expect((JSON.parse(output.at(-1)!) as { valid: boolean }).valid).toBe(false);
   });
 
   it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {

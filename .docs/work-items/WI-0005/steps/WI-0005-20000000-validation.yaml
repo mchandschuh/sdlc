@@ -73,7 +73,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0005|10000000#result/R-001
+        ref: WI-0005-10000000#result/R-001
         purpose: Identify the schema implementation and runtime alignment result.
         required: true
       - id: INPUT-SCHEMA-001
@@ -84,7 +84,7 @@ task:
     targets:
       - id: TARGET-STAT-SCHEMA-001
         kind: artifact
-        ref: WI-0005|10000000#result/R-001
+        ref: WI-0005-10000000#result/R-001
         purpose: Validate the persisted schema and representative stat output.
         required: true
     objectiveRefs:

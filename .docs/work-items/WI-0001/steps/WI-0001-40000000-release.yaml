@@ -63,12 +63,12 @@ task:
     inputs:
       - id: INPUT-VALIDATION-001
         kind: validation
-        ref: WI-0001|20000000#result/R-001
+        ref: WI-0001-20000000#result/R-001
         purpose: Confirm the implementation and task records have local validation evidence.
         required: true
       - id: INPUT-REVIEW-001
         kind: taskResult
-        ref: WI-0001|30000000#result/R-001
+        ref: WI-0001-30000000#result/R-001
         purpose: Confirm the bounded review result and its release non-claims.
         required: true
       - id: INPUT-REPOSITORY-001

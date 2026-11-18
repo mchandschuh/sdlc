@@ -30,7 +30,7 @@
             {
               "id": "REF-001",
               "type": "requirement",
-              "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+              "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
               "description": "The requirement for durable task-specific contracts."
             },
             {
@@ -231,7 +231,7 @@
         {
           "id": "REF-001",
           "type": "requirement",
-          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
           "description": "The requirement for durable task-specific contracts."
         },
         {
@@ -2164,7 +2164,7 @@
               {
                 "id": "REF-001",
                 "type": "requirement",
-                "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+                "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
                 "description": "The requirement for durable task-specific contracts."
               }
             ]
@@ -2559,7 +2559,7 @@
             {
               "id": "REF-001",
               "type": "requirement",
-              "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+              "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
               "description": "The requirement for durable task-specific contracts."
             },
             {
@@ -4132,7 +4132,7 @@
       "type": "string",
       "oneOf": [
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
           "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
@@ -4140,8 +4140,8 @@
       ],
       "description": "A globally qualified SDLC reference. Use this form for cross-task SDLC entities so repository, task, entity kind, and entity identity are explicit.",
       "examples": [
-        "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
-        "sdlc://repo/local%2Fskills/WI-0003%7C03000000#artifact/A-001",
+        "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
+        "sdlc://repo/local%2Fskills/WI-0003-03000000#artifact/A-001",
         "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002"
       ]
     },
@@ -4574,7 +4574,7 @@
           "description": "Optional globally scoped SDLC test-case references; cross-task references must not use task-local syntax.",
           "examples": [
             [
-              "sdlc://repo/local%2Fskills/WI-0003%7C06000000#test-case/TC-001"
+              "sdlc://repo/local%2Fskills/WI-0003-06000000#test-case/TC-001"
             ]
           ]
         },
@@ -4690,7 +4690,7 @@
           "$ref": "#/$defs/SdlcGlobalReference",
           "description": "The scoped locator whose grammar is selected by the reference type.",
           "examples": [
-            "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001"
+            "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001"
           ]
         },
         "description": {
@@ -4714,7 +4714,7 @@
         {
           "id": "REF-001",
           "type": "requirement",
-          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
           "description": "A scoped design reference."
         }
       ]
@@ -4886,7 +4886,7 @@
           ],
           "description": "An explicitly scoped locator for the extensible reference.",
           "examples": [
-            "sdlc://repo/local%2Fskills/WI-0003%7C03000000#document/DOC-001"
+            "sdlc://repo/local%2Fskills/WI-0003-03000000#document/DOC-001"
           ]
         },
         "description": {
@@ -4910,7 +4910,7 @@
         {
           "id": "REF-001",
           "type": "other",
-          "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#document/DOC-001",
+          "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#document/DOC-001",
           "description": "An explicitly scoped extensible reference."
         }
       ]
@@ -4933,7 +4933,7 @@
           {
             "id": "REF-001",
             "type": "requirement",
-            "locator": "sdlc://repo/local%2Fskills/WI-0003%7C03000000#requirement/WI-0003_REQ_001",
+            "locator": "sdlc://repo/local%2Fskills/WI-0003-03000000#requirement/WI-0003_REQ_001",
             "description": "The requirement for durable task-specific contracts."
           },
           {

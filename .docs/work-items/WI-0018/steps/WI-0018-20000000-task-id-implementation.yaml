@@ -4,7 +4,7 @@ taskUid: WI-0018-20000000
 orderKey: '20000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Replace pipe task identifiers with hyphen UIDs
 objective: Update task identifier schemas, runtime parsing, reference patterns, records, fixtures, and tests from WorkItemId|StepId to WorkItemId-StepId.
 references:
@@ -50,7 +50,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -87,19 +87,49 @@ task:
       - Update runtime parsers, fixtures, work-item records, and tests.
       - Run the complete unit-test suite and schema checks before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation has not yet been processed.
+      summary: Replaced canonical pipe-separated task identifiers with hyphenated eight-digit task UIDs across schemas, runtime parsing, persisted records, fixtures, and tests.
       changes:
-        - id: CHANGE-PLAN-001
+        - id: CHANGE-001
+          type: schema
+          summary: Updated task identifier, qualified reference, global reference, and embedded task-reference patterns to canonical hyphen UIDs.
+          objectiveRefs: [OBJ-003]
+          paths: [schemas/common/v1/, schemas/sdlc-ref/, schemas/sdlc-task-delivery/]
+        - id: CHANGE-002
+          type: production-code
+          summary: Updated runtime qualified-reference parsing to accept canonical hyphen UIDs and reject pipe-qualified forms through syntax validation.
+          objectiveRefs: [OBJ-003]
+          paths: [src/core/reference-resolution.ts]
+        - id: CHANGE-003
           type: documentation
-          summary: Recorded the hyphen task-identifier migration plan.
-          objectiveRefs: [OBJ-003, OBJ-004]
-          paths: [.docs/work-items/WI-0018/steps/WI-0018-20000000-task-id-implementation.yaml]
-      testImplementations: []
+          summary: Converted repository-owned task records, schema examples, and fixtures to hyphenated task UIDs.
+          objectiveRefs: [OBJ-003]
+          paths: [.docs/work-items/, schemas/]
+        - id: CHANGE-004
+          type: test-code
+          summary: Added canonical acceptance and pipe rejection coverage.
+          objectiveRefs: [OBJ-004]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-HYPHEN-SCHEMAS'
+          path: tests/cli.test.ts
+          selector: validates every example from every schema-registered reference type dynamically
+        - testCaseRef: '#test-case/TC-HYPHEN-RUNTIME'
+          path: tests/cli.test.ts
+          selector: accepts canonical hyphen task identifiers and rejects pipe-separated task references
+        - testCaseRef: '#test-case/TC-HYPHEN-RECORDS'
+          path: .docs/work-items/WI-0018/work-item.json
+          selector: work-item validate
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-003, OBJ-004]
-      tests: []
+      tests:
+        - id: EXEC-HYPHEN-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-HYPHEN-SCHEMAS', '#test-case/TC-HYPHEN-RUNTIME', '#test-case/TC-HYPHEN-RECORDS']
+          command: yarn typecheck && yarn build && yarn test && node ./bin/cli.js work-item validate --work-item WI-0018 --json
+          status: passed
+          result: Canonical hyphen syntax passed schema/runtime checks; pipe syntax was rejected; all 39 tests and 8 WI-0018 object validations passed.
     limitations:
-      - Existing pipe-separated task references remain until this task is processed.
+      - Pipe-separated references remain supported only as migration inputs handled by the migration task.

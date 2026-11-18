@@ -19,21 +19,21 @@
           "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
           "sourceReview": {
             "taskType": "review",
-            "taskRef": "WI-0003|19000000",
+            "taskRef": "WI-0003-19000000",
             "result": {
-              "ref": "WI-0003|19000000#result/R-001",
+              "ref": "WI-0003-19000000#result/R-001",
               "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
             },
             "decision": "changes_requested",
             "findingRefs": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           },
           "affectedResult": {
             "taskType": "implementation",
-            "taskRef": "WI-0003|06000000",
+            "taskRef": "WI-0003-06000000",
             "result": {
-              "ref": "WI-0003|06000000#result/R-001",
+              "ref": "WI-0003-06000000#result/R-001",
               "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
             }
           },
@@ -42,7 +42,7 @@
               "id": "OBJ-001",
               "statement": "Correct the reviewed validation boundary.",
               "sourceRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ]
             }
           ],
@@ -54,7 +54,7 @@
                 "#objective/OBJ-001"
               ],
               "findingRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ]
             }
           ],
@@ -107,7 +107,7 @@
                 "#acceptance-criterion/AC-001"
               ],
               "findingRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ],
               "paths": [
                 "src/validation/service.ts"
@@ -118,7 +118,7 @@
             {
               "id": "EVID-001",
               "kind": "test",
-              "ref": "WI-0003|08000000#result/R-001",
+              "ref": "WI-0003-08000000#result/R-001",
               "claim": "The focused regression test passed for the corrected validation boundary.",
               "tier": "unit",
               "source": "referenced-result"
@@ -166,14 +166,14 @@
           "examples": [
             {
               "taskType": "review",
-              "taskRef": "WI-0003|19000000",
+              "taskRef": "WI-0003-19000000",
               "result": {
-                "ref": "WI-0003|19000000#result/R-001",
+                "ref": "WI-0003-19000000#result/R-001",
                 "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
               },
               "decision": "changes_requested",
               "findingRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ]
             }
           ]
@@ -184,9 +184,9 @@
           "examples": [
             {
               "taskType": "implementation",
-              "taskRef": "WI-0003|06000000",
+              "taskRef": "WI-0003-06000000",
               "result": {
-                "ref": "WI-0003|06000000#result/R-001",
+                "ref": "WI-0003-06000000#result/R-001",
                 "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
               }
             }
@@ -205,7 +205,7 @@
                 "id": "OBJ-001",
                 "statement": "Correct the reviewed validation boundary.",
                 "sourceRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ]
               }
             ]
@@ -216,7 +216,7 @@
                 "id": "OBJ-001",
                 "statement": "Correct the reviewed validation boundary.",
                 "sourceRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ]
               }
             ]
@@ -238,7 +238,7 @@
                   "#objective/OBJ-001"
                 ],
                 "findingRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ]
               }
             ]
@@ -252,7 +252,7 @@
                   "#objective/OBJ-001"
                 ],
                 "findingRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ]
               }
             ]
@@ -336,21 +336,21 @@
           "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
           "sourceReview": {
             "taskType": "review",
-            "taskRef": "WI-0003|19000000",
+            "taskRef": "WI-0003-19000000",
             "result": {
-              "ref": "WI-0003|19000000#result/R-001",
+              "ref": "WI-0003-19000000#result/R-001",
               "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
             },
             "decision": "changes_requested",
             "findingRefs": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           },
           "affectedResult": {
             "taskType": "implementation",
-            "taskRef": "WI-0003|06000000",
+            "taskRef": "WI-0003-06000000",
             "result": {
-              "ref": "WI-0003|06000000#result/R-001",
+              "ref": "WI-0003-06000000#result/R-001",
               "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
             }
           },
@@ -359,7 +359,7 @@
               "id": "OBJ-001",
               "statement": "Correct the reviewed validation boundary.",
               "sourceRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ]
             }
           ],
@@ -371,7 +371,7 @@
                 "#objective/OBJ-001"
               ],
               "findingRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ]
             }
           ],
@@ -429,7 +429,7 @@
           "$ref": "../../common/v1/sdlc-task-identifier.schema.json",
           "description": "The work-item-qualified identity of the source review task.",
           "examples": [
-            "WI-0003|19000000"
+            "WI-0003-19000000"
           ]
         },
         "result": {
@@ -437,7 +437,7 @@
           "description": "The exact source review result and digest.",
           "examples": [
             {
-              "ref": "WI-0003|19000000#result/R-001",
+              "ref": "WI-0003-19000000#result/R-001",
               "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
             }
           ]
@@ -457,13 +457,13 @@
             "$ref": "../../common/v1/sdlc-any-reference.schema.json",
             "description": "Finding from the source review that this action must address.",
             "examples": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           },
           "description": "The source-review findings that establish the corrective-work boundary.",
           "examples": [
             [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           ]
         }
@@ -471,14 +471,14 @@
       "examples": [
         {
           "taskType": "review",
-          "taskRef": "WI-0003|19000000",
+          "taskRef": "WI-0003-19000000",
           "result": {
-            "ref": "WI-0003|19000000#result/R-001",
+            "ref": "WI-0003-19000000#result/R-001",
             "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
           },
           "decision": "changes_requested",
           "findingRefs": [
-            "WI-0003|19000000#finding/FIND-001"
+            "WI-0003-19000000#finding/FIND-001"
           ]
         }
       ]
@@ -504,7 +504,7 @@
           "$ref": "../../common/v1/sdlc-task-identifier.schema.json",
           "description": "The work-item-qualified identity of the task that produced the affected result.",
           "examples": [
-            "WI-0003|06000000"
+            "WI-0003-06000000"
           ]
         },
         "result": {
@@ -512,7 +512,7 @@
           "description": "The exact affected result and digest; corrective work must produce a new result rather than replace it.",
           "examples": [
             {
-              "ref": "WI-0003|06000000#result/R-001",
+              "ref": "WI-0003-06000000#result/R-001",
               "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
             }
           ]
@@ -521,9 +521,9 @@
       "examples": [
         {
           "taskType": "implementation",
-          "taskRef": "WI-0003|06000000",
+          "taskRef": "WI-0003-06000000",
           "result": {
-            "ref": "WI-0003|06000000#result/R-001",
+            "ref": "WI-0003-06000000#result/R-001",
             "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
           }
         }
@@ -563,13 +563,13 @@
             "$ref": "../../common/v1/sdlc-any-reference.schema.json",
             "description": "Source review, finding, affected result, or other authoritative reference motivating this objective.",
             "examples": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           },
           "description": "Authoritative inputs from which the corrective objective was derived.",
           "examples": [
             [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           ]
         }
@@ -579,7 +579,7 @@
           "id": "OBJ-001",
           "statement": "Correct the reviewed validation boundary.",
           "sourceRefs": [
-            "WI-0003|19000000#finding/FIND-001"
+            "WI-0003-19000000#finding/FIND-001"
           ]
         }
       ]
@@ -806,13 +806,13 @@
             "$ref": "../../common/v1/sdlc-any-reference.schema.json",
             "description": "Source-review finding addressed by this correction.",
             "examples": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           },
           "description": "Findings that this correction addresses.",
           "examples": [
             [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           ]
         },
@@ -846,7 +846,7 @@
             "#acceptance-criterion/AC-001"
           ],
           "findingRefs": [
-            "WI-0003|19000000#finding/FIND-001"
+            "WI-0003-19000000#finding/FIND-001"
           ],
           "paths": [
             "src/validation/service.ts"
@@ -907,7 +907,7 @@
                   "#acceptance-criterion/AC-001"
                 ],
                 "findingRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ],
                 "paths": [
                   "src/validation/service.ts"
@@ -928,7 +928,7 @@
                   "#acceptance-criterion/AC-001"
                 ],
                 "findingRefs": [
-                  "WI-0003|19000000#finding/FIND-001"
+                  "WI-0003-19000000#finding/FIND-001"
                 ],
                 "paths": [
                   "src/validation/service.ts"
@@ -948,7 +948,7 @@
               {
                 "id": "EVID-001",
                 "kind": "test",
-                "ref": "WI-0003|08000000#result/R-001",
+                "ref": "WI-0003-08000000#result/R-001",
                 "claim": "The focused regression test passed for the corrected validation boundary.",
                 "tier": "unit",
                 "source": "referenced-result"
@@ -961,7 +961,7 @@
               {
                 "id": "EVID-001",
                 "kind": "test",
-                "ref": "WI-0003|08000000#result/R-001",
+                "ref": "WI-0003-08000000#result/R-001",
                 "claim": "The focused regression test passed for the corrected validation boundary.",
                 "tier": "unit",
                 "source": "referenced-result"
@@ -1024,7 +1024,7 @@
                 "#acceptance-criterion/AC-001"
               ],
               "findingRefs": [
-                "WI-0003|19000000#finding/FIND-001"
+                "WI-0003-19000000#finding/FIND-001"
               ],
               "paths": [
                 "src/validation/service.ts"
@@ -1035,7 +1035,7 @@
             {
               "id": "EVID-001",
               "kind": "test",
-              "ref": "WI-0003|08000000#result/R-001",
+              "ref": "WI-0003-08000000#result/R-001",
               "claim": "The focused regression test passed for the corrected validation boundary.",
               "tier": "unit",
               "source": "referenced-result"
@@ -1058,21 +1058,21 @@
         "summary": "Correct the implementation findings and produce a result that can undergo a subsequent review.",
         "sourceReview": {
           "taskType": "review",
-          "taskRef": "WI-0003|19000000",
+          "taskRef": "WI-0003-19000000",
           "result": {
-            "ref": "WI-0003|19000000#result/R-001",
+            "ref": "WI-0003-19000000#result/R-001",
             "sha256": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
           },
           "decision": "changes_requested",
           "findingRefs": [
-            "WI-0003|19000000#finding/FIND-001"
+            "WI-0003-19000000#finding/FIND-001"
           ]
         },
         "affectedResult": {
           "taskType": "implementation",
-          "taskRef": "WI-0003|06000000",
+          "taskRef": "WI-0003-06000000",
           "result": {
-            "ref": "WI-0003|06000000#result/R-001",
+            "ref": "WI-0003-06000000#result/R-001",
             "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
           }
         },
@@ -1081,7 +1081,7 @@
             "id": "OBJ-001",
             "statement": "Correct the reviewed validation boundary.",
             "sourceRefs": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           }
         ],
@@ -1093,7 +1093,7 @@
               "#objective/OBJ-001"
             ],
             "findingRefs": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ]
           }
         ],
@@ -1140,7 +1140,7 @@
               "#acceptance-criterion/AC-001"
             ],
             "findingRefs": [
-              "WI-0003|19000000#finding/FIND-001"
+              "WI-0003-19000000#finding/FIND-001"
             ],
             "paths": [
               "src/validation/service.ts"
@@ -1151,7 +1151,7 @@
           {
             "id": "EVID-001",
             "kind": "test",
-            "ref": "WI-0003|08000000#result/R-001",
+            "ref": "WI-0003-08000000#result/R-001",
             "claim": "The focused regression test passed for the corrected validation boundary.",
             "tier": "unit",
             "source": "referenced-result"

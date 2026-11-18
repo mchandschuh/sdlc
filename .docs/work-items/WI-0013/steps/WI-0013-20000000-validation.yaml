@@ -78,7 +78,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0013|10000000#result/R-001
+        ref: WI-0013-10000000#result/R-001
         purpose: Identify the complete validation implementation result.
         required: true
       - id: INPUT-REQ-001
@@ -105,7 +105,7 @@ task:
       - id: TARGET-WORK-ITEM-REFERENCE-VALIDATE-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0013|10000000#result/R-001
+        ref: WI-0013-10000000#result/R-001
         purpose: Validate complete object and reference resolution behavior.
         required: true
     objectiveRefs:

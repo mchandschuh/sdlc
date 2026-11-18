@@ -54,9 +54,9 @@ task:
     reviewKind: code
     target:
       taskType: implementation
-      taskRef: WI-0001|10000000
+      taskRef: WI-0001-10000000
       result:
-        ref: WI-0001|10000000#result/R-001
+        ref: WI-0001-10000000#result/R-001
         sha256: null
     gateId: implementation-result
     policyRef:
@@ -68,13 +68,13 @@ task:
         purpose: Prevent domain, provider, deployment, or credential scope from entering the initial scaffold.
         required: true
         evidenceRefs:
-          - WI-0001|10000000#result/R-001
+          - WI-0001-10000000#result/R-001
       - id: CRIT-002
         statement: The CLI supports both requested help and version aliases with deterministic exit behavior.
         purpose: Confirm the user-visible terminal contract is implemented and tested.
         required: true
         evidenceRefs:
-          - WI-0001|20000000#result/R-001
+          - WI-0001-20000000#result/R-001
       - id: CRIT-003
         statement: The work-item records include an explicit bounded release task without claiming deployment or approval.
         purpose: Preserve traceability and honest evidence boundaries around the requested release task.
@@ -84,7 +84,7 @@ task:
     evidenceRequirements:
       - id: EVID-001
         kind: validation
-        ref: WI-0001|20000000#result/R-001
+        ref: WI-0001-20000000#result/R-001
         purpose: Provide the local CLI and schema validation result.
         required: true
         minimumTier: cli-audit
@@ -123,13 +123,13 @@ task:
         status: satisfied
         summary: The changed application files are limited to CLI plumbing, tests, package configuration, and documentation.
         evidenceRefs:
-          - WI-0001|10000000#result/R-001
+          - WI-0001-10000000#result/R-001
         findingRefs: []
       - criterionRef: '#criterion/CRIT-002'
         status: satisfied
         summary: The validation record reports successful typecheck, build, and CLI test execution.
         evidenceRefs:
-          - WI-0001|20000000#result/R-001
+          - WI-0001-20000000#result/R-001
         findingRefs: []
       - criterionRef: '#criterion/CRIT-003'
         status: satisfied
@@ -141,7 +141,7 @@ task:
     evidence:
       - id: EVID-001
         kind: validation
-        ref: WI-0001|20000000#result/R-001
+        ref: WI-0001-20000000#result/R-001
         claim: The local validation task records successful CLI checks and schema validation procedures.
         tier: cli-audit
         source: referenced-result

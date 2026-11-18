@@ -52,7 +52,7 @@ task:
     inputs:
       - id: INPUT-VALIDATION-001
         kind: validation
-        ref: WI-0018|31000000#result/R-001
+        ref: WI-0018-31000000#result/R-001
         purpose: Confirm migration validation passed before release preparation.
         required: true
       - id: INPUT-REPOSITORY-001

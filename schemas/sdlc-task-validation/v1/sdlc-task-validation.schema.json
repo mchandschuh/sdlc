@@ -21,7 +21,7 @@
             {
               "id": "INPUT-DESIGN-001",
               "kind": "design",
-              "ref": "WI-0003|03000000#result/R-001",
+              "ref": "WI-0003-03000000#result/R-001",
               "purpose": "Provide the design result whose contract assertions must be checked.",
               "required": true
             }
@@ -31,7 +31,7 @@
               "id": "TARGET-DESIGN-001",
               "kind": "taskResult",
               "taskType": "design",
-              "ref": "WI-0003|03000000#result/R-001",
+              "ref": "WI-0003-03000000#result/R-001",
               "purpose": "Validate the design result rather than an implementation result.",
               "required": true
             }
@@ -167,7 +167,7 @@
               {
                 "id": "INPUT-DESIGN-001",
                 "kind": "design",
-                "ref": "WI-0003|03000000#result/R-001",
+                "ref": "WI-0003-03000000#result/R-001",
                 "purpose": "Provide the design result whose contract assertions must be checked.",
                 "required": true
               }
@@ -178,7 +178,7 @@
               {
                 "id": "INPUT-DESIGN-001",
                 "kind": "design",
-                "ref": "WI-0003|03000000#result/R-001",
+                "ref": "WI-0003-03000000#result/R-001",
                 "purpose": "Provide the design result whose contract assertions must be checked.",
                 "required": true
               }
@@ -198,7 +198,7 @@
                 "id": "TARGET-DESIGN-001",
                 "kind": "taskResult",
                 "taskType": "design",
-                "ref": "WI-0003|03000000#result/R-001",
+                "ref": "WI-0003-03000000#result/R-001",
                 "purpose": "Validate the design result rather than an implementation result.",
                 "required": true
               }
@@ -210,7 +210,7 @@
                 "id": "TARGET-IMPLEMENTATION-001",
                 "kind": "taskResult",
                 "taskType": "implementation",
-                "ref": "WI-0003|06000000#result/R-001",
+                "ref": "WI-0003-06000000#result/R-001",
                 "purpose": "Validate implementation evidence when this target is selected.",
                 "required": true
               }
@@ -356,7 +356,7 @@
             {
               "id": "INPUT-DESIGN-001",
               "kind": "design",
-              "ref": "WI-0003|03000000#result/R-001",
+              "ref": "WI-0003-03000000#result/R-001",
               "purpose": "Provide the design result whose contract assertions must be checked.",
               "required": true
             }
@@ -366,7 +366,7 @@
               "id": "TARGET-DESIGN-001",
               "kind": "taskResult",
               "taskType": "design",
-              "ref": "WI-0003|03000000#result/R-001",
+              "ref": "WI-0003-03000000#result/R-001",
               "purpose": "Validate the design result rather than an implementation result.",
               "required": true
             }
@@ -479,7 +479,7 @@
           "$ref": "#/$defs/AnyReference",
           "description": "Reference resolved by the host to the input record or entity.",
           "examples": [
-            "WI-0003|03000000#result/R-001"
+            "WI-0003-03000000#result/R-001"
           ]
         },
         "purpose": {
@@ -503,7 +503,7 @@
         {
           "id": "INPUT-DESIGN-001",
           "kind": "design",
-          "ref": "WI-0003|03000000#result/R-001",
+          "ref": "WI-0003-03000000#result/R-001",
           "purpose": "Provide the design result whose contract assertions must be checked.",
           "required": true
         }
@@ -571,7 +571,7 @@
           "$ref": "#/$defs/AnyReference",
           "description": "Reference resolved by the host to the target.",
           "examples": [
-            "WI-0003|03000000#result/R-001"
+            "WI-0003-03000000#result/R-001"
           ]
         },
         "purpose": {
@@ -596,7 +596,7 @@
           "id": "TARGET-DESIGN-001",
           "kind": "taskResult",
           "taskType": "design",
-          "ref": "WI-0003|03000000#result/R-001",
+          "ref": "WI-0003-03000000#result/R-001",
           "purpose": "Validate the design result rather than an implementation result.",
           "required": true
         }
@@ -1628,10 +1628,10 @@
           "description": "A work-item-local reference resolved against the selected work-item directory."
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
           "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
@@ -1641,8 +1641,8 @@
       "description": "A task-local, task-qualified, or globally qualified SDLC reference resolved by host validation.",
       "examples": [
         "#objective/OBJ-001",
-        "WI-0003|03000000#result/R-001",
-        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C03000000#result/R-001"
+        "WI-0003-03000000#result/R-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-03000000#result/R-001"
       ]
     }
   },
@@ -1654,7 +1654,7 @@
           {
             "id": "INPUT-DESIGN-001",
             "kind": "design",
-            "ref": "WI-0003|03000000#result/R-001",
+            "ref": "WI-0003-03000000#result/R-001",
             "purpose": "Provide the design result whose contract assertions must be checked.",
             "required": true
           }
@@ -1664,7 +1664,7 @@
             "id": "TARGET-DESIGN-001",
             "kind": "taskResult",
             "taskType": "design",
-            "ref": "WI-0003|03000000#result/R-001",
+            "ref": "WI-0003-03000000#result/R-001",
             "purpose": "Validate the design result rather than an implementation result.",
             "required": true
           }

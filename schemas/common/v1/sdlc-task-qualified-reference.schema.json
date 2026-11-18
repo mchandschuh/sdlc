@@ -8,20 +8,20 @@
   "type": "string",
   "oneOf": [
     {
-      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A task-qualified reference with an explicit intent/result JSON-path-like selector."
     },
     {
-      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A legacy task-qualified reference retained for migration compatibility."
     }
   ],
   "examples": [
-    "WI-0003|50000000#intent/objectives/OBJ-001",
-    "WI-0003|50000000#result/outcomes/O-001",
-    "WI-0003|50000000#result/R-001",
-    "WI-0003|50000000#outcome/O-001",
-    "WI-0003|50000000#artifact/ART-001",
-    "GH-0042|19000000#finding/F-001"
+    "WI-0003-50000000#intent/objectives/OBJ-001",
+    "WI-0003-50000000#result/outcomes/O-001",
+    "WI-0003-50000000#result/R-001",
+    "WI-0003-50000000#outcome/O-001",
+    "WI-0003-50000000#artifact/ART-001",
+    "GH-0042-19000000#finding/F-001"
   ]
 }

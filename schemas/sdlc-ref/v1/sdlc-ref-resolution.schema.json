@@ -9,7 +9,7 @@
   "required": ["schema", "ref", "valid", "resolution", "findings"],
   "properties": {
     "schema": {"const": "https://schemas.handschuh.dev/sdlc/ref/resolution/v1", "description": "The canonical resolution response schema identifier.", "examples": ["https://schemas.handschuh.dev/sdlc/ref/resolution/v1"]},
-    "ref": {"type": "string", "minLength": 1, "description": "The reference supplied to the resolver.", "examples": ["WI-0003", "WI-0003|50000000#objective/OBJ-001"]},
+    "ref": {"type": "string", "minLength": 1, "description": "The reference supplied to the resolver.", "examples": ["WI-0003", "WI-0003-50000000#objective/OBJ-001"]},
     "valid": {"type": "boolean", "description": "Whether the reference resolved to a document and data.", "examples": [true, false]},
     "resolution": {
       "type": ["object", "null"],

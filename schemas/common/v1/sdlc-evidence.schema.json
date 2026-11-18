@@ -48,7 +48,7 @@
       "$ref": "sdlc-any-reference.schema.json",
       "description": "Durable reference to the evidence source or record.",
       "examples": [
-        "WI-0003|08000000#result/R-001"
+        "WI-0003-08000000#result/R-001"
       ]
     },
     "claim": {
@@ -87,7 +87,7 @@
     {
       "id": "EVID-001",
       "kind": "test",
-      "ref": "WI-0003|08000000#result/R-001",
+      "ref": "WI-0003-08000000#result/R-001",
       "claim": "The focused regression test passed for the corrected behavior.",
       "tier": "unit",
       "source": "referenced-result"

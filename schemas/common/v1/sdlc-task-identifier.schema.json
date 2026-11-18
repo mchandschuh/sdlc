@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.handschuh.dev/sdlc/task-identifier/v1",
   "title": "SDLC Task Identifier v1",
-  "description": "A task identity composed of a WorkItemId, a literal pipe separator, and a StepId. The separator makes the boundary between the work-item identity and the task-local step identity explicit.",
-  "$comment": "TaskIdentifier has the form {WorkItemId}|{StepId}. For example, WI-0003|05 identifies legacy step 05 in WI-0003, while WI-0003|50000000 identifies the eight-digit task-tree position 50000000 in WI-0003. The host must verify that the identifier agrees with the owning task record.",
+  "description": "A canonical task identity composed of a WorkItemId, a hyphen separator, and an eight-digit task-tree order key.",
+  "$comment": "TaskIdentifier has the canonical form {WorkItemId}-{OrderKey}. For example, WI-0003-05000000 identifies task-tree position 05000000 in WI-0003. Pipe-separated identifiers are migration-only inputs and are not canonical task identifiers.",
   "type": "string",
-  "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}$",
+  "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$",
   "examples": [
-    "WI-0003|05",
-    "WI-0003|50000000",
-    "GH-0042|19000000"
+    "WI-0003-05000000",
+    "WI-0003-50000000",
+    "GH-0042-19000000"
   ]
 }

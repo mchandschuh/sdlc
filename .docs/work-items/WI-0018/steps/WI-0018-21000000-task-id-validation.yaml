@@ -4,7 +4,7 @@ taskUid: WI-0018-21000000
 orderKey: '21000000'
 parentTaskUid: WI-0018-20000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate hyphen task identifier formatting
 objective: Validate schema/runtime/record conversion to hyphen task identifiers and require a 100% passing unit-test gate.
 references:
@@ -43,7 +43,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -52,7 +52,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0018|20000000#result/R-001
+        ref: WI-0018-20000000#result/R-001
         purpose: Identify hyphen formatting implementation.
         required: true
       - id: INPUT-REQ-003
@@ -69,7 +69,7 @@ task:
       - id: TARGET-HYPHEN-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0018|20000000#result/R-001
+        ref: WI-0018-20000000#result/R-001
         purpose: Validate task identifier conversion.
         required: true
     objectiveRefs: ['#objective/OBJ-003', '#objective/OBJ-004']
@@ -101,23 +101,29 @@ task:
     nonGoals:
       - Do not claim migration command behavior or task-local semantic migration in this task.
   result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
+    status: passed
+    summary: Hyphenated task identifiers passed schema, runtime, persisted-record, and complete test-gate validation.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-HYPHEN-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until implementation task processing.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Canonical hyphen task identifiers and qualified references passed; pipe-separated references were rejected; all 39 tests passed.
+          assertions:
+            - Canonical task UIDs use WorkItemId-OrderKey with exactly eight order-key digits.
+            - Repository-owned records and schema examples use hyphenated task UIDs.
+            - The complete unit-test suite passed before commit.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Hyphen task identifier validation is planned.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Hyphen task identifier validation and the complete test gate passed.
+            command: yarn typecheck && yarn build && yarn test && node ./bin/cli.js work-item validate --work-item WI-0018 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - The hyphen task identifier implementation has not yet been validated.
+      - Pipe-separated forms are intentionally retained only as migration inputs and are not canonical.
     nonClaims:
-      - This planned result does not claim pipe-to-hyphen migration completion.
+      - This result does not claim the migration command implementation or execution.

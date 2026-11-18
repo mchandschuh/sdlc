@@ -15,7 +15,7 @@
       "$ref": "sdlc-any-reference.schema.json",
       "description": "The task-local, task-qualified, or globally qualified reference to the result entity or durable result record.",
       "examples": [
-        "WI-0003|06000000#result/R-001"
+        "WI-0003-06000000#result/R-001"
       ]
     },
     "sha256": {
@@ -28,7 +28,7 @@
   },
   "examples": [
     {
-      "ref": "WI-0003|06000000#result/R-001",
+      "ref": "WI-0003-06000000#result/R-001",
       "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     }
   ]

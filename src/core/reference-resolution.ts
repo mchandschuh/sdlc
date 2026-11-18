@@ -85,14 +85,14 @@ function taskLocalReference(ref: string): Selector | undefined {
 }
 
 function taskQualifiedReference(ref: string): { readonly workItemId: string; readonly orderKey: string; readonly selector: Selector } | undefined {
-  const explicit = /^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#(intent|result)\/(.+)$/u.exec(ref);
+  const explicit = /^([A-Z]{1,10}-[0-9]+)-([0-9]{8})#(intent|result)\/(.+)$/u.exec(ref);
   if (explicit) {
     const segments = explicit[4]!.split('/');
     const id = segments.pop();
     if (!id || segments.length === 0 || segments.some((segment) => !/^[A-Za-z][A-Za-z0-9_-]*$/u.test(segment))) return undefined;
     return { workItemId: explicit[1]!, orderKey: explicit[2]!, selector: parseSelector(explicit[3] as 'intent' | 'result', segments, id) };
   }
-  const match = /^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
+  const match = /^([A-Z]{1,10}-[0-9]+)-([0-9]{8})#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
   if (!match) return undefined;
   return { workItemId: match[1]!, orderKey: match[2]!, selector: parseSelector('result', [match[3]!], match[4]!, true) };
 }
@@ -245,7 +245,7 @@ async function resolveLocal(repositoryRoot: string, ref: string): Promise<Refere
     return success(ref, resolved.document, data);
   }
 
-  const legacyQualified = ref.match(/^([A-Z]{1,10}-[0-9]+)[|]([0-9]{2,8})#result\/([A-Za-z][A-Za-z0-9._:-]*)$/u);
+  const legacyQualified = ref.match(/^([A-Z]{1,10}-[0-9]+)-([0-9]{8})#result\/([A-Za-z][A-Za-z0-9._:-]*)$/u);
   if (legacyQualified) {
     const resolved = await taskDocument(repositoryRoot, legacyQualified[1]!, legacyQualified[2]!);
     if (!resolved) return report(ref, [`Task document not found for task reference: ${ref}`]);

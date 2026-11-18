@@ -35,17 +35,17 @@
       ]
     },
     {
-      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A task-qualified reference resolved against the named task.",
       "examples": [
-        "WI-0003|50000000#outcome/O-001",
-        "WI-0003|50000000#artifact/ART-001"
+        "WI-0003-50000000#outcome/O-001",
+        "WI-0003-50000000#artifact/ART-001"
       ]
     },
     {
       "anyOf": [
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
           "description": "A globally qualified repository reference resolved against a repository, task, and entity."
         },
         {
@@ -54,7 +54,7 @@
         }
       ],
       "examples": [
-        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-50000000#outcome/O-001",
         "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002"
       ]
     }
@@ -64,8 +64,8 @@
     "WI-0003-50000000",
     "#outcome/O-001",
     "WI-0002#work-item.json#work-item/WI-0002",
-    "WI-0003|50000000#outcome/O-001",
-    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001",
+    "WI-0003-50000000#outcome/O-001",
+    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-50000000#outcome/O-001",
     "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002"
   ]
 }

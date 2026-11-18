@@ -25,7 +25,7 @@
             {
               "id": "INPUT-VALIDATION-001",
               "kind": "validation",
-              "ref": "WI-0003|08000000#result/R-001",
+              "ref": "WI-0003-08000000#result/R-001",
               "purpose": "Confirm that required validation evidence is available before delivery.",
               "required": true
             },
@@ -149,8 +149,8 @@
       "description": "A task-local, task-qualified, or globally qualified SDLC reference resolved by the host against the delivery record or an authoritative upstream record.",
       "examples": [
         "#repository-state/HEAD",
-        "WI-0003|08000000#result/R-001",
-        "sdlc://repo/local%2Fskills/WI-0003%7C08000000#result/R-001"
+        "WI-0003-08000000#result/R-001",
+        "sdlc://repo/local%2Fskills/WI-0003-08000000#result/R-001"
       ]
     },
     "DeliveryIntent": {
@@ -205,7 +205,7 @@
               {
                 "id": "INPUT-VALIDATION-001",
                 "kind": "validation",
-                "ref": "WI-0003|08000000#result/R-001",
+                "ref": "WI-0003-08000000#result/R-001",
                 "purpose": "Provide validation evidence before delivery.",
                 "required": true
               }
@@ -404,7 +404,7 @@
           "$ref": "#/$defs/AnyReference",
           "description": "Reference to the authoritative input record.",
           "examples": [
-            "WI-0003|08000000#result/R-001"
+            "WI-0003-08000000#result/R-001"
           ]
         },
         "purpose": {

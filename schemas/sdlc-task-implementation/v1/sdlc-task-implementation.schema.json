@@ -196,10 +196,10 @@
           "description": "A work-item-local reference resolved against the selected work-item directory."
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
           "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
@@ -209,8 +209,8 @@
       "description": "A task-local, task-qualified, or globally qualified SDLC reference resolved by the host.",
       "examples": [
         "#requirement/REQ-001",
-        "WI-0003|07000000#result/R-001",
-        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C07000000#result/R-001"
+        "WI-0003-07000000#result/R-001",
+        "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-07000000#result/R-001"
       ]
     },
     "TestCaseReference": {
@@ -220,16 +220,16 @@
           "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
         }
       ],
       "description": "A reference to a stable test-case ID defined by the governing strategy or owned by a small implementation without a strategy.",
       "examples": [
         "#test-case/TC-001",
-        "WI-0003|07000000#test-case/TC-001"
+        "WI-0003-07000000#test-case/TC-001"
       ]
     },
     "InputReference": {
@@ -384,10 +384,10 @@
                     "description": "A work-item-local reference resolved against the selected work-item directory."
                   },
                   {
-                    "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
                   },
                   {
-                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
                   },
                   {
                     "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
@@ -397,7 +397,7 @@
                 "description": "Resolvable task-local, task-qualified, or globally qualified source reference.",
                 "examples": [
                   "#requirement/REQ-001",
-                  "WI-0003|07000000#result/R-001"
+                  "WI-0003-07000000#result/R-001"
                 ]
               },
               "purpose": {
@@ -421,7 +421,7 @@
               {
                 "id": "INPUT-STRATEGY-001",
                 "kind": "testStrategy",
-                "ref": "WI-0003|07000000#result/R-001",
+                "ref": "WI-0003-07000000#result/R-001",
                 "purpose": "Apply the completed strategy's required test-case set.",
                 "required": true
               }
@@ -440,7 +440,7 @@
               {
                 "id": "INPUT-STRATEGY-001",
                 "kind": "testStrategy",
-                "ref": "WI-0003|07000000#result/R-001",
+                "ref": "WI-0003-07000000#result/R-001",
                 "purpose": "Apply the completed strategy's required test-case set.",
                 "required": true
               }
@@ -509,10 +509,10 @@
                       "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                     },
                     {
-                      "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                     },
                     {
-                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                     }
                   ],
                   "description": "Strategy-defined or implementation-owned test case expected to verify this objective.",
@@ -638,7 +638,7 @@
             {
               "id": "INPUT-STRATEGY-001",
               "kind": "testStrategy",
-              "ref": "WI-0003|07000000#result/R-001",
+              "ref": "WI-0003-07000000#result/R-001",
               "purpose": "Apply the completed strategy's required test-case set.",
               "required": true
             }
@@ -853,10 +853,10 @@
                         "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                       },
                       {
-                        "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                        "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                       },
                       {
-                        "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                        "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                       }
                     ],
                     "description": "Test case realized by this test source.",
@@ -1036,10 +1036,10 @@
                           "pattern": "^#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                         },
                         {
-                          "pattern": "^[A-Z]{1,10}-[0-9]+\\|[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                         },
                         {
-                          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+                          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#test-case/TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                         }
                       ],
                       "description": "Test case for which this execution produced evidence.",
@@ -1292,7 +1292,7 @@
           {
             "id": "INPUT-STRATEGY-001",
             "kind": "testStrategy",
-            "ref": "WI-0003|07000000#result/R-001",
+            "ref": "WI-0003-07000000#result/R-001",
             "purpose": "Apply the completed strategy's required test-case set.",
             "required": true
           }

@@ -71,7 +71,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0014|10000000#result/R-001
+        ref: WI-0014-10000000#result/R-001
         purpose: Identify the operative-root implementation result.
         required: true
       - id: INPUT-REQ-001
@@ -98,7 +98,7 @@ task:
       - id: TARGET-OPERATIVE-ROOT-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0014|10000000#result/R-001
+        ref: WI-0014-10000000#result/R-001
         purpose: Validate the operative-root implementation and command routing.
         required: true
     objectiveRefs:

@@ -53,13 +53,13 @@
         "$ref": "sdlc-any-reference.schema.json",
         "description": "Review finding that motivates or constrains this criterion.",
         "examples": [
-          "WI-0003|19000000#finding/FIND-001"
+          "WI-0003-19000000#finding/FIND-001"
         ]
       },
       "description": "Findings that this criterion addresses or makes verifiable.",
       "examples": [
         [
-          "WI-0003|19000000#finding/FIND-001"
+          "WI-0003-19000000#finding/FIND-001"
         ],
         []
       ]
@@ -73,7 +73,7 @@
         "#objective/OBJ-001"
       ],
       "findingRefs": [
-        "WI-0003|19000000#finding/FIND-001"
+        "WI-0003-19000000#finding/FIND-001"
       ]
     }
   ]

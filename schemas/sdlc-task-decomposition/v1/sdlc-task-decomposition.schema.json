@@ -86,7 +86,7 @@
           "status": "decomposed",
           "tasks": [
             {
-              "ref": "WI-0003|50000000#task/T-001",
+              "ref": "WI-0003-50000000#task/T-001",
               "taskType": "implementation"
             }
           ],
@@ -461,11 +461,11 @@
           "examples": [
             [
               {
-                "ref": "WI-0003|50000000#task/T-001",
+                "ref": "WI-0003-50000000#task/T-001",
                 "taskType": "implementation"
               },
               {
-                "ref": "WI-0003|60000000#task/T-002",
+                "ref": "WI-0003-60000000#task/T-002",
                 "taskType": "validation"
               }
             ],
@@ -489,7 +489,7 @@
           "status": "decomposed",
           "tasks": [
             {
-              "ref": "WI-0003|50000000#task/T-001",
+              "ref": "WI-0003-50000000#task/T-001",
               "taskType": "implementation"
             }
           ],
@@ -510,7 +510,7 @@
           "$ref": "../../common/v1/sdlc-task-qualified-reference.schema.json",
           "description": "The qualified reference to the materialized task. The host resolves this reference and verifies that it identifies the produced task.",
           "examples": [
-            "WI-0003|50000000#task/T-001"
+            "WI-0003-50000000#task/T-001"
           ]
         },
         "taskType": {
@@ -523,7 +523,7 @@
       },
       "examples": [
         {
-          "ref": "WI-0003|50000000#task/T-001",
+          "ref": "WI-0003-50000000#task/T-001",
           "taskType": "implementation"
         }
       ]
@@ -747,7 +747,7 @@
         "status": "decomposed",
         "tasks": [
           {
-            "ref": "WI-0003|50000000#task/T-001",
+            "ref": "WI-0003-50000000#task/T-001",
             "taskType": "implementation"
           }
         ],

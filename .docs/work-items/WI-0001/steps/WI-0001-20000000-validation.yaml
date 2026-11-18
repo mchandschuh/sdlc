@@ -72,7 +72,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0001|10000000#result/R-001
+        ref: WI-0001-10000000#result/R-001
         purpose: Identify the implementation result and its declared verification.
         required: true
       - id: INPUT-WORK-ITEM-001
@@ -84,7 +84,7 @@ task:
       - id: TARGET-CLI-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0001|10000000#result/R-001
+        ref: WI-0001-10000000#result/R-001
         purpose: Validate the implementation result and its executable evidence.
         required: true
       - id: TARGET-WORK-ITEM-001

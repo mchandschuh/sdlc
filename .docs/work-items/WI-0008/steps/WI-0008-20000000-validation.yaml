@@ -76,7 +76,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0008|10000000#result/R-001
+        ref: WI-0008-10000000#result/R-001
         purpose: Identify the stat object-reference implementation result.
         required: true
       - id: INPUT-REQ-001
@@ -103,7 +103,7 @@ task:
       - id: TARGET-STAT-OBJECT-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0008|10000000#result/R-001
+        ref: WI-0008-10000000#result/R-001
         purpose: Validate the enriched stat implementation and response contract.
         required: true
     objectiveRefs:

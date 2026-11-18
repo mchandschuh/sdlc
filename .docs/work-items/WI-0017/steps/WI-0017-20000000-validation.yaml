@@ -56,7 +56,7 @@ task:
   intent:
     summary: Validate default/explicit depth behavior, flat references, depth rounds, deduplication/cycles, malformed depth, response schema, nested CWD, and read-only behavior.
     inputs:
-      - {id: INPUT-IMPLEMENTATION-001, kind: implementation, ref: WI-0017|10000000#result/R-001, purpose: Identify the depth-expansion implementation result., required: true}
+      - {id: INPUT-IMPLEMENTATION-001, kind: implementation, ref: WI-0017-10000000#result/R-001, purpose: Identify the depth-expansion implementation result., required: true}
       - {id: INPUT-REQ-001, kind: requirement, ref: WI-0017#work-item.json#requirement/WI-0017_REQ_001, purpose: Identify depth switch conditions., required: true}
       - {id: INPUT-REQ-002, kind: requirement, ref: WI-0017#work-item.json#requirement/WI-0017_REQ_002, purpose: Identify flat references-map conditions., required: true}
       - {id: INPUT-REQ-003, kind: requirement, ref: WI-0017#work-item.json#requirement/WI-0017_REQ_003, purpose: Identify recursive round and deduplication conditions., required: true}
@@ -69,7 +69,7 @@ task:
       - id: TARGET-DEPTH-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0017|10000000#result/R-001
+        ref: WI-0017-10000000#result/R-001
         purpose: Validate depth-limited flat expansion implementation and response contract.
         required: true
     objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']

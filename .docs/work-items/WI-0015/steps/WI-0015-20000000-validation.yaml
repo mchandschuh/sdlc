@@ -77,7 +77,7 @@ task:
     inputs:
       - id: INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0015|10000000#result/R-001
+        ref: WI-0015-10000000#result/R-001
         purpose: Identify the bare identity reference implementation result.
         required: true
       - id: INPUT-REQ-001
@@ -104,7 +104,7 @@ task:
       - id: TARGET-BARE-REFERENCE-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0015|10000000#result/R-001
+        ref: WI-0015-10000000#result/R-001
         purpose: Validate the schema-driven bare identity reference implementation.
         required: true
     objectiveRefs:

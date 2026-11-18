@@ -4,11 +4,11 @@
   "title": "SDLC Global Reference v1",
   "x-sdlc-reference-type": true,
   "description": "A globally qualified SDLC reference that identifies a repository and either a task entity or a work-item artifact entity. Task references use the task identifier form; work-item references use a work-item ID, a work-item-relative filename, and an in-file entity selector.",
-  "$comment": "SdlcReference supports task-global references in the form sdlc://repo/<repository-id>/<TaskIdentifier>#<entity-kind>/<entity-id>, and work-item-global references in the URI-safe form sdlc://repo/<repository-id>/<WorkItemId>#<filename>%23<entity-kind>/<entity-id>. The repository identifier is one percent-encoded URI path segment; %7C separates a task identifier and %23 separates a work-item filename from its in-file selector. The parser must validate percent encoding, canonicalize escapes, and resolve the repository, work item or task, file, and entity; JSON Schema checks only the string shape.",
+  "$comment": "SdlcReference supports task-global references in the form sdlc://repo/<repository-id>/<TaskIdentifier>#<entity-kind>/<entity-id>, and work-item-global references in the URI-safe form sdlc://repo/<repository-id>/<WorkItemId>#<filename>%23<entity-kind>/<entity-id>. The repository identifier is one percent-encoded URI path segment; - separates a task identifier and %23 separates a work-item filename from its in-file selector. The parser must validate percent encoding, canonicalize escapes, and resolve the repository, work item or task, file, and entity; JSON Schema checks only the string shape.",
   "type": "string",
   "oneOf": [
     {
-      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+%7C[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A globally qualified reference to an entity in a task payload or result."
     },
     {
@@ -17,9 +17,9 @@
     }
   ],
   "examples": [
-    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#outcome/O-001",
-    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003%7C50000000#artifact/ART-001",
-    "sdlc://repo/local%2F01JABCDEF0123456789XYZ/GH-0042%7C19000000#finding/F-001",
+    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-50000000#outcome/O-001",
+    "sdlc://repo/github.com%2Facme%2Fpayments/WI-0003-50000000#artifact/ART-001",
+    "sdlc://repo/local%2F01JABCDEF0123456789XYZ/GH-0042-19000000#finding/F-001",
     "sdlc://repo/local%2Fskills/WI-0002#work-item.json%23work-item/WI-0002",
     "sdlc://repo/local%2Fskills/WI-0002#steps/WI-0002-00000000-system-design.yaml%23result/R-001"
   ]
