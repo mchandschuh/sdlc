@@ -1,0 +1,124 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0027
+taskUid: WI-0027-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement configured repository and schema resolution
+objective: Separate target repository selection from installed schema registry lookup, add the sdlc config contract and installer, and add all-hook setup support with complete tests.
+references:
+  required:
+    - .docs/work-items/WI-0027/work-item.json
+    - .cline/README.md
+    - package.json
+    - src/core/operative-root.ts
+    - src/core/work-item-validation.ts
+    - scripts/install_sdlc_validate_git_hooks.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0022/work-item.json
+    - .docs/work-items/WI-0026/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/sdlc-config/v1/
+    - src/core/
+    - src/cli/
+    - scripts/
+    - tests/
+    - .docs/work-items/WI-0027/steps/WI-0027-10000000-configured-schema-resolution-implementation.yaml
+  commitSubject: 'WI-0027: feat(config): configure repository and schema resolution'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement package-owned schema resolution, configured repository selection, ~/.sdlc/config.json installation, and --hooks setup.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: WI-0027-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_001
+        purpose: Define schema registry separation.
+        required: true
+      - id: WI-0027-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_002
+        purpose: Define configuration contract and precedence.
+        required: true
+      - id: WI-0027-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_003
+        purpose: Define repository-root selection.
+        required: true
+      - id: WI-0027-10000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_004
+        purpose: Define installer and hook behavior.
+        required: true
+      - id: WI-0027-10000000_INPUT-REQ-005
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_005
+        purpose: Define external validation and fixture coverage.
+        required: true
+    objectives:
+      - id: WI-0027-10000000_OBJ-001
+        statement: Work-item and task schema validation resolves schemas from the installed/configured schema registry independently of the target repository root.
+        inputRefs: [WI-0027-10000000_INPUT-REQ-001, WI-0027-10000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/WI-0027-10000000_TC-SCHEMA-ROOT', '#test-case/WI-0027-10000000_TC-EXTERNAL-REPOSITORY']
+      - id: WI-0027-10000000_OBJ-002
+        statement: Configuration and ./scripts/install.mjs provide deterministic repositoryRoot selection and idempotent all-hook installation.
+        inputRefs: [WI-0027-10000000_INPUT-REQ-002, WI-0027-10000000_INPUT-REQ-004]
+        testCaseRefs: ['#test-case/WI-0027-10000000_TC-CONFIG-PRECEDENCE', '#test-case/WI-0027-10000000_TC-INSTALLER', '#test-case/WI-0027-10000000_TC-HOOKS']
+      - id: WI-0027-10000000_OBJ-003
+        statement: External repository, nested CWD, invalid configuration, and read-only behavior are covered by automated tests.
+        inputRefs: [WI-0027-10000000_INPUT-REQ-005]
+        testCaseRefs: ['#test-case/WI-0027-10000000_TC-NESTED-CWD', '#test-case/WI-0027-10000000_TC-CONFIG-INVALID', '#test-case/WI-0027-10000000_TC-READ-ONLY']
+    ownedPaths: [schemas/sdlc-config/v1/, src/core/, src/cli/, scripts/, tests/]
+    nonGoals:
+      - Do not download remote schemas.
+      - Do not mutate target work-item files during validation.
+    steps:
+      - Add the closed sdlc/config/v1 schema and configuration adapter using nodejs-common precedence/provenance.
+      - Separate package schema registry root from target repository root in work-item/task validation.
+      - Add explicit/configured repository-root selection and actionable diagnostics.
+      - Add scripts/install.mjs with safe default configuration installation and --hooks all-hook installation.
+      - Add isolated external-repository, config, installer, hook, and read-only tests.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Configured schema and repository resolution implementation is planned.
+      changes:
+        - id: WI-0027-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Defined the schema-root, repository-root, config, installer, and hook implementation boundary.
+          objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
+          paths: [.docs/work-items/WI-0027/steps/WI-0027-10000000-configured-schema-resolution-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
+      tests: []
+    limitations:
+      - Implementation has not started.

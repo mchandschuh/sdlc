@@ -1,0 +1,149 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0027
+taskUid: WI-0027-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0027-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate configured repository and schema resolution
+objective: Validate the external-repository root-cause fix, configuration precedence, default installer, all-hook setup, schema registry resolution, and complete read-only gates.
+references:
+  required:
+    - .docs/work-items/WI-0027/work-item.json
+    - .docs/work-items/WI-0027/steps/WI-0027-10000000-configured-schema-resolution-implementation.yaml
+    - schemas/sdlc-config/v1/
+    - src/core/work-item-validation.ts
+    - src/core/operative-root.ts
+    - scripts/install.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+    - .docs/work-items/WI-0022/work-item.json
+dependsOn:
+  - WI-0027-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0027/steps/WI-0027-11000000-configured-schema-resolution-validation.yaml
+  commitSubject: 'WI-0027: test(config): validate external repository resolution'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0027, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate external repository schema resolution, nodejs-common config precedence, installer default configuration, --hooks behavior, diagnostics, and read-only boundaries.
+    inputs:
+      - id: WI-0027-11000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0027-10000000#result/WI-0027-11000000_R-001
+        purpose: Identify the configured resolution implementation.
+        required: true
+      - id: WI-0027-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_001
+        purpose: Identify schema-root conditions.
+        required: true
+      - id: WI-0027-11000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_002
+        purpose: Identify config contract conditions.
+        required: true
+      - id: WI-0027-11000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_003
+        purpose: Identify root selection conditions.
+        required: true
+      - id: WI-0027-11000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_004
+        purpose: Identify installer and hook conditions.
+        required: true
+      - id: WI-0027-11000000_INPUT-REQ-005
+        kind: requirement
+        ref: WI-0027#work-item.json#requirement/WI-0027_REQ_005
+        purpose: Identify fixture and read-only conditions.
+        required: true
+    targets:
+      - id: WI-0027-11000000_TARGET-CONFIGURED-RESOLUTION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0027-10000000#result/WI-0027-11000000_R-001
+        purpose: Validate the configured schema and repository resolution implementation.
+        required: true
+    objectiveRefs: ['WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-001', 'WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-002', 'WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-003']
+    testCaseRefs: []
+    procedures:
+      - id: WI-0027-11000000_VAL-CONFIGURED-RESOLUTION-001
+        sequence: 1
+        name: validate-configured-schema-resolution
+        description: Reproduce and verify the BTCUSD-0000 external repository failure fix, configuration precedence, schema registry selection, installer, all-hook setup, diagnostics, and all gates.
+        reason: Prove validation no longer assumes the target repository contains the sdlc schema registry and that setup is safe and repeatable.
+        targetRefs: ['#intent/targets/WI-0027-11000000_TARGET-CONFIGURED-RESOLUTION-001']
+        objectiveRefs: ['WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-001', 'WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-002', 'WI-0027-10000000#intent/objectives/WI-0027-10000000_OBJ-003']
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: external BTCUSD-0000 fixture, nodejs-common configuration roots, scripts/install.mjs, and all supported Git hooks
+          steps:
+            - Reproduce and verify external validation from a repository without a schemas directory.
+            - Validate application, ~/.sdlc, and SDLC_CONFIG precedence and source provenance.
+            - Verify explicit repository selection, configured repositoryRoot default, and nested-CWD behavior.
+            - Run scripts/install.mjs with and without --hooks and verify default config, all hook files, idempotence, unmanaged content preservation, and permissions.
+            - Confirm schema resolution uses the installed sdlc registry and reports target repository root separately.
+            - Verify invalid config and missing schema registry failures are actionable and read-only.
+            - Run yarn typecheck, yarn build, yarn test, schema audit, and sdlc work-item validate --work-item WI-0027 --json.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim remote schema lookup or global hook installation.
+      - Do not claim automatic repair of invalid external work items.
+  result:
+    status: implemented-unproven
+    summary: Configured schema and repository resolution validation is planned and has not yet been executed.
+    executions:
+      - id: WI-0027-11000000_EXEC-VAL-001
+        procedureRef: '#intent/procedures/WI-0027-11000000_VAL-CONFIGURED-RESOLUTION-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until the configured schema-resolution implementation is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: External repository schema resolution, config precedence, installer, all-hook setup, and read-only validation are planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Validation has not started.
+    nonClaims:
+      - This planned result does not claim implementation, external validation success, or hook installation completion.

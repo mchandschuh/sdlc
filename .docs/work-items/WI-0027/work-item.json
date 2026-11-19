@@ -1,0 +1,183 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0027",
+  "status": "planned",
+  "title": "Configure repository and schema resolution for external work-item validation",
+  "type": "feature",
+  "objective": "Separate the target repository root from the installed SDLC schema registry so sdlc work-item/task validation works for external repositories such as BTCUSD-0000, add a nodejs-common-backed ~/.sdlc/config.json repositoryRoot default with documented precedence, and add ./scripts/install.mjs with an idempotent --hooks option that installs all supported Git hooks.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0027-configured-schema-resolution-and-hooks",
+      "created": false,
+      "rationale": "WI-0027 planning is prepared on main; implementation and validation will use the declared context branch after start."
+    }
+  },
+  "baseline": "bfcbeee9b0fbd7a52d3ddf673c0d51a9f1009a64",
+  "request": {
+    "source": "conversation",
+    "text": "Determine the root cause of this:\n\n> sdlc work-item validate --work-item BTCUSD-0000\nWork item validation for BTCUSD-0000: failed\n  Objects: 0/1 valid\n  FAIL work-item .docs/work-items/BTCUSD-0000/work-item.json\nFinding: FAIL /tmp/sdlc-work-item-validation-Z9wfS3/work-item.json\n  $ [schema] Cannot read schema: ENOENT: no such file or directory, open '/home/michael/src/algorithms/coinbase-btcusd/schemas/work-item/v2/work-item.schema.json'\nRemediation: Fix the object at .docs/work-items/BTCUSD-0000/work-item.json so it conforms to schemas/work-item/v2/work-item.schema.json, then rerun validation.\n\nIt looks like the root directory for schema resolution is based on the executing directory. Perhaps we should be using schema-validate and its registry feature to resolve schemas. We could also be using a ~/.sdlc/config.json that specifies a repository directory and then we use that. ~/src/github/nodejs-common/ package provides a configuration provider that can check home, local and envvar in a pre-defined order.\n\nPrepare a ./scripts/install.mjs that installs a default ~/.sdlc/config.json and configures the repositoryRoot default. include a --hooks switch that installs all git hooks.\n\nWrite the .docs/work-items/* to accomplish the above and commit the work item.",
+    "sha256": "a01cf64a51314f5abfc1bbce7522d1d15f654e6cb96cb57b0e438b6ac9897703"
+  },
+  "scope": [
+    {
+      "name": "schema-registry-root-separation",
+      "description": "Resolve SDLC schemas from the installed package registry or an explicitly configured registry rather than assuming the target repository contains schemas/.",
+      "reason": "External repositories can contain valid work items without vendoring the sdlc schema tree."
+    },
+    {
+      "name": "repository-root-configuration",
+      "description": "Define a versioned ~/.sdlc/config.json contract with repositoryRoot and use nodejs-common application, home, and SDLC_CONFIG environment precedence with provenance and safe path handling.",
+      "reason": "Validation launched outside the target repository needs a deterministic configured repository default."
+    },
+    {
+      "name": "operative-root-selection",
+      "description": "Make repository-dependent commands select an explicit or configured repository root when the current working directory is not the target repository, while preserving current Git-root behavior when no override is configured.",
+      "reason": "The BTCUSD-0000 failure occurs because the executing repository is incorrectly treated as the target and schema repository simultaneously."
+    },
+    {
+      "name": "installer-and-hooks",
+      "description": "Add ./scripts/install.mjs to install the default user configuration and, with --hooks, install every supported managed Git hook idempotently without destroying unmanaged hook content.",
+      "reason": "Users need one repeatable setup command for configuration and repository hook protection."
+    },
+    {
+      "name": "external-repository-validation",
+      "description": "Exercise BTCUSD-0000-style external repositories without schema trees, nested CWD invocation, schema-registry resolution, work-item/task validation, and hook subprocess behavior in isolated fixtures.",
+      "reason": "The reported failure must be reproduced and prevented at the exact command boundary."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "remote-schema-download",
+      "description": "Do not download schemas or contact remote registries during validation.",
+      "reason": "The installed package registry and explicit local configuration are sufficient and keep validation offline.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "global-git-config-mutation",
+      "description": "Do not change global Git configuration or install hooks outside the selected repository.",
+      "reason": "The --hooks option is repository-scoped and must remain safe for users with multiple repositories.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "automatic-repository-discovery-overrides",
+      "description": "Do not silently replace an explicit command repository selection with the current working directory or an unrelated configured path.",
+      "reason": "Repository selection must be deterministic, diagnosable, and preserve source provenance.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "historical-work-item-repair",
+      "description": "Do not automatically rewrite invalid external work items; validation and migration remain separate operations.",
+      "reason": "Configuration should correct schema lookup, not mutate target repository records.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0027_REQ_001",
+        "name": "schema-root-separation",
+        "description": "sdlc work-item validate and sdlc task validate must resolve work-item, task-envelope, and selected task schemas from the installed sdlc schema registry or an explicitly configured registry, never by assuming the target repository contains schemas/.",
+        "reason": "The reported ENOENT comes from using /home/michael/src/algorithms/coinbase-btcusd/schemas as both target repository and schema registry.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_001_AC_001",
+            "description": "A valid BTCUSD-0000 fixture in a repository without a schemas directory validates its work-item and task records successfully using the installed sdlc schema registry."
+          },
+          {
+            "id": "WI-0027_REQ_001_AC_002",
+            "description": "Schema-read failures identify the selected schema registry root and target repository separately, with no path based on an unrelated executing repository."
+          }
+        ]
+      },
+      {
+        "id": "WI-0027_REQ_002",
+        "name": "sdlc-config-contract",
+        "description": "The repository must define a versioned sdlc/config/v1 schema for ~/.sdlc/config.json with repositoryRoot as an absolute existing-directory path and optional schemaRegistryRoot, plus source provenance and safe invalid-path behavior.",
+        "reason": "A persisted configuration contract is required for reproducible external repository commands.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_002_AC_001",
+            "description": "The default installed ~/.sdlc/config.json contains repositoryRoot for the selected repository, validates against sdlc/config/v1, and is not overwritten when the user already has a valid configuration."
+          },
+          {
+            "id": "WI-0027_REQ_002_AC_002",
+            "description": "Configuration resolution follows nodejs-common application .config, ~/.sdlc, and SDLC_CONFIG environment precedence, rejects relative/missing roots and traversal, and reports the selected source."
+          }
+        ]
+      },
+      {
+        "id": "WI-0027_REQ_003",
+        "name": "repository-root-selection",
+        "description": "Repository-dependent commands must use an explicit repository-root option when supplied, otherwise a configured repositoryRoot default when the current working directory is not a repository, and otherwise the nearest Git repository as today.",
+        "reason": "The reported command needs a stable target repository without breaking existing nested-CWD behavior.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_003_AC_001",
+            "description": "Running sdlc work-item validate --work-item BTCUSD-0000 from outside or beside the target Git repository validates the configured target repository and reports its repository root and paths."
+          },
+          {
+            "id": "WI-0027_REQ_003_AC_002",
+            "description": "An explicit repository selection takes precedence over configuration, configuration takes precedence over fallback discovery only when no current target repository is available, and invalid selection fails with actionable remediation."
+          }
+        ]
+      },
+      {
+        "id": "WI-0027_REQ_004",
+        "name": "installer-default-and-hooks",
+        "description": "./scripts/install.mjs must safely install the default user configuration and support --hooks to install every supported managed Git hook in the selected repository, idempotently preserving unmanaged content.",
+        "reason": "The requested setup must be one command and must cover both configuration and Git hook installation without an external manager.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_004_AC_001",
+            "description": "Running ./scripts/install.mjs creates ~/.sdlc/config.json only when absent or explicitly requested, writes the selected repositoryRoot, validates the result, and is idempotent."
+          },
+          {
+            "id": "WI-0027_REQ_004_AC_002",
+            "description": "Running ./scripts/install.mjs --hooks installs every supported managed hook, makes hooks executable, preserves unmanaged hook content, replaces only managed blocks, and is byte-for-byte idempotent on repetition."
+          }
+        ]
+      },
+      {
+        "id": "WI-0027_REQ_005",
+        "name": "external-validation-and-hook-fixtures",
+        "description": "The implementation must include isolated fixtures and tests for external repositories without schema trees, nested CWD invocation, configuration precedence, schema registry selection, work-item/task validation, installer behavior, all-hook installation, failure output, and read-only boundaries.",
+        "reason": "The reported failure and setup workflow cross configuration, CLI, schema resolution, and Git hook execution.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_005_AC_001",
+            "description": "Tests cover the default configuration path, application/home/environment precedence, explicit override, external BTCUSD-0000 validation, schema-root diagnostics, and config provenance."
+          },
+          {
+            "id": "WI-0027_REQ_005_AC_002",
+            "description": "Tests cover every supported hook installation path, idempotence, existing-hook preservation, invalid configuration blocking, complete validation output, and unchanged target files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0027_REQ_006",
+        "name": "complete-gates-and-self-validation",
+        "description": "Implementation and validation must pass typecheck, build, complete tests, schema audit, external-repository validation, config/install tests, hook tests, and sdlc work-item validate before their commits and before the work-item commit.",
+        "reason": "The change affects command root selection, schema lookup, configuration, installer writes, and Git hook execution.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0027_REQ_006_AC_001",
+            "description": "The committed work item passes sdlc work-item validate with zero invalid objects and zero unresolved references, and every task records the required gate evidence."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0026",
+  "stepsPath": ".docs/work-items/WI-0027/steps/"
+}
