@@ -131,9 +131,8 @@ task:
       - Do not deploy or publish a package registry artifact.
   result:
     status: delivered
-    summary: Merged WI-0024 into main, prepared package version 0.7.0, and completed
-      local release gates. The annotated primary-branch tag and remote
-      publication are recorded after the release commit.
+    summary: Merged WI-0024 into main, prepared package version 0.7.0, completed all
+      local release gates, and created annotated tag 0.7.0 at the primary tip.
     artifacts:
       - id: WI-0024-20000000_ART-MANIFEST
         kind: manifest
@@ -142,18 +141,20 @@ task:
       - id: WI-0024-20000000_ART-TAG
         kind: releaseRecord
         path: .git/refs/tags/0.7.0
-        checksum: sha256:9254de8770f6b952ea4346a4639a5256d43785a1d8fbbc758e90e7790ac42aef
+        checksum: sha256:cf5356fa8ccf13ed7c0b29ce8e232b2ef71d7fabb012acabe45a7e1998a87c11
     executions:
       - id: WI-0024-20000000_EXEC-RELEASE
         procedureRef: "#procedure/WI-0024-20000000_PROC-RELEASE"
         result:
           status: passed
           summary: Typecheck, build, tests, schema validation, and WI-0024 validation
-            passed on main before the 0.7.0 tag.
+            passed on main; package.json reports 0.7.0 and annotated tag 0.7.0
+            points at the primary tip.
         command: yarn typecheck && yarn build && yarn test --run && schema-validate
           --root schemas schemas/work-item/v3/work-item.schema.json
           schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
-          && node ./bin/cli.js work-item validate --work-item WI-0024 --json
+          && node ./bin/cli.js work-item validate --work-item WI-0024 --json &&
+          node ./bin/cli.js --version && git tag --annotate 0.7.0 -m "Release
+          0.7.0"
     limitations:
-      - Remote branch/tag publication remains subject to remote server policy
-        and network availability.
+      - The release is locally tagged and has not yet been pushed to origin.
