@@ -4,7 +4,7 @@ taskUid: WI-0028-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0028-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate migrate-work-item-up
 objective: Validate whole-work-item migration semantics, diagnostics, read-only boundaries, response schema behavior, and complete repository gates.
 references:
@@ -50,7 +50,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -113,23 +113,40 @@ task:
     nonGoals:
       - Do not claim release publication or remote push; those belong to the delivery task.
   result:
-    status: implemented-unproven
-    summary: Validation task is planned.
+    status: passed
+    summary: Validated migrate-work-item-up with focused fixtures, response-schema checks, a historical disposable-worktree rehearsal, read-only assertions, and complete repository gates.
     executions:
-      - id: WI-0028-11000000_EXEC-PLAN-001
-        procedureRef: '#intent/procedures/WI-0028-11000000_VAL-MIGRATION-001'
-        status: inconclusive
+      - id: WI-0028-11000000_EXEC-VALIDATION-001
+        procedureRef: '#procedure/WI-0028-11000000_VAL-MIGRATION-001'
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
+          outcome: passed
+          exitCode: 0
+          summary: The new command passed focused fixtures, schema response validation, historical rehearsal, read-only checks, and all repository gates.
+          assertions:
+            - Valid fixtures migrated work-item.json and task files while sibling work items remained unchanged.
+            - Repeated migration returned no changed files, no replacements, and unchanged canonical content.
+            - Unresolvable legacy references remained byte-for-byte unchanged and were reported with context and reason.
+            - Missing, malformed, duplicate, unknown, and unsafe selections returned non-zero diagnostics without writes.
+            - All 18 historical WI-0001 through WI-0018 work items were rehearsed in a disposable worktree; 43 changed paths remained within selected work-item trees and the source worktree was unchanged.
+            - The work-item migration response validated against sdlc/ref/work-item-migration/v1.
         evidenceTier: inspection
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The whole-work-item migration validation procedure is declared but not yet executed.
+          - kind: command
+            source: Validation execution WI-0028-11000000_EXEC-VALIDATION-001
+            claim: Typecheck, build, complete tests, schema audit, task validation, and WI-0028 validation passed.
+            command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js task validate --task WI-0028-11000000 --json && node ./bin/cli.js work-item validate --work-item WI-0028 --json
+          - kind: command
+            source: Validation execution WI-0028-11000000_EXEC-VALIDATION-001
+            claim: Historical work-item rehearsal remained bounded and did not modify the source worktree.
+            command: disposable worktree rehearsal of sdlc ref migrate-work-item-up for WI-0001 through WI-0018
+          - kind: command
+            source: Validation execution WI-0028-11000000_EXEC-VALIDATION-001
+            claim: The distinct work-item migration response validated against its persisted schema.
+            command: schema-validate schemas/sdlc-ref/v1/sdlc-ref-work-item-migration.schema.json
     findings: []
     evidenceTier: cli-audit
     limitations:
-      - Validation has not started.
+      - Evidence is local CLI, schema, fixture, and disposable-worktree evidence; no remote publication is claimed.
     nonClaims:
       - This task does not claim release or remote publication.

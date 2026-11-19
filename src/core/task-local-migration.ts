@@ -5,6 +5,7 @@ import { DiscoveryError } from './discovery.js';
 import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
 
 export const TASK_LOCAL_MIGRATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1';
+export const WORK_ITEM_MIGRATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/work-item-migration/v1';
 
 export interface MigrationReplacement {
   readonly from: string;
@@ -34,6 +35,12 @@ export interface TaskLocalMigrationReport {
   readonly replacements: readonly MigrationReplacement[];
   readonly unresolvable: readonly UnresolvableReference[];
   readonly findings: readonly string[];
+}
+
+export interface WorkItemMigrationReport extends Omit<TaskLocalMigrationReport, 'schema' | 'path'> {
+  readonly schema: typeof WORK_ITEM_MIGRATION_SCHEMA;
+  readonly workItemId: string;
+  readonly path: string;
 }
 
 const WORK_ITEM_ID = '[A-Z]{1,10}-[0-9]+';
@@ -349,4 +356,14 @@ export async function migrateTaskLocalReferencesForWorkItem(repositoryRoot: stri
   if (!WORK_ITEM_ID_PATTERN.test(workItemId)) throw new DiscoveryError(`Invalid work-item ID: ${workItemId}`);
   const requestedPath = `.docs/work-items/${workItemId}`;
   return migrateTaskLocalReferences(repositoryRoot, requestedPath);
+}
+
+export async function migrateWorkItemReferences(repositoryRoot: string, workItemId: string): Promise<WorkItemMigrationReport> {
+  if (!WORK_ITEM_ID_PATTERN.test(workItemId)) throw new DiscoveryError(`Invalid work-item ID: ${workItemId}`);
+  const report = await migrateTaskLocalReferences(repositoryRoot, `.docs/work-items/${workItemId}`);
+  return {
+    ...report,
+    schema: WORK_ITEM_MIGRATION_SCHEMA,
+    workItemId,
+  };
 }

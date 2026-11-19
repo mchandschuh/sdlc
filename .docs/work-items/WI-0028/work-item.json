@@ -5,29 +5,154 @@
   "title": "Add whole-work-item reference migration command",
   "type": "feature",
   "objective": "Implement sdlc ref migrate-work-item-up --work-item <work-item-id> as a bounded, deterministic whole-work-item reference migration command, validate it with isolated fixtures and read-only failure checks, then release version 0.6.0 by pushing main to origin.",
-  "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
-  "context": {"mergeTarget": {"branch": "main"}, "branch": {"name": "WI-0028-migrate-work-item-up", "created": false, "rationale": "Implementation and validation will use a dedicated context branch before merging into main and publishing the 0.6.0 release."}},
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0028-migrate-work-item-up",
+      "created": true,
+      "rationale": "Implementation and validation will use a dedicated context branch before merging into main and publishing the 0.6.0 release."
+    }
+  },
   "baseline": "e0c4f7d27b7bc5e63ee39e78ab14b187bc67d911",
-  "request": {"source": "conversation", "text": "Prepare a .docs/work-items/* to implement a sdlc ref migrate-work-item-up --work-item <work-item-id>.\n\nCommit the work item.\n\nProcess the new work item, making a commit for each task until the work item is completed.\n\nPerform release by pushing to the origin and incrementing a minor version.", "sha256": "4afd8ea912288c24ed6996b44ec92b037bce137f8d16e51dcb4815ff3ed4eb60"},
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a .docs/work-items/* to implement a sdlc ref migrate-work-item-up --work-item <work-item-id>.\n\nCommit the work item.\n\nProcess the new work item, making a commit for each task until the work item is completed.\n\nPerform release by pushing to the origin and incrementing a minor version.",
+    "sha256": "4afd8ea912288c24ed6996b44ec92b037bce137f8d16e51dcb4815ff3ed4eb60"
+  },
   "scope": [
-    {"name": "whole-work-item-command", "description": "Add sdlc ref migrate-work-item-up --work-item <work-item-id> as the explicit command for migrating one complete work-item directory.", "reason": "Callers need a named whole-work-item migration boundary instead of relying on path-oriented or task-local command variants."},
-    {"name": "bounded-migration-report", "description": "Migrate work-item.json and supported files below the selected work-item directory while reporting deterministic files, replacements, unresolvable references, and findings.", "reason": "Whole-work-item migration must remain auditable, idempotent, and isolated from sibling records."},
-    {"name": "fixture-and-read-only-validation", "description": "Exercise valid, invalid, missing, conflicting, unresolvable, repeated, and sibling-isolation cases with unchanged-file assertions on failure paths.", "reason": "The command mutates selected records and needs explicit safety evidence at the command boundary."},
-    {"name": "minor-release-publication", "description": "Increment the package minor version from 0.5.0 to 0.6.0, verify the compiled launcher, and push main to origin after all task gates pass.", "reason": "The request explicitly includes release publication and a minor version increment."}
+    {
+      "name": "whole-work-item-command",
+      "description": "Add sdlc ref migrate-work-item-up --work-item <work-item-id> as the explicit command for migrating one complete work-item directory.",
+      "reason": "Callers need a named whole-work-item migration boundary instead of relying on path-oriented or task-local command variants."
+    },
+    {
+      "name": "bounded-migration-report",
+      "description": "Migrate work-item.json and supported files below the selected work-item directory while reporting deterministic files, replacements, unresolvable references, and findings.",
+      "reason": "Whole-work-item migration must remain auditable, idempotent, and isolated from sibling records."
+    },
+    {
+      "name": "fixture-and-read-only-validation",
+      "description": "Exercise valid, invalid, missing, conflicting, unresolvable, repeated, and sibling-isolation cases with unchanged-file assertions on failure paths.",
+      "reason": "The command mutates selected records and needs explicit safety evidence at the command boundary."
+    },
+    {
+      "name": "minor-release-publication",
+      "description": "Increment the package minor version from 0.5.0 to 0.6.0, verify the compiled launcher, and push main to origin after all task gates pass.",
+      "reason": "The request explicitly includes release publication and a minor version increment."
+    }
   ],
   "nonGoals": [
-    {"name": "arbitrary-path-migration", "description": "Do not add a path selector or allow the new command to migrate content outside .docs/work-items/<work-item-id>/.", "reason": "The requested command is intentionally work-item scoped.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
-    {"name": "remote-work-item-migration", "description": "Do not contact or mutate remote repositories during migration.", "reason": "Migration remains a local deterministic filesystem operation.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
-    {"name": "automatic-invalid-reference-repair", "description": "Do not invent canonical targets for unresolvable references; preserve them and report the reason.", "reason": "Safe migration requires explicit resolution evidence.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
-    {"name": "release-tagging", "description": "Do not create a Git tag as part of this release unless a later request explicitly requires one.", "reason": "The request requires pushing to origin and incrementing a minor version, but does not request tagging.", "forbiddenFileWrites": [], "forbiddenFileReads": []}
+    {
+      "name": "arbitrary-path-migration",
+      "description": "Do not add a path selector or allow the new command to migrate content outside .docs/work-items/<work-item-id>/.",
+      "reason": "The requested command is intentionally work-item scoped.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "remote-work-item-migration",
+      "description": "Do not contact or mutate remote repositories during migration.",
+      "reason": "Migration remains a local deterministic filesystem operation.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "automatic-invalid-reference-repair",
+      "description": "Do not invent canonical targets for unresolvable references; preserve them and report the reason.",
+      "reason": "Safe migration requires explicit resolution evidence.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "release-tagging",
+      "description": "Do not create a Git tag as part of this release unless a later request explicitly requires one.",
+      "reason": "The request requires pushing to origin and incrementing a minor version, but does not request tagging.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
   ],
-  "requirements": {"items": [
-    {"id": "WI-0028_REQ_001", "name": "command-selection", "description": "sdlc ref migrate-work-item-up --work-item <work-item-id> must accept one valid work-item ID and select exactly the corresponding .docs/work-items/<id>/ directory.", "reason": "The requested command needs a stable, explicit whole-work-item entry point.", "acceptanceCriteria": [{"id": "WI-0028_REQ_001_AC_001", "description": "A valid work-item ID migrates work-item.json and all supported files below the selected directory and does not modify sibling work items."}, {"id": "WI-0028_REQ_001_AC_002", "description": "Missing, malformed, unknown, duplicate, and conflicting options return stable non-zero diagnostics without writes."}]},
-    {"id": "WI-0028_REQ_002", "name": "migration-contract", "description": "The command must reuse the established reference migration semantics and emit a versioned whole-work-item response with deterministic scope, changed files, replacements, unresolvable entries, and findings.", "reason": "Existing task-local migration behavior and machine-readable reporting must remain consistent while adding the new command boundary.", "acceptanceCriteria": [{"id": "WI-0028_REQ_002_AC_001", "description": "Resolvable legacy references migrate to their canonical targets; unresolvable references remain byte-for-byte unchanged and are reported with context and reason."}, {"id": "WI-0028_REQ_002_AC_002", "description": "Repeated migration is a no-op with deterministic output, and the response validates against the persisted work-item migration schema."}]},
-    {"id": "WI-0028_REQ_003", "name": "safety-and-test-coverage", "description": "Implementation and validation must cover command help/errors, full work-item scope, sibling isolation, malformed content, read-only failure paths, and complete repository gates.", "reason": "The command mutates a bounded record tree and must be safe for coding-agent use.", "acceptanceCriteria": [{"id": "WI-0028_REQ_003_AC_001", "description": "Isolated fixtures cover valid migration, no-op repeat, unresolvable preservation, invalid/missing work items, and sibling isolation."}, {"id": "WI-0028_REQ_003_AC_002", "description": "The selected fixture and unrelated files remain unchanged when selection or parsing fails, and every task records a passing full test gate."}]},
-    {"id": "WI-0028_REQ_004", "name": "minor-release-and-push", "description": "After implementation and validation pass, increment the package minor version from 0.5.0 to 0.6.0, verify the compiled CLI reports 0.6.0, and push main to origin.", "reason": "The user explicitly requested a minor release and origin publication.", "acceptanceCriteria": [{"id": "WI-0028_REQ_004_AC_001", "description": "package.json reports 0.6.0, node ./bin/cli.js --version reports 0.6.0 after build, final gates pass, and origin/main contains the release commit."}]},
-    {"id": "WI-0028_REQ_005", "name": "task-commit-gates", "description": "Each implementation, validation, and delivery task must be committed separately with its required evidence and passing gates.", "reason": "The command, persisted migration behavior, package version, and remote publication cross distinct delivery boundaries.", "acceptanceCriteria": [{"id": "WI-0028_REQ_005_AC_001", "description": "Every task result records its completed validation procedure, and the completed work item validates with zero invalid objects and zero unresolved references."}]}
-  ]},
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0028_REQ_001",
+        "name": "command-selection",
+        "description": "sdlc ref migrate-work-item-up --work-item <work-item-id> must accept one valid work-item ID and select exactly the corresponding .docs/work-items/<id>/ directory.",
+        "reason": "The requested command needs a stable, explicit whole-work-item entry point.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0028_REQ_001_AC_001",
+            "description": "A valid work-item ID migrates work-item.json and all supported files below the selected directory and does not modify sibling work items."
+          },
+          {
+            "id": "WI-0028_REQ_001_AC_002",
+            "description": "Missing, malformed, unknown, duplicate, and conflicting options return stable non-zero diagnostics without writes."
+          }
+        ]
+      },
+      {
+        "id": "WI-0028_REQ_002",
+        "name": "migration-contract",
+        "description": "The command must reuse the established reference migration semantics and emit a versioned whole-work-item response with deterministic scope, changed files, replacements, unresolvable entries, and findings.",
+        "reason": "Existing task-local migration behavior and machine-readable reporting must remain consistent while adding the new command boundary.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0028_REQ_002_AC_001",
+            "description": "Resolvable legacy references migrate to their canonical targets; unresolvable references remain byte-for-byte unchanged and are reported with context and reason."
+          },
+          {
+            "id": "WI-0028_REQ_002_AC_002",
+            "description": "Repeated migration is a no-op with deterministic output, and the response validates against the persisted work-item migration schema."
+          }
+        ]
+      },
+      {
+        "id": "WI-0028_REQ_003",
+        "name": "safety-and-test-coverage",
+        "description": "Implementation and validation must cover command help/errors, full work-item scope, sibling isolation, malformed content, read-only failure paths, and complete repository gates.",
+        "reason": "The command mutates a bounded record tree and must be safe for coding-agent use.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0028_REQ_003_AC_001",
+            "description": "Isolated fixtures cover valid migration, no-op repeat, unresolvable preservation, invalid/missing work items, and sibling isolation."
+          },
+          {
+            "id": "WI-0028_REQ_003_AC_002",
+            "description": "The selected fixture and unrelated files remain unchanged when selection or parsing fails, and every task records a passing full test gate."
+          }
+        ]
+      },
+      {
+        "id": "WI-0028_REQ_004",
+        "name": "minor-release-and-push",
+        "description": "After implementation and validation pass, increment the package minor version from 0.5.0 to 0.6.0, verify the compiled CLI reports 0.6.0, and push main to origin.",
+        "reason": "The user explicitly requested a minor release and origin publication.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0028_REQ_004_AC_001",
+            "description": "package.json reports 0.6.0, node ./bin/cli.js --version reports 0.6.0 after build, final gates pass, and origin/main contains the release commit."
+          }
+        ]
+      },
+      {
+        "id": "WI-0028_REQ_005",
+        "name": "task-commit-gates",
+        "description": "Each implementation, validation, and delivery task must be committed separately with its required evidence and passing gates.",
+        "reason": "The command, persisted migration behavior, package version, and remote publication cross distinct delivery boundaries.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0028_REQ_005_AC_001",
+            "description": "Every task result records its completed validation procedure, and the completed work item validates with zero invalid objects and zero unresolved references."
+          }
+        ]
+      }
+    ]
+  },
   "sourceWorkItem": "WI-0027",
   "stepsPath": ".docs/work-items/WI-0028/steps/"
 }

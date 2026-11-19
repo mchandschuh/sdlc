@@ -48,7 +48,7 @@ describe('CLI interface', () => {
 
     await expect(main([argument])).resolves.toBe(0);
 
-    expect(output).toEqual(['0.5.0']);
+    expect(output).toEqual(['0.6.0']);
   });
 
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
@@ -767,6 +767,89 @@ describe('CLI interface', () => {
       'Migration path does not exist: .docs/work-items/WI-0999',
       '--path and --work-item are mutually exclusive.',
     ]);
+  });
+
+  it('provides a distinct migrate-work-item-up command with deterministic idempotent scope', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-migrate-work-item-up-'));
+    const selected = join(root, '.docs', 'work-items', 'WI-0099');
+    const sibling = join(root, '.docs', 'work-items', 'WI-0100');
+    await mkdir(join(selected, 'steps'), { recursive: true });
+    await mkdir(join(sibling, 'steps'), { recursive: true });
+    await writeFile(join(selected, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', ref: 'WI-0099|10000000#work-item/WI-0099' }, null, 2));
+    await writeFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), [
+      'taskUid: WI-0099-10000000',
+      'task:',
+      '  result:',
+      '    results:',
+      '      - id: R-001',
+      '        summary: result',
+      'references:',
+      '  - "WI-0099|10000000#result/R-001"',
+      '  - "#objective/OBJ-999"',
+      '',
+    ].join('\n'));
+    await writeFile(join(sibling, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0100', ref: 'WI-0100|10000000#work-item/WI-0100' }, null, 2));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const siblingBefore = await readFile(join(sibling, 'work-item.json'), 'utf8');
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+      const first = JSON.parse(output.at(-1)!) as { schema: string; workItemId: string; path: string; changedFiles: string[]; unresolvable: Array<{ reference: string; preserved: true }> };
+      expect(first).toEqual(expect.objectContaining({ schema: 'https://schemas.handschuh.dev/sdlc/ref/work-item-migration/v1', workItemId: 'WI-0099', path: '.docs/work-items/WI-0099' }));
+      expect(first.changedFiles).toEqual([
+        '.docs/work-items/WI-0099/steps/WI-0099-10000000-task.yaml',
+        '.docs/work-items/WI-0099/work-item.json',
+      ]);
+      expect(first.unresolvable).toEqual(expect.arrayContaining([expect.objectContaining({ reference: '#objective/OBJ-999', preserved: true })]));
+      expect(await readFile(join(selected, 'work-item.json'), 'utf8')).toContain('WI-0099#work-item.json#work-item/WI-0099');
+      expect(await readFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
+      expect(await readFile(join(sibling, 'work-item.json'), 'utf8')).toBe(siblingBefore);
+
+      output.length = 0;
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item=WI-0099', '--json'])).resolves.toBe(0);
+      const second = JSON.parse(output.at(-1)!) as { changedFiles: string[]; files: Array<{ changed: boolean }>; replacements: unknown[] };
+      expect(second.changedFiles).toEqual([]);
+      expect(second.files.every((file) => !file.changed)).toBe(true);
+      expect(second.replacements).toEqual([]);
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('reports migrate-work-item-up help and rejects unsafe selections without writes', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-migrate-work-item-up-errors-'));
+    await mkdir(join(root, '.docs', 'work-items', 'WI-0099'), { recursive: true });
+    const marker = join(root, '.docs', 'work-items', 'WI-0099', 'work-item.json');
+    await writeFile(marker, '{"workItemId":"WI-0099"}\n');
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    const errors: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-work-item-up', '--help'])).resolves.toBe(0);
+      await expect(main(['ref', 'migrate-work-item-up'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'bad-id'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'WI-0999'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'WI-0099', '--work-item', 'WI-0100'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-work-item-up', '--path', '.'])).resolves.toBe(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    expect(output.join('\n')).toContain('Usage: sdlc ref migrate-work-item-up --work-item <work-item-id> [--json]');
+    expect(errors).toEqual([
+      'Usage: sdlc ref migrate-work-item-up --work-item <work-item-id> [--json]',
+      'Invalid work-item ID: bad-id',
+      'Migration path does not exist: .docs/work-items/WI-0999',
+      'Duplicate --work-item option.',
+      'Unknown option: --path',
+    ]);
+    expect(await readFile(marker, 'utf8')).toBe('{"workItemId":"WI-0099"}\n');
   });
 
   it('rehearses every existing WI-0000 through WI-0018 migration in a disposable worktree', async () => {
