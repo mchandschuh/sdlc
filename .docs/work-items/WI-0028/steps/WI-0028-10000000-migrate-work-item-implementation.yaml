@@ -1,0 +1,110 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0028
+taskUid: WI-0028-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement migrate-work-item-up
+objective: Add the explicit whole-work-item migration command, bounded response contract, deterministic behavior, and complete focused tests.
+references:
+  required:
+    - .docs/work-items/WI-0028/work-item.json
+    - src/cli/main.ts
+    - src/core/task-local-migration.ts
+    - schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0019/work-item.json
+    - .docs/work-items/WI-0020/work-item.json
+    - .docs/work-items/WI-0027/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/sdlc-ref/v1/
+    - src/cli/
+    - src/core/
+    - tests/
+    - .docs/work-items/WI-0028/steps/WI-0028-10000000-migrate-work-item-implementation.yaml
+  commitSubject: 'WI-0028: feat(ref): add migrate-work-item-up'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement sdlc ref migrate-work-item-up --work-item <work-item-id> with bounded whole-work-item selection and deterministic migration output.
+    changeTypes: [production-code, test-code, schema]
+    changeIntent: feature
+    inputs:
+      - id: WI-0028-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_001
+        purpose: Define command selection and scope.
+        required: true
+      - id: WI-0028-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_002
+        purpose: Define migration semantics and response behavior.
+        required: true
+      - id: WI-0028-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_003
+        purpose: Define safety and test coverage.
+        required: true
+    objectives:
+      - id: WI-0028-10000000_OBJ-001
+        statement: The new command selects exactly one work-item directory and preserves existing migration semantics without changing the path-scoped command.
+        inputRefs: [WI-0028-10000000_INPUT-REQ-001, WI-0028-10000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0028-10000000_TC-COMMAND', '#test-case/WI-0028-10000000_TC-SCOPE']
+      - id: WI-0028-10000000_OBJ-002
+        statement: The migration response and schema report deterministic changed files, replacements, unresolvable references, and findings.
+        inputRefs: [WI-0028-10000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0028-10000000_TC-REPORT', '#test-case/WI-0028-10000000_TC-IDEMPOTENCE']
+      - id: WI-0028-10000000_OBJ-003
+        statement: Focused tests cover valid, invalid, repeated, unresolvable, sibling-isolated, and read-only command behavior before this task commit.
+        inputRefs: [WI-0028-10000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/WI-0028-10000000_TC-SAFETY', '#test-case/WI-0028-10000000_TC-TEST-GATE']
+    ownedPaths: [schemas/sdlc-ref/v1/, src/cli/, src/core/, tests/]
+    nonGoals:
+      - Do not bump the package version or push to origin in this task.
+      - Do not add arbitrary path selection to migrate-work-item-up.
+    steps:
+      - Add the work-item-scoped migration function and versioned response schema.
+      - Add CLI help, option parsing, stable diagnostics, and response output.
+      - Add isolated fixtures for migration, idempotence, unresolvable preservation, scope, and read-only behavior.
+      - Run the complete typecheck, build, and test gates before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation task is planned.
+      changes:
+        - id: WI-0028-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded whole-work-item migration command, response, safety, and test implementation plan.
+          objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002, WI-0028-10000000_OBJ-003]
+          paths: [.docs/work-items/WI-0028/steps/WI-0028-10000000-migrate-work-item-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002, WI-0028-10000000_OBJ-003]
+      tests: []
+    limitations:
+      - Implementation has not started.

@@ -1,0 +1,135 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0028
+taskUid: WI-0028-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0028-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate migrate-work-item-up
+objective: Validate whole-work-item migration semantics, diagnostics, read-only boundaries, response schema behavior, and complete repository gates.
+references:
+  required:
+    - .docs/work-items/WI-0028/work-item.json
+    - .docs/work-items/WI-0028/steps/WI-0028-10000000-migrate-work-item-implementation.yaml
+    - src/cli/main.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-ref/v1/
+  informational:
+    - .docs/work-items/WI-0020/work-item.json
+    - .docs/work-items/WI-0027/work-item.json
+dependsOn:
+  - WI-0028-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0028/steps/WI-0028-11000000-migrate-work-item-validation.yaml
+  commitSubject: 'WI-0028: test(ref): validate migrate-work-item-up'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0028, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate migrate-work-item-up across isolated valid, invalid, repeated, unresolvable, sibling, and read-only scenarios.
+    inputs:
+      - id: WI-0028-11000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0028-10000000#result/WI-0028-11000000_R-001
+        purpose: Identify the migration implementation under validation.
+        required: true
+      - id: WI-0028-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_001
+        purpose: Identify command-selection conditions.
+        required: true
+      - id: WI-0028-11000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_002
+        purpose: Identify migration-contract conditions.
+        required: true
+      - id: WI-0028-11000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0028#work-item.json#requirement/WI-0028_REQ_003
+        purpose: Identify safety and test-gate conditions.
+        required: true
+    targets:
+      - id: WI-0028-11000000_TARGET-MIGRATION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0028-10000000#result/WI-0028-11000000_R-001
+        purpose: Validate the migrate-work-item-up implementation.
+        required: true
+    objectiveRefs: ['WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-001', 'WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-002', 'WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-003']
+    testCaseRefs: []
+    procedures:
+      - id: WI-0028-11000000_VAL-MIGRATION-001
+        sequence: 1
+        name: validate-migrate-work-item-up
+        description: Exercise whole-work-item migration, response schema, diagnostics, idempotence, sibling isolation, and read-only failure behavior.
+        reason: Prove the new command is bounded, deterministic, safe, and usable by coding agents.
+        targetRefs: ['#intent/targets/WI-0028-11000000_TARGET-MIGRATION-001']
+        objectiveRefs: ['WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-001', 'WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-002', 'WI-0028-10000000#intent/objectives/WI-0028-10000000_OBJ-003']
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: isolated work-item fixtures and sdlc ref migrate-work-item-up
+          steps:
+            - Run typecheck, build, and the complete test suite.
+            - Migrate a valid fixture and verify canonical replacements and changed-file reporting.
+            - Repeat migration and verify no additional changes and deterministic output.
+            - Verify unresolvable references remain unchanged and are reported with context/reason.
+            - Verify invalid, missing, duplicate, and sibling-selection cases do not write outside the selected scope.
+            - Run the schema audit and validate WI-0028 plus both task envelopes.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim release publication or remote push; those belong to the delivery task.
+  result:
+    status: implemented-unproven
+    summary: Validation task is planned.
+    executions:
+      - id: WI-0028-11000000_EXEC-PLAN-001
+        procedureRef: '#intent/procedures/WI-0028-11000000_VAL-MIGRATION-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: The whole-work-item migration validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - Validation has not started.
+    nonClaims:
+      - This task does not claim release or remote publication.

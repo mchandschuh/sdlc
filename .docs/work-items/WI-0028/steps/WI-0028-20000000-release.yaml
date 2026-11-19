@@ -1,0 +1,132 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0028
+taskUid: WI-0028-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0028-11000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release version 0.6.0 and push main
+objective: Increment the package minor version to 0.6.0, verify the compiled CLI and complete gates, then push main to origin.
+references:
+  required:
+    - package.json
+    - bin/cli.js
+    - src/cli/main.ts
+    - .docs/work-items/WI-0028/work-item.json
+    - .docs/work-items/WI-0028/steps/WI-0028-11000000-migrate-work-item-validation.yaml
+  informational:
+    - tsconfig.json
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0021/steps/WI-0021-20000000-release.yaml
+dependsOn:
+  - WI-0028-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0028/work-item.json
+    - .docs/work-items/WI-0028/steps/WI-0028-20000000-release.yaml
+  commitSubject: 'WI-0028: chore(release): prepare version 0.6.0'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: smoke-version
+      executable: node
+      arguments: [./bin/cli.js, --version]
+      expectedExitCode: 0
+    - id: push-origin
+      executable: git
+      arguments: [push, origin, main]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare and publish the 0.6.0 release after migrate-work-item-up implementation and validation pass.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: WI-0028-20000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0028-11000000#result/WI-0028-11000000_R-001
+        purpose: Confirm migration validation passed before release.
+        required: true
+      - id: WI-0028-20000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the repository revision from which the release is built.
+        required: true
+    artifacts:
+      - id: WI-0028-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.6.0.
+        required: true
+      - id: WI-0028-20000000_ART-BINARY
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI entrypoint reporting version 0.6.0.
+        required: true
+    procedures:
+      - id: WI-0028-20000000_PROC-BUILD
+        sequence: 1
+        name: build-release
+        description: Run typecheck, build, complete tests, schema audit, and WI-0028 validation.
+        steps: [Run yarn typecheck., Run yarn build., Run yarn test., Run the schema audit., Validate WI-0028 and both task records.]
+        command: yarn typecheck && yarn build && yarn test && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0028 --json
+        expected:
+          result: All local release gates pass.
+        required: true
+      - id: WI-0028-20000000_PROC-VERSION
+        sequence: 2
+        name: smoke-version
+        description: Verify the compiled launcher reports version 0.6.0.
+        steps: [Run node ./bin/cli.js --version., Confirm output is 0.6.0.]
+        command: node ./bin/cli.js --version
+        expected:
+          result: The compiled launcher reports 0.6.0 and exits successfully.
+        required: true
+      - id: WI-0028-20000000_PROC-PUSH
+        sequence: 3
+        name: push-origin-main
+        description: Push the final main branch release commit to origin and verify origin/main contains it.
+        steps: [Verify the worktree and main branch are clean., Push main to origin., Confirm local main and origin/main resolve to the same release commit.]
+        command: git push origin main && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+        expected:
+          result: origin/main contains the final 0.6.0 release commit.
+        required: true
+    nonGoals:
+      - Do not create a Git tag.
+      - Do not deploy the application or publish a package registry artifact.
+      - Do not mutate the parent lifecycle directly outside the recorded task/work-item artifacts.
+  result:
+    status: partially-delivered
+    summary: Release task is planned.
+    artifacts:
+      - id: WI-0028-20000000_ART-PLAN-001
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0028-20000000_EXEC-PLAN-001
+        procedureRef: '#procedure/WI-0028-20000000_PROC-BUILD'
+        result:
+          status: inconclusive
+          summary: Release execution is deferred until implementation and validation tasks pass.
+        command: yarn typecheck && yarn build && yarn test
+    limitations:
+      - The 0.6.0 package version has not been prepared and main has not been pushed to origin.
