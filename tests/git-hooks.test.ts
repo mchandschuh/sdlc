@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -62,6 +62,18 @@ async function commit(root: string, env: Record<string, string> = {}): Promise<{
   return execFileAsync('git', ['-C', root, 'commit', '-m', 'test commit'], {
     encoding: 'utf8',
     env: { ...process.env, ...env },
+  });
+}
+
+async function runPrePush(root: string, input: string): Promise<{ readonly code: number | null; readonly output: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [join(root, 'scripts/install_sdlc_validate_git_hooks.mjs'), '--pre-push', 'origin'], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', (chunk) => { output += chunk.toString(); });
+    child.stderr.on('data', (chunk) => { output += chunk.toString(); });
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ code, output }));
+    child.stdin.end(input);
   });
 }
 
@@ -167,6 +179,54 @@ describe('install_sdlc_validate_git_hooks.mjs', () => {
     await commit(repository.root);
     await stage(repository.root, '.docs/work-items/WI-0099/steps/WI-0099-10000000.yaml', 'processingStatus: processing_in_progress\n');
     await expect(commit(repository.root)).rejects.toThrow();
+  });
+
+  it('enforces deterministic minor release version and annotated tag on primary push', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-release-hook-'));
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    await writeFile(join(root, 'scripts/install_sdlc_validate_git_hooks.mjs'), await readFile(installerSource));
+    await writeFile(join(root, 'package.json'), JSON.stringify({ version: '0.8.0' }));
+    await git(root, ['init', '--quiet']);
+    await git(root, ['checkout', '-b', 'main']);
+    await git(root, ['config', 'user.email', 'sdlc-tests@example.invalid']);
+    await git(root, ['config', 'user.name', 'sdlc tests']);
+    await git(root, ['add', '--', 'package.json', 'scripts/install_sdlc_validate_git_hooks.mjs']);
+    await git(root, ['commit', '--quiet', '-m', 'baseline']);
+    await git(root, ['tag', '--annotate', '0.7.0', '-m', 'Release 0.7.0']);
+    const baseline = await git(root, ['rev-parse', 'HEAD']);
+    await mkdir(join(root, '.docs/work-items/WI-0099'), { recursive: true });
+    await writeFile(join(root, '.docs/work-items/WI-0099/work-item.json'), JSON.stringify({ status: 'complete', versionSuggestion: { impact: 'minor' } }));
+    await git(root, ['add', '--', '.docs/work-items/WI-0099/work-item.json']);
+    await git(root, ['commit', '--quiet', '-m', 'complete work item']);
+    const head = await git(root, ['rev-parse', 'HEAD']);
+    await git(root, ['tag', '--annotate', '0.8.0', '-m', 'Release 0.8.0']);
+    const tagObject = await git(root, ['rev-parse', 'refs/tags/0.8.0']);
+    const input = [`refs/heads/main ${head} refs/heads/main ${baseline}`, `refs/tags/0.8.0 ${tagObject} refs/tags/0.8.0 ${'0'.repeat(40)}`].join('\n') + '\n';
+    const result = await runPrePush(root, input);
+    expect(result.code).toBe(0);
+  });
+
+  it('rejects a primary push when package.json is ahead of calculated impact', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-release-ahead-hook-'));
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    await writeFile(join(root, 'scripts/install_sdlc_validate_git_hooks.mjs'), await readFile(installerSource));
+    await writeFile(join(root, 'package.json'), JSON.stringify({ version: '0.9.0' }));
+    await git(root, ['init', '--quiet']);
+    await git(root, ['checkout', '-b', 'main']);
+    await git(root, ['config', 'user.email', 'sdlc-tests@example.invalid']);
+    await git(root, ['config', 'user.name', 'sdlc tests']);
+    await git(root, ['add', '--', 'package.json', 'scripts/install_sdlc_validate_git_hooks.mjs']);
+    await git(root, ['commit', '--quiet', '-m', 'baseline']);
+    await git(root, ['tag', '--annotate', '0.7.0', '-m', 'Release 0.7.0']);
+    const baseline = await git(root, ['rev-parse', 'HEAD']);
+    await mkdir(join(root, '.docs/work-items/WI-0099'), { recursive: true });
+    await writeFile(join(root, '.docs/work-items/WI-0099/work-item.json'), JSON.stringify({ status: 'complete', versionSuggestion: { impact: 'minor' } }));
+    await git(root, ['add', '--', '.docs/work-items/WI-0099/work-item.json']);
+    await git(root, ['commit', '--quiet', '-m', 'complete work item']);
+    const head = await git(root, ['rev-parse', 'HEAD']);
+    const result = await runPrePush(root, `refs/heads/main ${head} refs/heads/main ${baseline}\n`);
+    expect(result.code).toBe(1);
+    expect(result.output).toContain('package.json contains 0.9.0');
   });
 
   it('installs a default user config without overwriting an existing config', async () => {

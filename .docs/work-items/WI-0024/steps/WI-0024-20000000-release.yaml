@@ -5,10 +5,9 @@ orderKey: "20000000"
 parentTaskUid: WI-0024-12000000
 taskType: delivery
 processingStatus: processing_completed
-title: Release version 0.7.0 on the primary branch
-objective: Merge the completed WI-0024 context branch into main, prepare the
-  minor 0.7.0 release from versionSuggestion impact, create the annotated
-  primary-branch tag, and push branch/tag when the remote accepts it.
+title: Release revision version 0.7.1
+objective: Release the deterministic pre-push enforcement hardening as revision
+  0.7.1 after the completed WI-0024 workflow has already shipped in 0.7.0.
 references:
   required:
     - package.json
@@ -26,7 +25,7 @@ governance:
     - package.json
     - .docs/work-items/WI-0024/work-item.json
     - .docs/work-items/WI-0024/steps/WI-0024-20000000-release.yaml
-  commitSubject: "WI-0024: chore(release): prepare version 0.7.0"
+  commitSubject: "WI-0024: chore(release): prepare version 0.7.1"
   commitBody:
     requiredSections:
       - Why
@@ -78,7 +77,8 @@ task:
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
   intent:
-    summary: Prepare and publish the local 0.7.0 minor release after WI-0024 completion.
+    summary: Prepare the backwards-compatible 0.7.1 revision release after
+      deterministic primary-release enforcement hardening.
     deliveryTypes:
       - package
       - release
@@ -97,7 +97,7 @@ task:
       - id: WI-0024-20000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        purpose: Package metadata containing version 0.7.0.
+        purpose: Package metadata containing version 0.7.1.
         required: true
       - id: WI-0024-20000000_ART-TAG
         kind: releaseRecord
@@ -108,53 +108,48 @@ task:
       - id: WI-0024-20000000_PROC-RELEASE
         sequence: 1
         name: merge-tag-and-push-release
-        description: Merge the context branch into main, update package version to
-          0.7.0, create the annotated tag at the primary tip, and push
-          branch/tag when origin accepts it.
+        description: Run all gates for the deterministic pre-push enforcement hardening,
+          then create and publish the 0.7.1 revision tag on main.
         steps:
-          - Verify WI-0024 is complete and the context branch is clean.
-          - Merge the context branch into main.
-          - Update package.json to 0.7.0 and run all gates.
-          - Create annotated tag 0.7.0 at the main tip.
-          - Push main and tag 0.7.0 when a remote exists and accepts the update.
+          - Run yarn typecheck.
+          - Run yarn build.
+          - Run yarn test.
+          - Run targeted schema validation.
+          - Validate WI-0024.
+          - Create annotated tag 0.7.1 at the main tip.
+          - Push main and tag 0.7.1 when origin accepts the update.
         command: yarn typecheck && yarn build && yarn test --run && schema-validate
           --root schemas schemas/work-item/v3/work-item.schema.json
           schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
           && node ./bin/cli.js work-item validate --work-item WI-0024 --json
         expected:
-          result: WI-0024 is complete, package.json is 0.7.0, the annotated 0.7.0 tag
-            points at main, and remote publication succeeds when configured.
+          result: WI-0024 remains valid, package.json is 0.7.1, annotated tag 0.7.1 is at
+            the main tip, and remote publication succeeds when configured.
         required: true
     nonGoals:
       - Do not create tags on the context branch.
       - Do not claim server-side enforcement from local hooks.
       - Do not deploy or publish a package registry artifact.
   result:
-    status: delivered
-    summary: Merged WI-0024 into main, prepared package version 0.7.0, completed all
-      local release gates, and created annotated tag 0.7.0 at the primary tip.
+    status: partially-delivered
+    summary: Revision 0.7.1 is prepared for the deterministic pre-push enforcement
+      hardening.
     artifacts:
       - id: WI-0024-20000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        checksum: sha256:5c92965d6d153c10787222cd225fb2fb988ee0a9231a7430287eac6acce80623
-      - id: WI-0024-20000000_ART-TAG
-        kind: releaseRecord
-        path: .git/refs/tags/0.7.0
-        checksum: sha256:cf5356fa8ccf13ed7c0b29ce8e232b2ef71d7fabb012acabe45a7e1998a87c11
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
     executions:
-      - id: WI-0024-20000000_EXEC-RELEASE
+      - id: WI-0024-20000000_EXEC-PLAN
         procedureRef: "#procedure/WI-0024-20000000_PROC-RELEASE"
         result:
-          status: passed
-          summary: Typecheck, build, tests, schema validation, and WI-0024 validation
-            passed on main; package.json reports 0.7.0 and annotated tag 0.7.0
-            points at the primary tip.
+          status: inconclusive
+          summary: Revision release execution is deferred until the deterministic pre-push
+            enforcement follow-up is committed and merged.
         command: yarn typecheck && yarn build && yarn test --run && schema-validate
           --root schemas schemas/work-item/v3/work-item.schema.json
           schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
-          && node ./bin/cli.js work-item validate --work-item WI-0024 --json &&
-          node ./bin/cli.js --version && git tag --annotate 0.7.0 -m "Release
-          0.7.0"
+          && node ./bin/cli.js work-item validate --work-item WI-0024 --json
     limitations:
-      - The release is locally tagged and has not yet been pushed to origin.
+      - Release execution is deferred until the follow-up deterministic pre-push
+        enforcement and validation commits are merged into main.

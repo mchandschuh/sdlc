@@ -167,8 +167,9 @@ task:
     status: implemented
     implementation:
       summary: Extended managed hook installation with task-processing branch
-        enforcement, post-merge completion reminders, primary-branch pre-push
-        release-tag checks, and isolated hook coverage.
+        enforcement, post-merge completion reminders, primary-branch release-tag
+        checks, deterministic SemVer impact/baseline calculation, and isolated
+        hook coverage.
       changes:
         - id: WI-0024-11000000_CHANGE-HOOK-001
           type: production-code
@@ -197,6 +198,15 @@ task:
             - WI-0024-11000000_OBJ-002
           paths:
             - tests/git-hooks.test.ts
+        - id: WI-0024-11000000_CHANGE-SEMVER-001
+          type: production-code
+          summary: Added deterministic pre-push SemVer impact aggregation, annotated
+            reachable baseline selection, package-ahead intervention, and tag
+            update validation.
+          objectiveRefs:
+            - WI-0024-11000000_OBJ-002
+          paths:
+            - scripts/install_sdlc_validate_git_hooks.mjs
       testImplementations:
         - testCaseRef: "#test-case/WI-0024-11000000_TC-HOOK-TASK-BRANCH"
           path: tests/git-hooks.test.ts
@@ -204,6 +214,10 @@ task:
         - testCaseRef: "#test-case/WI-0024-11000000_TC-POST-MERGE-REMINDER"
           path: tests/git-hooks.test.ts
           selector: installs completion and primary-release hook blocks
+        - testCaseRef: "#test-case/WI-0024-11000000_TC-PUSH-SEMVER"
+          path: tests/git-hooks.test.ts
+          selector: enforces deterministic minor release version and annotated tag on
+            primary push
     verification:
       status: passed
       objectiveRefs:
@@ -219,8 +233,6 @@ task:
             --check scripts/install.mjs && yarn typecheck && yarn build && yarn
             test --run
           status: passed
-          result: Hook syntax, typecheck, build, and the complete 83-test suite passed.
+          result: Hook syntax, typecheck, build, and the complete 85-test suite passed.
     limitations:
-      - The local pre-push guard enforces primary-branch annotated SemVer tag
-        presence at HEAD; aggregate version-impact calculation and every remote
-        ref-update edge case remain release-task validation concerns.
+      - Server-side remote enforcement remains outside local hook evidence.
