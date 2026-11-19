@@ -1,0 +1,108 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0022
+taskUid: WI-0022-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement the work-item validation hook installer
+objective: Add the Node.js hook installer and managed pre-commit behavior for staged work-item validation with complete regression coverage.
+references:
+  required:
+    - .docs/work-items/WI-0022/work-item.json
+    - src/cli/main.ts
+    - tests/cli.test.ts
+    - package.json
+  informational:
+    - .git/hooks/pre-commit.sample
+    - .docs/work-items/WI-0021/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - scripts/
+    - tests/
+    - .docs/work-items/WI-0022/steps/WI-0022-10000000-hook-implementation.yaml
+  commitSubject: 'WI-0022: feat(git): install work-item validation hooks'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement an idempotent Node.js pre-commit hook installer that validates staged work items and prints complete failure responses.
+    changeTypes: [production-code, test-code, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_001
+        purpose: Define installer behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_002
+        purpose: Define staged work-item detection.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_003
+        purpose: Define failure output/blocking behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_005
+        purpose: Define the complete test gate.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The installer creates an idempotent executable pre-commit hook that validates each staged work item and preserves existing unmanaged hook content.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-HOOK-INSTALL', '#test-case/TC-HOOK-IDEMPOTENT', '#test-case/TC-HOOK-STAGED-SELECTION']
+      - id: OBJ-002
+        statement: Hook failures print the complete validation response and block commits, while unrelated commits remain unaffected.
+        inputRefs: [INPUT-REQ-003, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-HOOK-FAILURE-OUTPUT', '#test-case/TC-HOOK-BLOCK', '#test-case/TC-HOOK-TEST-GATE']
+    ownedPaths: [scripts/, tests/]
+    nonGoals:
+      - Do not add external hook-manager dependencies.
+      - Do not repair invalid work-item files from the hook.
+      - Do not bump version or create tags.
+    steps:
+      - Add scripts/install_sdlc_validate_git_hooks.mjs and managed hook content.
+      - Detect staged work-item IDs deterministically and invoke the local compiled CLI.
+      - Add installer/hook success/failure/idempotence/read-only tests.
+      - Run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Hook installer implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the Git hook installer implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0022/steps/WI-0022-10000000-hook-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - The installer and managed pre-commit hook do not yet exist.

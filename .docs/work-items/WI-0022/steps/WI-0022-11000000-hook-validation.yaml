@@ -1,0 +1,141 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0022
+taskUid: WI-0022-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0022-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate work-item validation Git hooks
+objective: Validate hook installation, staged selection, output/blocking behavior, idempotence, existing-hook preservation, WI-0022 validation, and the complete test gate.
+references:
+  required:
+    - .docs/work-items/WI-0022/work-item.json
+    - .docs/work-items/WI-0022/steps/WI-0022-10000000-hook-implementation.yaml
+    - scripts/install_sdlc_validate_git_hooks.mjs
+    - src/cli/main.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - .git/hooks/pre-commit.sample
+dependsOn:
+  - WI-0022-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0022/steps/WI-0022-11000000-hook-validation.yaml
+  commitSubject: 'WI-0022: test(git): validate work-item validation hooks'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0022, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the installed pre-commit hook and require the complete package/test/work-item validation gates.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0022-10000000#result/R-001
+        purpose: Identify the hook implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_001
+        purpose: Identify installer behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_002
+        purpose: Identify staged selection behavior.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_003
+        purpose: Identify failure output/blocking behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_004
+        purpose: Identify self-validation behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0022#work-item.json#requirement/WI-0022_REQ_005
+        purpose: Identify test-gate behavior.
+        required: true
+    targets:
+      - id: TARGET-HOOK-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0022-10000000#result/R-001
+        purpose: Validate hook implementation and tests.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-HOOK-INSTALL', '#test-case/TC-HOOK-IDEMPOTENT', '#test-case/TC-HOOK-STAGED-SELECTION', '#test-case/TC-HOOK-FAILURE-OUTPUT', '#test-case/TC-HOOK-BLOCK', '#test-case/TC-HOOK-TEST-GATE']
+    procedures:
+      - id: VAL-HOOK-001
+        sequence: 1
+        name: validate-work-item-validation-hooks
+        description: Run package checks, self-validate WI-0022, install the hook in isolated repositories, exercise success/failure/blocking paths, and verify idempotence/preservation/read-only behavior.
+        reason: Prove agents cannot commit invalid work-item changes without receiving complete validation output.
+        targetRefs: ['#target/TARGET-HOOK-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-HOOK-INSTALL', '#test-case/TC-HOOK-IDEMPOTENT', '#test-case/TC-HOOK-STAGED-SELECTION', '#test-case/TC-HOOK-FAILURE-OUTPUT', '#test-case/TC-HOOK-BLOCK', '#test-case/TC-HOOK-TEST-GATE']
+        method:
+          executionMode: executable
+          target: install_sdlc_validate_git_hooks.mjs and managed pre-commit hook
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run node ./bin/cli.js work-item validate --work-item WI-0022 --json.
+            - Install hooks in temporary repositories and verify executable/idempotent behavior.
+            - Stage valid and invalid work-item changes and verify successful commits, printed JSON failure responses, and blocked commits.
+            - Verify existing unmanaged hook content is preserved and unrelated commits skip validation.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim remote hooks, publication, deployment, or automatic repair.
+  result:
+    status: implemented-unproven
+    summary: Hook validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-HOOK-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until hook implementation processing.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Work-item validation hook testing is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Hook installation and failure blocking have not yet been validated.
+    nonClaims:
+      - This planned result does not claim WI-0022 self-validation or hook completion.
