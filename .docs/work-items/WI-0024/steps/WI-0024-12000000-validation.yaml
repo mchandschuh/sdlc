@@ -253,8 +253,8 @@ task:
   result:
     status: passed
     summary: Validated branch policy, work-item start, v2/v3 schema behavior, JSON
-      task discovery, managed hook enforcement, current agent guidance, and
-      complete local gates.
+      task discovery, managed hook enforcement, deterministic SemVer release
+      checks, current agent guidance, and complete local gates.
     executions:
       - id: WI-0024-12000000_EXEC-BRANCH-DELIVERY
         procedureRef: "#procedure/WI-0024-12000000_VAL-BRANCH-DELIVERY-001"
@@ -262,8 +262,9 @@ task:
         observed:
           outcome: passed
           exitCode: 0
-          summary: Branch-aware validation and hook delivery gates passed on the current
-            WI-0024 context branch.
+          summary: Branch-aware validation, deterministic primary-release enforcement,
+            targeted schema validation, package version checks, and WI-0024
+            self-validation passed.
           assertions:
             - work-item/v3 and work-item-validation/v2 schemas passed targeted
               schema validation.
@@ -277,6 +278,9 @@ task:
               installation tests passed.
             - Repository .cline/README.md instructs agents to keep the external
               sdlc SKILL.md current.
+            - Pre-push tests verify minor impact calculation from the previous
+              primary baseline and reject package versions ahead of calculated
+              impact.
         evidenceTier: cli-audit
         evidence:
           - kind: command
@@ -291,9 +295,6 @@ task:
     evidenceTier: cli-audit
     limitations:
       - Local hook evidence does not establish server-side remote enforcement.
-      - The pre-push implementation enforces annotated SemVer tag presence at
-        the primary tip but does not yet calculate aggregate version impact or
-        inspect every remote ref-update edge case.
     nonClaims:
       - This validation does not claim remote publication or production
         readiness.
