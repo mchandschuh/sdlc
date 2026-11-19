@@ -1,0 +1,107 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0029
+taskUid: WI-0029-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement centralized extension-aware migration context
+objective: Reuse centralized work-item object enumeration and fix task context discovery across all supported file extensions.
+references:
+  required:
+    - .docs/work-items/WI-0029/work-item.json
+    - src/core/discovery.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0024/work-item.json
+    - .docs/work-items/WI-0028/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - src/core/
+    - tests/
+    - .docs/work-items/WI-0029/steps/WI-0029-10000000-migration-context-implementation.yaml
+  commitSubject: 'WI-0029: fix(migration): reuse extension-aware object enumeration'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Fix JSON task-context discovery by centralizing supported work-item object enumeration and testing every supported extension.
+    changeTypes: [production-code, test-code]
+    changeIntent: bugfix
+    inputs:
+      - id: WI-0029-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_001
+        purpose: Define centralized enumeration ownership.
+        required: true
+      - id: WI-0029-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_002
+        purpose: Define extension-aware task context behavior.
+        required: true
+      - id: WI-0029-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_003
+        purpose: Define extension-complete regression coverage.
+        required: true
+    objectives:
+      - id: WI-0029-10000000_OBJ-001
+        statement: Discovery and migration share one deterministic supported-file enumerator.
+        inputRefs: [WI-0029-10000000_INPUT-REQ-001]
+        testCaseRefs: ['#test-case/WI-0029-10000000_TC-CENTRALIZED-ENUM']
+      - id: WI-0029-10000000_OBJ-002
+        statement: Task context is available for JSON, YAML, YML, TS, and MD supported files without changing safe parse fallback behavior.
+        inputRefs: [WI-0029-10000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0029-10000000_TC-EXTENSIONS', '#test-case/WI-0029-10000000_TC-BTCUSD-JSON']
+      - id: WI-0029-10000000_OBJ-003
+        statement: Focused unit and CLI tests cover the regression and preserve migration scope/idempotence behavior.
+        inputRefs: [WI-0029-10000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/WI-0029-10000000_TC-SAFETY', '#test-case/WI-0029-10000000_TC-TEST-GATE']
+    ownedPaths: [src/core/, tests/]
+    nonGoals:
+      - Do not change the migrate-work-item-up public API or response schema.
+      - Do not rewrite unresolvable historical records.
+    steps:
+      - Export centralized supported work-item object enumeration from discovery.ts.
+      - Reuse it from discoverTasks and migration context lookup.
+      - Make task identity parsing extension-aware for all supported file types.
+      - Add focused extension and BTCUSD-style JSON migration tests.
+      - Run typecheck, build, and the complete test suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Implementation task is planned.
+      changes:
+        - id: WI-0029-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the centralized enumeration and extension-aware migration context implementation plan.
+          objectiveRefs: [WI-0029-10000000_OBJ-001, WI-0029-10000000_OBJ-002, WI-0029-10000000_OBJ-003]
+          paths: [.docs/work-items/WI-0029/steps/WI-0029-10000000-migration-context-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0029-10000000_OBJ-001, WI-0029-10000000_OBJ-002, WI-0029-10000000_OBJ-003]
+      tests: []
+    limitations:
+      - Implementation has not started.

@@ -1,0 +1,117 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0029
+taskUid: WI-0029-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0029-11000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release revision version 0.6.1
+objective: Increment the package revision to 0.6.1, verify the compiled CLI and complete gates, and record a backwards-compatible bugfix release with no public API changes.
+references:
+  required:
+    - package.json
+    - bin/cli.js
+    - src/cli/main.ts
+    - .docs/work-items/WI-0029/work-item.json
+    - .docs/work-items/WI-0029/steps/WI-0029-11000000-migration-context-validation.yaml
+  informational:
+    - tsconfig.json
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0028/steps/WI-0028-20000000-release.yaml
+dependsOn: [WI-0029-11000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0029/work-item.json
+    - .docs/work-items/WI-0029/steps/WI-0029-20000000-revision-release.yaml
+  commitSubject: 'WI-0029: chore(release): prepare version 0.6.1'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: smoke-version
+      executable: node
+      arguments: [./bin/cli.js, --version]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare the backwards-compatible 0.6.1 revision release after extension-aware migration context validation passes.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: WI-0029-20000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0029-11000000#result/WI-0029-11000000_R-001
+        purpose: Confirm the bugfix validation passed before release.
+        required: true
+      - id: WI-0029-20000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the repository revision from which the release is built.
+        required: true
+    artifacts:
+      - id: WI-0029-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.6.1.
+        required: true
+      - id: WI-0029-20000000_ART-BINARY
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI entrypoint reporting version 0.6.1.
+        required: true
+    procedures:
+      - id: WI-0029-20000000_PROC-BUILD
+        sequence: 1
+        name: build-revision-release
+        description: Run typecheck, build, complete tests, schema audit, and WI-0029 validation.
+        steps: [Run yarn typecheck., Run yarn build., Run yarn test., Run the schema audit., Validate WI-0029.]
+        command: yarn typecheck && yarn build && yarn test && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0029 --json
+        expected:
+          result: All revision-release gates pass.
+        required: true
+      - id: WI-0029-20000000_PROC-VERSION
+        sequence: 2
+        name: smoke-version
+        description: Verify the compiled launcher reports version 0.6.1.
+        steps: [Run node ./bin/cli.js --version., Confirm output is 0.6.1.]
+        command: node ./bin/cli.js --version
+        expected:
+          result: The compiled launcher reports 0.6.1 and exits successfully.
+        required: true
+    nonGoals:
+      - Do not change the public migrate-work-item-up command or response schema.
+      - Do not create a Git tag or publish/deploy externally.
+  result:
+    status: partially-delivered
+    summary: Revision release is planned.
+    artifacts:
+      - id: WI-0029-20000000_ART-PLAN-001
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0029-20000000_EXEC-PLAN-001
+        procedureRef: '#procedure/WI-0029-20000000_PROC-BUILD'
+        result:
+          status: inconclusive
+          summary: Revision release is deferred until implementation and validation tasks pass.
+        command: yarn typecheck && yarn build && yarn test
+    limitations:
+      - Version 0.6.1 has not been prepared.

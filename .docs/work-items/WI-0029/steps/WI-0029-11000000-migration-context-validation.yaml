@@ -1,0 +1,131 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0029
+taskUid: WI-0029-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0029-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate extension-aware migration context
+objective: Validate centralized enumeration reuse, all supported extensions, BTCUSD-style JSON migration, safety behavior, and complete gates.
+references:
+  required:
+    - .docs/work-items/WI-0029/work-item.json
+    - .docs/work-items/WI-0029/steps/WI-0029-10000000-migration-context-implementation.yaml
+    - src/core/discovery.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0024/work-item.json
+    - .docs/work-items/WI-0028/work-item.json
+dependsOn: [WI-0029-10000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0029/steps/WI-0029-11000000-migration-context-validation.yaml
+  commitSubject: 'WI-0029: test(migration): validate extension-aware context'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0029, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate all extension-specific task context paths, external JSON migration, centralized enumeration, and read-only safety.
+    inputs:
+      - id: WI-0029-11000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0029-10000000#result/WI-0029-11000000_R-001
+        purpose: Identify the implementation under validation.
+        required: true
+      - id: WI-0029-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_001
+        purpose: Identify centralized enumeration requirements.
+        required: true
+      - id: WI-0029-11000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_002
+        purpose: Identify extension-aware context requirements.
+        required: true
+      - id: WI-0029-11000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0029#work-item.json#requirement/WI-0029_REQ_003
+        purpose: Identify regression and safety test requirements.
+        required: true
+    targets:
+      - id: WI-0029-11000000_TARGET-CONTEXT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0029-10000000#result/WI-0029-11000000_R-001
+        purpose: Validate the migration context implementation.
+        required: true
+    objectiveRefs: ['WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-001', 'WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-002', 'WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-003']
+    testCaseRefs: []
+    procedures:
+      - id: WI-0029-11000000_VAL-CONTEXT-001
+        sequence: 1
+        name: validate-extension-aware-context
+        description: Exercise centralized file enumeration, every supported extension, BTCUSD-style JSON migration, idempotence, unresolvable preservation, and read-only errors.
+        reason: Prove the reported external-repository failure is corrected without public API or scope changes.
+        targetRefs: ['#intent/targets/WI-0029-11000000_TARGET-CONTEXT-001']
+        objectiveRefs: ['WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-001', 'WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-002', 'WI-0029-10000000#intent/objectives/WI-0029-10000000_OBJ-003']
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: centralized discovery and migrate-work-item-up fixtures
+          steps:
+            - Run typecheck, build, complete tests, schema audit, and WI-0029 validation.
+            - Verify .json, .yaml, .yml, .ts, and .md context/enumeration tests.
+            - Verify BTCUSD-style JSON task files no longer report no-task-context solely because of extension.
+            - Verify unresolvable references remain unchanged, repeated migration is a no-op, and failures do not write.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim release publication or public API changes.
+  result:
+    status: implemented-unproven
+    summary: Validation task is planned.
+    executions:
+      - id: WI-0029-11000000_EXEC-PLAN-001
+        procedureRef: '#procedure/WI-0029-11000000_VAL-CONTEXT-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Extension-aware migration context validation is declared but not yet executed.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Validation has not started.
+    nonClaims:
+      - This task does not claim a release or public API change.
