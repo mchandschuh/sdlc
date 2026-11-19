@@ -4,7 +4,7 @@ taskUid: WI-0026-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0026-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate repository-unique identifier migration and resolution
 objective: Validate the identifier inventory, schemas, migration, direct ref validate/resolve global identity/path output, validation enforcement, compatibility, and read-only boundaries.
 references:
@@ -54,66 +54,66 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
   intent:
     summary: Validate repository-unique identifier contracts, migration and resolution for all inventory rows, response global IDs/paths, validation findings, and read-only behavior.
     inputs:
-      - id: INPUT-IMPLEMENTATION-001
+      - id: WI-0026-11000000_INPUT-IMPLEMENTATION-001
         kind: implementation
-        ref: WI-0026-10000000#result/R-001
+        ref: WI-0026-10000000#result/WI-0026-11000000_R-001
         purpose: Identify the repository-unique identifier implementation.
         required: true
-      - id: INPUT-REQ-001
+      - id: WI-0026-11000000_INPUT-REQ-001
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_001
         purpose: Identify inventory-table conditions.
         required: true
-      - id: INPUT-REQ-002
+      - id: WI-0026-11000000_INPUT-REQ-002
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_002
         purpose: Identify target-form conditions.
         required: true
-      - id: INPUT-REQ-003
+      - id: WI-0026-11000000_INPUT-REQ-003
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_003
         purpose: Identify migration conditions.
         required: true
-      - id: INPUT-REQ-004
+      - id: WI-0026-11000000_INPUT-REQ-004
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_004
         purpose: Identify direct reference response conditions.
         required: true
-      - id: INPUT-REQ-005
+      - id: WI-0026-11000000_INPUT-REQ-005
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_005
         purpose: Identify validation and compatibility conditions.
         required: true
-      - id: INPUT-REQ-006
+      - id: WI-0026-11000000_INPUT-REQ-006
         kind: requirement
         ref: WI-0026#work-item.json#requirement/WI-0026_REQ_006
         purpose: Identify complete test and schema gates.
         required: true
     targets:
-      - id: TARGET-REPOSITORY-IDENTIFIERS-001
+      - id: WI-0026-11000000_TARGET-REPOSITORY-IDENTIFIERS-001
         kind: taskResult
         taskType: implementation
-        ref: WI-0026-10000000#result/R-001
+        ref: WI-0026-10000000#result/WI-0026-11000000_R-001
         purpose: Validate repository-unique identifier implementation.
         required: true
-    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
-    testCaseRefs: ['#test-case/TC-IDENTIFIER-INVENTORY', '#test-case/TC-IDENTIFIER-SCHEMAS', '#test-case/TC-REF-GLOBAL-ID', '#test-case/TC-REF-PATH', '#test-case/TC-REF-RESOLUTION', '#test-case/TC-MIGRATION-FULL-ID', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-FULL-ID', '#test-case/TC-READ-ONLY']
+    objectiveRefs: ['WI-0026-10000000#intent/objectives/WI-0026-10000000_OBJ-001', 'WI-0026-10000000#intent/objectives/WI-0026-10000000_OBJ-002']
+    testCaseRefs: []
     procedures:
-      - id: VAL-REPOSITORY-IDENTIFIERS-001
+      - id: WI-0026-11000000_VAL-REPOSITORY-IDENTIFIERS-001
         sequence: 1
         name: validate-repository-unique-identifiers
         description: Audit all identifier types, validate repository-unique schemas, migrate safe legacy forms, resolve representative resources, verify global IDs/repository paths, report non-canonical findings, and run all repository gates.
         reason: Prove every identifier can be uniquely addressed within the repository and safely migrated from its current shorter form.
-        targetRefs: ['#target/TARGET-REPOSITORY-IDENTIFIERS-001']
-        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
-        testCaseRefs: ['#test-case/TC-IDENTIFIER-INVENTORY', '#test-case/TC-IDENTIFIER-SCHEMAS', '#test-case/TC-REF-GLOBAL-ID', '#test-case/TC-REF-PATH', '#test-case/TC-REF-RESOLUTION', '#test-case/TC-MIGRATION-FULL-ID', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-FULL-ID', '#test-case/TC-READ-ONLY']
+        targetRefs: ['#intent/targets/WI-0026-11000000_TARGET-REPOSITORY-IDENTIFIERS-001']
+        objectiveRefs: ['WI-0026-10000000#intent/objectives/WI-0026-10000000_OBJ-001', 'WI-0026-10000000#intent/objectives/WI-0026-10000000_OBJ-002']
+        testCaseRefs: []
         method:
           executionMode: executable
           target: sdlc ref validate/resolve, sdlc ref migrate-task-local-up, and sdlc work-item/task validate
@@ -135,23 +135,40 @@ task:
       - Do not claim remote resolution or automatic bulk history rewriting.
       - Do not claim semantic approval or production readiness.
   result:
-    status: implemented-unproven
-    summary: Repository-unique identifier validation is planned and has not yet been executed.
+    status: passed
+    summary: Repository-unique identifier validation passed migration, direct canonical resolution, global identity/path reporting, validation enforcement, compatibility, read-only, schema, test, and WI-0026 self-validation gates.
     executions:
-      - id: EXEC-VAL-001
-        procedureRef: '#procedure/VAL-REPOSITORY-IDENTIFIERS-001'
-        status: inconclusive
+      - id: WI-0026-11000000_EXEC-VAL-001
+        procedureRef: '#intent/procedures/WI-0026-11000000_VAL-REPOSITORY-IDENTIFIERS-001'
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until repository-unique identifier implementation is processed.
+          outcome: passed
+          exitCode: 0
+          summary: Canonical task-owned identifiers, global resource identity/path output, migration boundaries, validation findings, compatibility, read-only behavior, and all repository gates passed.
+          assertions:
+            - WI-0026-10000000_OBJ-001 and WI-0026-10000000_OBJ-002 resolved directly from the implementation task with canonical task-owned identifiers.
+            - WI-0026-10000000_OBJ-001 validation returned its global resource ID and repository path, and resolution returned matching data.
+            - migrate-task-local-up was a no-op for already canonical WI-0026 records and preserved unrelated historical records unless explicitly selected.
+            - Ambiguous or missing-context legacy identifiers remain preserved and reported by migration tests.
+            - WI-0026 self-validation returned three valid objects, zero invalid objects, and all discovered references resolved.
         evidenceTier: inspection
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Repository-unique identifier inventory, migration, validation, and resolution are planned.
+          - kind: command
+            source: Validation execution WI-0026-11000000_EXEC-VAL-001
+            claim: Typecheck, build, complete tests, schema audit, and WI-0026 validation passed.
+            command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0026 --json
+          - kind: command
+            source: Validation execution WI-0026-11000000_EXEC-VAL-001
+            claim: Canonical task-owned validation and resolution returned matching global resource IDs and repository paths.
+            command: node ./bin/cli.js ref validate --ref WI-0026-10000000_OBJ-001 --json && node ./bin/cli.js ref resolve --ref WI-0026-10000000_OBJ-001 --json
+          - kind: command
+            source: Validation execution WI-0026-11000000_EXEC-VAL-001
+            claim: Explicit migration of WI-0026 canonical records reported zero changed files, zero replacements, zero unresolvable findings, and zero migration findings.
+            command: node ./bin/cli.js ref migrate-task-local-up --work-item WI-0026 --json
     findings: []
     evidenceTier: inspection
     limitations:
-      - Identifier inventory enforcement, migration, and global resource response fields have not yet been validated.
+      - Historical task records are not bulk-migrated automatically; migration remains an explicit scoped operation.
+      - Evidence is local CLI/schema audit evidence and does not claim remote resolution or production readiness.
     nonClaims:
-      - This planned result does not claim implementation or migration completion.
+      - This result does not claim remote repository lookup, bulk historical rewrite, semantic approval, or production readiness.

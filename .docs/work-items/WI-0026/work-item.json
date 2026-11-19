@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0026",
-  "status": "planned",
+  "status": "complete",
   "title": "Upgrade SDLC identifiers to repository-unique references",
   "type": "feature",
   "objective": "Inventory all identifier types used by work-item and task records, define work-item-prefixed or work-item-plus-task-order-key-prefixed repository-unique forms, migrate legacy task-local identifiers with sdlc ref migrate-task-local-up, enforce the new forms in validation, and support immediate sdlc ref validate/resolve with globally unique resource identifiers and repository paths.",
