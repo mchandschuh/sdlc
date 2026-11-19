@@ -146,6 +146,29 @@ describe('install_sdlc_validate_git_hooks.mjs', () => {
     expect(await Promise.all(hooks.map(async (hook) => readFile(join(root, '.git', 'hooks', hook), 'utf8')))).toEqual(before);
   });
 
+  it('installs completion and primary-release hook blocks', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-completion-hooks-'));
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    const installer = join(root, 'scripts', 'install_sdlc_validate_git_hooks.mjs');
+    await writeFile(installer, await readFile(installerSource));
+    await git(root, ['init', '--quiet']);
+    await execFileAsync(process.execPath, [installer], { cwd: root });
+    expect(await readFile(join(root, '.git', 'hooks', 'post-merge'), 'utf8')).toContain('sdlc work-item completion reminder');
+    expect(await readFile(join(root, '.git', 'hooks', 'pre-push'), 'utf8')).toContain('sdlc primary release validation');
+  });
+
+  it('blocks staged task processing on the wrong branch', async () => {
+    const repository = await createRepository();
+    await stage(repository.root, '.docs/work-items/WI-0099/work-item.json', JSON.stringify({
+      workItemId: 'WI-0099',
+      context: { mergeTarget: { branch: 'main' }, branch: { name: 'WI-0099-feature', created: true } },
+    }));
+    await stage(repository.root, '.docs/work-items/WI-0099/steps/WI-0099-10000000.yaml', 'processingStatus: unprocessed\n');
+    await commit(repository.root);
+    await stage(repository.root, '.docs/work-items/WI-0099/steps/WI-0099-10000000.yaml', 'processingStatus: processing_in_progress\n');
+    await expect(commit(repository.root)).rejects.toThrow();
+  });
+
   it('installs a default user config without overwriting an existing config', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-config-install-'));
     await mkdir(join(root, 'scripts'), { recursive: true });
