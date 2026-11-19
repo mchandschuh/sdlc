@@ -1,0 +1,155 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0025
+taskUid: WI-0025-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0025-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate prefixed-only requirement and acceptance-criterion identifiers
+objective: Validate schema rejection, migration canonicalization, validation findings, ambiguity handling, compatibility, read-only behavior, and complete repository gates.
+references:
+  required:
+    - .docs/work-items/WI-0025/work-item.json
+    - .docs/work-items/WI-0025/steps/WI-0025-10000000-prefixed-identifier-implementation.yaml
+    - schemas/common/v1/sdlc-acceptance-criterion.schema.json
+    - schemas/common/v1/sdlc-acceptance-criterion-reference.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/task-local-migration.ts
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0023/work-item.json
+    - .docs/work-items/WI-0024/work-item.json
+dependsOn:
+  - WI-0025-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0025/steps/WI-0025-11000000-prefixed-identifier-validation.yaml
+  commitSubject: 'WI-0025: test(ref): validate prefixed identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0025, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate prefixed-only requirement and acceptance-criterion schemas, migration, validation findings, compatibility, and read-only behavior.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0025-10000000#result/R-001
+        purpose: Identify the prefixed identifier implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_001
+        purpose: Identify requirement identifier conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_002
+        purpose: Identify acceptance-criterion identifier conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_003
+        purpose: Identify migration conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_004
+        purpose: Identify direct acceptance-criterion validation and resolution conditions.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_005
+        purpose: Identify validation finding conditions.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_006
+        purpose: Identify compatibility and gate conditions.
+        required: true
+    targets:
+      - id: TARGET-PREFIXED-IDENTIFIERS-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0025-10000000#result/R-001
+        purpose: Validate identifier implementation.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-REQUIREMENT-PREFIX', '#test-case/TC-ACCEPTANCE-PREFIX', '#test-case/TC-REF-AC-VALIDATE', '#test-case/TC-REF-AC-RESOLVE', '#test-case/TC-MIGRATION-PREFIX', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-PREFIX', '#test-case/TC-READ-ONLY']
+    procedures:
+      - id: VAL-PREFIXED-IDENTIFIERS-001
+        sequence: 1
+        name: validate-prefixed-only-identifiers
+        description: Validate canonical schema forms, rejected abbreviations, automatic migration to work-item-prefixed forms, ambiguous preservation, work-item/task findings, compatibility, read-only behavior, schema audit, full tests, and WI-0025 self-validation.
+        reason: Prove agents cannot commit abbreviated requirement or acceptance-criterion identifiers and can safely migrate resolvable legacy references.
+        targetRefs: ['#target/TARGET-PREFIXED-IDENTIFIERS-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-REQUIREMENT-PREFIX', '#test-case/TC-ACCEPTANCE-PREFIX', '#test-case/TC-REF-AC-VALIDATE', '#test-case/TC-REF-AC-RESOLVE', '#test-case/TC-MIGRATION-PREFIX', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-PREFIX', '#test-case/TC-READ-ONLY']
+        method:
+          executionMode: executable
+          target: sdlc ref migrate-task-local-up and sdlc work-item/task validate
+          steps:
+            - Validate work-item-prefixed requirement and acceptance-criterion schemas and reject abbreviated forms.
+            - Migrate uniquely resolvable #requirement/REQ-* and #acceptance-criterion/AC-* references to work-item-prefixed forms.
+            - Preserve and report ambiguous or missing-context references without speculative rewrites.
+            - Validate work-item and selected task fixtures containing abbreviated declarations/references and verify actionable findings.
+            - Verify existing prefixed identifiers and qualified references remain valid.
+            - Verify migration and validation do not mutate files outside explicit migration writes.
+            - Run yarn typecheck, yarn build, yarn test, schema audit, and sdlc work-item validate --work-item WI-0025 --json.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim automatic repair of ambiguous references.
+      - Do not claim bulk historical migration.
+      - Do not claim remote resolution.
+  result:
+    status: implemented-unproven
+    summary: Prefixed-only identifier validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-PREFIXED-IDENTIFIERS-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until identifier implementation is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Prefixed-only requirement and acceptance-criterion validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Schema, migration, and validation enforcement have not yet been validated.
+    nonClaims:
+      - This planned result does not claim identifier migration or validation completion.

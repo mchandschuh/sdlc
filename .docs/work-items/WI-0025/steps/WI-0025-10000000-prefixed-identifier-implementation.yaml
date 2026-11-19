@@ -1,0 +1,130 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0025
+taskUid: WI-0025-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Enforce work-item-prefixed requirement and acceptance-criterion identifiers
+objective: Add strict prefixed-only schemas, validation findings, and migration canonicalization for requirement and acceptance-criterion identifiers.
+references:
+  required:
+    - .docs/work-items/WI-0025/work-item.json
+    - schemas/common/v1/sdlc-acceptance-criterion.schema.json
+    - schemas/common/v1/sdlc-acceptance-criterion-reference.schema.json
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/common/v1/sdlc-requirement-identifier.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/reference.ts
+    - src/core/task-local-migration.ts
+    - src/core/work-item-validation.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0023/work-item.json
+    - .docs/work-items/WI-0024/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/
+    - schemas/work-item/v2/
+    - src/core/
+    - src/cli/
+    - tests/
+    - .docs/work-items/WI-0025/steps/WI-0025-10000000-prefixed-identifier-implementation.yaml
+  commitSubject: 'WI-0025: feat(ref): require prefixed requirement identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Require work-item-prefixed requirement and acceptance-criterion identifiers and migrate legacy task-local forms without speculative rewrites.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_001
+        purpose: Define requirement identifier syntax.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_002
+        purpose: Define acceptance-criterion identifier syntax.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_003
+        purpose: Define migration behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_004
+        purpose: Define direct acceptance-criterion validation and resolution.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_005
+        purpose: Define validation findings.
+        required: true
+      - id: INPUT-REQ-006
+        kind: requirement
+        ref: WI-0025#work-item.json#requirement/WI-0025_REQ_006
+        purpose: Define compatibility and gates.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Requirement and acceptance-criterion schemas reject abbreviated forms and accept only work-item-prefixed identities.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-REQUIREMENT-PREFIX', '#test-case/TC-ACCEPTANCE-PREFIX']
+      - id: OBJ-002
+        statement: Migration and validation expose or canonicalize legacy abbreviated forms deterministically and read-only when unresolved.
+        inputRefs: [INPUT-REQ-003, INPUT-REQ-004, INPUT-REQ-005, INPUT-REQ-006]
+        testCaseRefs: ['#test-case/TC-REF-AC-VALIDATE', '#test-case/TC-REF-AC-RESOLVE', '#test-case/TC-MIGRATION-PREFIX', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-PREFIX', '#test-case/TC-READ-ONLY']
+    ownedPaths: [schemas/common/v1/, schemas/work-item/v2/, src/core/, src/cli/, tests/]
+    nonGoals:
+      - Do not bulk rewrite historical work items automatically.
+      - Do not move authoritative requirements out of work-item.json.
+      - Do not add remote/global resolution.
+    steps:
+      - Remove abbreviated requirement and acceptance-criterion alternatives from canonical schemas and direct reference registration.
+      - Register direct acceptance-criterion identifier syntax and resolve prefixed criterion IDs from authoritative work-item.json data.
+      - Extend migration parsing and replacement reporting for abbreviated requirement and criterion forms.
+      - Add validation findings for non-prefixed declarations and references in work-item and task scopes.
+      - Add resolvable, ambiguous, missing-context, and read-only regression tests.
+      - Run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Prefixed-only identifier implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded prefixed identifier, migration, and validation implementation boundaries.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0025/steps/WI-0025-10000000-prefixed-identifier-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - Abbreviated identifier enforcement and migration have not yet been implemented.
