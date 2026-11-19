@@ -111,6 +111,7 @@
             {},
             {
               "WI-0007-10000000": {
+                "globalResourceId": "sdlc://repo/local%2Fskills/WI-0007-10000000#task/WI-0007-10000000",
                 "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
                 "repositoryPath": ".docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml",
                 "format": "yaml",
@@ -130,7 +131,8 @@
           "data": {
             "workItemId": "WI-0007"
           },
-          "references": {}
+          "references": {},
+          "globalResourceId": "sdlc://repo/local%2Fskills/WI-0007#work-item/WI-0007"
         },
         null
       ]
@@ -213,6 +215,7 @@
       },
       "examples": [
         {
+          "globalResourceId": "sdlc://repo/local%2Fskills/WI-0007#work-item/WI-0007",
           "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0007/work-item.json",
           "repositoryPath": ".docs/work-items/WI-0007/work-item.json",
           "format": "json",

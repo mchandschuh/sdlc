@@ -4,7 +4,7 @@ import YAML from 'yaml';
 import { discoverTasks, DiscoveryError } from './discovery.js';
 import { validateReference } from './reference.js';
 import { globalResourceId, repositoryIdentifier } from './global-reference.js';
-import { taskEntityKind, taskOwnedParts } from './identifier.js';
+import { taskOwnedParts } from './identifier.js';
 
 export const REFERENCE_RESOLUTION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/resolution/v2';
 
@@ -37,6 +37,35 @@ export interface ParsedDocument {
 
 type Selector = { readonly root: 'intent' | 'result'; readonly path: readonly string[]; readonly id: string; readonly legacy?: boolean };
 export type TaskContext = { readonly document: ParsedDocument; readonly taskUid: string };
+
+function taskEntityMatches(value: unknown, id: string, objects: unknown[], strings: string[]): void {
+  if (Array.isArray(value)) {
+    for (const item of value) taskEntityMatches(item, id, objects, strings);
+    return;
+  }
+  if (typeof value === 'string') {
+    if (value === id || value.endsWith(`/${id}`)) strings.push(value);
+    return;
+  }
+  const object = objectValue(value);
+  if (!object) return;
+  if (object.id === id) objects.push(object);
+  for (const child of Object.values(object)) taskEntityMatches(child, id, objects, strings);
+}
+
+function taskOwnedData(document: ParsedDocument, id: string): { readonly data?: unknown; readonly reason?: string } {
+  const envelope = objectValue(document.value);
+  const task = objectValue(envelope?.task);
+  if (!task) return { reason: 'Containing task document has no task payload.' };
+  const objects: unknown[] = [];
+  const strings: string[] = [];
+  taskEntityMatches(task, id, objects, strings);
+  if (objects.length > 1) return { reason: `Task-owned identifier ${id} is ambiguous across ${objects.length} task entities.` };
+  if (objects.length === 1) return { data: objects[0] };
+  if (strings.length > 1) return { reason: `Task-owned identifier ${id} is ambiguous across ${strings.length} task references.` };
+  if (strings.length === 1) return { data: strings[0] };
+  return { reason: `Task-owned identifier not found in ${document.repositoryPath}: ${id}` };
+}
 
 function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null, references: Readonly<Record<string, ReferenceResolution>> = {}): ReferenceResolutionReport {
   return {
@@ -252,24 +281,6 @@ async function taskDocument(repositoryRoot: string, workItemId: string, orderKey
   return { document: await parseDocument(repositoryRoot, task.path), taskUid: task.taskUid };
 }
 
-function taskSelector(kind: string, id: string): Selector | undefined {
-  const paths: Readonly<Record<string, { readonly root: 'intent' | 'result'; readonly path: readonly string[] }>> = {
-    objective: { root: 'intent', path: ['objectives'] },
-    input: { root: 'intent', path: ['inputs'] },
-    target: { root: 'intent', path: ['targets'] },
-    procedure: { root: 'intent', path: ['procedures'] },
-    'test-case': { root: 'intent', path: ['objectives'] },
-    change: { root: 'result', path: ['implementation', 'changes'] },
-    execution: { root: 'result', path: ['verification', 'tests'] },
-    artifact: { root: 'result', path: ['artifacts'] },
-    finding: { root: 'result', path: ['findings'] },
-    result: { root: 'result', path: [] },
-    outcome: { root: 'result', path: ['outcomes'] },
-  };
-  const selected = paths[kind];
-  return selected ? parseSelector(selected.root, selected.path, id) : undefined;
-}
-
 function globalReferenceParts(ref: string): { readonly repository: string; readonly target: string } | undefined {
   const match = /^sdlc:\/\/repo\/([^/]+)\/(.+)$/u.exec(ref);
   if (!match) return undefined;
@@ -290,11 +301,9 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
       const task = await taskDocument(repositoryRoot, taskTarget[1]!.slice(0, taskTarget[1]!.lastIndexOf('-')), taskTarget[1]!.slice(taskTarget[1]!.lastIndexOf('-') + 1));
       if (!task) return report(ref, [`Task document not found for global reference: ${ref}`]);
       if (taskTarget[2] === 'task' && taskTarget[3] === task.taskUid) return success(ref, repository, task.document, task.document.value);
-      const selector = taskSelector(taskTarget[2]!, taskTarget[3]!);
-      if (!selector) return report(ref, [`Global entity kind is not supported: ${taskTarget[2]}`]);
-      const data = selectData(task.document.value, selector, taskTarget[1]!.slice(0, taskTarget[1]!.lastIndexOf('-')), task.taskUid);
-      if (data === undefined) return report(ref, [`Global task entity not found in ${task.document.repositoryPath}: ${taskTarget[3]}`]);
-      return success(ref, repository, task.document, data);
+      const selected = taskOwnedData(task.document, taskTarget[3]!);
+      if (selected.data === undefined) return report(ref, [selected.reason ?? `Global task entity not found in ${task.document.repositoryPath}: ${taskTarget[3]}`]);
+      return success(ref, repository, task.document, selected.data);
     }
     const workItemTarget = /^([A-Z]{1,10}-[0-9]+)#([^%]+)%23([^/]+)\/(.+)$/u.exec(global.target);
     if (workItemTarget) {
@@ -354,11 +363,9 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
   if (owned) {
     const resolved = await taskDocument(repositoryRoot, owned.taskUid.slice(0, owned.taskUid.lastIndexOf('-')), owned.taskUid.slice(owned.taskUid.lastIndexOf('-') + 1));
     if (!resolved) return report(ref, [`Task document not found for task-owned identifier: ${ref}`]);
-    const selector = taskSelector(taskEntityKind(ref), ref);
-    if (!selector) return report(ref, [`Task-owned identifier category is not supported: ${ref}`]);
-    const data = selectData(resolved.document.value, selector, owned.taskUid.slice(0, owned.taskUid.lastIndexOf('-')), resolved.taskUid);
-    if (data === undefined) return report(ref, [`Task-owned identifier not found in ${resolved.document.repositoryPath}: ${ref}`]);
-    return success(ref, repository, resolved.document, data);
+    const selected = taskOwnedData(resolved.document, ref);
+    if (selected.data === undefined) return report(ref, [selected.reason ?? `Task-owned identifier not found: ${ref}`]);
+    return success(ref, repository, resolved.document, selected.data);
   }
 
   const local = selectorReference(ref);
@@ -462,6 +469,8 @@ export async function validateReferenceResource(repositoryRoot: string, schemaRo
   return {
     ...syntax,
     globalResourceId: resolved.resolution.globalResourceId,
+    repositoryRoot: resolve(repositoryRoot),
+    fullPath: resolved.resolution.fullPath,
     repositoryPath: resolved.resolution.repositoryPath,
   };
 }

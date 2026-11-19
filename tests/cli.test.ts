@@ -158,10 +158,12 @@ describe('CLI interface', () => {
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
     await expect(main(['ref', 'validate', '--ref', 'WI-0026-10000000_OBJ-001', '--json'])).resolves.toBe(0);
-    const validation = JSON.parse(output.at(-1)!) as { valid: boolean; globalResourceId: string; repositoryPath: string };
+    const validation = JSON.parse(output.at(-1)!) as { valid: boolean; globalResourceId: string; repositoryRoot: string; fullPath: string; repositoryPath: string };
     expect(validation).toEqual(expect.objectContaining({
       valid: true,
       globalResourceId: 'sdlc://repo/github.com%2Fmchandschuh%2Fsdlc/WI-0026-10000000#objective/WI-0026-10000000_OBJ-001',
+      repositoryRoot: process.cwd(),
+      fullPath: join(process.cwd(), '.docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml'),
       repositoryPath: '.docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml',
     }));
 
@@ -173,6 +175,112 @@ describe('CLI interface', () => {
       repositoryPath: validation.repositoryPath,
       data: expect.objectContaining({ id: 'WI-0026-10000000_OBJ-001' }),
     }));
+  });
+
+  it('resolves every canonical task-owned identifier prefix directly', async () => {
+    const prefixes = ['INPUT', 'OBJ', 'TARGET', 'VAL', 'TC', 'CHANGE', 'EXEC', 'ART', 'FIND', 'PROC', 'INV', 'R', 'O', 'Q', 'UQ'] as const;
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-task-owned-prefixes-'));
+    const workItem = join(root, '.docs', 'work-items', 'WI-0099');
+    const steps = join(workItem, 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(workItem, 'work-item.json'), JSON.stringify({
+      workItemId: 'WI-0099',
+      status: 'planned',
+      title: 'Task-owned identifier fixture',
+      stepsPath: '.docs/work-items/WI-0099/steps/',
+    }));
+    await writeFile(join(steps, 'WI-0099-10000000-fixture.yaml'), [
+      'schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1',
+      'workItemId: WI-0099',
+      'taskUid: WI-0099-10000000',
+      "orderKey: '10000000'",
+      'parentTaskUid: null',
+      'taskType: implementation',
+      'processingStatus: unprocessed',
+      'title: Task-owned fixture',
+      'objective: Task-owned fixture',
+      'references:',
+      '  required: []',
+      '  informational: []',
+      'dependsOn: []',
+      'task:',
+      '  status: planned',
+      '  intent:',
+      '    objectives:',
+      `      - id: WI-0099-10000000_OBJ-001`,
+      '        statement: objective',
+      '    inputs:',
+      `      - id: WI-0099-10000000_INPUT-001`,
+      '        kind: artifact',
+      '    targets:',
+      `      - id: WI-0099-10000000_TARGET-001`,
+      '        kind: artifact',
+      '    procedures:',
+      `      - id: WI-0099-10000000_VAL-001`,
+      '        name: procedure',
+      '    testCaseRefs:',
+      `      - '#test-case/WI-0099-10000000_TC-001'`,
+      '  result:',
+      '    implementation:',
+      '      changes:',
+      `        - id: WI-0099-10000000_CHANGE-001`,
+      '          type: production-code',
+      '    verification:',
+      '      tests:',
+      `        - id: WI-0099-10000000_EXEC-001`,
+      '          status: passed',
+      '    artifacts:',
+      `      - id: WI-0099-10000000_ART-001`,
+      '        name: artifact',
+      '    findings:',
+      `      - id: WI-0099-10000000_FIND-001`,
+      '        summary: finding',
+      '    procedures:',
+      `      - id: WI-0099-10000000_PROC-001`,
+      '        name: procedure',
+      '    invariants:',
+      `      - id: WI-0099-10000000_INV-001`,
+      '        statement: invariant',
+      '    results:',
+      `      - id: WI-0099-10000000_R-001`,
+      '        summary: result',
+      '    outcomes:',
+      `      - id: WI-0099-10000000_O-001`,
+      '        summary: outcome',
+      '    questions:',
+      `      - id: WI-0099-10000000_Q-001`,
+      '        question: question',
+      '    unresolvedQuestions:',
+      `      - id: WI-0099-10000000_UQ-001`,
+      '        question: unresolved',
+      '',
+    ].join('\n'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      for (const prefix of prefixes) {
+        const ref = `WI-0099-10000000_${prefix}-001`;
+        output.length = 0;
+        await expect(main(['ref', 'validate', '--ref', ref, '--json'])).resolves.toBe(0);
+        const validation = JSON.parse(output.at(-1)!) as { valid: boolean; globalResourceId?: string; repositoryRoot?: string; fullPath?: string; repositoryPath?: string };
+        expect(validation.valid, ref).toBe(true);
+        expect(validation.globalResourceId, ref).toContain(`WI-0099-10000000#`);
+        expect(validation.repositoryRoot, ref).toBe(root);
+        expect(validation.fullPath, ref).toBe(join(steps, 'WI-0099-10000000-fixture.yaml'));
+        expect(validation.repositoryPath, ref).toBe('.docs/work-items/WI-0099/steps/WI-0099-10000000-fixture.yaml');
+        await expect(main(['ref', 'resolve', '--ref', ref, '--json'])).resolves.toBe(0);
+        const resolution = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { globalResourceId: string; fullPath: string; repositoryPath: string; data: unknown } };
+        expect(resolution.valid, ref).toBe(true);
+        expect(resolution.resolution.globalResourceId, ref).toBe(validation.globalResourceId);
+        expect(resolution.resolution.fullPath, ref).toBe(validation.fullPath);
+        expect(resolution.resolution.repositoryPath, ref).toBe(validation.repositoryPath);
+      }
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 
   it('validates every root example from every marked reference schema', async () => {

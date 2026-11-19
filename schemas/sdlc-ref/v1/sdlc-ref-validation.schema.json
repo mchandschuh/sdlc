@@ -3,7 +3,7 @@
   "$id": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",
   "title": "SDLC Reference Validation v1",
   "description": "Closed JSON response envelope for validating one direct SDLC reference string against the repository's schema-registered reference types.",
-  "$comment": "The command performs syntactic JSON Schema-pattern validation only. It does not resolve repositories, work items, tasks, files, or entities. The schema registry is discovered from schemas marked with x-sdlc-reference-type: true.",
+  "$comment": "The command first applies registered reference syntax checks and, for repository-local references, resolves the resource to return its global identity, repository root, absolute document path, and repository-relative document path. The schema registry is discovered from schemas marked with x-sdlc-reference-type: true.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -94,6 +94,22 @@
         "sdlc://repo/github.com%2Fmchandschuh%2Fsdlc/WI-0003-05000000#objective/WI-0003-05000000_OBJ-001"
       ]
     },
+    "repositoryRoot": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute root path of the repository in which the resource was resolved.",
+      "examples": [
+        "/home/michael/src/github/sdlc"
+      ]
+    },
+    "fullPath": {
+      "type": "string",
+      "pattern": "^/.+$",
+      "description": "The absolute path of the document that defines the resolved resource.",
+      "examples": [
+        "/home/michael/src/github/sdlc/.docs/work-items/WI-0003/steps/WI-0003-05000000-implementation.yaml"
+      ]
+    },
     "repositoryPath": {
       "type": "string",
       "minLength": 1,
@@ -149,7 +165,11 @@
           "path": "schemas/common/v1/sdlc-work-item-id.schema.json"
         }
       ],
-      "findings": []
+      "findings": [],
+      "globalResourceId": "sdlc://repo/github.com%2Fmchandschuh%2Fsdlc/WI-0003#work-item.json%23work-item/WI-0003",
+      "repositoryRoot": "/home/michael/src/github/sdlc",
+      "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0003/work-item.json",
+      "repositoryPath": ".docs/work-items/WI-0003/work-item.json"
     },
     {
       "schema": "https://schemas.handschuh.dev/sdlc/ref/validation/v1",

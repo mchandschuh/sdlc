@@ -147,7 +147,8 @@ task:
           summary: Canonical task-owned identifiers, global resource identity/path output, migration boundaries, validation findings, compatibility, read-only behavior, and all repository gates passed.
           assertions:
             - WI-0026-10000000_OBJ-001 and WI-0026-10000000_OBJ-002 resolved directly from the implementation task with canonical task-owned identifiers.
-            - WI-0026-10000000_OBJ-001 validation returned its global resource ID and repository path, and resolution returned matching data.
+            - WI-0026-10000000_OBJ-001 validation returned its global resource ID, absolute repository root, absolute defining-document fullPath, and repository-relative path; resolution returned matching identity, path, and data.
+            - The direct validation/resolution matrix covered INPUT, OBJ, TARGET, VAL, TC, CHANGE, EXEC, ART, FIND, PROC, INV, R, O, Q, and UQ task-owned prefixes.
             - migrate-task-local-up was a no-op for already canonical WI-0026 records and preserved unrelated historical records unless explicitly selected.
             - Ambiguous or missing-context legacy identifiers remain preserved and reported by migration tests.
             - WI-0026 self-validation returned three valid objects, zero invalid objects, and all discovered references resolved.
@@ -159,8 +160,8 @@ task:
             command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0026 --json
           - kind: command
             source: Validation execution WI-0026-11000000_EXEC-VAL-001
-            claim: Canonical task-owned validation and resolution returned matching global resource IDs and repository paths.
-            command: node ./bin/cli.js ref validate --ref WI-0026-10000000_OBJ-001 --json && node ./bin/cli.js ref resolve --ref WI-0026-10000000_OBJ-001 --json
+            claim: Canonical task-owned validation and resolution returned matching global resource IDs, repository roots, absolute full paths, repository-relative paths, and resource data.
+            command: node ./bin/cli.js ref validate --ref WI-0026-10000000_OBJ-001 --json && node ./bin/cli.js ref resolve --ref WI-0026-10000000_OBJ-001 --json && node ./bin/cli.js ref validate --ref WI-0026-10000000_INPUT-001 --json
           - kind: command
             source: Validation execution WI-0026-11000000_EXEC-VAL-001
             claim: Explicit migration of WI-0026 canonical records reported zero changed files, zero replacements, zero unresolvable findings, and zero migration findings.
