@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0027-configured-schema-resolution-and-hooks",
-      "created": false,
+      "created": true,
       "rationale": "WI-0027 planning is prepared on main; implementation and validation will use the declared context branch after start."
     }
   },
