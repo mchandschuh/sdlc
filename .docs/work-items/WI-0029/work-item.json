@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0029",
-  "status": "planned",
+  "status": "complete",
   "title": "Fix migration context discovery for supported work-item file types",
   "type": "bugfix",
   "objective": "Fix migrate-work-item-up so task context is discovered for every supported work-item object file extension by reusing centralized enumeration, add extension-complete unit coverage, and release revision 0.6.1 without public API changes.",
