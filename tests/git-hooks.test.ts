@@ -128,4 +128,38 @@ describe('install_sdlc_validate_git_hooks.mjs', () => {
     expect(await readFile(join(repository.root, 'existing-hook.log'), 'utf8')).toBe('existing-hook\n');
     expect(await readFile(repository.log, 'utf8')).toBe('WI-0003\n');
   });
+
+  it('installs all managed hooks with --hooks idempotently', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-all-hooks-'));
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    const installer = join(root, 'scripts', 'install.mjs');
+    await writeFile(installer, await readFile(join(process.cwd(), 'scripts/install.mjs')));
+    await git(root, ['init', '--quiet']);
+    await execFileAsync(process.execPath, [installer, '--hooks'], { cwd: root, env: { ...process.env, HOME: join(root, 'home') } });
+    const hooks = ['applypatch-msg', 'commit-msg', 'post-update', 'pre-applypatch', 'pre-commit', 'pre-merge-commit', 'pre-push', 'pre-rebase', 'pre-receive', 'prepare-commit-msg', 'push-to-checkout', 'update'];
+    const contents = await Promise.all(hooks.map(async (hook) => readFile(join(root, '.git', 'hooks', hook), 'utf8')));
+    expect(contents.every((content) => content.includes('# >>> sdlc managed hook >>>'))).toBe(true);
+    const before = contents;
+    await execFileAsync(process.execPath, [installer, '--hooks'], { cwd: root, env: { ...process.env, HOME: join(root, 'home') } });
+    expect(await Promise.all(hooks.map(async (hook) => readFile(join(root, '.git', 'hooks', hook), 'utf8')))).toEqual(before);
+  });
+
+  it('installs a default user config without overwriting an existing config', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-config-install-'));
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    const installer = join(root, 'scripts', 'install.mjs');
+    await writeFile(installer, await readFile(join(process.cwd(), 'scripts/install.mjs')));
+    await git(root, ['init', '--quiet']);
+    const home = join(root, 'home');
+    const environment = { ...process.env, HOME: home };
+    await execFileAsync(process.execPath, [installer], { cwd: root, env: environment });
+    const configPath = join(home, '.sdlc', 'config.json');
+    const first = await readFile(configPath, 'utf8');
+    expect(JSON.parse(first)).toEqual(expect.objectContaining({
+      schema: 'https://schemas.handschuh.dev/sdlc/config/v1',
+      repositoryRoot: root,
+    }));
+    await execFileAsync(process.execPath, [installer], { cwd: root, env: environment });
+    expect(await readFile(configPath, 'utf8')).toBe(first);
+  });
 });

@@ -7,7 +7,7 @@ import { resolveReference, validateReferenceResource } from '../core/reference-r
 import { migrateTaskLocalReferences, migrateTaskLocalReferencesForWorkItem } from '../core/task-local-migration.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
-import { resolveOperativeRoot } from '../core/operative-root.js';
+import { resolveCommandContext, resolveOperativeRoot } from '../core/operative-root.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -140,26 +140,43 @@ function optionValue(args: readonly string[], name: string): { value?: string; d
   return { duplicate: false, value };
 }
 
+function selectedOptions(args: readonly string[], names: readonly string[]): { readonly values: Readonly<Record<string, string | undefined>>; readonly unknown?: string } {
+  const values: Record<string, string | undefined> = {};
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!;
+    if (argument === '--json') continue;
+    const name = names.find((candidate) => argument === candidate || argument.startsWith(`${candidate}=`));
+    if (!name) return { values, unknown: argument };
+    const value = argument === name ? args[++index] : argument.slice(name.length + 1);
+    if (!value || value.startsWith('-')) throw new DiscoveryError(`${name} requires a value.`);
+    if (values[name] !== undefined) throw new DiscoveryError(`Duplicate ${name} option.`);
+    values[name] = value;
+  }
+  return { values };
+}
+
 async function handleWorkItemValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   if (args[0] !== 'work-item' || args[1] !== 'validate') return undefined;
-  const selected = optionValue(args.slice(2), '--work-item');
-  if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+  const selected = selectedOptions(args.slice(2), ['--work-item', '--repository-root']);
   if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-  if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item validate --work-item <work-item> [--json]');
-  const report = await validateWorkItem(await getOperativeRoot(), selected.value);
+  const workItem = selected.values['--work-item'];
+  if (!workItem) throw new DiscoveryError('Usage: sdlc work-item validate --work-item <work-item> [--repository-root <path>] [--json]');
+  const context = await resolveCommandContext(selected.values['--repository-root']);
+  const report = await validateWorkItem(context.repositoryRoot, workItem, undefined, context.schemaRegistryRoot);
   printWorkItemValidation(report, jsonRequested(args));
   return report.valid ? 0 : 1;
 }
 
 async function handleTaskValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
   if (args[0] !== 'task' || args[1] !== 'validate') return undefined;
-  const selected = optionValue(args.slice(2), '--task');
-  if (selected.duplicate) throw new DiscoveryError('Duplicate --task option.');
+  const selected = selectedOptions(args.slice(2), ['--task', '--repository-root']);
   if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-  if (!selected.value) throw new DiscoveryError('Usage: sdlc task validate --task <task-identifier> [--json]');
-  if (!/^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u.test(selected.value)) throw new DiscoveryError(`Invalid task identifier: ${selected.value}`);
-  const workItemId = selected.value.slice(0, selected.value.lastIndexOf('-'));
-  const report = await validateWorkItem(await getOperativeRoot(), workItemId, selected.value);
+  const task = selected.values['--task'];
+  if (!task) throw new DiscoveryError('Usage: sdlc task validate --task <task-identifier> [--repository-root <path>] [--json]');
+  if (!/^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u.test(task)) throw new DiscoveryError(`Invalid task identifier: ${task}`);
+  const workItemId = task.slice(0, task.lastIndexOf('-'));
+  const context = await resolveCommandContext(selected.values['--repository-root']);
+  const report = await validateWorkItem(context.repositoryRoot, workItemId, task, context.schemaRegistryRoot);
   printWorkItemValidation(report, jsonRequested(args));
   return report.valid ? 0 : 1;
 }

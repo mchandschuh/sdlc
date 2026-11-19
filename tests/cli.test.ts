@@ -177,6 +177,32 @@ describe('CLI interface', () => {
     }));
   });
 
+  it('validates an external repository without a local schemas directory when explicitly selected', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-external-validation-'));
+    const item = join(root, '.docs', 'work-items', 'BTCUSD-0000');
+    await mkdir(join(item, 'steps'), { recursive: true });
+    await writeFile(join(item, 'work-item.json'), JSON.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/work-item/v2',
+      workItemId: 'BTCUSD-0000',
+      status: 'planned',
+      title: 'External fixture',
+      objective: 'Validate an external repository without vendored schemas.',
+      repository: { root, authority: 'local' },
+      context: { mergeTarget: { branch: 'main' }, branch: { name: 'main', created: false, rationale: 'fixture' } },
+      request: { source: 'conversation', text: 'fixture', sha256: '0'.repeat(64) },
+      scope: [{ name: 'external-fixture', description: 'fixture', reason: 'fixture' }],
+      nonGoals: [{ name: 'none', description: 'none', reason: 'fixture', forbiddenFileWrites: [], forbiddenFileReads: [] }],
+      requirements: { items: [{ id: 'BTCUSD-0000_REQ_001', name: 'fixture', description: 'fixture', reason: 'fixture', acceptanceCriteria: [{ id: 'BTCUSD-0000_REQ_001_AC_001', description: 'fixture' }] }] },
+      stepsPath: '.docs/work-items/BTCUSD-0000/steps/',
+    }, null, 2));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    await expect(main(['work-item', 'validate', '--work-item', 'BTCUSD-0000', '--repository-root', root, '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.at(-1)!) as { valid: boolean; workItemId: string; invalidObjectCount: number };
+    expect(report).toEqual(expect.objectContaining({ valid: true, workItemId: 'BTCUSD-0000', invalidObjectCount: 0 }));
+  });
+
   it('resolves every canonical task-owned identifier prefix directly', async () => {
     const prefixes = ['INPUT', 'OBJ', 'TARGET', 'VAL', 'TC', 'CHANGE', 'EXEC', 'ART', 'FIND', 'PROC', 'INV', 'R', 'O', 'Q', 'UQ'] as const;
     const root = await mkdtemp(join(tmpdir(), 'sdlc-task-owned-prefixes-'));

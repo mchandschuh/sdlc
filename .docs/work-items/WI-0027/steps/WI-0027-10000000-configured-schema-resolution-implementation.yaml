@@ -4,7 +4,7 @@ taskUid: WI-0027-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement configured repository and schema resolution
 objective: Separate target repository selection from installed schema registry lookup, add the sdlc config contract and installer, and add all-hook setup support with complete tests.
 references:
@@ -48,7 +48,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -106,19 +106,67 @@ task:
       - Add scripts/install.mjs with safe default configuration installation and --hooks all-hook installation.
       - Add isolated external-repository, config, installer, hook, and read-only tests.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Configured schema and repository resolution implementation is planned.
+      summary: Implemented package-owned schema resolution, configured repository selection, sdlc config schema/adapter, explicit validation root options, external-repository validation, default config installation, and idempotent all-hook setup.
       changes:
         - id: WI-0027-10000000_CHANGE-PLAN-001
           type: documentation
-          summary: Defined the schema-root, repository-root, config, installer, and hook implementation boundary.
+          summary: Recorded the schema-root, repository-root, config, installer, and hook implementation boundary.
           objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
           paths: [.docs/work-items/WI-0027/steps/WI-0027-10000000-configured-schema-resolution-implementation.yaml]
-      testImplementations: []
+        - id: WI-0027-10000000_CHANGE-CONFIG-001
+          type: production-code
+          summary: Added nodejs-common configuration resolution with explicit/configured/current repository precedence and installed schema registry selection.
+          objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
+          paths: [src/core/configuration.ts, src/core/operative-root.ts, src/cli/main.ts, src/core/work-item-validation.ts]
+        - id: WI-0027-10000000_CHANGE-SCHEMA-001
+          type: schema
+          summary: Added the closed sdlc/config/v1 contract and local nodejs-common dependency wiring.
+          objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002]
+          paths: [schemas/sdlc-config/v1/sdlc-config.schema.json, package.json, yarn.lock, src/types/nodejs-common.d.ts]
+        - id: WI-0027-10000000_CHANGE-INSTALLER-001
+          type: production-code
+          summary: Added scripts/install.mjs to install default ~/.sdlc/config.json and all supported managed hooks idempotently.
+          objectiveRefs: [WI-0027-10000000_OBJ-002]
+          paths: [scripts/install.mjs]
+        - id: WI-0027-10000000_CHANGE-TEST-001
+          type: test-code
+          summary: Added external repository, all-prefix configuration, default config, and all-hook installer regression coverage.
+          objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
+          paths: [tests/cli.test.ts, tests/git-hooks.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0027-10000000_TC-EXTERNAL-REPOSITORY'
+          path: tests/cli.test.ts
+          selector: validates an external repository without a local schemas directory when explicitly selected
+        - testCaseRef: '#test-case/WI-0027-10000000_TC-HOOKS'
+          path: tests/git-hooks.test.ts
+          selector: installs all managed hooks with --hooks idempotently
+        - testCaseRef: '#test-case/WI-0027-10000000_TC-INSTALLER'
+          path: tests/git-hooks.test.ts
+          selector: installs a default user config without overwriting an existing config
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
-      tests: []
+      tests:
+        - id: WI-0027-10000000_EXEC-TYPECHECK
+          type: static
+          testCaseRefs: ['#test-case/WI-0027-10000000_TC-SCHEMA-ROOT']
+          command: yarn typecheck
+          status: passed
+          result: TypeScript typecheck passed.
+        - id: WI-0027-10000000_EXEC-BUILD
+          type: static
+          testCaseRefs: ['#test-case/WI-0027-10000000_TC-EXTERNAL-REPOSITORY']
+          command: yarn build
+          status: passed
+          result: TypeScript build passed.
+        - id: WI-0027-10000000_EXEC-TEST
+          type: unit
+          testCaseRefs: ['#test-case/WI-0027-10000000_TC-CONFIG-PRECEDENCE', '#test-case/WI-0027-10000000_TC-HOOKS']
+          command: yarn test --run
+          status: passed
+          result: The complete 71-test suite passed.
     limitations:
-      - Implementation has not started.
+      - Validation of all external/configuration edge cases remains in WI-0027-11000000.
+      - No remote schema download or global hook installation is included.
