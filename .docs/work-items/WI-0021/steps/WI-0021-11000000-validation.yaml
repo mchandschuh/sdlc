@@ -4,7 +4,7 @@ taskUid: WI-0021-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0021-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate remediation-oriented work-item and task validation
 objective: Validate command selection, complete object/schema coverage, reference validation after schema failures, remediation context, read-only behavior, and the complete test gate.
 references:
@@ -42,7 +42,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -117,23 +117,31 @@ task:
     nonGoals:
       - Do not claim repair, approval, lifecycle mutation, provider behavior, or release behavior.
   result:
-    status: implemented-unproven
-    summary: Validation of the new work-item/task validation commands is planned and has not yet been executed.
+    status: passed
+    summary: Work-item/task validation passed command selection, complete object/schema coverage, schema-failure reference continuation, remediation context, read-only behavior, and the full test gate.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-VALIDATION-COMMANDS'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until the validation implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Validation commands and the complete 48-test suite passed.
+          assertions:
+            - Work-item validation reports all selected objects and reference metrics.
+            - Task validation accepts canonical task identifiers and scopes output to one task.
+            - Schema-invalid fixtures still report independent reference findings and remediation guidance.
+            - Selected artifacts remain byte-for-byte unchanged.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Remediation-oriented work-item/task validation is planned.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Work-item/task validation and the complete test gate passed.
+            command: yarn typecheck && yarn build && yarn test
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - New commands and response contracts have not yet been validated.
+      - Validation proves local artifact/schema/reference behavior only.
+      - Remediation suggestions are actionable guidance, not automatic repairs.
     nonClaims:
-      - This planned result does not claim schema-failure continuation or remediation-context completion.
+      - This result does not claim approval, release, provider behavior, or production readiness.
