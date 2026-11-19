@@ -4,7 +4,7 @@ taskUid: WI-0029-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0029-11000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Release revision version 0.6.1
 objective: Increment the package revision to 0.6.1, verify the compiled CLI and complete gates, and record a backwards-compatible bugfix release with no public API changes.
 references:
@@ -47,7 +47,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -99,19 +99,29 @@ task:
       - Do not change the public migrate-work-item-up command or response schema.
       - Do not create a Git tag or publish/deploy externally.
   result:
-    status: partially-delivered
-    summary: Revision release is planned.
+    status: delivered
+    summary: Prepared the backwards-compatible 0.6.1 revision release, verified the compiled launcher and complete gates, and preserved the migrate-work-item-up public API.
     artifacts:
-      - id: WI-0029-20000000_ART-PLAN-001
+      - id: WI-0029-20000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:1cf17974207821b5235ba2a7122ed15b85c078eba0c0a3c45b783e26c73e4ca4
+      - id: WI-0029-20000000_ART-BINARY
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:e6de6ebe256757d49ef64bd53df62900f0577dcde42c5d52335a14097543edd3
     executions:
-      - id: WI-0029-20000000_EXEC-PLAN-001
+      - id: WI-0029-20000000_EXEC-BUILD
         procedureRef: '#procedure/WI-0029-20000000_PROC-BUILD'
         result:
-          status: inconclusive
-          summary: Revision release is deferred until implementation and validation tasks pass.
-        command: yarn typecheck && yarn build && yarn test
+          status: passed
+          summary: Typecheck, build, complete tests, schema audit, and WI-0029 validation passed for version 0.6.1.
+        command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0029 --json
+      - id: WI-0029-20000000_EXEC-VERSION
+        procedureRef: '#procedure/WI-0029-20000000_PROC-VERSION'
+        result:
+          status: passed
+          summary: The compiled launcher reported version 0.6.1.
+        command: node ./bin/cli.js --version
     limitations:
-      - Version 0.6.1 has not been prepared.
+      - The revision release is local and is not tagged, published, or deployed externally.

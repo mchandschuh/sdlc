@@ -48,7 +48,7 @@ describe('CLI interface', () => {
 
     await expect(main([argument])).resolves.toBe(0);
 
-    expect(output).toEqual(['0.6.0']);
+    expect(output).toEqual(['0.6.1']);
   });
 
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
