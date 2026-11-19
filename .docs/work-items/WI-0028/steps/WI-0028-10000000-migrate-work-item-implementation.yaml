@@ -4,7 +4,7 @@ taskUid: WI-0028-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement migrate-work-item-up
 objective: Add the explicit whole-work-item migration command, bounded response contract, deterministic behavior, and complete focused tests.
 references:
@@ -45,7 +45,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -92,19 +92,61 @@ task:
       - Add isolated fixtures for migration, idempotence, unresolvable preservation, scope, and read-only behavior.
       - Run the complete typecheck, build, and test gates before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation task is planned.
+      summary: Added sdlc ref migrate-work-item-up --work-item <work-item-id> with a distinct versioned response schema, bounded migration API, deterministic idempotence, and focused safety coverage.
       changes:
         - id: WI-0028-10000000_CHANGE-PLAN-001
           type: documentation
-          summary: Recorded the bounded whole-work-item migration command, response, safety, and test implementation plan.
+          summary: Recorded the bounded whole-work-item migration command, response, safety, and test implementation boundary.
           objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002, WI-0028-10000000_OBJ-003]
           paths: [.docs/work-items/WI-0028/steps/WI-0028-10000000-migrate-work-item-implementation.yaml]
-      testImplementations: []
+        - id: WI-0028-10000000_CHANGE-API-001
+          type: production-code
+          summary: Added the distinct work-item migration report/API and CLI command while preserving migrate-task-local-up behavior.
+          objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002]
+          paths: [src/core/task-local-migration.ts, src/cli/main.ts]
+        - id: WI-0028-10000000_CHANGE-SCHEMA-001
+          type: schema
+          summary: Added the closed sdlc/ref/work-item-migration/v1 response contract.
+          objectiveRefs: [WI-0028-10000000_OBJ-002]
+          paths: [schemas/sdlc-ref/v1/sdlc-ref-work-item-migration.schema.json]
+        - id: WI-0028-10000000_CHANGE-TEST-001
+          type: test-code
+          summary: Added whole-work-item command, idempotence, unresolvable-preservation, sibling-isolation, help, and diagnostic coverage.
+          objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002, WI-0028-10000000_OBJ-003]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0028-10000000_TC-COMMAND'
+          path: tests/cli.test.ts
+          selector: provides a distinct migrate-work-item-up command with deterministic idempotent scope
+        - testCaseRef: '#test-case/WI-0028-10000000_TC-SAFETY'
+          path: tests/cli.test.ts
+          selector: reports migrate-work-item-up help and rejects unsafe selections without writes
+        - testCaseRef: '#test-case/WI-0028-10000000_TC-TEST-GATE'
+          path: tests/cli.test.ts
+          selector: CLI interface test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0028-10000000_OBJ-001, WI-0028-10000000_OBJ-002, WI-0028-10000000_OBJ-003]
-      tests: []
+      tests:
+        - id: WI-0028-10000000_EXEC-GATES
+          type: cli-audit
+          testCaseRefs: ['#test-case/WI-0028-10000000_TC-COMMAND', '#test-case/WI-0028-10000000_TC-SAFETY', '#test-case/WI-0028-10000000_TC-TEST-GATE']
+          command: yarn typecheck && yarn build && yarn test --run
+          status: passed
+          result: Typecheck, build, and the complete 75-test suite passed.
+        - id: WI-0028-10000000_EXEC-SCHEMA
+          type: static
+          testCaseRefs: ['#test-case/WI-0028-10000000_TC-REPORT']
+          command: node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: The 40-schema audit passed.
+        - id: WI-0028-10000000_EXEC-SELF
+          type: cli-audit
+          testCaseRefs: ['#test-case/WI-0028-10000000_TC-REPORT']
+          command: node ./bin/cli.js work-item validate --work-item WI-0028 --json
+          status: passed
+          result: WI-0028 returned 4 valid objects, 25 resolved references, and 0 findings.
     limitations:
-      - Implementation has not started.
+      - Release versioning and remote publication remain in WI-0028-20000000.

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/ref/work-item-migration/v1",
+  "title": "SDLC Work-Item Migration Response v1",
+  "description": "Stable machine-readable result for a bounded migration of one complete work-item directory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "workItemId", "path", "changedFiles", "files", "replacements", "unresolvable", "findings"],
+  "properties": {
+    "schema": {"const": "https://schemas.handschuh.dev/sdlc/ref/work-item-migration/v1"},
+    "workItemId": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+$"},
+    "path": {"type": "string", "pattern": "^\\.docs/work-items/[A-Z]{1,10}-[0-9]+$"},
+    "changedFiles": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "files": {"type": "array", "items": {"$ref": "sdlc-ref-task-local-migration.schema.json#/$defs/File"}},
+    "replacements": {"type": "array", "items": {"$ref": "sdlc-ref-task-local-migration.schema.json#/$defs/Replacement"}},
+    "unresolvable": {"type": "array", "items": {"$ref": "sdlc-ref-task-local-migration.schema.json#/$defs/Unresolvable"}},
+    "findings": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "examples": [
+    {
+      "schema": "https://schemas.handschuh.dev/sdlc/ref/work-item-migration/v1",
+      "workItemId": "WI-0028",
+      "path": ".docs/work-items/WI-0028",
+      "changedFiles": [],
+      "files": [],
+      "replacements": [],
+      "unresolvable": [],
+      "findings": []
+    }
+  ]
+}
