@@ -1,7 +1,7 @@
 {
-  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0024",
-  "status": "active",
+  "status": "complete",
   "title": "Enforce branch-aware work-item completion and SemVer delivery",
   "type": "feature",
   "objective": "Extend sdlc work-item validate, add sdlc work-item start --work-item <id>, and extend the installed Git hooks to support planning on the merge target, task processing on a started context branch, merge completion, primary-branch-only SemVer tagging, and remote push readiness, while introducing conditional work-item/v3 versionSuggestion metadata without adding a version suggest-new command.",
@@ -266,5 +266,10 @@
     ]
   },
   "sourceWorkItem": "WI-0023",
-  "stepsPath": ".docs/work-items/WI-0024/steps/"
+  "stepsPath": ".docs/work-items/WI-0024/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Adds branch-aware work-item validation, an explicit work-item start command, task-processing and primary-delivery hook enforcement, work-item v3 metadata, and agent process documentation without breaking existing work-item v2 records.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes are larger or more breaking than expected."
+  }
 }
