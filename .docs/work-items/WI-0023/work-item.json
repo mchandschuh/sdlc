@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0023",
-  "status": "planned",
+  "status": "implemented",
   "title": "Resolve requirements by strict direct identifiers",
   "type": "feature",
   "objective": "Define the strict sdlc/requirement-identifier/v1 format <work-item-id>_REQ_<###>, confirm that authoritative requirements are declared only by work-item.json, register the identifier for direct reference validation, and resolve bare requirement identifiers through the local repository scope with sdlc ref resolve --ref.",
