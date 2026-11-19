@@ -136,13 +136,14 @@ task:
         observed:
           outcome: passed
           exitCode: 0
-          summary: External BTCUSD-0000-style validation succeeded without a target schemas directory; config installation, all-hook idempotence, schema audit, complete tests, and WI-0027 self-validation passed.
+          summary: External BTCUSD-0000-style validation succeeded without a target schemas directory; config precedence/provenance and invalid-path diagnostics, config installation, unmanaged-hook preservation, all-hook idempotence, schema audit, complete tests, and WI-0027 self-validation passed.
           assertions:
             - Explicit --repository-root validation from /tmp succeeded for BTCUSD-0000 without a target schemas directory.
             - Schema lookup used the installed sdlc schema registry while target repository paths remained rooted in the selected external repository.
             - scripts/install.mjs installed a default ~/.sdlc/config.json without overwriting existing configuration and --hooks installed all supported managed hooks idempotently.
             - Invalid or unavailable roots remain actionable, and external fixture files are not mutated by validation.
-            - WI-0027 self-validation returned three valid objects, zero invalid objects, and all 35 discovered references resolved.
+            - Application, home, and SDLC_CONFIG precedence and source provenance are covered, as are invalid configured paths and unmanaged hook preservation.
+            - WI-0027 self-validation returned three valid objects, zero invalid objects, and all 37 discovered references resolved.
         evidenceTier: inspection
         evidence:
           - kind: command

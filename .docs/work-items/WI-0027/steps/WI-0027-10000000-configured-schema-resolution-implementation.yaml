@@ -145,6 +145,12 @@ task:
         - testCaseRef: '#test-case/WI-0027-10000000_TC-INSTALLER'
           path: tests/git-hooks.test.ts
           selector: installs a default user config without overwriting an existing config
+        - testCaseRef: '#test-case/WI-0027-10000000_TC-CONFIG-PRECEDENCE'
+          path: tests/cli.test.ts
+          selector: resolves application, home, and SDLC_CONFIG layers with source provenance and configured-root fallback
+        - testCaseRef: '#test-case/WI-0027-10000000_TC-CONFIG-INVALID'
+          path: tests/cli.test.ts
+          selector: rejects invalid configured paths before selecting a repository
     verification:
       status: passed
       objectiveRefs: [WI-0027-10000000_OBJ-001, WI-0027-10000000_OBJ-002, WI-0027-10000000_OBJ-003]
@@ -166,7 +172,7 @@ task:
           testCaseRefs: ['#test-case/WI-0027-10000000_TC-CONFIG-PRECEDENCE', '#test-case/WI-0027-10000000_TC-HOOKS']
           command: yarn test --run
           status: passed
-          result: The complete 71-test suite passed.
+          result: The complete 73-test suite passed.
     limitations:
       - Validation of all external/configuration edge cases remains in WI-0027-11000000.
       - No remote schema download or global hook installation is included.

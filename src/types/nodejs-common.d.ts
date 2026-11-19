@@ -13,5 +13,7 @@ declare module 'nodejs-common/dist/src/config/index.js' {
     readonly applicationSourceDirectory: string;
     readonly appSlug: string;
     readonly environmentVariable?: string;
+    readonly homeDirectory?: string;
+    readonly environment?: Readonly<Record<string, string | undefined>>;
   }): Promise<ResolvedConfigJson>;
 }

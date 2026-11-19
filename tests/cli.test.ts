@@ -11,6 +11,7 @@ import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, sta
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
+import { commandContext, resolveSdlcConfig } from '../src/core/configuration.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -85,6 +86,53 @@ describe('CLI interface', () => {
       process.chdir(originalCwd);
     }
     expect(errors.at(-1)).toContain('No Git repository found from path');
+  });
+
+  it('resolves application, home, and SDLC_CONFIG layers with source provenance and configured-root fallback', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-config-precedence-'));
+    const application = join(root, 'application');
+    const home = join(root, 'home');
+    const environmentRoot = join(root, 'environment');
+    const applicationRepository = join(root, 'application-repository');
+    const homeRepository = join(root, 'home-repository');
+    const environmentRepository = join(root, 'environment-repository');
+    await Promise.all([
+      mkdir(join(application, '.config'), { recursive: true }),
+      mkdir(join(home, '.sdlc'), { recursive: true }),
+      mkdir(environmentRoot, { recursive: true }),
+      mkdir(applicationRepository, { recursive: true }),
+      mkdir(homeRepository, { recursive: true }),
+      mkdir(environmentRepository, { recursive: true }),
+    ]);
+    const config = (repositoryRoot: string) => JSON.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/config/v1', repositoryRoot });
+    await writeFile(join(application, '.config', 'config.json'), config(applicationRepository));
+    await writeFile(join(home, '.sdlc', 'config.json'), config(homeRepository));
+    await writeFile(join(environmentRoot, 'config.json'), config(environmentRepository));
+    const options = { applicationSourceDirectory: application, homeDirectory: home, environment: { SDLC_CONFIG: environmentRoot } };
+    await expect(resolveSdlcConfig(options)).resolves.toEqual(expect.objectContaining({
+      config: expect.objectContaining({ repositoryRoot: environmentRepository }),
+      source: 'environment',
+      sourcePath: join(environmentRoot, 'config.json'),
+    }));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(commandContext(undefined, options)).resolves.toEqual(expect.objectContaining({
+        repositoryRoot: environmentRepository,
+        configSource: 'environment',
+      }));
+      await expect(commandContext(applicationRepository, options)).resolves.toEqual(expect.objectContaining({ repositoryRoot: applicationRepository }));
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('rejects invalid configured paths before selecting a repository', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-invalid-config-'));
+    const application = join(root, 'application');
+    await mkdir(join(application, '.config'), { recursive: true });
+    await writeFile(join(application, '.config', 'config.json'), JSON.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/config/v1', repositoryRoot: '../outside' }));
+    await expect(resolveSdlcConfig({ applicationSourceDirectory: application, homeDirectory: join(root, 'home'), environment: {} })).rejects.toThrow('repositoryRoot must be an absolute path without parent traversal.');
   });
 
   it('prints repository-dependent command help without requiring a Git repository', async () => {
@@ -195,12 +243,14 @@ describe('CLI interface', () => {
       requirements: { items: [{ id: 'BTCUSD-0000_REQ_001', name: 'fixture', description: 'fixture', reason: 'fixture', acceptanceCriteria: [{ id: 'BTCUSD-0000_REQ_001_AC_001', description: 'fixture' }] }] },
       stepsPath: '.docs/work-items/BTCUSD-0000/steps/',
     }, null, 2));
+    const before = await readFile(join(item, 'work-item.json'), 'utf8');
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
     await expect(main(['work-item', 'validate', '--work-item', 'BTCUSD-0000', '--repository-root', root, '--json'])).resolves.toBe(0);
     const report = JSON.parse(output.at(-1)!) as { valid: boolean; workItemId: string; invalidObjectCount: number };
     expect(report).toEqual(expect.objectContaining({ valid: true, workItemId: 'BTCUSD-0000', invalidObjectCount: 0 }));
+    expect(await readFile(join(item, 'work-item.json'), 'utf8')).toBe(before);
   });
 
   it('resolves every canonical task-owned identifier prefix directly', async () => {

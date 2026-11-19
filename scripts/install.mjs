@@ -3,10 +3,8 @@
 import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const scriptRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const START = '# >>> sdlc managed hook >>>';
 const END = '# <<< sdlc managed hook <<<';
 const HOOKS = ['applypatch-msg', 'commit-msg', 'post-update', 'pre-applypatch', 'pre-commit', 'pre-merge-commit', 'pre-push', 'pre-rebase', 'pre-receive', 'prepare-commit-msg', 'push-to-checkout', 'update'];

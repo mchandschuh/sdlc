@@ -135,10 +135,12 @@ describe('install_sdlc_validate_git_hooks.mjs', () => {
     const installer = join(root, 'scripts', 'install.mjs');
     await writeFile(installer, await readFile(join(process.cwd(), 'scripts/install.mjs')));
     await git(root, ['init', '--quiet']);
+    await writeFile(join(root, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\necho unmanaged-hook\n');
     await execFileAsync(process.execPath, [installer, '--hooks'], { cwd: root, env: { ...process.env, HOME: join(root, 'home') } });
     const hooks = ['applypatch-msg', 'commit-msg', 'post-update', 'pre-applypatch', 'pre-commit', 'pre-merge-commit', 'pre-push', 'pre-rebase', 'pre-receive', 'prepare-commit-msg', 'push-to-checkout', 'update'];
     const contents = await Promise.all(hooks.map(async (hook) => readFile(join(root, '.git', 'hooks', hook), 'utf8')));
     expect(contents.every((content) => content.includes('# >>> sdlc managed hook >>>'))).toBe(true);
+    expect(contents[hooks.indexOf('pre-commit')]).toContain('unmanaged-hook');
     const before = contents;
     await execFileAsync(process.execPath, [installer, '--hooks'], { cwd: root, env: { ...process.env, HOME: join(root, 'home') } });
     expect(await Promise.all(hooks.map(async (hook) => readFile(join(root, '.git', 'hooks', hook), 'utf8')))).toEqual(before);

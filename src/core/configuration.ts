@@ -1,6 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ConfigError, resolveConfigJson } from 'nodejs-common/dist/src/config/index.js';
 import { DiscoveryError } from './discovery.js';
 import { repositoryInfo } from './repository.js';
@@ -18,9 +19,22 @@ export interface SdlcCommandContext {
   readonly schemaRegistryRoot: string;
   readonly config?: SdlcConfig;
   readonly configSource?: string;
+  readonly configSourcePath?: string;
 }
 
-const packageRoot = resolve(new URL('../..', import.meta.url).pathname);
+export interface SdlcConfigResolutionOptions {
+  readonly applicationSourceDirectory?: string;
+  readonly homeDirectory?: string;
+  readonly environment?: Readonly<Record<string, string | undefined>>;
+}
+
+export interface SdlcConfigResolution {
+  readonly config?: SdlcConfig;
+  readonly source?: string;
+  readonly sourcePath?: string;
+}
+
+const packageRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
 function objectValue(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
@@ -38,13 +52,36 @@ async function existingDirectory(value: unknown, label: string): Promise<string 
   return path;
 }
 
-async function configured(): Promise<{ readonly config?: SdlcConfig; readonly source?: string }> {
+function assertConfigPath(value: unknown, label: string): string {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.split('/').includes('..')) throw new DiscoveryError(`${label} must be an absolute path without parent traversal.`);
+  return value;
+}
+
+function assertConfig(value: Record<string, unknown>): SdlcConfig {
+  const allowed = new Set(['schema', 'repositoryRoot', 'schemaRegistryRoot']);
+  const unexpected = Object.keys(value).find((key) => !allowed.has(key));
+  if (unexpected) throw new DiscoveryError(`Unsupported sdlc config property: ${unexpected}`);
+  if (value.schema !== SDLC_CONFIG_SCHEMA) throw new DiscoveryError(`Configuration schema must be ${SDLC_CONFIG_SCHEMA}.`);
+  const repositoryRoot = assertConfigPath(value.repositoryRoot, 'repositoryRoot');
+  const schemaRegistryRoot = value.schemaRegistryRoot === undefined ? undefined : assertConfigPath(value.schemaRegistryRoot, 'schemaRegistryRoot');
+  return { schema: SDLC_CONFIG_SCHEMA, repositoryRoot, ...(schemaRegistryRoot ? { schemaRegistryRoot } : {}) };
+}
+
+export async function resolveSdlcConfig(options: SdlcConfigResolutionOptions = {}): Promise<SdlcConfigResolution> {
   try {
-    const result = await resolveConfigJson({ applicationSourceDirectory: packageRoot, appSlug: 'sdlc' });
-    const value = objectValue(result.value) ?? {};
+    const result = await resolveConfigJson({
+      applicationSourceDirectory: options.applicationSourceDirectory ?? packageRoot,
+      appSlug: 'sdlc',
+      homeDirectory: options.homeDirectory,
+      environment: options.environment,
+    });
+    const value = objectValue(result.value);
+    if (!value) throw new DiscoveryError('SDLC configuration must be a JSON object.');
+    const config = assertConfig(value);
     return {
-      config: value as SdlcConfig,
-      source: result.layers.at(-1)?.absolutePath,
+      config,
+      source: result.layers.at(-1)?.source,
+      sourcePath: result.layers.at(-1)?.absolutePath,
     };
   } catch (error) {
     if (error instanceof ConfigError && error.code === 'CONFIGURATION_FILE_NOT_FOUND') return {};
@@ -52,8 +89,8 @@ async function configured(): Promise<{ readonly config?: SdlcConfig; readonly so
   }
 }
 
-export async function commandContext(explicitRepositoryRoot?: string): Promise<SdlcCommandContext> {
-  const selected = await configured();
+export async function commandContext(explicitRepositoryRoot?: string, options: SdlcConfigResolutionOptions = {}): Promise<SdlcCommandContext> {
+  const selected = await resolveSdlcConfig(options);
   const explicit = await existingDirectory(explicitRepositoryRoot, '--repository-root');
   let current: string | undefined;
   let currentError: unknown;
@@ -70,7 +107,7 @@ export async function commandContext(explicitRepositoryRoot?: string): Promise<S
   const schemaRegistryRoot = await existingDirectory(selected.config?.schemaRegistryRoot, 'schemaRegistryRoot') ?? packageRoot;
   const schemas = resolve(schemaRegistryRoot, 'schemas');
   if (!(await stat(schemas).catch(() => undefined))?.isDirectory()) throw new DiscoveryError(`Schema registry does not contain schemas/: ${schemas}`);
-  return { repositoryRoot, schemaRegistryRoot, config: selected.config, configSource: selected.source };
+  return { repositoryRoot, schemaRegistryRoot, config: selected.config, configSource: selected.source, configSourcePath: selected.sourcePath };
 }
 
 export async function installDefaultConfig(repositoryRoot: string, overwrite = false): Promise<{ readonly path: string; readonly created: boolean }> {
