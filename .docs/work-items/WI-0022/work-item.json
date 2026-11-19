@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0022",
-  "status": "planned",
+  "status": "implemented",
   "title": "Install pre-commit validation hooks for work items",
   "type": "feature",
   "objective": "Add ./scripts/install_sdlc_validate_git_hooks.mjs to install an idempotent Git pre-commit hook that validates every work item touched by a commit with sdlc work-item validate and prints the complete failure response before blocking invalid work-item commits.",

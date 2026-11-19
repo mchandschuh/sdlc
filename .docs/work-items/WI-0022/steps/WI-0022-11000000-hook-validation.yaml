@@ -4,7 +4,7 @@ taskUid: WI-0022-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0022-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate work-item validation Git hooks
 objective: Validate hook installation, staged selection, output/blocking behavior, idempotence, existing-hook preservation, WI-0022 validation, and the complete test gate.
 references:
@@ -45,7 +45,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -119,23 +119,35 @@ task:
     nonGoals:
       - Do not claim remote hooks, publication, deployment, or automatic repair.
   result:
-    status: implemented-unproven
-    summary: Hook validation is planned and has not yet been executed.
+    status: passed
+    summary: The installed Git hook passed installation, staged work-item selection, idempotence, existing-hook preservation, failure output/blocking, read-only, complete test, and WI-0022 self-validation checks.
     executions:
       - id: EXEC-VAL-001
         procedureRef: '#procedure/VAL-HOOK-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until hook implementation processing.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: The installer syntax check, package typecheck, build, focused hook tests, complete 52-test suite, and WI-0022 self-validation all passed.
+          assertions:
+            - The installer creates an executable managed pre-commit hook and repeated installation is byte-for-byte idempotent.
+            - Staged work-item paths are detected with NUL-safe Git output, deduplicated, sorted, and validated once each; unrelated commits skip validation.
+            - Complete stdout and stderr validation responses are printed before invalid commits are blocked, and staged files remain unchanged.
+            - Existing unmanaged hook content executes and valid work-item commits proceed.
+            - WI-0022 validation reports valid=true for all 3 selected objects with zero invalid objects.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Work-item validation hook testing is planned.
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: Hook behavior and the complete test gate passed.
+            command: node --check scripts/install_sdlc_validate_git_hooks.mjs && yarn typecheck && yarn build && yarn test
+          - kind: command
+            source: Validation execution EXEC-VAL-001
+            claim: WI-0022 schema and reference validation passed.
+            command: node ./bin/cli.js work-item validate --work-item WI-0022 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - Hook installation and failure blocking have not yet been validated.
+      - Validation proves local repository hook behavior only; it does not configure hooks globally or use an external hook manager.
     nonClaims:
-      - This planned result does not claim WI-0022 self-validation or hook completion.
+      - This result does not claim remote publication, deployment, provider behavior, or production readiness.
