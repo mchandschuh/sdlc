@@ -1,0 +1,119 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0021
+taskUid: WI-0021-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement remediation-oriented work-item and task validation
+objective: Add work-item/task validation commands that validate schemas and references independently, continue after schema failures, and emit actionable remediation findings.
+references:
+  required:
+    - src/cli/main.ts
+    - src/core/work-item-validation.ts
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+    - .docs/work-items/WI-0021/work-item.json
+  informational:
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+    - .docs/work-items/WI-0013/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - src/cli/
+    - src/core/
+    - tests/
+    - schemas/sdlc-work-item-validation/
+    - .docs/work-items/WI-0021/steps/WI-0021-10000000-validation-implementation.yaml
+  commitSubject: 'WI-0021: feat(cli): add remediation-oriented validation'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement complete schema/reference validation for one work item or one canonical task identifier with independent failure categories and remediation context.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_001
+        purpose: Define work-item validation scope.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_002
+        purpose: Define task validation scope.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_003
+        purpose: Define schema/reference continuation.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_004
+        purpose: Define remediation findings.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_005
+        purpose: Define read-only/test-gate behavior.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Work-item/task commands validate every selected object and all references with independent schema and reference result categories.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002, INPUT-REQ-003]
+        testCaseRefs: ['#test-case/TC-WORK-ITEM-VALIDATE', '#test-case/TC-TASK-VALIDATE', '#test-case/TC-SCHEMA-REFERENCE-CONTINUE']
+      - id: OBJ-002
+        statement: Findings provide sufficient source/schema/reference/remediation context and validation is read-only.
+        inputRefs: [INPUT-REQ-004, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-REMEDIATION-FINDINGS', '#test-case/TC-READ-ONLY', '#test-case/TC-TEST-GATE']
+    ownedPaths: [src/cli/, src/core/, tests/, schemas/sdlc-work-item-validation/]
+    nonGoals:
+      - Do not mutate or repair invalid work items/tasks.
+      - Do not bump package version or create release tags.
+    steps:
+      - Add task-specific validation selection and shared report structures.
+      - Continue reference discovery/validation after schema failures.
+      - Add remediation-oriented findings and response-schema coverage.
+      - Run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Validation command implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the remediation-oriented validation implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0021/steps/WI-0021-10000000-validation-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - New validation commands and remediation response fields do not yet exist.

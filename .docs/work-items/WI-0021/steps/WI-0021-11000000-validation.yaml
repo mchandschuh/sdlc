@@ -1,0 +1,139 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0021
+taskUid: WI-0021-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0021-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate remediation-oriented work-item and task validation
+objective: Validate command selection, complete object/schema coverage, reference validation after schema failures, remediation context, read-only behavior, and the complete test gate.
+references:
+  required:
+    - .docs/work-items/WI-0021/work-item.json
+    - .docs/work-items/WI-0021/steps/WI-0021-10000000-validation-implementation.yaml
+    - src/cli/main.ts
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json
+  informational:
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/sdlc-ref/v1/sdlc-ref-validation.schema.json
+dependsOn:
+  - WI-0021-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0021/steps/WI-0021-11000000-validation.yaml
+  commitSubject: 'WI-0021: test(cli): validate remediation-oriented validation'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate work-item/task validation outputs, schema/reference continuation, actionable remediation findings, and read-only behavior.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0021-10000000#result/R-001
+        purpose: Identify validation implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_001
+        purpose: Identify work-item command conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_002
+        purpose: Identify task command conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_003
+        purpose: Identify continuation conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_004
+        purpose: Identify remediation context.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0021#work-item.json#requirement/WI-0021_REQ_005
+        purpose: Identify read-only/test-gate conditions.
+        required: true
+    targets:
+      - id: TARGET-VALIDATION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0021-10000000#result/R-001
+        purpose: Validate the command implementation.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-WORK-ITEM-VALIDATE', '#test-case/TC-TASK-VALIDATE', '#test-case/TC-SCHEMA-REFERENCE-CONTINUE', '#test-case/TC-REMEDIATION-FINDINGS', '#test-case/TC-READ-ONLY', '#test-case/TC-TEST-GATE']
+    procedures:
+      - id: VAL-VALIDATION-COMMANDS
+        sequence: 1
+        name: validate-work-item-and-task-commands
+        description: Run full checks and validate valid/invalid work-item/task fixtures, continuation, remediation findings, reference coverage, and read-only behavior.
+        reason: Prove coding agents receive complete actionable validation context.
+        targetRefs: ['#target/TARGET-VALIDATION-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-WORK-ITEM-VALIDATE', '#test-case/TC-TASK-VALIDATE', '#test-case/TC-SCHEMA-REFERENCE-CONTINUE', '#test-case/TC-REMEDIATION-FINDINGS', '#test-case/TC-READ-ONLY', '#test-case/TC-TEST-GATE']
+        method:
+          executionMode: executable
+          target: sdlc work-item/task validate commands
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Validate a complete valid work item and one valid task identifier.
+            - Validate malformed work-item/task objects containing independent bad references and confirm both categories are reported.
+            - Verify remediation fields identify object/reference locations, schema paths, reasons, and suggested fixes.
+            - Verify selected files remain byte-for-byte unchanged.
+            - Run the complete repository schema audit.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim repair, approval, lifecycle mutation, provider behavior, or release behavior.
+  result:
+    status: implemented-unproven
+    summary: Validation of the new work-item/task validation commands is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-VALIDATION-COMMANDS'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until the validation implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Remediation-oriented work-item/task validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - New commands and response contracts have not yet been validated.
+    nonClaims:
+      - This planned result does not claim schema-failure continuation or remediation-context completion.
