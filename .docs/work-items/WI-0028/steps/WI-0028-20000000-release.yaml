@@ -115,7 +115,7 @@ task:
       - Do not mutate the parent lifecycle directly outside the recorded task/work-item artifacts.
   result:
     status: delivered
-    summary: Prepared the 0.6.0 package release, verified the compiled launcher, and recorded the final origin publication procedure pending the merged main release commit.
+    summary: Prepared version 0.6.0, verified the compiled launcher and complete gates, and pushed main to origin/main at the final release commit.
     artifacts:
       - id: WI-0028-20000000_ART-MANIFEST
         kind: manifest
@@ -138,5 +138,11 @@ task:
           status: passed
           summary: The compiled launcher reported version 0.6.0.
         command: node ./bin/cli.js --version
+      - id: WI-0028-20000000_EXEC-PUSH
+        procedureRef: '#procedure/WI-0028-20000000_PROC-PUSH'
+        result:
+          status: passed
+          summary: Pushed main to origin and verified origin/main resolves to the final release commit 73ba80bd9d42782649446cdf5b5dbadd7c92259f.
+        command: git push origin main && git fetch origin main && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
     limitations:
-      - Origin publication is performed after this release task commit is merged into main; the final push result will be recorded in the completion update.
+      - The release was pushed to origin/main but was not tagged, deployed, or published to a package registry.

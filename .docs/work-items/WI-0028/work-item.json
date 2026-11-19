@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0028",
-  "status": "planned",
+  "status": "complete",
   "title": "Add whole-work-item reference migration command",
   "type": "feature",
   "objective": "Implement sdlc ref migrate-work-item-up --work-item <work-item-id> as a bounded, deterministic whole-work-item reference migration command, validate it with isolated fixtures and read-only failure checks, then release version 0.6.0 by pushing main to origin.",
