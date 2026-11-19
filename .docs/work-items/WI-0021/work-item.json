@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0021",
-  "status": "planned",
+  "status": "implemented",
   "title": "Add remediation-oriented work-item and task validation",
   "type": "feature",
   "objective": "Implement sdlc work-item validate --work-item <work-item-id> and sdlc task validate --task <task identifier> so schema validation covers every selected object and reference validation always runs, including after schema failures, with actionable remediation context for coding agents, then deliver the change as version 0.5.0.",

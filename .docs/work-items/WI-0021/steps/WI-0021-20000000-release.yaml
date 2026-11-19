@@ -4,7 +4,7 @@ taskUid: WI-0021-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0021-11000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Release version 0.5.0
 objective: Bump the package minor version to 0.5.0, build and test the compiled CLI, and record a local release candidate after validation completion.
 references:
@@ -47,7 +47,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -100,20 +100,29 @@ task:
       - Do not deploy the application.
       - Do not mutate the parent lifecycle directly.
   result:
-    status: blocked
-    summary: The 0.5.0 release candidate is planned and has not yet been produced.
+    status: delivered
+    summary: The local 0.5.0 release candidate was built, smoke-tested, and verified after remediation-oriented validation passed.
     artifacts:
-      - id: ART-PLANNED-001
+      - id: ART-001
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:23e3c2e85f7ce44f5ab7a09adb4cdec9142353665acaba2f005e14ce303ed633
+      - id: ART-002
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:e53f197438a9c9c158e50c71fc04ccd16905f9daa92deacfb70c53166440ea28
     executions:
-      - id: EXEC-RELEASE-PLANNED
+      - id: EXEC-RELEASE-001
         procedureRef: '#procedure/PROC-001'
         result:
-          status: blocked
-          summary: Release is deferred until remediation-oriented validation passes.
+          status: passed
+          summary: Typecheck, build, and the complete 48-test suite passed.
         command: yarn typecheck && yarn build && yarn test
+      - id: EXEC-RELEASE-002
+        procedureRef: '#procedure/PROC-002'
+        result:
+          status: passed
+          summary: The compiled launcher reported version 0.5.0 and exited successfully.
+        command: node ./bin/cli.js --version
     limitations:
-      - Release preparation remains pending WI-0021 validation.
-      - The planned checksum is a placeholder and is not release evidence.
+      - The release candidate is local and is not published, deployed, or installed into production.
