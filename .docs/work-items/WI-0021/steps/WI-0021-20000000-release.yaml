@@ -1,0 +1,119 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0021
+taskUid: WI-0021-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0021-11000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release version 0.5.0
+objective: Bump the package minor version to 0.5.0, build and test the compiled CLI, and record a local release candidate after validation completion.
+references:
+  required:
+    - package.json
+    - bin/cli.js
+    - src/cli/main.ts
+    - .docs/work-items/WI-0021/work-item.json
+    - .docs/work-items/WI-0021/steps/WI-0021-11000000-validation.yaml
+  informational:
+    - tsconfig.json
+    - tests/cli.test.ts
+dependsOn:
+  - WI-0021-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0021/work-item.json
+    - .docs/work-items/WI-0021/steps/WI-0021-20000000-release.yaml
+  commitSubject: 'WI-0021: chore(release): prepare version 0.5.0'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: smoke-version
+      executable: node
+      arguments: [./bin/cli.js, --version]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare and verify a local 0.5.0 release candidate after remediation-oriented validation passes.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0021-11000000#result/R-001
+        purpose: Confirm work-item/task validation passed before release preparation.
+        required: true
+      - id: INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the repository revision from which the release is built.
+        required: true
+    artifacts:
+      - id: ART-001
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.5.0.
+        required: true
+      - id: ART-002
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI entrypoint reporting version 0.5.0.
+        required: true
+    procedures:
+      - id: PROC-001
+        sequence: 1
+        name: build-release
+        description: Run typecheck, build, and the complete test suite.
+        steps: [Run yarn typecheck., Run yarn build., Run yarn test.]
+        command: yarn typecheck && yarn build && yarn test
+        expected:
+          result: All checks pass and the release candidate is buildable.
+        required: true
+      - id: PROC-002
+        sequence: 2
+        name: smoke-version
+        description: Verify the compiled launcher reports version 0.5.0.
+        steps: [Run node ./bin/cli.js --version., Confirm output is 0.5.0.]
+        command: node ./bin/cli.js --version
+        expected:
+          result: The compiled launcher reports 0.5.0 and exits successfully.
+        required: true
+    nonGoals:
+      - Do not publish the package.
+      - Do not deploy the application.
+      - Do not mutate the parent lifecycle directly.
+  result:
+    status: blocked
+    summary: The 0.5.0 release candidate is planned and has not yet been produced.
+    artifacts:
+      - id: ART-PLANNED-001
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: EXEC-RELEASE-PLANNED
+        procedureRef: '#procedure/PROC-001'
+        result:
+          status: blocked
+          summary: Release is deferred until remediation-oriented validation passes.
+        command: yarn typecheck && yarn build && yarn test
+    limitations:
+      - Release preparation remains pending WI-0021 validation.
+      - The planned checksum is a placeholder and is not release evidence.
