@@ -5,30 +5,168 @@
   "title": "Upgrade SDLC identifiers to repository-unique references",
   "type": "feature",
   "objective": "Inventory all identifier types used by work-item and task records, define work-item-prefixed or work-item-plus-task-order-key-prefixed repository-unique forms, migrate legacy task-local identifiers with sdlc ref migrate-task-local-up, enforce the new forms in validation, and support immediate sdlc ref validate/resolve with globally unique resource identifiers and repository paths.",
-  "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
-  "context": {"mergeTarget": {"branch": "main"}, "branch": {"name": "WI-0026-repository-unique-identifiers", "created": false, "rationale": "WI-0026 planning is prepared on main; task processing will use the declared context branch after start."}},
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0026-repository-unique-identifiers",
+      "created": true,
+      "rationale": "WI-0026 planning is prepared on main; task processing will use the declared context branch after start."
+    }
+  },
   "baseline": "f4043838e1735ebdbcb51d6abca14763e220aa1e",
-  "request": {"source": "conversation", "text": "Review all the identifiers available within a work item, including objectives, invariants, etc. For each, ensure that we move towards a work item prefixed, and where appropriate, work item and task order key prefixed identifier so that the identifiers are unique within a repository. Produce a table of all identifier types, where they're used, and whether they require work item prefixed or work item + task order key prefixing.\n\nThese identifiers must be migratable via sdlc ref migrate-task-local-up to their new full formats.\n\nsdlc ref {validate|resolve} must support these new repository unique identifiers for immediate resolution of the reference.\n\nInclude an update to sdlc ref validate that returns the sdlc globally unique identifier of the resource the ref points to and the repository path upon successful validation\n\nPrepare a new .docs/work-items/* to upgrade all of the identifiers to repository unique identifiers, ensure sdlc work item validate requires these new identifier formats, ensure sdlc ref migrate-task-local-up properly migrates the old shorter identifiers to the new identifiers.", "sha256": "8233b16bc38228c8dad03d7e21ee72a86702cdd79baa3cd8a2ef89675300f235"},
+  "request": {
+    "source": "conversation",
+    "text": "Review all the identifiers available within a work item, including objectives, invariants, etc. For each, ensure that we move towards a work item prefixed, and where appropriate, work item and task order key prefixed identifier so that the identifiers are unique within a repository. Produce a table of all identifier types, where they're used, and whether they require work item prefixed or work item + task order key prefixing.\n\nThese identifiers must be migratable via sdlc ref migrate-task-local-up to their new full formats.\n\nsdlc ref {validate|resolve} must support these new repository unique identifiers for immediate resolution of the reference.\n\nInclude an update to sdlc ref validate that returns the sdlc globally unique identifier of the resource the ref points to and the repository path upon successful validation\n\nPrepare a new .docs/work-items/* to upgrade all of the identifiers to repository unique identifiers, ensure sdlc work item validate requires these new identifier formats, ensure sdlc ref migrate-task-local-up properly migrates the old shorter identifiers to the new identifiers.",
+    "sha256": "8233b16bc38228c8dad03d7e21ee72a86702cdd79baa3cd8a2ef89675300f235"
+  },
   "scope": [
-    {"name": "identifier-inventory", "description": "Produce and maintain a complete table of identifier types, their declaration/reference locations, their current shorthand, and their required repository-unique target form.", "reason": "Every identifier needs an explicit uniqueness decision before schemas and migration can be changed safely."},
-    {"name": "work-item-unique-identifiers", "description": "Use work-item-prefixed identifiers for requirements and acceptance criteria: WI-0002_REQ_001 and WI-0002_REQ_001_AC_001.", "reason": "These entities are declared by work-item.json and must retain their declaring work-item identity."},
-    {"name": "task-unique-identifiers", "description": "Use work-item-plus-eight-digit-task-order-key prefixes for task-owned objectives, procedures, changes, executions, targets, inputs, test cases, artifacts, findings, and result entities where their current IDs are task-local.", "reason": "Task-local IDs such as OBJ-001 and CHANGE-001 collide across tasks and are not repository-unique."},
-    {"name": "migration-and-resolution", "description": "Extend sdlc ref migrate-task-local-up and sdlc ref validate/resolve to migrate, validate, and immediately resolve repository-unique identifiers with globally unique resource IDs and repository paths.", "reason": "Agents need a deterministic migration path and direct semantic lookup for every canonical identifier."},
-    {"name": "validation-enforcement", "description": "Make sdlc work-item validate and sdlc task validate report non-canonical task-local identifiers with source locations, old/new forms, reasons, and remediation guidance.", "reason": "Invalid identifier forms must be blocked before they become committed repository state."}
+    {
+      "name": "identifier-inventory",
+      "description": "Produce and maintain a complete table of identifier types, their declaration/reference locations, their current shorthand, and their required repository-unique target form.",
+      "reason": "Every identifier needs an explicit uniqueness decision before schemas and migration can be changed safely."
+    },
+    {
+      "name": "work-item-unique-identifiers",
+      "description": "Use work-item-prefixed identifiers for requirements and acceptance criteria: WI-0002_REQ_001 and WI-0002_REQ_001_AC_001.",
+      "reason": "These entities are declared by work-item.json and must retain their declaring work-item identity."
+    },
+    {
+      "name": "task-unique-identifiers",
+      "description": "Use work-item-plus-eight-digit-task-order-key prefixes for task-owned objectives, procedures, changes, executions, targets, inputs, test cases, artifacts, findings, and result entities where their current IDs are task-local.",
+      "reason": "Task-local IDs such as OBJ-001 and CHANGE-001 collide across tasks and are not repository-unique."
+    },
+    {
+      "name": "migration-and-resolution",
+      "description": "Extend sdlc ref migrate-task-local-up and sdlc ref validate/resolve to migrate, validate, and immediately resolve repository-unique identifiers with globally unique resource IDs and repository paths.",
+      "reason": "Agents need a deterministic migration path and direct semantic lookup for every canonical identifier."
+    },
+    {
+      "name": "validation-enforcement",
+      "description": "Make sdlc work-item validate and sdlc task validate report non-canonical task-local identifiers with source locations, old/new forms, reasons, and remediation guidance.",
+      "reason": "Invalid identifier forms must be blocked before they become committed repository state."
+    }
   ],
   "nonGoals": [
-    {"name": "remote-identifier-resolution", "description": "Do not add remote repository lookup or network-backed semantic resolution.", "reason": "Repository uniqueness is local; global URI generation must identify the local resource without requiring remote access.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
-    {"name": "automatic-historical-rewrite", "description": "Do not bulk rewrite all historical work items without an explicit migration invocation.", "reason": "Migration must be scoped, reviewable, and safe for ambiguous legacy references.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
-    {"name": "requirement-authority-change", "description": "Do not move authoritative requirements or acceptance criteria out of work-item.json requirements.items.", "reason": "WI-0023/WI-0025 establish work-item.json as the requirement authority.", "forbiddenFileWrites": [], "forbiddenFileReads": []}
+    {
+      "name": "remote-identifier-resolution",
+      "description": "Do not add remote repository lookup or network-backed semantic resolution.",
+      "reason": "Repository uniqueness is local; global URI generation must identify the local resource without requiring remote access.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "automatic-historical-rewrite",
+      "description": "Do not bulk rewrite all historical work items without an explicit migration invocation.",
+      "reason": "Migration must be scoped, reviewable, and safe for ambiguous legacy references.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "requirement-authority-change",
+      "description": "Do not move authoritative requirements or acceptance criteria out of work-item.json requirements.items.",
+      "reason": "WI-0023/WI-0025 establish work-item.json as the requirement authority.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
   ],
-  "requirements": {"items": [
-    {"id": "WI-0026_REQ_001", "name": "identifier-inventory-table", "description": "The work item must publish a complete identifier inventory table covering requirements, acceptance criteria, objectives, invariants, inputs, targets, procedures, test cases, changes, executions, findings, artifacts, outcomes, results, task UIDs, work-item IDs, and other identifier-bearing entities found during schema/artifact audit.", "reason": "Implementation needs one authoritative mapping from current identifier usage to repository-unique target forms.", "acceptanceCriteria": [{"id": "WI-0026_REQ_001_AC_001", "description": "The committed work-item includes a table with identifier type, declaration/reference locations, current form, target form, prefix scope (work item or work item plus task order key), and migration/resolution strategy for every audited type."}]},
-    {"id": "WI-0026_REQ_002", "name": "repository-unique-identifier-forms", "description": "Requirements and acceptance criteria must use work-item-prefixed identifiers, while task-owned entities must use work-item-plus-task-order-key-prefixed identifiers where task-local forms would collide across the repository.", "reason": "Repository-wide uniqueness requires the identifier to carry enough ownership scope to identify one resource without current-task context.", "acceptanceCriteria": [{"id": "WI-0026_REQ_002_AC_001", "description": "The canonical schemas accept and document forms such as WI-0002_REQ_001, WI-0002_REQ_001_AC_001, WI-0002-10000000_OBJ-001, and WI-0002-10000000_CHANGE-001 according to the inventory table, while abbreviated forms produce validation findings."}, {"id": "WI-0026_REQ_002_AC_002", "description": "Task UID and work-item ID handling remains compatible with existing canonical identities and no target form depends on an implicit current task for repository uniqueness."}]},
-    {"id": "WI-0026_REQ_003", "name": "migration-to-full-identifiers", "description": "sdlc ref migrate-task-local-up must convert every safely resolvable task-local identifier/reference in the inventory to its repository-unique form and report replacements with source path, from, to, and count.", "reason": "Existing task records use local OBJ/CHANGE/EXEC/TC and related forms that must be upgraded without manual search-and-replace guessing.", "acceptanceCriteria": [{"id": "WI-0026_REQ_003_AC_001", "description": "Migration rewrites uniquely contextualized local references and identifier-bearing fields for YAML, YML, and JSON task records, including work-item-prefixed requirement/criterion forms and task-prefixed entities."}, {"id": "WI-0026_REQ_003_AC_002", "description": "Ambiguous or missing-context identifiers remain unchanged and appear in unresolvable findings with a reason and remediation rather than being speculatively rewritten."}]},
-    {"id": "WI-0026_REQ_004", "name": "validate-resolve-global-resource-response", "description": "sdlc ref validate --ref and sdlc ref resolve --ref must support every new repository-unique identifier form; successful validation must return the resource's globally unique SDLC identifier and repository-relative path, and resolve must return the resource data.", "reason": "Agents need immediate syntax validation, stable global identity, source location, and semantic data resolution from one reference string.", "acceptanceCriteria": [{"id": "WI-0026_REQ_004_AC_001", "description": "A successful sdlc ref validate response includes valid=true, matching schema metadata, a globally unique resource reference, and repositoryPath for a work-item, requirement, acceptance criterion, task-owned entity, and task UID fixture."}, {"id": "WI-0026_REQ_004_AC_002", "description": "sdlc ref resolve accepts the same canonical forms and returns the matching resource data, repository path, format, and globally unique reference; malformed, missing, and ambiguous identifiers return actionable non-zero findings."}]},
-    {"id": "WI-0026_REQ_005", "name": "validation-enforcement-and-compatibility", "description": "sdlc work-item validate and sdlc task validate must require repository-unique identifier forms, report old/new forms and remediation for legacy task-local identifiers, preserve independent schema/reference findings, and remain read-only.", "reason": "Canonical identifiers must be enforced at the commit validation boundary without hiding unrelated errors or mutating artifacts.", "acceptanceCriteria": [{"id": "WI-0026_REQ_005_AC_001", "description": "Fixtures containing local OBJ/CHANGE/EXEC/TC or abbreviated requirement/criterion forms fail validation with source path, category, old value, required canonical form, and remediation guidance."}, {"id": "WI-0026_REQ_005_AC_002", "description": "Existing already-prefixed identifiers and qualified references remain valid, and validation does not write to selected or unrelated files."}]},
-    {"id": "WI-0026_REQ_006", "name": "schema-and-test-gates", "description": "The implementation and validation tasks must pass the complete typecheck, build, test, schema audit, migration, reference validation/resolution, work-item validation, and read-only gates before their commits and before the work-item commit.", "reason": "Identifier changes cross all schema-backed task families, reference registry/resolver behavior, migration, and validation reporting.", "acceptanceCriteria": [{"id": "WI-0026_REQ_006_AC_001", "description": "The complete repository test suite, schema audit, and sdlc work-item validate --work-item WI-0026 command pass before commit."}]}
-  ]},
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0026_REQ_001",
+        "name": "identifier-inventory-table",
+        "description": "The work item must publish a complete identifier inventory table covering requirements, acceptance criteria, objectives, invariants, inputs, targets, procedures, test cases, changes, executions, findings, artifacts, outcomes, results, task UIDs, work-item IDs, and other identifier-bearing entities found during schema/artifact audit.",
+        "reason": "Implementation needs one authoritative mapping from current identifier usage to repository-unique target forms.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_001_AC_001",
+            "description": "The committed work-item includes a table with identifier type, declaration/reference locations, current form, target form, prefix scope (work item or work item plus task order key), and migration/resolution strategy for every audited type."
+          }
+        ]
+      },
+      {
+        "id": "WI-0026_REQ_002",
+        "name": "repository-unique-identifier-forms",
+        "description": "Requirements and acceptance criteria must use work-item-prefixed identifiers, while task-owned entities must use work-item-plus-task-order-key-prefixed identifiers where task-local forms would collide across the repository.",
+        "reason": "Repository-wide uniqueness requires the identifier to carry enough ownership scope to identify one resource without current-task context.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_002_AC_001",
+            "description": "The canonical schemas accept and document forms such as WI-0002_REQ_001, WI-0002_REQ_001_AC_001, WI-0002-10000000_OBJ-001, and WI-0002-10000000_CHANGE-001 according to the inventory table, while abbreviated forms produce validation findings."
+          },
+          {
+            "id": "WI-0026_REQ_002_AC_002",
+            "description": "Task UID and work-item ID handling remains compatible with existing canonical identities and no target form depends on an implicit current task for repository uniqueness."
+          }
+        ]
+      },
+      {
+        "id": "WI-0026_REQ_003",
+        "name": "migration-to-full-identifiers",
+        "description": "sdlc ref migrate-task-local-up must convert every safely resolvable task-local identifier/reference in the inventory to its repository-unique form and report replacements with source path, from, to, and count.",
+        "reason": "Existing task records use local OBJ/CHANGE/EXEC/TC and related forms that must be upgraded without manual search-and-replace guessing.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_003_AC_001",
+            "description": "Migration rewrites uniquely contextualized local references and identifier-bearing fields for YAML, YML, and JSON task records, including work-item-prefixed requirement/criterion forms and task-prefixed entities."
+          },
+          {
+            "id": "WI-0026_REQ_003_AC_002",
+            "description": "Ambiguous or missing-context identifiers remain unchanged and appear in unresolvable findings with a reason and remediation rather than being speculatively rewritten."
+          }
+        ]
+      },
+      {
+        "id": "WI-0026_REQ_004",
+        "name": "validate-resolve-global-resource-response",
+        "description": "sdlc ref validate --ref and sdlc ref resolve --ref must support every new repository-unique identifier form; successful validation must return the resource's globally unique SDLC identifier and repository-relative path, and resolve must return the resource data.",
+        "reason": "Agents need immediate syntax validation, stable global identity, source location, and semantic data resolution from one reference string.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_004_AC_001",
+            "description": "A successful sdlc ref validate response includes valid=true, matching schema metadata, a globally unique resource reference, and repositoryPath for a work-item, requirement, acceptance criterion, task-owned entity, and task UID fixture."
+          },
+          {
+            "id": "WI-0026_REQ_004_AC_002",
+            "description": "sdlc ref resolve accepts the same canonical forms and returns the matching resource data, repository path, format, and globally unique reference; malformed, missing, and ambiguous identifiers return actionable non-zero findings."
+          }
+        ]
+      },
+      {
+        "id": "WI-0026_REQ_005",
+        "name": "validation-enforcement-and-compatibility",
+        "description": "sdlc work-item validate and sdlc task validate must require repository-unique identifier forms, report old/new forms and remediation for legacy task-local identifiers, preserve independent schema/reference findings, and remain read-only.",
+        "reason": "Canonical identifiers must be enforced at the commit validation boundary without hiding unrelated errors or mutating artifacts.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_005_AC_001",
+            "description": "Fixtures containing local OBJ/CHANGE/EXEC/TC or abbreviated requirement/criterion forms fail validation with source path, category, old value, required canonical form, and remediation guidance."
+          },
+          {
+            "id": "WI-0026_REQ_005_AC_002",
+            "description": "Existing already-prefixed identifiers and qualified references remain valid, and validation does not write to selected or unrelated files."
+          }
+        ]
+      },
+      {
+        "id": "WI-0026_REQ_006",
+        "name": "schema-and-test-gates",
+        "description": "The implementation and validation tasks must pass the complete typecheck, build, test, schema audit, migration, reference validation/resolution, work-item validation, and read-only gates before their commits and before the work-item commit.",
+        "reason": "Identifier changes cross all schema-backed task families, reference registry/resolver behavior, migration, and validation reporting.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0026_REQ_006_AC_001",
+            "description": "The complete repository test suite, schema audit, and sdlc work-item validate --work-item WI-0026 command pass before commit."
+          }
+        ]
+      }
+    ]
+  },
   "sourceWorkItem": "WI-0025",
   "stepsPath": ".docs/work-items/WI-0026/steps/"
 }
