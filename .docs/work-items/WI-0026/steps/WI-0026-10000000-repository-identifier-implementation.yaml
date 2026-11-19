@@ -4,7 +4,7 @@ taskUid: WI-0026-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement repository-unique identifier schemas and resolution
 objective: Audit the identifier vocabulary, add repository-unique schema forms, extend direct ref validation/resolution with global identity and path, and implement migration to full identifiers.
 references:
@@ -50,7 +50,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
