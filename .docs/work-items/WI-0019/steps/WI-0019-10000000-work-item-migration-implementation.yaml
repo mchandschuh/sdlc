@@ -1,0 +1,105 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0019
+taskUid: WI-0019-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement whole-work-item migration
+objective: Add --work-item <work-item-id> to migrate-task-local-up with bounded whole-work-item scope, deterministic reporting, and complete test coverage.
+references:
+  required:
+    - src/cli/main.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+    - schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+    - .docs/work-items/WI-0018/work-item.json
+    - .docs/work-items/WI-0019/work-item.json
+  informational:
+    - .cline/README.md
+    - package.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - src/cli/
+    - src/core/
+    - tests/
+    - schemas/sdlc-ref/
+    - .docs/work-items/WI-0019/steps/WI-0019-10000000-work-item-migration-implementation.yaml
+  commitSubject: 'WI-0019: feat(ref): migrate complete work items'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement whole-work-item migration selection, option exclusivity, safe scope, and deterministic reporting.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_001
+        purpose: Define whole-work-item selection.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_002
+        purpose: Define scope and safety behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_005
+        purpose: Define the complete test gate.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: --work-item selects exactly one complete local work-item directory and reports deterministic migration results.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-WORK-ITEM-REWRITE', '#test-case/TC-WORK-ITEM-SCOPE']
+      - id: OBJ-002
+        statement: The complete test suite passes before this implementation commit.
+        inputRefs: [INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-WORK-ITEM-TEST-GATE']
+    ownedPaths: [src/cli/, src/core/, tests/, schemas/sdlc-ref/]
+    nonGoals:
+      - Do not change version or create Git tags in this task.
+      - Do not accept --path and --work-item together.
+    steps:
+      - Add whole-work-item selection and option exclusivity.
+      - Preserve existing path-scoped migration behavior and response reporting.
+      - Add full unit-test coverage and run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Whole-work-item migration implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the whole-work-item migration implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0019/steps/WI-0019-10000000-work-item-migration-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - --work-item mode does not yet exist.

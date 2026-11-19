@@ -1,0 +1,32 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0019",
+  "status": "planned",
+  "title": "Upgrade an entire work item with task-local reference migration",
+  "type": "feature",
+  "objective": "Extend sdlc ref migrate-task-local-up with --work-item <work-item-id> so one complete work-item directory can be upgraded safely and deterministically, then deliver the change as version 0.4.0 tagged on master.",
+  "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
+  "context": {"mergeTarget": {"branch": "master"}, "branch": {"name": "main", "created": false, "rationale": "The repository currently uses main; the requested release tag must point to a local master branch at the final release commit."}},
+  "baseline": "6c57960b177fb023b44a1d89d4cbf3e73527a271",
+  "request": {"source": "conversation", "text": "Prepare a new .docs/work-items/* to upgrade an entire work item via sdlc ref migrate-task-local-up --work-item <work-item-id>. Commit the work item. Process the work item and minor version bump upon completion. Git tag the new version on master.", "sha256": "a44510601448bc5d9227e2e14ba17e766979853721779244202cb93a657a4807"},
+  "scope": [
+    {"name": "work-item-migration-option", "description": "Add --work-item <work-item-id> to migrate the selected .docs/work-items/<id>/ directory, including work-item.json and all task files, without requiring --path.", "reason": "Callers need one bounded command to upgrade a complete work item rather than manually selecting its files."},
+    {"name": "scope-and-safety-contract", "description": "Make --work-item and --path mutually exclusive, preserve path containment and unrelated identifiers, and report all changed files and replacements deterministically.", "reason": "Whole-work-item migration must remain auditable and must not modify neighboring work items or arbitrary repository content."},
+    {"name": "minor-release-and-tag", "description": "Bump the minor version from 0.3.0 to 0.4.0, verify the compiled CLI, and create annotated tag 0.4.0 on master at the release commit.", "reason": "The user explicitly requests processing, a minor version bump, and tagging the new version on master."},
+    {"name": "per-task-test-gates", "description": "Require a complete passing unit-test gate before every implementation, validation, and delivery task commit.", "reason": "The CLI scope change, persisted work-item migration, and release/tag boundary must remain continuously validated."}
+  ],
+  "nonGoals": [
+    {"name": "remote-repository-migration", "description": "Do not contact remote repositories or migrate work items outside the selected local repository.", "reason": "The command remains local and deterministic.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
+    {"name": "path-and-work-item-combination", "description": "Do not accept --path and --work-item together in one migration invocation.", "reason": "Two independent scopes would make authorization and reporting ambiguous.", "forbiddenFileWrites": [], "forbiddenFileReads": []},
+    {"name": "remote-publication", "description": "Do not publish or deploy the package; only create the requested local Git tag.", "reason": "The requested release boundary is a local versioned commit and tag.", "forbiddenFileWrites": [], "forbiddenFileReads": []}
+  ],
+  "requirements": {"items": [
+    {"id": "WI-0019_REQ_001", "name": "whole-work-item-option", "description": "sdlc ref migrate-task-local-up --work-item <work-item-id> must migrate only the selected work-item directory, including work-item.json and all supported files below its stepsPath.", "reason": "A work-item identifier should be sufficient to select the complete bounded migration scope.", "acceptanceCriteria": [{"id": "WI-0019_REQ_001_AC_001", "description": "The command accepts a valid work-item ID, rewrites recognized references in the selected work-item record and task files, reports all changed files, and leaves sibling work items unchanged."}, {"id": "WI-0019_REQ_001_AC_002", "description": "Missing, malformed, or unknown work-item IDs return stable non-zero errors without writes."}]},
+    {"id": "WI-0019_REQ_002", "name": "migration-scope-contract", "description": "--work-item and --path are mutually exclusive, and every whole-work-item write remains contained by .docs/work-items/<id>/.", "reason": "The migration scope must be explicit and safe.", "acceptanceCriteria": [{"id": "WI-0019_REQ_002_AC_001", "description": "Combining --path and --work-item is rejected; selected work-item migration does not modify files outside the selected directory."}, {"id": "WI-0019_REQ_002_AC_002", "description": "The response reports deterministic selected scope, changed files, and aggregated replacements."}]},
+    {"id": "WI-0019_REQ_003", "name": "minor-release-040", "description": "After all prior WI-0019 tasks pass, bump the package minor version from 0.3.0 to 0.4.0 and verify the compiled launcher reports 0.4.0.", "reason": "The user requests a minor version bump upon completion.", "acceptanceCriteria": [{"id": "WI-0019_REQ_003_AC_001", "description": "package.json reports 0.4.0, the compiled launcher reports 0.4.0, and release checks pass before the delivery commit."}]},
+    {"id": "WI-0019_REQ_004", "name": "master-version-tag", "description": "Create annotated Git tag 0.4.0 on master at the final release commit.", "reason": "The user explicitly requests that the new version be Git tagged on master.", "acceptanceCriteria": [{"id": "WI-0019_REQ_004_AC_001", "description": "A local master branch points at the final release commit and annotated tag 0.4.0 points to that same commit."}]},
+    {"id": "WI-0019_REQ_005", "name": "task-commit-test-gate", "description": "Every WI-0019 implementation, validation, and delivery task must record and pass the complete unit-test command before its task commit.", "reason": "The work-item-wide mutation and release/tag changes cross CLI, filesystem, records, package metadata, and Git state.", "acceptanceCriteria": [{"id": "WI-0019_REQ_005_AC_001", "description": "Each task result records a passed full test execution and the repository suite is 100% passing at every task commit."}]}
+  ]},
+  "sourceWorkItem": "WI-0018",
+  "stepsPath": ".docs/work-items/WI-0019/steps/"
+}

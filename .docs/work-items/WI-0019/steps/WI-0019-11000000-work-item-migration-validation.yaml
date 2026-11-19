@@ -1,0 +1,127 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0019
+taskUid: WI-0019-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0019-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate whole-work-item migration
+objective: Validate --work-item scope, complete-record migration, option exclusivity, no-op/error behavior, deterministic reporting, and the complete unit-test gate.
+references:
+  required:
+    - .docs/work-items/WI-0019/work-item.json
+    - .docs/work-items/WI-0019/steps/WI-0019-10000000-work-item-migration-implementation.yaml
+    - src/cli/main.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+    - .docs/work-items/WI-0018/work-item.json
+dependsOn:
+  - WI-0019-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0019/steps/WI-0019-11000000-work-item-migration-validation.yaml
+    - .docs/work-items/WI-0019/work-item.json
+  commitSubject: 'WI-0019: test(ref): validate whole-work-item migration'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate whole-work-item migration behavior and require a fully passing test suite before commit.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0019-10000000#result/R-001
+        purpose: Identify the whole-work-item implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_001
+        purpose: Identify whole-work-item selection conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_002
+        purpose: Identify scope conditions.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0019#work-item.json#requirement/WI-0019_REQ_005
+        purpose: Identify test-gate conditions.
+        required: true
+    targets:
+      - id: TARGET-WORK-ITEM-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0019-10000000#result/R-001
+        purpose: Validate the whole-work-item implementation.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-WORK-ITEM-REWRITE', '#test-case/TC-WORK-ITEM-SCOPE', '#test-case/TC-WORK-ITEM-TEST-GATE']
+    procedures:
+      - id: VAL-WORK-ITEM-001
+        sequence: 1
+        name: validate-whole-work-item-migration
+        description: Run complete package checks and whole-work-item migration tests.
+        reason: Prove complete selected-record migration, sibling isolation, option exclusivity, no-op/error behavior, and full test passage.
+        targetRefs: ['#target/TARGET-WORK-ITEM-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-WORK-ITEM-REWRITE', '#test-case/TC-WORK-ITEM-SCOPE', '#test-case/TC-WORK-ITEM-TEST-GATE']
+        method:
+          executionMode: executable
+          target: sdlc ref migrate-task-local-up --work-item <work-item-id>
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Migrate a complete fixture work item and verify all selected files change as expected.
+            - Verify sibling work items, missing IDs, malformed IDs, and --path/--work-item combinations.
+            - Validate task artifacts and response schema.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim the 0.4.0 release or Git tag in this validation task.
+  result:
+    status: implemented-unproven
+    summary: Whole-work-item migration validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-WORK-ITEM-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Whole-work-item migration validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Whole-work-item migration has not yet been validated.
+    nonClaims:
+      - This planned result does not claim release or tag completion.
