@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
 import { resolveReference } from '../core/reference-resolution.js';
-import { migrateTaskLocalReferences } from '../core/task-local-migration.js';
+import { migrateTaskLocalReferences, migrateTaskLocalReferencesForWorkItem } from '../core/task-local-migration.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 import { resolveOperativeRoot } from '../core/operative-root.js';
@@ -244,15 +244,49 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
   if (args[0] !== 'ref') return undefined;
   if (args[1] === 'migrate-task-local-up') {
     if (args[2] === '--help' || args[2] === '-h') {
-      console.log('Usage: sdlc ref migrate-task-local-up --path <path> [--json]');
-      console.log('Rewrite recognized legacy task-local/task-qualified references under a repository-relative path.');
+      console.log('Usage: sdlc ref migrate-task-local-up [--path <path> | --work-item <work-item-id>] [--json]');
+      console.log('Rewrite recognized legacy task-local/task-qualified references under one bounded repository scope.');
       return 0;
     }
-    const selected = optionValue(args.slice(2), '--path');
-    if (selected.duplicate) throw new DiscoveryError('Duplicate --path option.');
-    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-    if (!selected.value) throw new DiscoveryError('Usage: sdlc ref migrate-task-local-up --path <path>');
-    const report = await migrateTaskLocalReferences(await resolveOperativeRoot(), selected.value);
+    let pathValue: string | undefined;
+    let workItemId: string | undefined;
+    for (let index = 2; index < args.length; index += 1) {
+      const argument = args[index]!;
+      if (argument === '--json') continue;
+      if (argument === '--path' || argument === '--work-item') {
+        const value = args[++index];
+        if (!value || value.startsWith('-')) throw new DiscoveryError(`${argument} requires a value.`);
+        if (argument === '--path') {
+          if (pathValue !== undefined) throw new DiscoveryError('Duplicate --path option.');
+          pathValue = value;
+        } else {
+          if (workItemId !== undefined) throw new DiscoveryError('Duplicate --work-item option.');
+          workItemId = value;
+        }
+        continue;
+      }
+      if (argument.startsWith('--path=')) {
+        const value = argument.slice('--path='.length);
+        if (!value) throw new DiscoveryError('--path requires a value.');
+        if (pathValue !== undefined) throw new DiscoveryError('Duplicate --path option.');
+        pathValue = value;
+        continue;
+      }
+      if (argument.startsWith('--work-item=')) {
+        const value = argument.slice('--work-item='.length);
+        if (!value) throw new DiscoveryError('--work-item requires a value.');
+        if (workItemId !== undefined) throw new DiscoveryError('Duplicate --work-item option.');
+        workItemId = value;
+        continue;
+      }
+      throw new DiscoveryError(`Unknown option: ${argument}`);
+    }
+    if (pathValue !== undefined && workItemId !== undefined) throw new DiscoveryError('--path and --work-item are mutually exclusive.');
+    if (pathValue === undefined && workItemId === undefined) throw new DiscoveryError('Usage: sdlc ref migrate-task-local-up [--path <path> | --work-item <work-item-id>]');
+    const root = await resolveOperativeRoot();
+    const report = pathValue !== undefined
+      ? await migrateTaskLocalReferences(root, pathValue)
+      : await migrateTaskLocalReferencesForWorkItem(root, workItemId!);
     console.log(JSON.stringify(report, null, 2));
     return report.findings.length === 0 ? 0 : 1;
   }

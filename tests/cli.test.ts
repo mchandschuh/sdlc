@@ -288,6 +288,67 @@ describe('CLI interface', () => {
     expect(errors.at(-1)).toContain('Path must remain within the repository');
   });
 
+  it('migrates an entire selected work item and leaves sibling work items unchanged', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-work-item-migration-'));
+    const selected = join(root, '.docs', 'work-items', 'WI-0099');
+    const sibling = join(root, '.docs', 'work-items', 'WI-0100');
+    await mkdir(join(selected, 'steps'), { recursive: true });
+    await mkdir(join(sibling, 'steps'), { recursive: true });
+    await writeFile(join(selected, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', ref: 'WI-0099|10000000#result/R-001', value: 'OBJ-001' }, null, 2));
+    await writeFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), [
+      'taskUid: WI-0099-10000000',
+      'references:',
+      '  - "#objective/OBJ-001"',
+      '  - "WI-0099|10000000#result/R-001"',
+      '',
+    ].join('\n'));
+    await writeFile(join(sibling, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0100', ref: 'WI-0100|10000000#result/R-001' }, null, 2));
+    await writeFile(join(sibling, 'steps', 'WI-0100-10000000-task.yaml'), 'ref: "#objective/OBJ-001"\n');
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-task-local-up', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+
+    const report = JSON.parse(output.at(-1)!) as { path: string; changedFiles: string[] };
+    expect(report.path).toBe('.docs/work-items/WI-0099');
+    expect(report.changedFiles).toEqual([
+      '.docs/work-items/WI-0099/steps/WI-0099-10000000-task.yaml',
+      '.docs/work-items/WI-0099/work-item.json',
+    ]);
+    expect(await readFile(join(selected, 'work-item.json'), 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
+    expect(await readFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), 'utf8')).toContain('#intent/objectives/OBJ-001');
+    expect(await readFile(join(sibling, 'work-item.json'), 'utf8')).toContain('WI-0100|10000000#result/R-001');
+    expect(await readFile(join(sibling, 'steps', 'WI-0100-10000000-task.yaml'), 'utf8')).toContain('#objective/OBJ-001');
+  });
+
+  it('rejects invalid, missing, and conflicting whole-work-item migration options', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-work-item-migration-errors-'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-task-local-up', '--work-item', 'bad-id'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-task-local-up', '--work-item', 'WI-0999'])).resolves.toBe(1);
+      await expect(main(['ref', 'migrate-task-local-up', '--path', '.', '--work-item', 'WI-0999'])).resolves.toBe(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    expect(errors).toEqual([
+      'Invalid work-item ID: bad-id',
+      'Migration path does not exist: .docs/work-items/WI-0999',
+      '--path and --work-item are mutually exclusive.',
+    ]);
+  });
+
   it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-reference-depth-'));
     await mkdir(join(root, '.docs', 'work-items', 'WI-0099'), { recursive: true });

@@ -26,6 +26,7 @@ export interface TaskLocalMigrationReport {
 }
 
 const WORK_ITEM_ID = '[A-Z]{1,10}-[0-9]+';
+const WORK_ITEM_ID_PATTERN = /^[A-Z]{1,10}-[0-9]+$/u;
 const ORDER_KEY = '[0-9]{2,8}';
 const ID = '[A-Za-z][A-Za-z0-9._:-]*';
 const TASK_QUALIFIED = new RegExp(`^(${WORK_ITEM_ID})\\|(${ORDER_KEY})#([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/(${ID})$`, 'u');
@@ -156,4 +157,10 @@ export async function migrateTaskLocalReferences(repositoryRoot: string, request
     replacements,
     findings: [],
   };
+}
+
+export async function migrateTaskLocalReferencesForWorkItem(repositoryRoot: string, workItemId: string): Promise<TaskLocalMigrationReport> {
+  if (!WORK_ITEM_ID_PATTERN.test(workItemId)) throw new DiscoveryError(`Invalid work-item ID: ${workItemId}`);
+  const requestedPath = `.docs/work-items/${workItemId}`;
+  return migrateTaskLocalReferences(repositoryRoot, requestedPath);
 }

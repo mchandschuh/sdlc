@@ -4,7 +4,7 @@ taskUid: WI-0019-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement whole-work-item migration
 objective: Add --work-item <work-item-id> to migrate-task-local-up with bounded whole-work-item scope, deterministic reporting, and complete test coverage.
 references:
@@ -45,7 +45,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -87,19 +87,44 @@ task:
       - Preserve existing path-scoped migration behavior and response reporting.
       - Add full unit-test coverage and run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Whole-work-item migration implementation has not yet been processed.
+      summary: Added --work-item selection to migrate-task-local-up, preserved --path behavior, enforced exclusive scopes, and added complete whole-work-item migration coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the whole-work-item migration implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added a validated work-item selector that delegates to the existing bounded migration engine.
           objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0019/steps/WI-0019-10000000-work-item-migration-implementation.yaml]
-      testImplementations: []
+          paths: [src/core/task-local-migration.ts]
+        - id: CHANGE-002
+          type: production-code
+          summary: Added mutually exclusive --path/--work-item CLI parsing and stable whole-work-item errors/help.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [src/cli/main.ts]
+        - id: CHANGE-003
+          type: test-code
+          summary: Added whole-work-item rewrite, sibling isolation, invalid/missing ID, and conflicting-option tests.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-REWRITE'
+          path: tests/cli.test.ts
+          selector: migrates an entire selected work item and leaves sibling work items unchanged
+        - testCaseRef: '#test-case/TC-WORK-ITEM-SCOPE'
+          path: tests/cli.test.ts
+          selector: rejects invalid, missing, and conflicting whole-work-item migration options
+        - testCaseRef: '#test-case/TC-WORK-ITEM-TEST-GATE'
+          path: tests/cli.test.ts
+          selector: CLI interface test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      tests:
+        - id: EXEC-WORK-ITEM-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-WORK-ITEM-REWRITE', '#test-case/TC-WORK-ITEM-SCOPE', '#test-case/TC-WORK-ITEM-TEST-GATE']
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Whole-work-item migration and the complete 43-test suite passed.
     limitations:
-      - --work-item mode does not yet exist.
+      - Release and Git tag behavior remain outside this implementation task.
