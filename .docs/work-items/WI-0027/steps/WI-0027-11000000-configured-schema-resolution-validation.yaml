@@ -4,7 +4,7 @@ taskUid: WI-0027-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0027-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate configured repository and schema resolution
 objective: Validate the external-repository root-cause fix, configuration precedence, default installer, all-hook setup, schema registry resolution, and complete read-only gates.
 references:
@@ -52,7 +52,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -127,23 +127,39 @@ task:
       - Do not claim remote schema lookup or global hook installation.
       - Do not claim automatic repair of invalid external work items.
   result:
-    status: implemented-unproven
-    summary: Configured schema and repository resolution validation is planned and has not yet been executed.
+    status: passed
+    summary: Configured schema and repository resolution validation passed external repository validation, configuration, installer, all-hook, schema, test, and WI-0027 self-validation gates.
     executions:
       - id: WI-0027-11000000_EXEC-VAL-001
         procedureRef: '#intent/procedures/WI-0027-11000000_VAL-CONFIGURED-RESOLUTION-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Deferred until the configured schema-resolution implementation is processed.
+          outcome: passed
+          exitCode: 0
+          summary: External BTCUSD-0000-style validation succeeded without a target schemas directory; config installation, all-hook idempotence, schema audit, complete tests, and WI-0027 self-validation passed.
+          assertions:
+            - Explicit --repository-root validation from /tmp succeeded for BTCUSD-0000 without a target schemas directory.
+            - Schema lookup used the installed sdlc schema registry while target repository paths remained rooted in the selected external repository.
+            - scripts/install.mjs installed a default ~/.sdlc/config.json without overwriting existing configuration and --hooks installed all supported managed hooks idempotently.
+            - Invalid or unavailable roots remain actionable, and external fixture files are not mutated by validation.
+            - WI-0027 self-validation returned three valid objects, zero invalid objects, and all 35 discovered references resolved.
         evidenceTier: inspection
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: External repository schema resolution, config precedence, installer, all-hook setup, and read-only validation are planned.
+          - kind: command
+            source: Validation execution WI-0027-11000000_EXEC-VAL-001
+            claim: Typecheck, build, complete tests, schema audit, and WI-0027 validation passed.
+            command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0027 --json
+          - kind: command
+            source: Validation execution WI-0027-11000000_EXEC-VAL-001
+            claim: BTCUSD-0000-style validation succeeded outside the target repository without vendored schemas.
+            command: node ./bin/cli.js work-item validate --work-item BTCUSD-0000 --repository-root /tmp/fixture --json
+          - kind: command
+            source: Validation execution WI-0027-11000000_EXEC-VAL-001
+            claim: Default config and all supported hooks installed idempotently.
+            command: node ./scripts/install.mjs --hooks && node ./scripts/install.mjs --hooks
     findings: []
     evidenceTier: inspection
     limitations:
-      - Validation has not started.
+      - Evidence is local CLI/configuration/hook audit evidence and does not claim remote schema lookup or global hook installation.
     nonClaims:
-      - This planned result does not claim implementation, external validation success, or hook installation completion.
+      - This result does not claim remote schema download, global Git configuration mutation, or automatic repair of external work items.
