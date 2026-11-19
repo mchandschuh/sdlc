@@ -6,8 +6,8 @@ parentTaskUid: WI-0024-12000000
 taskType: delivery
 processingStatus: processing_completed
 title: Release revision version 0.7.1
-objective: Release the deterministic pre-push enforcement hardening as revision
-  0.7.1 after the completed WI-0024 workflow has already shipped in 0.7.0.
+objective: Release deterministic primary-branch pre-push enforcement hardening
+  as revision 0.7.1.
 references:
   required:
     - package.json
@@ -25,7 +25,7 @@ governance:
     - package.json
     - .docs/work-items/WI-0024/work-item.json
     - .docs/work-items/WI-0024/steps/WI-0024-20000000-release.yaml
-  commitSubject: "WI-0024: chore(release): prepare version 0.7.1"
+  commitSubject: "WI-0024: chore(release): complete version 0.7.1"
   commitBody:
     requiredSections:
       - Why
@@ -131,25 +131,26 @@ task:
       - Do not claim server-side enforcement from local hooks.
       - Do not deploy or publish a package registry artifact.
   result:
-    status: partially-delivered
-    summary: Revision 0.7.1 is prepared for the deterministic pre-push enforcement
-      hardening.
+    status: delivered
+    summary: Prepared version 0.7.1 revision hardening for deterministic
+      primary-release enforcement.
     artifacts:
       - id: WI-0024-20000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:9e41a7b59ac41a56d64784b8ac6fe790e88a7338b83340af64f4d9310f86fb65
     executions:
-      - id: WI-0024-20000000_EXEC-PLAN
+      - id: WI-0024-20000000_EXEC-REVISION
         procedureRef: "#procedure/WI-0024-20000000_PROC-RELEASE"
         result:
-          status: inconclusive
-          summary: Revision release execution is deferred until the deterministic pre-push
-            enforcement follow-up is committed and merged.
+          status: passed
+          summary: Typecheck, build, 85 tests, schema validation, and WI-0024 validation
+            passed for version 0.7.1 hardening.
         command: yarn typecheck && yarn build && yarn test --run && schema-validate
           --root schemas schemas/work-item/v3/work-item.schema.json
           schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
-          && node ./bin/cli.js work-item validate --work-item WI-0024 --json
+          && node ./bin/cli.js work-item validate --work-item WI-0024 --json &&
+          node ./bin/cli.js --version
     limitations:
-      - Release execution is deferred until the follow-up deterministic pre-push
-        enforcement and validation commits are merged into main.
+      - Revision 0.7.1 is local until the final annotated tag and remote push
+        complete.
