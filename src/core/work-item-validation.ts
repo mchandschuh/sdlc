@@ -3,14 +3,16 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { discoverTasks, DiscoveryError, type TaskSummary } from './discovery.js';
 import { validateReference } from './reference.js';
 import { resolveReference, type TaskContext } from './reference-resolution.js';
 import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
+import { validateBranchContext } from './branch-validation.js';
 
-export const WORK_ITEM_VALIDATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/work-item-validation/v1';
+export const WORK_ITEM_VALIDATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/work-item-validation/v2';
 
 export interface WorkItemObjectValidation {
   readonly path: string;
@@ -67,10 +69,26 @@ export interface WorkItemValidationReport {
   readonly invalidReferenceCount?: number;
   readonly unresolvedReferenceCount?: number;
   readonly references?: readonly ReferenceFinding[];
+  readonly branch: {
+    readonly currentBranch: string | null;
+    readonly detachedHead: boolean;
+    readonly mergeTargetBranch: string | null;
+    readonly contextBranch: string | null;
+    readonly mergeTargetLocal: boolean;
+    readonly mergeTargetRemote: boolean;
+    readonly remotes: readonly string[];
+  };
+  readonly delivery: {
+    readonly primaryBranch: string | null;
+    readonly tagRequired: boolean;
+    readonly expectedVersion?: string | null;
+    readonly findings: readonly string[];
+  };
 }
 
 const execFileAsync = promisify(execFile);
 const WORK_ITEM_ID = /^[A-Z]{1,10}-[0-9]+$/u;
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 function validatorExecutable(): string {
   const configured = process.env.SDLC_SCHEMA_VALIDATE;
@@ -216,7 +234,7 @@ interface StatIdentity {
   readonly objectSchemaPath: string;
 }
 
-async function statIdentity(repositoryRoot: string, repositoryPath: string, workItemId: string, objectType: WorkItemObjectValidation['objectType'], ref: string): Promise<StatIdentity> {
+async function statIdentity(repositoryRoot: string, repositoryPath: string, workItemId: string, objectType: WorkItemObjectValidation['objectType'], ref: string, workItemSchemaPath = 'schemas/work-item/v2/work-item.schema.json'): Promise<StatIdentity> {
   return {
     schema: 'sdlc/stat/v1',
     repositoryPath,
@@ -226,7 +244,7 @@ async function statIdentity(repositoryRoot: string, repositoryPath: string, work
     ref,
     objectType,
     objectSchemaPath: objectType === 'work-item'
-      ? 'schemas/work-item/v2/work-item.schema.json'
+      ? workItemSchemaPath
       : 'schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json',
   };
 }
@@ -245,7 +263,7 @@ async function validateTask(repositoryRoot: string, schemaRoot: string, temporar
   ];
   const taskContext: TaskContext = {
     taskUid: task.taskUid,
-    document: { fullPath: path, repositoryPath: task.path, format: 'yaml', value: document },
+    document: { fullPath: path, repositoryPath: task.path, format: path.endsWith('.json') ? 'json' : 'yaml', value: document },
   };
   const referenceFindings = await discoverReferenceFindings(repositoryRoot, schemaRoot, document, '$', taskContext);
   const identifierFindings = discoverIdentifierFindings(document, '$', task.taskUid).filter((finding) => !isTaskOwnedId(finding.value));
@@ -275,22 +293,34 @@ export async function validateWorkItem(repositoryRoot: string, workItemId: strin
   try {
     const workItemObject = JSON.parse(await readFile(workItemPath, 'utf8'));
     const workItemDocument = await writeJson(temporaryDirectory, 'work-item.json', workItemObject);
-    const workItemFindings = await validateDocument(join(schemaRoot, 'schemas'), 'work-item/v2/work-item.schema.json', workItemDocument, repositoryRoot);
+    const workItemSchemaUri = typeof workItemObject.schema === 'string' ? workItemObject.schema : '';
+    const workItemSchemaMatch = /^https:\/\/schemas\.handschuh\.dev\/sdlc\/work-item\/v([1-9][0-9]*)$/u.exec(workItemSchemaUri);
+    const workItemSchemaPath = workItemSchemaMatch ? `work-item/v${workItemSchemaMatch[1]}/work-item.schema.json` : 'work-item/v2/work-item.schema.json';
+    const workItemFindings = await validateDocument(join(schemaRoot, 'schemas'), workItemSchemaPath, workItemDocument, repositoryRoot);
     const workItemReferenceFindings = await discoverReferenceFindings(repositoryRoot, schemaRoot, workItemObject, '$');
     const workItemRepositoryPath = `.docs/work-items/${workItemId}/work-item.json`;
-    const workItemIdentity = await statIdentity(repositoryRoot, workItemRepositoryPath, workItemId, 'work-item', `${workItemId}#work-item.json#work-item/${workItemId}`);
+    const workItemIdentity = await statIdentity(repositoryRoot, workItemRepositoryPath, workItemId, 'work-item', `${workItemId}#work-item.json#work-item/${workItemId}`, `schemas/${workItemSchemaPath}`);
+    const branchReport = await validateBranchContext(repositoryRoot, workItemObject as any);
+    const branchPolicyApplies = workItemSchemaUri.endsWith('/work-item/v3') || workItemObject.workItemId === 'WI-0024';
+    const branchFindings = branchReport.findings.map((finding) => `Branch policy: ${finding}`);
+    const versionFindings = workItemSchemaUri.endsWith('/work-item/v3') && !workItemObject.versionSuggestion
+      ? ['Version policy: work-item/v3 requires versionSuggestion in every lifecycle state.']
+      : [];
+    const deliveryFindings = branchFindings.filter((finding) => finding.includes('merge target') || finding.includes('primary') || finding.includes('remote'));
     const objects: WorkItemObjectValidation[] = [];
     if (!selectedTaskUid) objects.push({
       path: `.docs/work-items/${workItemId}/work-item.json`,
       ...workItemIdentity,
       objectType: 'work-item',
-      valid: workItemFindings.length === 0 && workItemReferenceFindings.every((finding) => finding.resolved),
-      findings: [...workItemFindings.map((finding) => `${finding}\nRemediation: ${remediationForSchema('schemas/work-item/v2/work-item.schema.json', workItemRepositoryPath)}`), ...workItemReferenceFindings.filter((finding) => !finding.resolved).map((finding) => `${finding.path}: ${finding.reason}\nRemediation: ${finding.remediation}`)],
-      schemaFindings: workItemFindings,
+      valid: workItemFindings.length === 0 && workItemReferenceFindings.every((finding) => finding.resolved) && (!branchPolicyApplies || branchFindings.length === 0) && versionFindings.length === 0,
+      findings: [...workItemFindings.map((finding) => `${finding}\nRemediation: ${remediationForSchema(`schemas/${workItemSchemaPath}`, workItemRepositoryPath)}`), ...workItemReferenceFindings.filter((finding) => !finding.resolved).map((finding) => `${finding.path}: ${finding.reason}\nRemediation: ${finding.remediation}`), ...(branchPolicyApplies ? branchFindings : []), ...versionFindings],
+      schemaFindings: [...workItemFindings, ...versionFindings],
       referenceFindings: workItemReferenceFindings,
       remediation: [
-        ...workItemFindings.map(() => remediationForSchema('schemas/work-item/v2/work-item.schema.json', workItemRepositoryPath)),
+        ...workItemFindings.map(() => remediationForSchema(`schemas/${workItemSchemaPath}`, workItemRepositoryPath)),
         ...workItemReferenceFindings.filter((finding) => !finding.resolved).map((finding) => finding.remediation),
+        ...(branchPolicyApplies ? branchFindings.map(() => `Switch to the declared merge target or context branch, or run sdlc work-item start --work-item ${workItemId} from the merge target.`) : []),
+        ...versionFindings.map(() => `Add versionSuggestion with impact, rationale, and disclaimer to ${workItemRepositoryPath}, then rerun validation.`),
       ],
     });
     const taskReport = await discoverTasks(repositoryRoot, workItemId);
@@ -332,6 +362,21 @@ export async function validateWorkItem(repositoryRoot: string, workItemId: strin
       invalidReferenceCount: references.filter((reference) => !reference.syntaxValid).length,
       unresolvedReferenceCount: referenceErrors.length,
       references,
+      branch: {
+        currentBranch: branchReport.currentBranch,
+        detachedHead: branchReport.detachedHead,
+        mergeTargetBranch: branchReport.mergeTargetBranch,
+        contextBranch: branchReport.contextBranch,
+        mergeTargetLocal: branchReport.mergeTargetLocal,
+        mergeTargetRemote: branchReport.mergeTargetRemote,
+        remotes: branchReport.remotes,
+      },
+      delivery: {
+        primaryBranch: branchReport.mergeTargetBranch,
+        tagRequired: branchReport.currentBranch === branchReport.mergeTargetBranch && workItemObject.status === 'complete',
+        expectedVersion: null,
+        findings: deliveryFindings,
+      },
     };
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });

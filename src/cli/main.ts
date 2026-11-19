@@ -8,6 +8,7 @@ import { migrateTaskLocalReferences, migrateTaskLocalReferencesForWorkItem, migr
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 import { resolveCommandContext, resolveOperativeRoot } from '../core/operative-root.js';
+import { startWorkItem } from '../core/work-item-start.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -20,6 +21,7 @@ export function printHelp(): void {
   console.log('  -v, --version    Show the package version');
   console.log('\nCommands:');
   console.log('  work-item list   List .docs/work-items/*');
+  console.log('  work-item start  Start processing on the declared context branch');
   console.log('  repository info   Find the nearest Git repository');
   console.log('  task list        List the selected work-item task records');
   console.log('  task next        Select the next unprocessed task');
@@ -166,6 +168,22 @@ async function handleWorkItemValidation(args: readonly string[], getOperativeRoo
   const report = await validateWorkItem(context.repositoryRoot, workItem, undefined, context.schemaRegistryRoot);
   printWorkItemValidation(report, jsonRequested(args));
   return report.valid ? 0 : 1;
+}
+
+async function handleWorkItemStart(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
+  if (args[0] !== 'work-item' || args[1] !== 'start') return undefined;
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log('Usage: sdlc work-item start --work-item <work-item> [--json]');
+    console.log('Create and switch to the declared work-item context branch.');
+    return 0;
+  }
+  const selected = optionValue(args.slice(2), '--work-item');
+  if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
+  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+  if (!selected.value) throw new DiscoveryError('Usage: sdlc work-item start --work-item <work-item> [--json]');
+  const report = await startWorkItem(await getOperativeRoot(), selected.value);
+  console.log(JSON.stringify(report, null, 2));
+  return 0;
 }
 
 async function handleTaskValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
@@ -433,6 +451,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
     if (repositoryInfoResult !== undefined) return repositoryInfoResult;
     const workItemValidationResult = await handleWorkItemValidation(args, getOperativeRoot);
     if (workItemValidationResult !== undefined) return workItemValidationResult;
+    const workItemStartResult = await handleWorkItemStart(args, getOperativeRoot);
+    if (workItemStartResult !== undefined) return workItemStartResult;
     const taskValidationResult = await handleTaskValidation(args, getOperativeRoot);
     if (taskValidationResult !== undefined) return taskValidationResult;
     const statResult = await handleStat(args, getOperativeRoot);

@@ -1,0 +1,154 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0024
+taskUid: WI-0024-20000000
+orderKey: "20000000"
+parentTaskUid: WI-0024-12000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release version 0.7.0 on the primary branch
+objective: Merge the completed WI-0024 context branch into main, prepare the
+  minor 0.7.0 release from versionSuggestion impact, create the annotated
+  primary-branch tag, and push branch/tag when the remote accepts it.
+references:
+  required:
+    - package.json
+    - .docs/work-items/WI-0024/work-item.json
+    - .docs/work-items/WI-0024/steps/WI-0024-12000000-validation.yaml
+    - schemas/work-item/v3/work-item.schema.json
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0024-12000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0024/work-item.json
+    - .docs/work-items/WI-0024/steps/WI-0024-20000000-release.yaml
+  commitSubject: "WI-0024: chore(release): prepare version 0.7.0"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - schemas/work-item/v3/work-item.schema.json
+        - schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - work-item
+        - validate
+        - --work-item
+        - WI-0024
+        - --json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare and publish the local 0.7.0 minor release after WI-0024 completion.
+    deliveryTypes:
+      - package
+      - release
+    inputs:
+      - id: WI-0024-20000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0024-12000000#result/WI-0024-12000000_R-001
+        purpose: Confirm all WI-0024 implementation and validation tasks passed.
+        required: true
+      - id: WI-0024-20000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: "#repository-state/HEAD"
+        purpose: Identify the primary-branch revision from which the release is built.
+        required: true
+    artifacts:
+      - id: WI-0024-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.7.0.
+        required: true
+      - id: WI-0024-20000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/0.7.0
+        purpose: Annotated SemVer release tag at the primary-branch tip.
+        required: true
+    procedures:
+      - id: WI-0024-20000000_PROC-RELEASE
+        sequence: 1
+        name: merge-tag-and-push-release
+        description: Merge the context branch into main, update package version to
+          0.7.0, create the annotated tag at the primary tip, and push
+          branch/tag when origin accepts it.
+        steps:
+          - Verify WI-0024 is complete and the context branch is clean.
+          - Merge the context branch into main.
+          - Update package.json to 0.7.0 and run all gates.
+          - Create annotated tag 0.7.0 at the main tip.
+          - Push main and tag 0.7.0 when a remote exists and accepts the update.
+        command: yarn typecheck && yarn build && yarn test --run && schema-validate
+          --root schemas schemas/work-item/v3/work-item.schema.json
+          schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
+          && node ./bin/cli.js work-item validate --work-item WI-0024 --json
+        expected:
+          result: WI-0024 is complete, package.json is 0.7.0, the annotated 0.7.0 tag
+            points at main, and remote publication succeeds when configured.
+        required: true
+    nonGoals:
+      - Do not create tags on the context branch.
+      - Do not claim server-side enforcement from local hooks.
+      - Do not deploy or publish a package registry artifact.
+  result:
+    status: partially-delivered
+    summary: Release task is prepared; execution occurs on the primary branch after
+      the context branch is merged.
+    artifacts:
+      - id: WI-0024-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0024-20000000_EXEC-PLAN
+        procedureRef: "#procedure/WI-0024-20000000_PROC-RELEASE"
+        result:
+          status: inconclusive
+          summary: Release execution is deferred until the context branch is merged into
+            main and the primary-branch release gates are run.
+        command: yarn typecheck && yarn build && yarn test --run && schema-validate
+          --root schemas schemas/work-item/v3/work-item.schema.json
+          schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
+          && node ./bin/cli.js work-item validate --work-item WI-0024 --json
+    limitations:
+      - The release task is not complete until primary-branch merge, tag, final
+        gates, and conditional remote push are executed.

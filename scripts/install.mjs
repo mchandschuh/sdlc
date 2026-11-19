@@ -34,21 +34,26 @@ function removeManaged(content) {
   return normalizedPrefix + content.slice(after);
 }
 
-function managedBlock(root) {
+function managedBlock(root, name) {
+  const command = name === 'post-merge'
+    ? `node "${resolve(root, 'scripts/install_sdlc_validate_git_hooks.mjs')}" --post-merge-reminder || exit 0`
+    : name === 'pre-push'
+      ? `node "${resolve(root, 'scripts/install_sdlc_validate_git_hooks.mjs')}" --pre-push "$@"`
+      : `node "${resolve(root, 'scripts/install.mjs')}" --run-hook`;
   return [
     START,
-    `node "${resolve(root, 'scripts/install.mjs')}" --run-hook`,
+    command,
     'status=$?',
     'if [ "$status" -ne 0 ]; then exit "$status"; fi',
     END,
   ].join('\n');
 }
 
-function withManagedBlock(content, root) {
+function withManagedBlock(content, root, name) {
   const base = removeManaged(content);
   const lines = base.split('\n');
   const exitIndex = lines.findLastIndex((line) => line.trim() === 'exit 0');
-  const block = managedBlock(root).split('\n');
+  const block = managedBlock(root, name).split('\n');
   if (exitIndex >= 0) lines.splice(exitIndex, 0, ...block, '');
   else {
     if (lines.at(-1) !== '') lines.push('');
@@ -74,7 +79,7 @@ async function installHooks(root) {
   for (const name of HOOKS) {
     const path = resolve(directory, name);
     const existing = existsSync(path) ? await readFile(path, 'utf8') : '#!/bin/sh\n';
-    await writeFile(path, withManagedBlock(existing, root), 'utf8');
+    await writeFile(path, withManagedBlock(existing, root, name), 'utf8');
     await chmod(path, 0o755);
   }
   return HOOKS.map((name) => resolve(directory, name));

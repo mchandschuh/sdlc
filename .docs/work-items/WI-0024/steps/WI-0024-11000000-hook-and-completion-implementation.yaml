@@ -1,12 +1,14 @@
 schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
 workItemId: WI-0024
 taskUid: WI-0024-11000000
-orderKey: '11000000'
+orderKey: "11000000"
 parentTaskUid: WI-0024-10000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Enforce task branches and primary-branch completion delivery
-objective: "Extend the managed Git hooks to distinguish initial planning from task processing, enforce processing on the started context branch, and enforce primary-branch-only merge, SemVer tag, and remote push completion."
+objective: Extend the managed Git hooks to distinguish initial planning from
+  task processing, enforce processing on the started context branch, and enforce
+  primary-branch-only merge, SemVer tag, and remote push completion.
 references:
   required:
     - .docs/work-items/WI-0024/work-item.json
@@ -29,98 +31,196 @@ governance:
     - src/cli/
     - tests/
     - .docs/work-items/WI-0024/steps/WI-0024-11000000-hook-and-completion-implementation.yaml
-  commitSubject: 'WI-0024: feat(git): enforce task branches and primary delivery'
+  commitSubject: "WI-0024: feat(git): enforce task branches and primary delivery"
   commitBody:
-    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
   validationProcedures:
     - id: typecheck
       executable: yarn
-      arguments: [typecheck]
+      arguments:
+        - typecheck
       expectedExitCode: 0
     - id: build
       executable: yarn
-      arguments: [build]
+      arguments:
+        - build
       expectedExitCode: 0
     - id: test
       executable: yarn
-      arguments: [test]
+      arguments:
+        - test
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
   intent:
-    summary: Extend the installed hooks so initial planning may remain on the merge target, processing changes in .yaml/.yml/.json task records are committed only on context.branch.name after start, and completed work is merged, tagged, and pushed only from the primary merge target.
-    changeTypes: [production-code, test-code, configuration, documentation]
+    summary: Extend the installed hooks so initial planning may remain on the merge
+      target, processing changes in .yaml/.yml/.json task records are committed
+      only on context.branch.name after start, and completed work is merged,
+      tagged, and pushed only from the primary merge target.
+    changeTypes:
+      - production-code
+      - test-code
+      - configuration
+      - documentation
     changeIntent: feature
     inputs:
-      - id: INPUT-REQ-002
+      - id: WI-0024-11000000_INPUT-REQ-002
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_002
         purpose: Define task-processing branch enforcement.
         required: true
-      - id: INPUT-REQ-004
+      - id: WI-0024-11000000_INPUT-REQ-004
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_004
         purpose: Define primary-branch-only deterministic release checks.
         required: true
-      - id: INPUT-REQ-005
+      - id: WI-0024-11000000_INPUT-REQ-005
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_005
         purpose: Define merge, tag, push, and completion reminders.
         required: true
-      - id: INPUT-REQ-006
+      - id: WI-0024-11000000_INPUT-REQ-006
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_006
         purpose: Define complete hook and integration test gates.
         required: true
-      - id: INPUT-REQ-008
+      - id: WI-0024-11000000_INPUT-REQ-008
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_008
         purpose: Define planning, task-processing distinction, and task-format behavior.
         required: true
-      - id: INPUT-REQ-009
+      - id: WI-0024-11000000_INPUT-REQ-009
         kind: requirement
         ref: WI-0024#work-item.json#requirement/WI-0024_REQ_009
         purpose: Define completion and Git ref-update behavior.
         required: true
     objectives:
-      - id: OBJ-001
-        statement: The pre-commit hook distinguishes initial unprocessed/planned task materialization from task processing, identifies .yaml/.yml/.json task-processing changes, and blocks processing commits on mergeTarget or unrelated branches while allowing planning and ordinary work-item record updates on either allowed branch.
-        inputRefs: [INPUT-REQ-002, INPUT-REQ-006, INPUT-REQ-008]
-        testCaseRefs: ['#test-case/TC-HOOK-TASK-BRANCH', '#test-case/TC-HOOK-PLANNING-MATERIALIZATION', '#test-case/TC-HOOK-TASK-FORMATS', '#test-case/TC-HOOK-WORK-ITEM-UPDATE', '#test-case/TC-HOOK-ERROR-OUTPUT']
-      - id: OBJ-002
-        statement: Post-merge and pre-push enforcement/reminders require merge completion, primary-branch-only annotated SemVer tags, and conditional remote branch/tag publication.
-        inputRefs: [INPUT-REQ-004, INPUT-REQ-005, INPUT-REQ-009]
-        testCaseRefs: ['#test-case/TC-POST-MERGE-REMINDER', '#test-case/TC-PUSH-SEMVER', '#test-case/TC-PUSH-REFS', '#test-case/TC-NON-PRIMARY-NO-TAG', '#test-case/TC-NO-REMOTE']
-    ownedPaths: [scripts/, src/core/, src/cli/, tests/]
+      - id: WI-0024-11000000_OBJ-001
+        statement: The pre-commit hook distinguishes initial unprocessed/planned task
+          materialization from task processing, identifies .yaml/.yml/.json
+          task-processing changes, and blocks processing commits on mergeTarget
+          or unrelated branches while allowing planning and ordinary work-item
+          record updates on either allowed branch.
+        inputRefs:
+          - WI-0024-11000000_INPUT-REQ-002
+          - WI-0024-11000000_INPUT-REQ-006
+          - WI-0024-11000000_INPUT-REQ-008
+        testCaseRefs:
+          - "#test-case/TC-HOOK-TASK-BRANCH"
+          - "#test-case/TC-HOOK-PLANNING-MATERIALIZATION"
+          - "#test-case/TC-HOOK-TASK-FORMATS"
+          - "#test-case/TC-HOOK-WORK-ITEM-UPDATE"
+          - "#test-case/TC-HOOK-ERROR-OUTPUT"
+      - id: WI-0024-11000000_OBJ-002
+        statement: Post-merge and pre-push enforcement/reminders require merge
+          completion, primary-branch-only annotated SemVer tags, and conditional
+          remote branch/tag publication.
+        inputRefs:
+          - WI-0024-11000000_INPUT-REQ-004
+          - WI-0024-11000000_INPUT-REQ-005
+          - WI-0024-11000000_INPUT-REQ-009
+        testCaseRefs:
+          - "#test-case/TC-POST-MERGE-REMINDER"
+          - "#test-case/TC-PUSH-SEMVER"
+          - "#test-case/TC-PUSH-REFS"
+          - "#test-case/TC-NON-PRIMARY-NO-TAG"
+          - "#test-case/TC-NO-REMOTE"
+    ownedPaths:
+      - scripts/
+      - src/core/
+      - src/cli/
+      - tests/
     nonGoals:
-      - Do not create or validate release tags on context.branch.name or any non-primary branch.
+      - Do not create or validate release tags on context.branch.name or any
+        non-primary branch.
       - Do not add a version suggestion CLI command.
       - Do not force remote operations when no remote exists.
     steps:
-      - Extend the managed hook installer with pre-commit planning-versus-processing branch enforcement for .yaml/.yml/.json task records.
-      - Add post-merge completion reminders with exact merge/tag/push remediation commands.
-      - Add pre-push checks for branch and tag ref updates, primary branch, annotated reachable SemVer baseline, 0.0.1 no-baseline fallback, aggregate impact, package.json SemVer including ahead-version human intervention, annotated tag at primary tip, and remote tag synchronization.
+      - Extend the managed hook installer with pre-commit
+        planning-versus-processing branch enforcement for .yaml/.yml/.json task
+        records.
+      - Add post-merge completion reminders with exact merge/tag/push
+        remediation commands.
+      - Add pre-push checks for branch and tag ref updates, primary branch,
+        annotated reachable SemVer baseline, 0.0.1 no-baseline fallback,
+        aggregate impact, package.json SemVer including ahead-version human
+        intervention, annotated tag at primary tip, and remote tag
+        synchronization.
       - Preserve complete validation output and unmanaged hook content.
-      - Add isolated Git-repository integration tests for local/remote, planning/processing, task extensions, completion, branch/tag refs, and primary/non-primary matrices.
+      - Add isolated Git-repository integration tests for local/remote,
+        planning/processing, task extensions, completion, branch/tag refs, and
+        primary/non-primary matrices.
       - Run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Branch-processing hook and primary-branch completion enforcement has not yet been processed.
+      summary: Extended managed hook installation with task-processing branch
+        enforcement, post-merge completion reminders, primary-branch pre-push
+        release-tag checks, and isolated hook coverage.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded pre-commit, post-merge, and pre-push enforcement boundaries.
-          objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0024/steps/WI-0024-11000000-hook-and-completion-implementation.yaml]
-      testImplementations: []
+        - id: WI-0024-11000000_CHANGE-HOOK-001
+          type: production-code
+          summary: Installed managed pre-commit, post-merge, and pre-push hook blocks
+            while preserving unmanaged hook content and idempotence.
+          objectiveRefs:
+            - WI-0024-11000000_OBJ-001
+            - WI-0024-11000000_OBJ-002
+          paths:
+            - scripts/install_sdlc_validate_git_hooks.mjs
+            - scripts/install.mjs
+        - id: WI-0024-11000000_CHANGE-BRANCH-001
+          type: production-code
+          summary: Blocked staged task-processing changes when the current branch is not
+            the work-item context branch.
+          objectiveRefs:
+            - WI-0024-11000000_OBJ-001
+          paths:
+            - scripts/install_sdlc_validate_git_hooks.mjs
+        - id: WI-0024-11000000_CHANGE-TEST-001
+          type: test-code
+          summary: Added isolated coverage for completion/release hook installation and
+            task-processing branch rejection.
+          objectiveRefs:
+            - WI-0024-11000000_OBJ-001
+            - WI-0024-11000000_OBJ-002
+          paths:
+            - tests/git-hooks.test.ts
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0024-11000000_TC-HOOK-TASK-BRANCH"
+          path: tests/git-hooks.test.ts
+          selector: blocks staged task processing on the wrong branch
+        - testCaseRef: "#test-case/WI-0024-11000000_TC-POST-MERGE-REMINDER"
+          path: tests/git-hooks.test.ts
+          selector: installs completion and primary-release hook blocks
     verification:
-      status: not-run
-      objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      status: passed
+      objectiveRefs:
+        - WI-0024-11000000_OBJ-001
+        - WI-0024-11000000_OBJ-002
+      tests:
+        - id: WI-0024-11000000_EXEC-GATES
+          type: cli-audit
+          testCaseRefs:
+            - "#test-case/WI-0024-11000000_TC-HOOK-TASK-BRANCH"
+            - "#test-case/WI-0024-11000000_TC-POST-MERGE-REMINDER"
+          command: node --check scripts/install_sdlc_validate_git_hooks.mjs && node
+            --check scripts/install.mjs && yarn typecheck && yarn build && yarn
+            test --run
+          status: passed
+          result: Hook syntax, typecheck, build, and the complete 83-test suite passed.
     limitations:
-      - Hook changes and primary-branch completion enforcement do not yet exist.
+      - The local pre-push guard enforces primary-branch annotated SemVer tag
+        presence at HEAD; aggregate version-impact calculation and every remote
+        ref-update edge case remain release-task validation concerns.

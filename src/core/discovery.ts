@@ -203,9 +203,12 @@ export async function discoverTasks(repositoryRoot: string, workItemId: string):
 
   for (const path of files) {
     try {
-      const documents = YAML.parseAllDocuments(await readFile(path, 'utf8'), { version: '1.2', uniqueKeys: true });
-      if (documents.length !== 1 || documents[0]!.errors.length > 0) throw new DiscoveryError(`Invalid YAML task document: ${path}`);
-      const envelope = recordObject(documents[0]!.toJSON(), path);
+      const source = await readFile(path, 'utf8');
+      const envelope = recordObject(path.endsWith('.json') ? JSON.parse(source) : (() => {
+        const documents = YAML.parseAllDocuments(source, { version: '1.2', uniqueKeys: true });
+        if (documents.length !== 1 || documents[0]!.errors.length > 0) throw new DiscoveryError(`Invalid YAML task document: ${path}`);
+        return documents[0]!.toJSON();
+      })(), path);
       const task = recordObject(envelope.task, path);
       const taskUid = typeof envelope.taskUid === 'string' ? envelope.taskUid : '';
       const taskType = typeof envelope.taskType === 'string' ? envelope.taskType : '';
