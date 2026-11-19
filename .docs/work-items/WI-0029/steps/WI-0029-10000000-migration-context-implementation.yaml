@@ -4,7 +4,7 @@ taskUid: WI-0029-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement centralized extension-aware migration context
 objective: Reuse centralized work-item object enumeration and fix task context discovery across all supported file extensions.
 references:
@@ -41,7 +41,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -89,19 +89,50 @@ task:
       - Add focused extension and BTCUSD-style JSON migration tests.
       - Run typecheck, build, and the complete test suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Implementation task is planned.
+      summary: Extracted centralized supported work-item object enumeration, reused it in discovery and migration context lookup, made task identity extension-aware, and added complete extension/BTCUSD regression tests.
       changes:
         - id: WI-0029-10000000_CHANGE-PLAN-001
           type: documentation
-          summary: Recorded the centralized enumeration and extension-aware migration context implementation plan.
+          summary: Recorded the centralized enumeration and extension-aware migration context implementation boundary.
           objectiveRefs: [WI-0029-10000000_OBJ-001, WI-0029-10000000_OBJ-002, WI-0029-10000000_OBJ-003]
           paths: [.docs/work-items/WI-0029/steps/WI-0029-10000000-migration-context-implementation.yaml]
-      testImplementations: []
+        - id: WI-0029-10000000_CHANGE-ENUM-001
+          type: production-code
+          summary: Exported the deterministic supported work-item object enumerator and reused it from task discovery and migration context lookup.
+          objectiveRefs: [WI-0029-10000000_OBJ-001, WI-0029-10000000_OBJ-002]
+          paths: [src/core/discovery.ts, src/core/task-local-migration.ts]
+        - id: WI-0029-10000000_CHANGE-TEST-001
+          type: test-code
+          summary: Added unit coverage for .json, .yaml, .yml, .ts, and .md plus BTCUSD-style JSON migration, idempotence, safety, and centralized enumeration.
+          objectiveRefs: [WI-0029-10000000_OBJ-002, WI-0029-10000000_OBJ-003]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0029-10000000_TC-CENTRALIZED-ENUM'
+          path: tests/cli.test.ts
+          selector: centralizes deterministic enumeration for every supported work-item object extension
+        - testCaseRef: '#test-case/WI-0029-10000000_TC-EXTENSIONS'
+          path: tests/cli.test.ts
+          selector: discovers migration task context for each supported extension
+        - testCaseRef: '#test-case/WI-0029-10000000_TC-BTCUSD-JSON'
+          path: tests/cli.test.ts
+          selector: migrates a BTCUSD-style JSON task and no longer reports no-task-context for the JSON extension
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0029-10000000_OBJ-001, WI-0029-10000000_OBJ-002, WI-0029-10000000_OBJ-003]
-      tests: []
+      tests:
+        - id: WI-0029-10000000_EXEC-GATES
+          type: cli-audit
+          testCaseRefs: ['#test-case/WI-0029-10000000_TC-CENTRALIZED-ENUM', '#test-case/WI-0029-10000000_TC-EXTENSIONS', '#test-case/WI-0029-10000000_TC-BTCUSD-JSON']
+          command: yarn typecheck && yarn build && yarn test --run
+          status: passed
+          result: Typecheck, build, and the complete 82-test suite passed.
+        - id: WI-0029-10000000_EXEC-SELF
+          type: cli-audit
+          testCaseRefs: ['#test-case/WI-0029-10000000_TC-BTCUSD-JSON']
+          command: node ./bin/cli.js work-item validate --work-item WI-0029 --json
+          status: passed
+          result: WI-0029 returned 4 valid objects, 24 resolved references, and 0 findings.
     limitations:
-      - Implementation has not started.
+      - Revision release remains in WI-0029-20000000.

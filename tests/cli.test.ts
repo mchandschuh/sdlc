@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import YAML from 'yaml';
 import { main } from '../src/cli/main.js';
-import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
+import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enumerateWorkItemObjects, SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS, statTrackedPath } from '../src/core/discovery.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
@@ -48,7 +48,7 @@ describe('CLI interface', () => {
 
     await expect(main([argument])).resolves.toBe(0);
 
-    expect(output).toEqual(['0.6.0']);
+    expect(output).toEqual(['0.6.1']);
   });
 
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
@@ -850,6 +850,77 @@ describe('CLI interface', () => {
       'Unknown option: --path',
     ]);
     expect(await readFile(marker, 'utf8')).toBe('{"workItemId":"WI-0099"}\n');
+  });
+
+  it('centralizes deterministic enumeration for every supported work-item object extension', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-supported-object-enumeration-'));
+    const steps = join(root, '.docs', 'work-items', 'WI-0099', 'steps');
+    await mkdir(steps, { recursive: true });
+    for (const extension of SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS) {
+      await writeFile(join(steps, `WI-0099-10000000-object${extension}`), `fixture-${extension}\n`);
+    }
+    const objects = await enumerateWorkItemObjects(steps);
+    expect(objects.map((path) => path.slice(path.lastIndexOf('.')))).toEqual([...SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS].sort());
+  });
+
+  it.each([...SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS])('discovers migration task context for %s files', async (extension) => {
+    const root = await mkdtemp(join(tmpdir(), `sdlc-migration-context-${extension.slice(1)}-`));
+    const directory = join(root, '.docs', 'work-items', 'WI-0099');
+    const steps = join(directory, 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(directory, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', ref: 'WI-0099|10000000#work-item/WI-0099' }, null, 2));
+    const taskValue = {
+      taskUid: 'WI-0099-10000000',
+      task: { intent: { objectives: [{ id: 'OBJ-001', statement: 'fixture' }] } },
+      reference: '#objective/OBJ-001',
+    };
+    const content = extension === '.json'
+      ? JSON.stringify(taskValue, null, 2)
+      : ['taskUid: WI-0099-10000000', 'task:', '  intent:', '    objectives:', '      - id: OBJ-001', '        statement: fixture', 'reference: "#objective/OBJ-001"', ''].join('\n');
+    const taskPath = join(steps, `WI-0099-10000000-task${extension}`);
+    await writeFile(taskPath, content);
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.at(-1)!) as { files: Array<{ path: string; changed: boolean }>; unresolvable: Array<{ reference: string }> };
+    expect(report.files.some((file) => file.path.endsWith(`task${extension}`) && file.changed)).toBe(true);
+    expect(report.unresolvable).toEqual([]);
+    expect(await readFile(taskPath, 'utf8')).toContain('#intent/objectives/OBJ-001');
+  });
+
+  it('migrates a BTCUSD-style JSON task and no longer reports no-task-context for the JSON extension', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-btcusd-json-context-'));
+    const directory = join(root, '.docs', 'work-items', 'BTCUSD-0000');
+    const steps = join(directory, 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(directory, 'work-item.json'), JSON.stringify({ workItemId: 'BTCUSD-0000', ref: 'BTCUSD-0000|01000000#work-item/BTCUSD-0000' }, null, 2));
+    await writeFile(join(steps, 'BTCUSD-0000-01000000-implement-schema-registry.json'), JSON.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/task-envelope/v1',
+      taskUid: 'BTCUSD-0000-01000000',
+      task: { intent: { objectives: [{ id: 'OBJ-001', statement: 'fixture' }] } },
+      references: ['#objective/OBJ-001', '#objective/OBJ-999', 'BTCUSD-0000|01000000'],
+    }, null, 2));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-work-item-up', '--work-item', 'BTCUSD-0000', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; unresolvable: Array<{ context: string; reason: string }> };
+    expect(report.changedFiles).toContain('.docs/work-items/BTCUSD-0000/steps/BTCUSD-0000-01000000-implement-schema-registry.json');
+    expect(report.unresolvable).not.toEqual(expect.arrayContaining([expect.objectContaining({ context: 'no-task-context' })]));
+    expect(report.unresolvable).toEqual(expect.arrayContaining([expect.objectContaining({ context: 'BTCUSD-0000-01000000' })]));
   });
 
   it('rehearses every existing WI-0000 through WI-0018 migration in a disposable worktree', async () => {

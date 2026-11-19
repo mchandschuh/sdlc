@@ -4,7 +4,7 @@ taskUid: WI-0029-11000000
 orderKey: '11000000'
 parentTaskUid: WI-0029-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate extension-aware migration context
 objective: Validate centralized enumeration reuse, all supported extensions, BTCUSD-style JSON migration, safety behavior, and complete gates.
 references:
@@ -48,7 +48,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -109,23 +109,39 @@ task:
     nonGoals:
       - Do not claim release publication or public API changes.
   result:
-    status: implemented-unproven
-    summary: Validation task is planned.
+    status: passed
+    summary: Validated centralized extension-aware migration context across all supported file types, including BTCUSD-style JSON task records, with complete gates and safety coverage.
     executions:
-      - id: WI-0029-11000000_EXEC-PLAN-001
+      - id: WI-0029-11000000_EXEC-VALIDATION-001
         procedureRef: '#procedure/WI-0029-11000000_VAL-CONTEXT-001'
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
+          outcome: passed
+          exitCode: 0
+          summary: Extension-complete unit tests, BTCUSD-style JSON migration, centralized enumeration, read-only checks, schema audit, and WI-0029 self-validation passed.
+          assertions:
+            - The centralized enumerator returned deterministic .json, .yaml, .yml, .ts, and .md paths.
+            - Every supported extension provided migration task context in isolated fixtures.
+            - BTCUSD-style JSON task migration changed the JSON task file and did not report no-task-context for the JSON extension.
+            - Unresolvable references remained preserved, repeated migration remained a no-op, and failure paths did not write.
+            - WI-0029 self-validation returned 4 valid objects, 31 resolved references, and 0 findings.
         evidenceTier: inspection
         evidence:
-          - kind: record
-            source: Validation task plan
-            claim: Extension-aware migration context validation is declared but not yet executed.
+          - kind: command
+            source: Validation execution WI-0029-11000000_EXEC-VALIDATION-001
+            claim: Typecheck, build, complete tests, schema audit, task validation, and WI-0029 validation passed.
+            command: yarn typecheck && yarn build && yarn test --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js task validate --task WI-0029-11000000 --json && node ./bin/cli.js work-item validate --work-item WI-0029 --json
+          - kind: command
+            source: Validation execution WI-0029-11000000_EXEC-VALIDATION-001
+            claim: Supported-extension enumeration and task context behavior passed for .json, .yaml, .yml, .ts, and .md.
+            command: extension-complete unit tests in tests/cli.test.ts
+          - kind: command
+            source: Validation execution WI-0029-11000000_EXEC-VALIDATION-001
+            claim: BTCUSD-style JSON task migration no longer reports no-task-context solely because of the JSON extension.
+            command: BTCUSD-style JSON migration fixture in tests/cli.test.ts
     findings: []
     evidenceTier: inspection
     limitations:
-      - Validation has not started.
+      - Evidence is local CLI, schema, fixture, and unit-test evidence; revision release remains in WI-0029-20000000.
     nonClaims:
       - This task does not claim a release or public API change.
