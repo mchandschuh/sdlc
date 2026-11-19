@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.handschuh.dev/sdlc/acceptance-criterion/v1",
   "title": "SDLC Acceptance Criterion v1",
-  "description": "A reusable acceptance criterion with repository-compatible AC identifier forms and optional traceability to objectives and findings.",
-  "$comment": "A local AC-* identifier is suitable for a task-owned criterion. A work-item-qualified WI- or GH- requirement criterion preserves an existing work-item acceptance-criterion identity. Host validation must resolve objectiveRefs and findingRefs and must verify that criterion IDs are unique within their declared scope.",
+  "description": "A reusable acceptance criterion with a required work-item-prefixed identifier and optional traceability to objectives and findings.",
+  "$comment": "Acceptance criteria are authoritative work-item identities and must use {WorkItemId}_REQ_{RequirementNumber}_AC_{CriterionNumber}. Abbreviated AC-* identifiers are not canonical in this contract.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,10 +13,9 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^(?:AC-[A-Z0-9]+(?:-[A-Z0-9]+)*|[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,})$",
-      "description": "Stable acceptance-criterion identifier. It may be task-local or retain a canonical work-item requirement criterion identity.",
+      "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}_AC_[0-9]{3,}$",
+      "description": "Stable work-item-prefixed acceptance-criterion identifier.",
       "examples": [
-        "AC-001",
         "WI-0003_REQ_001_AC_001"
       ]
     },

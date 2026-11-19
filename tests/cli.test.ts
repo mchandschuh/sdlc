@@ -141,6 +141,7 @@ describe('CLI interface', () => {
     ['WI-0001', 'https://schemas.handschuh.dev/sdlc/work-item-id/v1'],
     ['WI-0001-80000000', 'https://schemas.handschuh.dev/sdlc/task-uid/v1'],
     ['WI-0001_REQ_001', 'https://schemas.handschuh.dev/sdlc/requirement-identifier/v1'],
+    ['WI-0001_REQ_001_AC_001', 'https://schemas.handschuh.dev/sdlc/acceptance-criterion-identifier/v1'],
   ])('validates bare identity reference %s', async (ref, schemaId) => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
@@ -255,6 +256,28 @@ describe('CLI interface', () => {
       acceptanceCriteria: expect.any(Array),
     }));
     expect(await readFile('.docs/work-items/WI-0023/work-item.json', 'utf8')).toBe(before);
+  });
+
+  it('resolves a bare acceptance-criterion identifier from authoritative work-item.json data', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const before = await readFile('.docs/work-items/WI-0002/work-item.json', 'utf8');
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0002_REQ_001_AC_001'])).resolves.toBe(0);
+
+    const criterion = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { repositoryPath: string; format: string; data: { id: string; description: string } } };
+    expect(criterion.valid).toBe(true);
+    expect(criterion.resolution.repositoryPath).toBe('.docs/work-items/WI-0002/work-item.json');
+    expect(criterion.resolution.format).toBe('json');
+    expect(criterion.resolution.data).toEqual(expect.objectContaining({ id: 'WI-0002_REQ_001_AC_001', description: expect.any(String) }));
+    expect(await readFile('.docs/work-items/WI-0002/work-item.json', 'utf8')).toBe(before);
+  });
+
+  it.each(['WI-0002_REQ_001_AC_01', 'WI-0002_REQ_001_AC_ABC'])('rejects malformed bare acceptance-criterion identifier %s', async (ref) => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    await expect(main(['ref', 'validate', '--ref', ref])).resolves.toBe(1);
+    expect((JSON.parse(output.at(-1)!) as { valid: boolean }).valid).toBe(false);
   });
 
   it('resolves a bare requirement identifier from a nested repository CWD', async () => {

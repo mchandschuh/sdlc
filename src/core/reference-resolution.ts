@@ -120,6 +120,12 @@ function requirementIdentifierReference(ref: string): { readonly workItemId: str
   return { workItemId: match[1]!, requirementId: ref };
 }
 
+function acceptanceCriterionIdentifierReference(ref: string): { readonly workItemId: string; readonly criterionId: string } | undefined {
+  const match = /^([A-Z]{1,10}-[0-9]+)_REQ_[0-9]{3,}_AC_[0-9]{3,}$/u.exec(ref);
+  if (!match) return undefined;
+  return { workItemId: match[1]!, criterionId: ref };
+}
+
 async function parseDocument(repositoryRoot: string, requestedPath: string): Promise<ParsedDocument> {
   const fullPath = containedPath(repositoryRoot, requestedPath);
   const source = await readFile(fullPath, 'utf8');
@@ -237,6 +243,22 @@ async function taskDocument(repositoryRoot: string, workItemId: string, orderKey
 }
 
 async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: TaskContext): Promise<ReferenceResolutionReport> {
+  const criterion = acceptanceCriterionIdentifierReference(ref);
+  if (criterion) {
+    const document = await parseDocument(repositoryRoot, `.docs/work-items/${criterion.workItemId}/work-item.json`);
+    const workItem = objectValue(document.value);
+    const requirements = objectValue(workItem?.requirements);
+    const items = requirements?.items;
+    if (!Array.isArray(items)) return report(ref, [`Authoritative requirements.items array not found in ${document.repositoryPath}.`]);
+    const matches = items.flatMap((item) => {
+      const requirement = objectValue(item);
+      const criteria = requirement?.acceptanceCriteria;
+      return Array.isArray(criteria) ? criteria.filter((candidate) => objectValue(candidate)?.id === criterion.criterionId) : [];
+    });
+    if (matches.length === 0) return report(ref, [`Acceptance criterion not found in ${document.repositoryPath}: ${criterion.criterionId}`]);
+    if (matches.length > 1) return report(ref, [`Duplicate acceptance criterion identifier in ${document.repositoryPath}: ${criterion.criterionId}`]);
+    return success(ref, document, matches[0]);
+  }
   const requirement = requirementIdentifierReference(ref);
   if (requirement) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${requirement.workItemId}/work-item.json`);
