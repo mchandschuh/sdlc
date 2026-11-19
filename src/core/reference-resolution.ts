@@ -114,6 +114,12 @@ function workItemReference(ref: string): string | undefined {
   return /^[A-Z]{1,10}-[0-9]+$/u.test(ref) ? ref : undefined;
 }
 
+function requirementIdentifierReference(ref: string): { readonly workItemId: string; readonly requirementId: string } | undefined {
+  const match = /^([A-Z]{1,10}-[0-9]+)_REQ_[0-9]{3}$/u.exec(ref);
+  if (!match) return undefined;
+  return { workItemId: match[1]!, requirementId: ref };
+}
+
 async function parseDocument(repositoryRoot: string, requestedPath: string): Promise<ParsedDocument> {
   const fullPath = containedPath(repositoryRoot, requestedPath);
   const source = await readFile(fullPath, 'utf8');
@@ -231,6 +237,19 @@ async function taskDocument(repositoryRoot: string, workItemId: string, orderKey
 }
 
 async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: TaskContext): Promise<ReferenceResolutionReport> {
+  const requirement = requirementIdentifierReference(ref);
+  if (requirement) {
+    const document = await parseDocument(repositoryRoot, `.docs/work-items/${requirement.workItemId}/work-item.json`);
+    const workItem = objectValue(document.value);
+    const requirements = objectValue(workItem?.requirements);
+    const items = requirements?.items;
+    if (!Array.isArray(items)) return report(ref, [`Authoritative requirements.items array not found in ${document.repositoryPath}.`]);
+    const matches = items.filter((item) => objectValue(item)?.id === requirement.requirementId);
+    if (matches.length === 0) return report(ref, [`Requirement not found in ${document.repositoryPath}: ${requirement.requirementId}`]);
+    if (matches.length > 1) return report(ref, [`Duplicate requirement identifier in ${document.repositoryPath}: ${requirement.requirementId}`]);
+    return success(ref, document, matches[0]);
+  }
+
   const bareWorkItem = workItemReference(ref);
   if (bareWorkItem) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${bareWorkItem}/work-item.json`);

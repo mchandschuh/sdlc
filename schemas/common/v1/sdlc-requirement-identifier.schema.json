@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/requirement-identifier/v1",
+  "title": "SDLC Requirement Identifier v1",
+  "x-sdlc-reference-type": true,
+  "description": "The canonical identifier of an authoritative requirement declared in a work-item.json requirements.items array.",
+  "$comment": "RequirementIdentifier has the exact form {WorkItemId}_REQ_{three-digit-number}. The identifier is a direct syntactic reference type; local semantic resolution loads only .docs/work-items/{WorkItemId}/work-item.json and selects exactly one requirements.items object with the matching id.",
+  "type": "string",
+  "pattern": "^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3}$",
+  "examples": [
+    "WI-0001_REQ_001",
+    "WI-0023_REQ_005",
+    "GH-0042_REQ_123"
+  ]
+}

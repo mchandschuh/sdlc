@@ -1,15 +1,29 @@
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import YAML from 'yaml';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath } from '../src/core/discovery.js';
+import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
 
 const execFileAsync = promisify(execFile);
+
+async function filesUnder(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await filesUnder(path));
+    else if (entry.isFile()) files.push(path);
+  }
+  return files;
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -126,6 +140,7 @@ describe('CLI interface', () => {
   it.each([
     ['WI-0001', 'https://schemas.handschuh.dev/sdlc/work-item-id/v1'],
     ['WI-0001-80000000', 'https://schemas.handschuh.dev/sdlc/task-uid/v1'],
+    ['WI-0001_REQ_001', 'https://schemas.handschuh.dev/sdlc/requirement-identifier/v1'],
   ])('validates bare identity reference %s', async (ref, schemaId) => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
@@ -135,6 +150,54 @@ describe('CLI interface', () => {
     const report = JSON.parse(output.join('\n')) as { valid: boolean; matches: Array<{ schemaId: string }> };
     expect(report.valid).toBe(true);
     expect(report.matches.some((match) => match.schemaId === schemaId)).toBe(true);
+  });
+
+  it('validates every root example from every marked reference schema', async () => {
+    const schemas = await discoverReferenceSchemas(process.cwd());
+    expect(schemas.length).toBeGreaterThan(0);
+    for (const schema of schemas) {
+      expect(schema.examples.length, `${schema.path} must provide examples`).toBeGreaterThan(0);
+      for (const example of schema.examples) {
+        const output: string[] = [];
+        vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+        await expect(main(['ref', 'validate', '--ref', example])).resolves.toBe(0);
+        const report = JSON.parse(output.at(-1)!) as { valid: boolean; matches: Array<{ schemaId: string }> };
+        expect(report.valid, `${schema.path} example ${example}`).toBe(true);
+        expect(report.matches.some((match) => match.schemaId === schema.id), `${schema.path} example ${example}`).toBe(true);
+        vi.restoreAllMocks();
+      }
+    }
+  });
+
+  it('confirms work-item.json is the authoritative requirement declaration source', async () => {
+    const repositoryRoot = process.cwd();
+    const workItemFiles = (await filesUnder(join(repositoryRoot, '.docs', 'work-items')))
+      .filter((path) => path.endsWith('/work-item.json'));
+    expect(workItemFiles.length).toBeGreaterThan(0);
+    for (const path of workItemFiles) {
+      const workItem = JSON.parse(await readFile(path, 'utf8')) as { requirements?: { items?: Array<{ id?: string }> } };
+      expect(Array.isArray(workItem.requirements?.items), path).toBe(true);
+      for (const requirement of workItem.requirements!.items!) expect(requirement.id, path).toMatch(/^[A-Z]{1,10}-[0-9]+_REQ_[0-9]{3,}$/u);
+    }
+
+    const taskFiles = (await filesUnder(join(repositoryRoot, '.docs', 'work-items')))
+      .filter((path) => path.endsWith('.yaml') || path.endsWith('.yml'));
+    for (const path of taskFiles) {
+      const task = YAML.parse(await readFile(path, 'utf8')) as Record<string, unknown>;
+      expect(Object.hasOwn(task, 'requirements'), path).toBe(false);
+    }
+
+    const requirementSchemaFiles = (await filesUnder(join(repositoryRoot, 'schemas')))
+      .filter((path) => path.endsWith('.schema.json'));
+    const rootRequirementSchemas = requirementSchemaFiles.filter((path) => {
+      const schema = JSON.parse(readFileSync(path, 'utf8')) as { properties?: Record<string, unknown> };
+      return Object.hasOwn(schema.properties ?? {}, 'requirements');
+    }).map((path) => path.slice(repositoryRoot.length + 1).split('\\').join('/')).sort();
+    expect(rootRequirementSchemas).toEqual([
+      'schemas/work-item-assessment/v1/work-item-assessment.schema.json',
+      'schemas/work-item-requirements/v1/sdlc-work-item-requirements.schema.json',
+      'schemas/work-item/v2/work-item.schema.json',
+    ]);
   });
 
   it('uses the installed reference schema registry outside a repository', async () => {
@@ -171,6 +234,83 @@ describe('CLI interface', () => {
     expect(task.resolution.repositoryPath).toBe('.docs/work-items/WI-0007/steps/WI-0007-10000000-implementation.yaml');
     expect(task.resolution.format).toBe('yaml');
     expect(task.resolution.data.taskUid).toBe('WI-0007-10000000');
+  });
+
+  it('resolves a bare requirement identifier from authoritative work-item.json data', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const before = await readFile('.docs/work-items/WI-0023/work-item.json', 'utf8');
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0023_REQ_001'])).resolves.toBe(0);
+
+    const requirement = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { repositoryPath: string; format: string; data: { id: string; name: string; description: string; reason: string; acceptanceCriteria: unknown[] } } };
+    expect(requirement.valid).toBe(true);
+    expect(requirement.resolution.repositoryPath).toBe('.docs/work-items/WI-0023/work-item.json');
+    expect(requirement.resolution.format).toBe('json');
+    expect(requirement.resolution.data).toEqual(expect.objectContaining({
+      id: 'WI-0023_REQ_001',
+      name: 'requirement-authority',
+      description: expect.any(String),
+      reason: expect.any(String),
+      acceptanceCriteria: expect.any(Array),
+    }));
+    expect(await readFile('.docs/work-items/WI-0023/work-item.json', 'utf8')).toBe(before);
+  });
+
+  it('resolves a bare requirement identifier from a nested repository CWD', async () => {
+    const nested = join(process.cwd(), '.docs', 'work-items', 'WI-0023', 'steps');
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(nested);
+      await expect(main(['ref', 'resolve', '--ref', 'WI-0023_REQ_002'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const requirement = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { repositoryPath: string; data: { id: string } } };
+    expect(requirement.valid).toBe(true);
+    expect(requirement.resolution.repositoryPath).toBe('.docs/work-items/WI-0023/work-item.json');
+    expect(requirement.resolution.data.id).toBe('WI-0023_REQ_002');
+  });
+
+  it.each(['WI-0001_REQ_01', 'WI-0001_REQ_0001', 'WI-0001-REQ-001', 'WI-0001_REQ_ABC'])('rejects malformed bare requirement identifier %s', async (ref) => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    await expect(main(['ref', 'validate', '--ref', ref])).resolves.toBe(1);
+    expect((JSON.parse(output.at(-1)!) as { valid: boolean }).valid).toBe(false);
+  });
+
+  it('reports missing and duplicate requirement identifiers without mutating the source', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-requirement-resolution-'));
+    const workItemDirectory = join(root, '.docs', 'work-items', 'WI-0099');
+    await mkdir(workItemDirectory, { recursive: true });
+    const workItemPath = join(workItemDirectory, 'work-item.json');
+    const fixture = JSON.stringify({ requirements: { items: [
+      { id: 'WI-0099_REQ_001', name: 'first', description: 'first', reason: 'first', acceptanceCriteria: [{ id: 'WI-0099_REQ_001_AC_001', description: 'first' }] },
+      { id: 'WI-0099_REQ_001', name: 'duplicate', description: 'duplicate', reason: 'duplicate', acceptanceCriteria: [{ id: 'WI-0099_REQ_001_AC_002', description: 'duplicate' }] },
+    ] } });
+    await writeFile(workItemPath, fixture);
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const originalCwd = process.cwd();
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'resolve', '--ref', 'WI-0099_REQ_001'])).resolves.toBe(1);
+      const duplicate = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: null; findings: string[] };
+      expect(duplicate.valid).toBe(false);
+      expect(duplicate.resolution).toBeNull();
+      expect(duplicate.findings[0]).toContain('Duplicate requirement identifier');
+
+      await expect(main(['ref', 'resolve', '--ref', 'WI-0099_REQ_999'])).resolves.toBe(1);
+      const missing = JSON.parse(output.at(-1)!) as { valid: boolean; findings: string[] };
+      expect(missing.valid).toBe(false);
+      expect(missing.findings[0]).toContain('Requirement not found');
+    } finally {
+      process.chdir(originalCwd);
+    }
+    expect(await readFile(workItemPath, 'utf8')).toBe(fixture);
   });
 
   it('resolves work-item-local and task-qualified selectors and reports unsupported scopes', async () => {
