@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0025",
-  "status": "planned",
+  "status": "implemented",
   "title": "Require work-item-prefixed requirement and acceptance-criterion identifiers",
   "type": "feature",
   "objective": "Remove abbreviated requirement and acceptance-criterion identifier forms from supported schemas and validation, migrate legacy task-local references to work-item-prefixed forms, and report actionable findings until declarations and references are canonical.",
