@@ -19,12 +19,14 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "nodejs-common": "file:../nodejs-common",
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
   "dependencies": {
+    "nodejs-common": "file:../nodejs-common",
     "yaml": "^2.9.1"
   },
   "license": "UNLICENSED"

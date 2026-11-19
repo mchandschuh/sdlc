@@ -3,7 +3,6 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { discoverTasks, DiscoveryError, type TaskSummary } from './discovery.js';
@@ -72,7 +71,6 @@ export interface WorkItemValidationReport {
 
 const execFileAsync = promisify(execFile);
 const WORK_ITEM_ID = /^[A-Z]{1,10}-[0-9]+$/u;
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 function validatorExecutable(): string {
   const configured = process.env.SDLC_SCHEMA_VALIDATE;
@@ -136,14 +134,13 @@ function discoverIdentifierFindings(value: unknown, path: string, taskUid?: stri
   return findings;
 }
 
-async function discoverReferenceFindings(repositoryRoot: string, value: unknown, path: string, taskContext?: TaskContext): Promise<ReferenceFinding[]> {
+async function discoverReferenceFindings(repositoryRoot: string, schemaRoot: string, value: unknown, path: string, taskContext?: TaskContext): Promise<ReferenceFinding[]> {
   const findings: ReferenceFinding[] = [];
   const visit = async (current: unknown, currentPath: string): Promise<void> => {
     if (typeof current === 'string') {
       const field = currentPath.split('.').at(-1) ?? '';
       const referenceField = field === 'ref' || field === 'procedureRef' || field === 'taskRef' || field.endsWith('Refs') || field === 'reference' || field === 'referenceRef' || field === 'policyRef';
       if (!referenceField && !looksLikeReference(current)) return;
-      const schemaRoot = existsSync(join(repositoryRoot, 'schemas')) ? repositoryRoot : packageRoot;
       const syntax = await validateReference(schemaRoot, current);
       if (!syntax.valid && !looksLikeReference(current)) return;
       if (!syntax.valid) {
@@ -234,7 +231,7 @@ async function statIdentity(repositoryRoot: string, repositoryPath: string, work
   };
 }
 
-async function validateTask(repositoryRoot: string, temporaryDirectory: string, workItemId: string, task: TaskSummary): Promise<WorkItemObjectValidation> {
+async function validateTask(repositoryRoot: string, schemaRoot: string, temporaryDirectory: string, workItemId: string, task: TaskSummary): Promise<WorkItemObjectValidation> {
   const path = resolve(repositoryRoot, task.path);
   const relativeTaskSchema = taskSchemaPath((YAML.parse(await readFile(path, 'utf8')) as Record<string, unknown>).task && typeof (YAML.parse(await readFile(path, 'utf8')) as Record<string, any>).task.taskSchema === 'string'
     ? (YAML.parse(await readFile(path, 'utf8')) as Record<string, any>).task.taskSchema
@@ -243,14 +240,14 @@ async function validateTask(repositoryRoot: string, temporaryDirectory: string, 
   const envelopePath = await writeJson(temporaryDirectory, `${task.taskUid}.envelope.json`, document);
   const payloadPath = await writeJson(temporaryDirectory, `${task.taskUid}.payload.json`, { intent: document.task?.intent, result: document.task?.result });
   const findings = [
-    ...await validateDocument(join(repositoryRoot, 'schemas'), 'sdlc-task-envelope/v1/sdlc-task-envelope.schema.json', envelopePath, repositoryRoot),
-    ...await validateDocument(join(repositoryRoot, 'schemas'), relativeTaskSchema, payloadPath, repositoryRoot),
+    ...await validateDocument(join(schemaRoot, 'schemas'), 'sdlc-task-envelope/v1/sdlc-task-envelope.schema.json', envelopePath, repositoryRoot),
+    ...await validateDocument(join(schemaRoot, 'schemas'), relativeTaskSchema, payloadPath, repositoryRoot),
   ];
   const taskContext: TaskContext = {
     taskUid: task.taskUid,
     document: { fullPath: path, repositoryPath: task.path, format: 'yaml', value: document },
   };
-  const referenceFindings = await discoverReferenceFindings(repositoryRoot, document, '$', taskContext);
+  const referenceFindings = await discoverReferenceFindings(repositoryRoot, schemaRoot, document, '$', taskContext);
   const identifierFindings = discoverIdentifierFindings(document, '$', task.taskUid).filter((finding) => !isTaskOwnedId(finding.value));
   const referenceErrors = referenceFindings.filter((finding) => !finding.resolved);
   const schemaFindings = findings.map((finding) => `${finding}\nRemediation: ${remediationForSchema(relativeTaskSchema, task.path)}`);
@@ -271,15 +268,15 @@ async function validateTask(repositoryRoot: string, temporaryDirectory: string, 
   };
 }
 
-export async function validateWorkItem(repositoryRoot: string, workItemId: string, selectedTaskUid?: string): Promise<WorkItemValidationReport> {
+export async function validateWorkItem(repositoryRoot: string, workItemId: string, selectedTaskUid?: string, schemaRoot = resolve(repositoryRoot, 'schemas')): Promise<WorkItemValidationReport> {
   if (!WORK_ITEM_ID.test(workItemId)) throw new DiscoveryError(`Invalid work-item ID: ${workItemId}`);
   const workItemPath = resolve(repositoryRoot, `.docs/work-items/${workItemId}/work-item.json`);
   const temporaryDirectory = await mkdtemp(join('/tmp', 'sdlc-work-item-validation-'));
   try {
     const workItemObject = JSON.parse(await readFile(workItemPath, 'utf8'));
     const workItemDocument = await writeJson(temporaryDirectory, 'work-item.json', workItemObject);
-    const workItemFindings = await validateDocument(join(repositoryRoot, 'schemas'), 'work-item/v2/work-item.schema.json', workItemDocument, repositoryRoot);
-    const workItemReferenceFindings = await discoverReferenceFindings(repositoryRoot, workItemObject, '$');
+    const workItemFindings = await validateDocument(join(schemaRoot, 'schemas'), 'work-item/v2/work-item.schema.json', workItemDocument, repositoryRoot);
+    const workItemReferenceFindings = await discoverReferenceFindings(repositoryRoot, schemaRoot, workItemObject, '$');
     const workItemRepositoryPath = `.docs/work-items/${workItemId}/work-item.json`;
     const workItemIdentity = await statIdentity(repositoryRoot, workItemRepositoryPath, workItemId, 'work-item', `${workItemId}#work-item.json#work-item/${workItemId}`);
     const objects: WorkItemObjectValidation[] = [];
@@ -313,7 +310,7 @@ export async function validateWorkItem(repositoryRoot: string, workItemId: strin
       });
     }
     for (const task of taskReport.items) {
-      if (!selectedTaskUid || task.taskUid === selectedTaskUid) objects.push(await validateTask(repositoryRoot, temporaryDirectory, workItemId, task));
+      if (!selectedTaskUid || task.taskUid === selectedTaskUid) objects.push(await validateTask(repositoryRoot, schemaRoot, temporaryDirectory, workItemId, task));
     }
     const validObjectCount = objects.filter((object) => object.valid).length;
     const findings = objects.flatMap((object) => object.findings);

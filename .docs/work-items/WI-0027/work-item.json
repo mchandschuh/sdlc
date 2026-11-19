@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0027",
-  "status": "planned",
+  "status": "complete",
   "title": "Configure repository and schema resolution for external work-item validation",
   "type": "feature",
   "objective": "Separate the target repository root from the installed SDLC schema registry so sdlc work-item/task validation works for external repositories such as BTCUSD-0000, add a nodejs-common-backed ~/.sdlc/config.json repositoryRoot default with documented precedence, and add ./scripts/install.mjs with an idempotent --hooks option that installs all supported Git hooks.",
@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0027-configured-schema-resolution-and-hooks",
-      "created": false,
+      "created": true,
       "rationale": "WI-0027 planning is prepared on main; implementation and validation will use the declared context branch after start."
     }
   },
