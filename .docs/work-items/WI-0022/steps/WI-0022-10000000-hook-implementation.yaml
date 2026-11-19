@@ -4,7 +4,7 @@ taskUid: WI-0022-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement the work-item validation hook installer
 objective: Add the Node.js hook installer and managed pre-commit behavior for staged work-item validation with complete regression coverage.
 references:
@@ -41,7 +41,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -90,19 +90,48 @@ task:
       - Add installer/hook success/failure/idempotence/read-only tests.
       - Run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Hook installer implementation has not yet been processed.
+      summary: Added an idempotent Node.js installer and managed pre-commit hook that validates every staged work item, preserves existing hook behavior, and prints complete validation failures.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the Git hook installer implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added repository-local hook installation, managed-block replacement, NUL-safe staged work-item detection, and validation subprocess execution.
           objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0022/steps/WI-0022-10000000-hook-implementation.yaml]
-      testImplementations: []
+          paths: [scripts/install_sdlc_validate_git_hooks.mjs]
+        - id: CHANGE-002
+          type: test-code
+          summary: Added isolated Git repository coverage for installation, idempotence, staged selection, failure output/blocking, preserved hook execution, and staged-file immutability.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [tests/git-hooks.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-HOOK-INSTALL'
+          path: tests/git-hooks.test.ts
+          selector: installs an executable hook and preserves existing hook content
+        - testCaseRef: '#test-case/TC-HOOK-IDEMPOTENT'
+          path: tests/git-hooks.test.ts
+          selector: repeated installation produces the same hook content
+        - testCaseRef: '#test-case/TC-HOOK-STAGED-SELECTION'
+          path: tests/git-hooks.test.ts
+          selector: skips unrelated commits and validates each staged work item once
+        - testCaseRef: '#test-case/TC-HOOK-FAILURE-OUTPUT'
+          path: tests/git-hooks.test.ts
+          selector: prints complete stdout and stderr validation response on failure
+        - testCaseRef: '#test-case/TC-HOOK-BLOCK'
+          path: tests/git-hooks.test.ts
+          selector: blocks invalid commits without changing staged file content
+        - testCaseRef: '#test-case/TC-HOOK-TEST-GATE'
+          path: tests/git-hooks.test.ts
+          selector: complete repository test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      tests:
+        - id: EXEC-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-HOOK-INSTALL', '#test-case/TC-HOOK-IDEMPOTENT', '#test-case/TC-HOOK-STAGED-SELECTION', '#test-case/TC-HOOK-FAILURE-OUTPUT', '#test-case/TC-HOOK-BLOCK', '#test-case/TC-HOOK-TEST-GATE']
+          command: node --check scripts/install_sdlc_validate_git_hooks.mjs && yarn typecheck && yarn build && yarn test
+          status: passed
+          result: The installer syntax check, TypeScript typecheck, build, focused hook tests, and complete 52-test suite all passed.
     limitations:
-      - The installer and managed pre-commit hook do not yet exist.
+      - The hook is installed per repository and does not configure global Git hooks or external hook managers.
