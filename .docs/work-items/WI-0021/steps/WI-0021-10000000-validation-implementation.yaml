@@ -4,7 +4,7 @@ taskUid: WI-0021-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement remediation-oriented work-item and task validation
 objective: Add work-item/task validation commands that validate schemas and references independently, continue after schema failures, and emit actionable remediation findings.
 references:
@@ -48,7 +48,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -101,19 +101,63 @@ task:
       - Add remediation-oriented findings and response-schema coverage.
       - Run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Validation command implementation has not yet been processed.
+      summary: Added work-item/task validation commands with independent schema/reference validation, continuation after schema failures, structured remediation findings, and read-only behavior.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the remediation-oriented validation implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Extended work-item validation with task scope, reference traversal, independent schema/reference categories, counters, and remediation data.
           objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0021/steps/WI-0021-10000000-validation-implementation.yaml]
-      testImplementations: []
+          paths: [src/core/work-item-validation.ts]
+        - id: CHANGE-002
+          type: production-code
+          summary: Added sdlc task validate --task <task-identifier> selection and stable canonical-ID errors.
+          objectiveRefs: [OBJ-001]
+          paths: [src/cli/main.ts]
+        - id: CHANGE-003
+          type: schema
+          summary: Extended the work-item validation response schema with scope, reference metrics, per-reference findings, schema findings, and remediation fields.
+          objectiveRefs: [OBJ-002]
+          paths: [schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json]
+        - id: CHANGE-004
+          type: production-code
+          summary: Added current-task context handling and legacy relationship-string compatibility in reference resolution.
+          objectiveRefs: [OBJ-001]
+          paths: [src/core/reference-resolution.ts, src/core/reference.ts]
+        - id: CHANGE-005
+          type: test-code
+          summary: Added task validation, schema/reference continuation, remediation, and read-only regression coverage.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-WORK-ITEM-VALIDATE'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
+        - testCaseRef: '#test-case/TC-TASK-VALIDATE'
+          path: tests/cli.test.ts
+          selector: validates one canonical task and reports structured reference metrics
+        - testCaseRef: '#test-case/TC-SCHEMA-REFERENCE-CONTINUE'
+          path: tests/cli.test.ts
+          selector: continues reference validation after schema failure and preserves remediation context
+        - testCaseRef: '#test-case/TC-REMEDIATION-FINDINGS'
+          path: tests/cli.test.ts
+          selector: continues reference validation after schema failure and preserves remediation context
+        - testCaseRef: '#test-case/TC-READ-ONLY'
+          path: tests/cli.test.ts
+          selector: reports malformed work-item objects without mutating the fixture
+        - testCaseRef: '#test-case/TC-TEST-GATE'
+          path: tests/cli.test.ts
+          selector: CLI interface test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      tests:
+        - id: EXEC-VALIDATION-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-WORK-ITEM-VALIDATE', '#test-case/TC-TASK-VALIDATE', '#test-case/TC-SCHEMA-REFERENCE-CONTINUE', '#test-case/TC-REMEDIATION-FINDINGS', '#test-case/TC-READ-ONLY', '#test-case/TC-TEST-GATE']
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Work-item/task validation, remediation reporting, schema-failure continuation, read-only behavior, and all 48 tests passed.
     limitations:
-      - New validation commands and remediation response fields do not yet exist.
+      - Full repository schema audit and final 0.5.0 release remain outside this implementation task.

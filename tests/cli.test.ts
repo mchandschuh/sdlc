@@ -751,6 +751,51 @@ describe('discovery commands', () => {
     }));
   });
 
+  it('validates one canonical task and reports structured reference metrics', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    await expect(main(['task', 'validate', '--task', 'WI-0008-10000000', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { scope: string; taskUid: string; objectCount: number; referenceCount: number; references: Array<{ value: string; remediation: string }> };
+    expect(report.scope).toBe('task');
+    expect(report.taskUid).toBe('WI-0008-10000000');
+    expect(report.objectCount).toBe(1);
+    expect(report.referenceCount).toBeGreaterThan(0);
+    expect(report.references.every((reference) => reference.remediation.length > 0)).toBe(true);
+  });
+
+  it('continues reference validation after schema failure and preserves remediation context', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-validation-continuation-'));
+    const workItem = join(root, '.docs', 'work-items', 'WI-0099');
+    await mkdir(join(workItem, 'steps'), { recursive: true });
+    await writeFile(join(workItem, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Invalid fixture', objective: 'fixture', references: { required: ['#not-a-reference'] }, stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    await writeFile(join(workItem, 'steps', 'WI-0099-10000000.yaml'), 'schema: invalid\ntaskUid: WI-0099-10000000\n');
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const before = await readFile(join(workItem, 'work-item.json'), 'utf8');
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['work-item', 'validate', '--work-item', 'WI-0099', '--json'])).resolves.toBe(1);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.join('\n')) as { valid: boolean; invalidObjectCount: number; references: Array<{ category: string; value: string; remediation: string }>; findings: string[] };
+    expect(report.valid).toBe(false);
+    expect(report.invalidObjectCount).toBeGreaterThan(0);
+    expect(report.findings.length).toBeGreaterThan(0);
+    expect(report.references.some((reference) => reference.value === '#not-a-reference')).toBe(true);
+    expect(report.references.every((reference) => reference.remediation.length > 0)).toBe(true);
+    expect(await readFile(join(workItem, 'work-item.json'), 'utf8')).toBe(before);
+  });
+
+  it('rejects non-canonical task validation identifiers', async () => {
+    const errors: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((...values: unknown[]) => errors.push(values.join(' ')));
+    await expect(main(['task', 'validate', '--task', 'WI-0008|10000000'])).resolves.toBe(1);
+    expect(errors.at(-1)).toBe('Invalid task identifier: WI-0008|10000000');
+  });
+
   it('reports malformed work-item objects without mutating the fixture', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-work-item-validation-'));
     const workItem = join(root, '.docs', 'work-items', 'WI-0098');

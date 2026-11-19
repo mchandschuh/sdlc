@@ -25,7 +25,7 @@ export interface ReferenceResolutionReport {
   readonly findings: readonly string[];
 }
 
-interface ParsedDocument {
+export interface ParsedDocument {
   readonly fullPath: string;
   readonly repositoryPath: string;
   readonly format: 'json' | 'yaml';
@@ -33,7 +33,7 @@ interface ParsedDocument {
 }
 
 type Selector = { readonly root: 'intent' | 'result'; readonly path: readonly string[]; readonly id: string; readonly legacy?: boolean };
-type TaskContext = { readonly document: ParsedDocument; readonly taskUid: string };
+export type TaskContext = { readonly document: ParsedDocument; readonly taskUid: string };
 
 function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null, references: Readonly<Record<string, ReferenceResolution>> = {}): ReferenceResolutionReport {
   return {
@@ -101,7 +101,7 @@ function taskQualifiedReference(ref: string): { readonly workItemId: string; rea
 function legacyTaskLocalReference(ref: string): Selector | undefined {
   const match = /^#([a-z][a-z0-9]*(?:-[a-z0-9]*)*)\/([A-Za-z][A-Za-z0-9._:-]*)$/u.exec(ref);
   if (!match) return undefined;
-  return parseSelector('result', [match[1]!], match[2]!);
+  return parseSelector('result', [match[1]!], match[2]!, true);
 }
 
 function taskUidReference(ref: string): { readonly workItemId: string; readonly orderKey: string } | undefined {
@@ -149,11 +149,32 @@ function findById(value: unknown, id: string): unknown {
   return undefined;
 }
 
+function findReferenceString(value: unknown, reference: string): string | undefined {
+  if (typeof value === 'string') return value === reference ? value : undefined;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const match = findReferenceString(item, reference);
+      if (match !== undefined) return match;
+    }
+    return undefined;
+  }
+  const object = objectValue(value);
+  if (!object) return undefined;
+  for (const child of Object.values(object)) {
+    const match = findReferenceString(child, reference);
+    if (match !== undefined) return match;
+  }
+  return undefined;
+}
+
 function selectData(document: unknown, selector: Selector, workItemId: string, taskUid?: string): unknown {
   const object = objectValue(document);
   if (selector.legacy) {
     if (selector.path[0] === 'result' && object?.task && objectValue(object.task)?.result !== undefined) return objectValue(object.task)!.result;
     if (selector.path[0] === 'task' && taskUid !== undefined && selector.id === taskUid) return document;
+    const legacyReference = `#${selector.path[0]}/${selector.id}`;
+    const referenceString = findReferenceString(object?.task, legacyReference);
+    if (referenceString !== undefined) return referenceString;
     return findById(document, selector.id);
   }
   if (selector.root === 'intent' || selector.root === 'result') {
@@ -240,7 +261,12 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
   }
 
   const legacyLocalTask = legacyTaskLocalReference(ref);
-  if (legacyLocalTask) return report(ref, ['Legacy task-local references require migration to an explicit intent/result path before resolution.']);
+  if (legacyLocalTask) {
+    if (!currentTask) return report(ref, ['Legacy task-local references require migration and an explicit current-task context before resolution.']);
+    const data = selectData(currentTask.document.value, legacyLocalTask, '', currentTask.taskUid);
+    if (data === undefined) return report(ref, [`Legacy selector not found in ${currentTask.document.repositoryPath}: ${legacyLocalTask.path[0]}/${legacyLocalTask.id}`]);
+    return success(ref, currentTask.document, data);
+  }
 
   const qualified = taskQualifiedReference(ref);
   if (qualified) {

@@ -14,7 +14,13 @@
     "validObjectCount",
     "invalidObjectCount",
     "objects",
-    "findings"
+    "findings",
+    "scope",
+    "referenceCount",
+    "validReferenceCount",
+    "invalidReferenceCount",
+    "unresolvedReferenceCount",
+    "references"
   ],
   "properties": {
     "schema": {
@@ -92,14 +98,14 @@
       "examples": [
         [
           {
-          "schema": "sdlc/stat/v1",
-          "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
-          "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
-          "tracked": true,
-          "objectKind": "file",
-          "ref": "WI-0008#work-item.json#work-item/WI-0008",
+            "schema": "sdlc/stat/v1",
+            "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+            "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
+            "tracked": true,
+            "objectKind": "file",
+            "ref": "WI-0008#work-item.json#work-item/WI-0008",
             "path": ".docs/work-items/WI-0008/work-item.json",
-          "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
+            "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
             "objectType": "work-item",
             "valid": true,
             "findings": []
@@ -123,6 +129,59 @@
         [
           "FAIL task envelope: schema mismatch"
         ]
+      ]
+    },
+    "scope": {
+      "enum": [
+        "work-item",
+        "task"
+      ],
+      "description": "Validation scope selected by the command.",
+      "examples": [
+        "work-item",
+        "task"
+      ]
+    },
+    "referenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total references discovered in selected documents.",
+      "examples": [
+        12
+      ]
+    },
+    "validReferenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "References with valid syntax and local target resolution.",
+      "examples": [
+        10
+      ]
+    },
+    "invalidReferenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "References rejected by syntax validation.",
+      "examples": [
+        1
+      ]
+    },
+    "unresolvedReferenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Syntactically valid references whose target or context failed resolution.",
+      "examples": [
+        1
+      ]
+    },
+    "references": {
+      "type": "array",
+      "description": "All per-reference validation outcomes.",
+      "items": {
+        "$ref": "#/$defs/ReferenceFinding"
+      },
+      "examples": [
+        []
       ]
     }
   },
@@ -264,21 +323,138 @@
           "examples": [
             []
           ]
+        },
+        "schemaFindings": {
+          "type": "array",
+          "description": "Schema-only findings for this object.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [
+            []
+          ]
+        },
+        "referenceFindings": {
+          "type": "array",
+          "description": "Reference outcomes discovered for this object, including when schema validation failed.",
+          "items": {
+            "$ref": "#/$defs/ReferenceFinding"
+          },
+          "examples": [
+            []
+          ]
+        },
+        "remediation": {
+          "type": "array",
+          "description": "Actionable remediation suggestions for this object.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [
+            []
+          ]
         }
       },
       "examples": [
         {
           "path": ".docs/work-items/WI-0008/work-item.json",
-            "schema": "sdlc/stat/v1",
-            "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
-            "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
-            "tracked": true,
-            "objectKind": "file",
-            "ref": "WI-0008#work-item.json#work-item/WI-0008",
+          "schema": "sdlc/stat/v1",
+          "repositoryPath": ".docs/work-items/WI-0008/work-item.json",
+          "fullPath": "/home/michael/src/github/sdlc/.docs/work-items/WI-0008/work-item.json",
+          "tracked": true,
+          "objectKind": "file",
+          "ref": "WI-0008#work-item.json#work-item/WI-0008",
           "objectType": "work-item",
-            "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
+          "objectSchemaPath": "schemas/work-item/v2/work-item.schema.json",
           "valid": true,
           "findings": []
+        }
+      ]
+    },
+    "ReferenceFinding": {
+      "type": "object",
+      "description": "One reference validation result with coding-agent remediation context.",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "value",
+        "category",
+        "syntaxValid",
+        "resolved",
+        "reason",
+        "remediation"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JSON/YAML-style location of the reference value.",
+          "examples": [
+            "$.task.intent.inputs[0].ref"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference value that was validated.",
+          "examples": [
+            "WI-0001-10000000#result/R-001"
+          ]
+        },
+        "category": {
+          "enum": [
+            "syntax",
+            "target",
+            "context",
+            "parse"
+          ],
+          "description": "Reference validation category.",
+          "examples": [
+            "target"
+          ]
+        },
+        "syntaxValid": {
+          "type": "boolean",
+          "description": "Whether the reference matched a registered syntax schema.",
+          "examples": [
+            true
+          ]
+        },
+        "resolved": {
+          "type": "boolean",
+          "description": "Whether the reference resolved to a local target.",
+          "examples": [
+            false
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Observed validation reason.",
+          "examples": [
+            "Selector not found in the selected task."
+          ]
+        },
+        "remediation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Actionable remediation guidance.",
+          "examples": [
+            "Update the reference to an existing target."
+          ]
+        }
+      },
+      "examples": [
+        {
+          "path": "$.task.intent.inputs[0].ref",
+          "value": "WI-0001-10000000#result/R-001",
+          "category": "target",
+          "syntaxValid": true,
+          "resolved": false,
+          "reason": "Selector not found in the selected task.",
+          "remediation": "Update the reference to an existing target."
         }
       ]
     }

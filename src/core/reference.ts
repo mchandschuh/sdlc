@@ -23,6 +23,8 @@ export interface ReferenceValidationReport {
   readonly findings: readonly string[];
 }
 
+const schemaCache = new Map<string, Promise<ReferenceSchema[]>>();
+
 function objectValue(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 }
@@ -39,6 +41,14 @@ async function schemaFiles(directory: string): Promise<string[]> {
 }
 
 export async function discoverReferenceSchemas(repositoryRoot: string): Promise<ReferenceSchema[]> {
+  const cached = schemaCache.get(repositoryRoot);
+  if (cached) return cached;
+  const pending = discoverReferenceSchemasUncached(repositoryRoot);
+  schemaCache.set(repositoryRoot, pending);
+  return pending;
+}
+
+async function discoverReferenceSchemasUncached(repositoryRoot: string): Promise<ReferenceSchema[]> {
   const root = join(repositoryRoot, 'schemas');
   const schemas: ReferenceSchema[] = [];
   for (const path of await schemaFiles(root)) {

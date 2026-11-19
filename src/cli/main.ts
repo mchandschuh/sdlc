@@ -151,6 +151,19 @@ async function handleWorkItemValidation(args: readonly string[], getOperativeRoo
   return report.valid ? 0 : 1;
 }
 
+async function handleTaskValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
+  if (args[0] !== 'task' || args[1] !== 'validate') return undefined;
+  const selected = optionValue(args.slice(2), '--task');
+  if (selected.duplicate) throw new DiscoveryError('Duplicate --task option.');
+  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
+  if (!selected.value) throw new DiscoveryError('Usage: sdlc task validate --task <task-identifier> [--json]');
+  if (!/^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u.test(selected.value)) throw new DiscoveryError(`Invalid task identifier: ${selected.value}`);
+  const workItemId = selected.value.slice(0, selected.value.lastIndexOf('-'));
+  const report = await validateWorkItem(await getOperativeRoot(), workItemId, selected.value);
+  printWorkItemValidation(report, jsonRequested(args));
+  return report.valid ? 0 : 1;
+}
+
 async function handleRepositoryInfo(args: readonly string[]): Promise<number | undefined> {
   if (args[0] !== 'repository' || args[1] !== 'info') return undefined;
   const selected = optionValue(args.slice(2), '--path');
@@ -362,6 +375,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
     if (repositoryInfoResult !== undefined) return repositoryInfoResult;
     const workItemValidationResult = await handleWorkItemValidation(args, getOperativeRoot);
     if (workItemValidationResult !== undefined) return workItemValidationResult;
+    const taskValidationResult = await handleTaskValidation(args, getOperativeRoot);
+    if (taskValidationResult !== undefined) return taskValidationResult;
     const statResult = await handleStat(args, getOperativeRoot);
     if (statResult !== undefined) return statResult;
     const discoveryResult = await handleDiscovery(args, getOperativeRoot);
