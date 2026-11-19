@@ -850,7 +850,7 @@
                   "testCaseRef",
                   "path"
                 ],
-                "description": "Repository location of executable test code corresponding to a strategy or implementation-owned test case.",
+                "description": "Repository location of executable test code corresponding to a strategy or implementation-owned test case. For a one-to-one unit-test mapping, selector should identify the individual unit-test function or scenario within this path.",
                 "properties": {
                   "testCaseRef": {
                     "type": "string",
@@ -865,7 +865,7 @@
                         "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#test-case/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
                       }
                     ],
-                    "description": "Test case realized by this test source.",
+                    "description": "Test case realized by this test source. A one-to-one unit-test mapping uses one reference for the named unit-test function or scenario identified by selector.",
                     "examples": [
                       "#test-case/TC-001"
                     ]
@@ -883,7 +883,7 @@
                     "minLength": 1,
                     "description": "Optional test name, function, method, scenario, node ID, filter, or selector.",
                     "examples": [
-                      "rejects invalid event before persistence"
+                      "rejectsInvalidEventBeforePersistence"
                     ]
                   },
                   "traceMarker": {
@@ -899,17 +899,17 @@
                   {
                     "testCaseRef": "#test-case/TC-001",
                     "path": "test/validation/service.test.ts",
-                    "selector": "rejects invalid event before persistence"
+                    "selector": "rejectsInvalidEventBeforePersistence"
                   }
                 ]
               },
-              "description": "Concrete executable test implementations. Manual, inspection, provider, and operational cases normally appear only in verification tests.",
+              "description": "Concrete executable test implementations. A valid one-test-case/one-unit-test mapping uses one entry with testCaseRef, path, and selector identifying the named unit-test function or scenario. The schema also permits one source to realize multiple cases. Manual, inspection, provider, and operational cases normally appear only in verification tests.",
               "examples": [
                 [
                   {
                     "testCaseRef": "#test-case/TC-001",
                     "path": "test/validation/service.test.ts",
-                    "selector": "rejects invalid event before persistence"
+                    "selector": "rejectsInvalidEventBeforePersistence"
                   }
                 ],
                 []
@@ -936,7 +936,7 @@
                 {
                   "testCaseRef": "#test-case/TC-001",
                   "path": "test/validation/service.test.ts",
-                  "selector": "rejects invalid event before persistence"
+                  "selector": "rejectsInvalidEventBeforePersistence"
                 }
               ]
             }
@@ -1053,7 +1053,7 @@
                         "#test-case/TC-001"
                       ]
                     },
-                    "description": "Test cases covered by this execution.",
+                    "description": "Test cases covered by this execution. Use one reference for a one-test-case/one-unit-test execution, or multiple references when one command produces evidence for a grouped set of cases.",
                     "examples": [
                       [
                         "#test-case/TC-001"
@@ -1150,7 +1150,7 @@
                   }
                 ]
               },
-              "description": "Observed executions or inspections against strategy-defined or implementation-owned test cases. These are actual evidence; the strategy remains planning input.",
+              "description": "Actual grouped verification evidence. Requirement and invariant traceability is obtained through strategy test cases, not repeated here. One execution may cover multiple test cases when a command runs a grouped suite, while a one-test-case/one-unit-test mapping remains valid.",
               "examples": [
                 [
                   {
@@ -1242,7 +1242,7 @@
               {
                 "testCaseRef": "#test-case/TC-001",
                 "path": "test/validation/service.test.ts",
-                "selector": "rejects invalid event before persistence"
+                "selector": "rejectsInvalidEventBeforePersistence"
               }
             ]
           },
@@ -1361,7 +1361,7 @@
             {
               "testCaseRef": "#test-case/TC-001",
               "path": "test/validation/service.test.ts",
-              "selector": "rejects invalid event before persistence"
+              "selector": "rejectsInvalidEventBeforePersistence"
             }
           ]
         },

@@ -1,0 +1,198 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0030
+taskUid: WI-0030-10000000
+orderKey: "10000000"
+parentTaskUid: null
+taskType: implementation
+processingStatus: processing_completed
+title: Document unit-test and grouped-test-case schema usage
+objective: Update the test-strategy and implementation schema documentation for
+  focused unit tests and grouped executions.
+references:
+  required:
+    - .docs/work-items/WI-0030/work-item.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0029/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/sdlc-task-test-strategy/v1/
+    - schemas/sdlc-task-implementation/v1/
+    - tests/
+    - package.json
+    - .docs/work-items/WI-0030/steps/WI-0030-10000000-test-case-schema-implementation.yaml
+  commitSubject: "WI-0030: docs(test): document unit and grouped test cases"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: implemented
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Clarify one-to-one unit-test and grouped-test-case modeling without
+      changing schema shape.
+    changeTypes:
+      - schema
+      - test-code
+      - documentation
+      - configuration
+    changeIntent: maintenance
+    inputs:
+      - id: WI-0030-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_001
+        purpose: Define the one-test-case/one-unit-test documentation boundary.
+        required: true
+      - id: WI-0030-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_002
+        purpose: Define grouped test-case and grouped execution documentation.
+        required: true
+      - id: WI-0030-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_003
+        purpose: Define removal of the unnecessary package-version smoke test.
+        required: true
+    objectives:
+      - id: WI-0030-10000000_OBJ-001
+        statement: The test-strategy schema describes a unit case whose procedure steps
+          belong to one named unit-test function.
+        inputRefs:
+          - WI-0030-10000000_INPUT-REQ-001
+        testCaseRefs:
+          - "#test-case/WI-0030-10000000_TC-UNIT-CASE-DOCUMENTATION"
+      - id: WI-0030-10000000_OBJ-002
+        statement: The test-strategy and implementation schemas preserve legitimate
+          grouped test cases and grouped executions.
+        inputRefs:
+          - WI-0030-10000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/WI-0030-10000000_TC-GROUPED-CASE-DOCUMENTATION"
+          - "#test-case/WI-0030-10000000_TC-IMPLEMENTATION-MAPPING"
+      - id: WI-0030-10000000_OBJ-003
+        statement: The package-version smoke test is removed while the remaining test
+          suite and release metadata remain valid.
+        inputRefs:
+          - WI-0030-10000000_INPUT-REQ-003
+        testCaseRefs:
+          - "#test-case/WI-0030-10000000_TC-VERSION-TEST-REMOVED"
+          - "#test-case/WI-0030-10000000_TC-RELEASE-GATES"
+    ownedPaths:
+      - schemas/sdlc-task-test-strategy/v1/
+      - schemas/sdlc-task-implementation/v1/
+      - tests/
+      - package.json
+    nonGoals:
+      - Do not change the task-test-strategy schema $id or the task envelope API.
+      - Do not enforce one-to-one case-to-test cardinality.
+    steps:
+      - Update the canonical and inline test-strategy TestCase documentation and
+        examples.
+      - Update implementation test mapping and grouped execution documentation.
+      - Remove the package version smoke test from tests/cli.test.ts.
+      - Bump package.json from 0.6.1 to 0.6.2.
+      - Run typecheck, build, and the complete test suite before commit.
+  result:
+    status: implemented
+    implementation:
+      summary: Documented one-test-case/one-unit-test and grouped test-case usage,
+        aligned implementation mappings, removed the package version smoke test,
+        and bumped the package revision.
+      changes:
+        - id: WI-0030-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the unit-test and grouped-test-case schema documentation
+            boundary.
+          objectiveRefs:
+            - WI-0030-10000000_OBJ-001
+            - WI-0030-10000000_OBJ-002
+            - WI-0030-10000000_OBJ-003
+          paths:
+            - .docs/work-items/WI-0030/steps/WI-0030-10000000-test-case-schema-implementation.yaml
+        - id: WI-0030-10000000_CHANGE-STRATEGY-001
+          type: schema
+          summary: Documented the canonical and inline TestCase definitions, procedure
+            steps, and grouped-case cardinality behavior.
+          objectiveRefs:
+            - WI-0030-10000000_OBJ-001
+            - WI-0030-10000000_OBJ-002
+          paths:
+            - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+            - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+        - id: WI-0030-10000000_CHANGE-CLEANUP-001
+          type: test-code
+          summary: Removed the package version smoke test and updated the package revision
+            metadata.
+          objectiveRefs:
+            - WI-0030-10000000_OBJ-002
+            - WI-0030-10000000_OBJ-003
+          paths:
+            - tests/cli.test.ts
+            - package.json
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0030-10000000_TC-UNIT-CASE-DOCUMENTATION"
+          path: tests/cli.test.ts
+          selector: documents a one-test-case/one-unit-test mapping with procedure steps
+        - testCaseRef: "#test-case/WI-0030-10000000_TC-GROUPED-CASE-DOCUMENTATION"
+          path: tests/cli.test.ts
+          selector: documents grouped test cases and grouped executions without
+            cardinality enforcement
+        - testCaseRef: "#test-case/WI-0030-10000000_TC-IMPLEMENTATION-MAPPING"
+          path: tests/cli.test.ts
+          selector: maps a named unit-test selector to a test case reference
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0030-10000000_OBJ-001
+        - WI-0030-10000000_OBJ-002
+        - WI-0030-10000000_OBJ-003
+      tests:
+        - id: WI-0030-10000000_EXEC-GATES
+          type: cli-audit
+          testCaseRefs:
+            - "#test-case/WI-0030-10000000_TC-UNIT-CASE-DOCUMENTATION"
+            - "#test-case/WI-0030-10000000_TC-GROUPED-CASE-DOCUMENTATION"
+            - "#test-case/WI-0030-10000000_TC-IMPLEMENTATION-MAPPING"
+          command: yarn typecheck && yarn build && yarn test --run
+          status: passed
+          result: Typecheck, build, and the complete 80-test suite passed.
+        - id: WI-0030-10000000_EXEC-SELF
+          type: cli-audit
+          testCaseRefs:
+            - "#test-case/WI-0030-10000000_TC-IMPLEMENTATION-MAPPING"
+          command: node ./bin/cli.js work-item validate --work-item WI-0030 --json
+          status: passed
+          result: WI-0030 returned valid task and work-item objects with no change-related
+            findings.
+    limitations:
+      - Revision release remains in WI-0030-20000000.

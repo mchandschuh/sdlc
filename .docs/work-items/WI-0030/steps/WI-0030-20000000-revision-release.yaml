@@ -1,0 +1,161 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0030
+taskUid: WI-0030-20000000
+orderKey: "20000000"
+parentTaskUid: WI-0030-11000000
+taskType: delivery
+processingStatus: processing_completed
+title: Release revision version 0.6.2
+objective: Increment the package revision to 0.6.2, verify the changed schemas
+  and complete local gates, and record a backwards-compatible schema
+  documentation release.
+references:
+  required:
+    - package.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - .docs/work-items/WI-0030/work-item.json
+    - .docs/work-items/WI-0030/steps/WI-0030-11000000-test-case-schema-validation.yaml
+  informational:
+    - tsconfig.json
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0029/steps/WI-0029-20000000-revision-release.yaml
+dependsOn:
+  - WI-0030-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - package.json
+    - .docs/work-items/WI-0030/work-item.json
+    - .docs/work-items/WI-0030/steps/WI-0030-20000000-revision-release.yaml
+  commitSubject: "WI-0030: chore(release): prepare version 0.6.2"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: changed-schema-validation
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+        - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: complete
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare the backwards-compatible 0.6.2 revision release after test-case
+      schema documentation validation passes.
+    deliveryTypes:
+      - package
+      - release
+    inputs:
+      - id: WI-0030-20000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0030-11000000#result/WI-0030-11000000_R-001
+        purpose: Confirm the schema documentation validation passed before release.
+        required: true
+      - id: WI-0030-20000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: "#repository-state/HEAD"
+        purpose: Identify the repository revision from which the release is built.
+        required: true
+    artifacts:
+      - id: WI-0030-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Package metadata containing version 0.6.2.
+        required: true
+      - id: WI-0030-20000000_ART-SCHEMA
+        kind: releaseRecord
+        path: schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+        purpose: Changed schema document included in version 0.6.2.
+        required: true
+      - id: WI-0030-20000000_ART-IMPLEMENTATION-SCHEMA
+        kind: releaseRecord
+        path: schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+        purpose: Changed implementation schema document included in version 0.6.2.
+        required: true
+    procedures:
+      - id: WI-0030-20000000_PROC-BUILD
+        sequence: 1
+        name: build-revision-release
+        description: Run typecheck, build, complete tests, targeted changed-schema
+          validation, and WI-0030 validation.
+        steps:
+          - Run yarn typecheck.
+          - Run yarn build.
+          - Run yarn test.
+          - Run targeted validation for the changed schemas.
+          - Validate WI-0030.
+        command: yarn typecheck && yarn build && yarn test && schema-validate --root
+          schemas
+          schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+          schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+          && node ./bin/cli.js work-item validate --work-item WI-0030 --json
+        expected:
+          result: All revision-release gates pass.
+        required: true
+    nonGoals:
+      - Do not change the task-test-strategy schema $id or task envelope API.
+      - Do not create a Git tag or publish/deploy externally.
+  result:
+    status: delivered
+    summary: Prepared the backwards-compatible 0.6.2 revision release, verified the
+      changed schemas and complete local gates, and preserved the
+      task-test-strategy schema $id and public task envelope API.
+    artifacts:
+      - id: WI-0030-20000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        checksum: sha256:fe01a8028f8f57d7e9e98289189bf5e793a80c0df841edf6cffd455038315858
+      - id: WI-0030-20000000_ART-SCHEMA
+        kind: releaseRecord
+        path: schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+        checksum: sha256:56f60191d900a9ca70dc47be017f0b711c523383bf2cc805c7a192312d2c6831
+      - id: WI-0030-20000000_ART-IMPLEMENTATION-SCHEMA
+        kind: releaseRecord
+        path: schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+        checksum: sha256:66ba15b277de3908d52c19678a0dabde3844cf055d12e47a1b2caaeac37cfe83
+    executions:
+      - id: WI-0030-20000000_EXEC-BUILD
+        procedureRef: "#procedure/WI-0030-20000000_PROC-BUILD"
+        result:
+          status: passed
+          summary: Typecheck, build, complete tests, targeted changed-schema validation,
+            and WI-0030 validation passed for version 0.6.2.
+        command: yarn typecheck && yarn build && yarn test --run && schema-validate
+          --root schemas
+          schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+          schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+          && node ./bin/cli.js work-item validate --work-item WI-0030 --json
+    limitations:
+      - The revision release is local and is not tagged, published, or deployed
+        externally; the full repository schema audit retains pre-existing
+        unrelated failures.

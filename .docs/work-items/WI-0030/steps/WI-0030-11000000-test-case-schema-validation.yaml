@@ -1,0 +1,193 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0030
+taskUid: WI-0030-11000000
+orderKey: "11000000"
+parentTaskUid: WI-0030-10000000
+taskType: validation
+processingStatus: processing_completed
+title: Validate unit-test and grouped-test-case schema documentation
+objective: Validate the canonical/inline TestCase documentation, representative
+  examples, removed package-version test, and complete local gates.
+references:
+  required:
+    - .docs/work-items/WI-0030/work-item.json
+    - .docs/work-items/WI-0030/steps/WI-0030-10000000-test-case-schema-implementation.yaml
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0029/work-item.json
+dependsOn:
+  - WI-0030-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0030/steps/WI-0030-11000000-test-case-schema-validation.yaml
+  commitSubject: "WI-0030: test(schema): validate unit and grouped test cases"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: changed-schema-validation
+      executable: schema-validate
+      arguments:
+        - --root
+        - schemas
+        - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+        - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - work-item
+        - validate
+        - --work-item
+        - WI-0030
+        - --json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: complete
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate all unit-test/grouped-case documentation paths, representative
+      schema examples, and the removed package-version test.
+    inputs:
+      - id: WI-0030-11000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0030-10000000#result/WI-0030-11000000_R-001
+        purpose: Identify the implementation under validation.
+        required: true
+      - id: WI-0030-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_001
+        purpose: Identify the one-test-case/one-unit-test documentation requirement.
+        required: true
+      - id: WI-0030-11000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_002
+        purpose: Identify grouped test-case documentation requirements.
+        required: true
+      - id: WI-0030-11000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0030#work-item.json#requirement/WI-0030_REQ_003
+        purpose: Identify package-version test removal requirements.
+        required: true
+    targets:
+      - id: WI-0030-11000000_TARGET-CONTEXT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0030-10000000#result/WI-0030-11000000_R-001
+        purpose: Validate the test-case schema documentation implementation.
+        required: true
+    objectiveRefs:
+      - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-001
+      - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-002
+      - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-003
+    testCaseRefs: []
+    procedures:
+      - id: WI-0030-11000000_VAL-CONTEXT-001
+        sequence: 1
+        name: validate-test-case-schema-documentation
+        description: Validate both changed schemas and their representative root
+          examples, then run the repository typecheck, build, and test suite.
+        reason: Prove the documentation clarifies both valid mappings without changing
+          the schema contract.
+        targetRefs:
+          - "#intent/targets/WI-0030-11000000_TARGET-CONTEXT-001"
+        objectiveRefs:
+          - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-001
+          - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-002
+          - WI-0030-10000000#intent/objectives/WI-0030-10000000_OBJ-003
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: Test-strategy and implementation schema documents plus CLI test suite
+          steps:
+            - Run typecheck, build, complete tests, targeted changed-schema
+              validation, and WI-0030 validation.
+            - Verify the canonical and inline TestCase definitions describe
+              unit-test steps and grouped cases.
+            - Verify implementation test mappings document testCaseRef, path,
+              and selector for a named unit test.
+            - Verify the package version smoke test is absent and the remaining
+              80 tests pass.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim release publication or public API changes.
+  result:
+    status: passed
+    summary: Validated the changed schema documents, representative examples,
+      package-version test removal, typecheck, build, and the complete 80-test
+      suite.
+    executions:
+      - id: WI-0030-11000000_EXEC-VALIDATION-001
+        procedureRef: "#procedure/WI-0030-11000000_VAL-CONTEXT-001"
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: Unit-test and grouped-case documentation, targeted changed-schema
+            validation, package-version test removal, and WI-0030
+            self-validation passed.
+          assertions:
+            - The canonical and inline TestCase definitions describe the
+              one-test-case/one-unit-test use case.
+            - The implementation schema documents both one-to-one selectors and
+              grouped execution references.
+            - The package version smoke test is absent and the remaining CLI
+              tests pass.
+            - The package revision is 0.6.2 and the schema shape/$id remain
+              unchanged.
+            - WI-0030 self-validation returned valid task and work-item objects
+              with no change-related findings.
+        evidenceTier: inspection
+        evidence:
+          - kind: command
+            source: Validation execution WI-0030-11000000_EXEC-VALIDATION-001
+            claim: Typecheck, build, complete tests, targeted changed-schema validation,
+              task validation, and WI-0030 validation passed.
+            command: yarn typecheck && yarn build && yarn test --run && schema-validate
+              --root schemas
+              schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+              schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+              && node ./bin/cli.js task validate --task WI-0030-11000000 --json
+              && node ./bin/cli.js work-item validate --work-item WI-0030 --json
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Evidence is local schema, CLI, and unit-test evidence; the full
+        repository schema audit retains pre-existing unrelated failures in other
+        schema files.
+    nonClaims:
+      - This task does not claim external publication or a schema contract
+        version change.

@@ -42,15 +42,6 @@ describe('CLI interface', () => {
     expect(output.join('\n')).toContain('-v, --version');
   });
 
-  it.each(['-v', '--version'])('prints the package version for %s', async (argument) => {
-    const output: string[] = [];
-    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
-
-    await expect(main([argument])).resolves.toBe(0);
-
-    expect(output).toEqual(['0.6.1']);
-  });
-
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-operative-root-'));
     const nested = join(root, 'nested');

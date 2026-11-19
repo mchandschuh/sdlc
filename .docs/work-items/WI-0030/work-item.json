@@ -1,0 +1,134 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
+  "workItemId": "WI-0030",
+  "status": "complete",
+  "title": "Document unit-test and grouped-test-case modeling",
+  "type": "maintenance",
+  "objective": "Clarify the test-strategy and implementation schemas for one-test-case/one-unit-test mappings and grouped test cases, remove the package-version smoke test, and release revision 0.6.2.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "main",
+      "created": false,
+      "rationale": "The repository is already on main and this backward-compatible schema documentation change does not require a context branch."
+    }
+  },
+  "baseline": "d67cefba2225afdcbbe61ce40f6a5679a9648d80",
+  "request": {
+    "source": "conversation",
+    "text": "Update the test case schema documentation to explicitly support a legitimate one-test-case/one-unit-test mapping with procedure steps and an implementation selector, while also documenting grouped test cases and executions. Remove the package version smoke test, commit the change, and release a revision bump.",
+    "sha256": "b3baac993b339ba8077640be0004bc819cf3e10d19cdbd04d63a5c122e3ca145"
+  },
+  "scope": [
+    {
+      "name": "unit-test-case-documentation",
+      "description": "Document unit test cases whose procedure steps describe the actions of one independently traceable unit-test function.",
+      "reason": "The schema supports unit tests but did not explicitly explain this useful one-to-one mapping."
+    },
+    {
+      "name": "grouped-test-case-documentation",
+      "description": "Document grouped test scenarios and executions that cover multiple test cases without imposing a cardinality rule.",
+      "reason": "The data model legitimately permits grouped cases and grouped command executions."
+    },
+    {
+      "name": "release-and-test-cleanup",
+      "description": "Remove the package version smoke test and bump the package revision to 0.6.2.",
+      "reason": "The version test is not part of the requested schema behavior and the documentation change is revision-level."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "schema-version-change",
+      "description": "Do not change the task-test-strategy schema $id or introduce a new major/minor contract version.",
+      "reason": "This is a backward-compatible documentation and example clarification.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "test-cardinality-enforcement",
+      "description": "Do not enforce one-test-case/one-unit-test as a validation rule.",
+      "reason": "The grouped use case is legitimate and must remain representable.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "external-publication",
+      "description": "Do not create a Git tag, publish a package, or push remote branches.",
+      "reason": "The release is a local revision release consistent with the latest repository convention.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0030_REQ_001",
+        "name": "unit-test-case-shape",
+        "description": "The test-strategy schema must document unit test cases whose procedure steps describe one independently traceable unit-test function.",
+        "reason": "Consumers need an explicit unit-test interpretation of type=unit and procedure.steps.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0030_REQ_001_AC_001",
+            "description": "The canonical and inline TestCase definitions describe the one-test-case/one-unit-test use case and include a named unit-test example with Arrange, Act, and Assert steps."
+          }
+        ]
+      },
+      {
+        "id": "WI-0030_REQ_002",
+        "name": "grouped-test-case-shape",
+        "description": "The schemas must state that grouped cases and grouped executions are valid and that one-to-one cardinality is not enforced.",
+        "reason": "The same data structure must support both focused unit tests and grouped scenarios.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0030_REQ_002_AC_001",
+            "description": "Test-case and implementation descriptions state that one execution may cover multiple cases and that the schema does not require one-to-one mapping."
+          }
+        ]
+      },
+      {
+        "id": "WI-0030_REQ_003",
+        "name": "version-test-removal",
+        "description": "The package version smoke test must be removed from the CLI test suite while existing version behavior remains available.",
+        "reason": "The version smoke test is not needed for this schema documentation change.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0030_REQ_003_AC_001",
+            "description": "The package-version test case is absent and the remaining test suite passes."
+          }
+        ]
+      },
+      {
+        "id": "WI-0030_REQ_004",
+        "name": "revision-release",
+        "description": "After implementation and validation pass, increment the package revision from 0.6.1 to 0.6.2.",
+        "reason": "The user requested a revision bump for the backward-compatible documentation change.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0030_REQ_004_AC_001",
+            "description": "package.json reports 0.6.2 and the changed schema examples validate."
+          }
+        ]
+      },
+      {
+        "id": "WI-0030_REQ_005",
+        "name": "task-commit-gates",
+        "description": "Implementation, validation, and delivery task records must capture the change and its local evidence.",
+        "reason": "The repository records schema changes and revision releases through traceable task envelopes.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0030_REQ_005_AC_001",
+            "description": "The complete WI-0030 object tree validates with no findings attributable to this change."
+          }
+        ]
+      }
+    ]
+  },
+  "sourceWorkItem": "WI-0029",
+  "stepsPath": ".docs/work-items/WI-0030/steps/"
+}
