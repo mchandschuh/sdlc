@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
@@ -398,6 +398,52 @@ describe('CLI interface', () => {
       'Migration path does not exist: .docs/work-items/WI-0999',
       '--path and --work-item are mutually exclusive.',
     ]);
+  });
+
+  it('rehearses every existing WI-0000 through WI-0018 migration in a disposable worktree', async () => {
+    const sourceRoot = process.cwd();
+    const sourceStatus = (await execFileAsync('git', ['status', '--porcelain'], { cwd: sourceRoot })).stdout;
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'sdlc-all-work-item-migration-'));
+    const worktree = join(temporaryRoot, 'worktree');
+    let worktreeCreated = false;
+    try {
+      const head = (await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot })).stdout.trim();
+      await execFileAsync('git', ['worktree', 'add', '--detach', worktree, head], { cwd: sourceRoot });
+      worktreeCreated = true;
+      await execFileAsync('ln', ['-s', join(sourceRoot, 'node_modules'), join(worktree, 'node_modules')]);
+      await execFileAsync('yarn', ['build'], { cwd: worktree });
+
+      const workItemEntries = await readdir(join(worktree, '.docs', 'work-items'), { withFileTypes: true });
+      const workItemIds = workItemEntries
+        .filter((entry) => entry.isDirectory() && /^WI-[0-9]+$/u.test(entry.name))
+        .map((entry) => entry.name)
+        .filter((id) => Number(id.slice(3)) <= 18)
+        .sort();
+      expect(workItemIds).toEqual(Array.from({ length: 18 }, (_, index) => `WI-${String(index + 1).padStart(4, '0')}`));
+
+      const reports: Array<{ path: string; changedFiles: string[]; replacements: unknown[]; unresolvable: unknown[] }> = [];
+      for (const workItemId of workItemIds) {
+        const result = await execFileAsync('node', ['./bin/cli.js', 'ref', 'migrate-task-local-up', '--work-item', workItemId, '--json'], { cwd: worktree });
+        const report = JSON.parse(result.stdout) as (typeof reports)[number];
+        reports.push(report);
+        expect(report.path).toBe(`.docs/work-items/${workItemId}`);
+        expect(Array.isArray(report.changedFiles)).toBe(true);
+        expect(Array.isArray(report.replacements)).toBe(true);
+        expect(Array.isArray(report.unresolvable)).toBe(true);
+      }
+      expect(reports).toHaveLength(18);
+
+      const changedPaths = (await execFileAsync('git', ['diff', '--name-only'], { cwd: worktree })).stdout.trim().split('\n').filter(Boolean);
+      expect(changedPaths.length).toBeGreaterThan(0);
+      expect(changedPaths.every((path) => /^\.docs\/work-items\/WI-00(?:0[1-9]|1[0-8])\//u.test(path))).toBe(true);
+
+      const rehearsalStatus = (await execFileAsync('git', ['status', '--porcelain'], { cwd: sourceRoot })).stdout;
+      expect(rehearsalStatus).toBe(sourceStatus);
+    } finally {
+      if (worktreeCreated) await execFileAsync('git', ['worktree', 'remove', '--force', worktree], { cwd: sourceRoot });
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
+    expect((await execFileAsync('git', ['status', '--porcelain'], { cwd: sourceRoot })).stdout).toBe(sourceStatus);
   });
 
   it('applies depth defaults and expands a flat deduplicated reference map by rounds', async () => {
