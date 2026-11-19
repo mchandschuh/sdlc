@@ -541,7 +541,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable objective identifier used by objective references in this rework payload.",
           "examples": [
             "OBJ-001"

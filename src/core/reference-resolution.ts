@@ -3,10 +3,13 @@ import { extname, join, relative, resolve, sep } from 'node:path';
 import YAML from 'yaml';
 import { discoverTasks, DiscoveryError } from './discovery.js';
 import { validateReference } from './reference.js';
+import { globalResourceId, repositoryIdentifier } from './global-reference.js';
+import { taskEntityKind, taskOwnedParts } from './identifier.js';
 
 export const REFERENCE_RESOLUTION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/resolution/v2';
 
 export interface ReferenceResolution {
+  readonly globalResourceId: string;
   readonly fullPath: string;
   readonly repositoryPath: string;
   readonly format: 'json' | 'yaml';
@@ -146,6 +149,7 @@ function objectValue(value: unknown): Record<string, unknown> | undefined {
 function findById(value: unknown, id: string): unknown {
   if (Array.isArray(value)) {
     for (const item of value) {
+      if (typeof item === 'string' && (item === id || item.endsWith(`/${id}`))) return item;
       const match = findById(item, id);
       if (match !== undefined) return match;
     }
@@ -154,6 +158,10 @@ function findById(value: unknown, id: string): unknown {
   const object = objectValue(value);
   if (!object) return undefined;
   if (object.id === id) return object;
+  if (typeof object.testCaseRefs === 'object' && Array.isArray(object.testCaseRefs)) {
+    const match = object.testCaseRefs.find((item) => typeof item === 'string' && item.endsWith(`/${id}`));
+    if (match !== undefined) return match;
+  }
   for (const child of Object.values(object)) {
     const match = findById(child, id);
     if (match !== undefined) return match;
@@ -192,6 +200,7 @@ function selectData(document: unknown, selector: Selector, workItemId: string, t
   if (selector.root === 'intent' || selector.root === 'result') {
     const task = objectValue(object?.task);
     let current: unknown = task?.[selector.root];
+    if (selector.root === 'result' && selector.path.length === 0) return current;
     for (const segment of selector.path) {
       const currentObject = objectValue(current);
       if (!currentObject || !(segment in currentObject)) return undefined;
@@ -202,8 +211,9 @@ function selectData(document: unknown, selector: Selector, workItemId: string, t
   return undefined;
 }
 
-function success(ref: string, document: ParsedDocument, data: unknown): ReferenceResolutionReport {
+function success(ref: string, repository: string, document: ParsedDocument, data: unknown): ReferenceResolutionReport {
   return report(ref, [], {
+    globalResourceId: globalResourceId(repository, ref, document, data),
     fullPath: document.fullPath,
     repositoryPath: document.repositoryPath,
     format: document.format,
@@ -242,7 +252,62 @@ async function taskDocument(repositoryRoot: string, workItemId: string, orderKey
   return { document: await parseDocument(repositoryRoot, task.path), taskUid: task.taskUid };
 }
 
+function taskSelector(kind: string, id: string): Selector | undefined {
+  const paths: Readonly<Record<string, { readonly root: 'intent' | 'result'; readonly path: readonly string[] }>> = {
+    objective: { root: 'intent', path: ['objectives'] },
+    input: { root: 'intent', path: ['inputs'] },
+    target: { root: 'intent', path: ['targets'] },
+    procedure: { root: 'intent', path: ['procedures'] },
+    'test-case': { root: 'intent', path: ['objectives'] },
+    change: { root: 'result', path: ['implementation', 'changes'] },
+    execution: { root: 'result', path: ['verification', 'tests'] },
+    artifact: { root: 'result', path: ['artifacts'] },
+    finding: { root: 'result', path: ['findings'] },
+    result: { root: 'result', path: [] },
+    outcome: { root: 'result', path: ['outcomes'] },
+  };
+  const selected = paths[kind];
+  return selected ? parseSelector(selected.root, selected.path, id) : undefined;
+}
+
+function globalReferenceParts(ref: string): { readonly repository: string; readonly target: string } | undefined {
+  const match = /^sdlc:\/\/repo\/([^/]+)\/(.+)$/u.exec(ref);
+  if (!match) return undefined;
+  try {
+    return { repository: decodeURIComponent(match[1]!), target: match[2]! };
+  } catch {
+    return undefined;
+  }
+}
+
 async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: TaskContext): Promise<ReferenceResolutionReport> {
+  const repository = await repositoryIdentifier(repositoryRoot);
+  const global = globalReferenceParts(ref);
+  if (global) {
+    if (global.repository !== repository) return report(ref, [`Global reference belongs to repository ${global.repository}, not ${repository}.`]);
+    const taskTarget = /^([A-Z]{1,10}-[0-9]+-[0-9]{8})#([^/]+)\/(.+)$/u.exec(global.target);
+    if (taskTarget) {
+      const task = await taskDocument(repositoryRoot, taskTarget[1]!.slice(0, taskTarget[1]!.lastIndexOf('-')), taskTarget[1]!.slice(taskTarget[1]!.lastIndexOf('-') + 1));
+      if (!task) return report(ref, [`Task document not found for global reference: ${ref}`]);
+      if (taskTarget[2] === 'task' && taskTarget[3] === task.taskUid) return success(ref, repository, task.document, task.document.value);
+      const selector = taskSelector(taskTarget[2]!, taskTarget[3]!);
+      if (!selector) return report(ref, [`Global entity kind is not supported: ${taskTarget[2]}`]);
+      const data = selectData(task.document.value, selector, taskTarget[1]!.slice(0, taskTarget[1]!.lastIndexOf('-')), task.taskUid);
+      if (data === undefined) return report(ref, [`Global task entity not found in ${task.document.repositoryPath}: ${taskTarget[3]}`]);
+      return success(ref, repository, task.document, data);
+    }
+    const workItemTarget = /^([A-Z]{1,10}-[0-9]+)#([^%]+)%23([^/]+)\/(.+)$/u.exec(global.target);
+    if (workItemTarget) {
+      const filename = workItemTarget[2]!;
+      const document = await parseDocument(repositoryRoot, `.docs/work-items/${workItemTarget[1]!}/${filename}`);
+      const kind = workItemTarget[3]!;
+      if (kind === 'work-item' && workItemTarget[4] === workItemTarget[1]) return success(ref, repository, document, document.value);
+      const data = findById(document.value, workItemTarget[4]!);
+      if (data === undefined) return report(ref, [`Global work-item entity not found in ${document.repositoryPath}: ${workItemTarget[4]}`]);
+      return success(ref, repository, document, data);
+    }
+    return report(ref, [`Global reference form is not supported for local resolution: ${ref}`]);
+  }
   const criterion = acceptanceCriterionIdentifierReference(ref);
   if (criterion) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${criterion.workItemId}/work-item.json`);
@@ -257,7 +322,7 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     });
     if (matches.length === 0) return report(ref, [`Acceptance criterion not found in ${document.repositoryPath}: ${criterion.criterionId}`]);
     if (matches.length > 1) return report(ref, [`Duplicate acceptance criterion identifier in ${document.repositoryPath}: ${criterion.criterionId}`]);
-    return success(ref, document, matches[0]);
+    return success(ref, repository, document, matches[0]);
   }
   const requirement = requirementIdentifierReference(ref);
   if (requirement) {
@@ -269,20 +334,31 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     const matches = items.filter((item) => objectValue(item)?.id === requirement.requirementId);
     if (matches.length === 0) return report(ref, [`Requirement not found in ${document.repositoryPath}: ${requirement.requirementId}`]);
     if (matches.length > 1) return report(ref, [`Duplicate requirement identifier in ${document.repositoryPath}: ${requirement.requirementId}`]);
-    return success(ref, document, matches[0]);
+    return success(ref, repository, document, matches[0]);
   }
 
   const bareWorkItem = workItemReference(ref);
   if (bareWorkItem) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${bareWorkItem}/work-item.json`);
-    return success(ref, document, document.value);
+    return success(ref, repository, document, document.value);
   }
 
   const bareTask = taskUidReference(ref);
   if (bareTask) {
     const resolved = await taskDocument(repositoryRoot, bareTask.workItemId, bareTask.orderKey);
     if (!resolved) return report(ref, [`Task document not found for task UID: ${ref}`]);
-    return success(ref, resolved.document, resolved.document.value);
+    return success(ref, repository, resolved.document, resolved.document.value);
+  }
+
+  const owned = taskOwnedParts(ref);
+  if (owned) {
+    const resolved = await taskDocument(repositoryRoot, owned.taskUid.slice(0, owned.taskUid.lastIndexOf('-')), owned.taskUid.slice(owned.taskUid.lastIndexOf('-') + 1));
+    if (!resolved) return report(ref, [`Task document not found for task-owned identifier: ${ref}`]);
+    const selector = taskSelector(taskEntityKind(ref), ref);
+    if (!selector) return report(ref, [`Task-owned identifier category is not supported: ${ref}`]);
+    const data = selectData(resolved.document.value, selector, owned.taskUid.slice(0, owned.taskUid.lastIndexOf('-')), resolved.taskUid);
+    if (data === undefined) return report(ref, [`Task-owned identifier not found in ${resolved.document.repositoryPath}: ${ref}`]);
+    return success(ref, repository, resolved.document, data);
   }
 
   const local = selectorReference(ref);
@@ -290,7 +366,7 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${local.workItemId}/${local.filename}`);
     const data = selectData(document.value, local.selector, local.workItemId);
     if (data === undefined) return report(ref, [`Selector not found in ${document.repositoryPath}: ${local.selector.root}/${local.selector.path.join('/')}/${local.selector.id}`]);
-    return success(ref, document, data);
+    return success(ref, repository, document, data);
   }
 
   const localTask = taskLocalReference(ref);
@@ -298,7 +374,7 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     if (!currentTask) return report(ref, ['Task-local references require an explicit current-task document context and cannot be resolved by this command root alone.']);
     const data = selectData(currentTask.document.value, localTask, currentTask.document.repositoryPath.split('/')[2] ?? '', currentTask.taskUid);
     if (data === undefined) return report(ref, [`Selector not found in ${currentTask.document.repositoryPath}: ${localTask.root}/${localTask.path.join('/')}/${localTask.id}`]);
-    return success(ref, currentTask.document, data);
+    return success(ref, repository, currentTask.document, data);
   }
 
   const legacyLocalTask = legacyTaskLocalReference(ref);
@@ -306,7 +382,7 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     if (!currentTask) return report(ref, ['Legacy task-local references require migration and an explicit current-task context before resolution.']);
     const data = selectData(currentTask.document.value, legacyLocalTask, '', currentTask.taskUid);
     if (data === undefined) return report(ref, [`Legacy selector not found in ${currentTask.document.repositoryPath}: ${legacyLocalTask.path[0]}/${legacyLocalTask.id}`]);
-    return success(ref, currentTask.document, data);
+    return success(ref, repository, currentTask.document, data);
   }
 
   const qualified = taskQualifiedReference(ref);
@@ -315,18 +391,18 @@ async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: T
     if (!resolved) return report(ref, [`Task document not found for task reference: ${ref}`]);
     const data = selectData(resolved.document.value, qualified.selector, qualified.workItemId, resolved.taskUid);
     if (data === undefined) return report(ref, [`Selector not found in ${resolved.document.repositoryPath}: ${qualified.selector.root}/${qualified.selector.path.join('/')}/${qualified.selector.id}`]);
-    return success(ref, resolved.document, data);
+    return success(ref, repository, resolved.document, data);
   }
 
   const legacyQualified = ref.match(/^([A-Z]{1,10}-[0-9]+)-([0-9]{8})#result\/([A-Za-z][A-Za-z0-9._:-]*)$/u);
   if (legacyQualified) {
     const resolved = await taskDocument(repositoryRoot, legacyQualified[1]!, legacyQualified[2]!);
     if (!resolved) return report(ref, [`Task document not found for task reference: ${ref}`]);
-    return success(ref, resolved.document, objectValue(resolved.document.value)?.task && objectValue(objectValue(resolved.document.value)!.task)?.result);
+    return success(ref, repository, resolved.document, objectValue(resolved.document.value)?.task && objectValue(objectValue(resolved.document.value)!.task)?.result);
   }
 
   if (ref.startsWith('#')) return report(ref, ['Task-local references require an explicit current-task context and cannot be resolved by this command.']);
-  if (ref.startsWith('sdlc://repo/')) return report(ref, ['Global references require a repository identity that is not resolved by this local command.']);
+  if (ref.startsWith('sdlc://repo/')) return report(ref, ['Global reference could not be resolved.']);
   return report(ref, [`Reference form is not supported for local resolution: ${ref}`]);
 }
 
@@ -376,4 +452,16 @@ export async function resolveReference(repositoryRoot: string, schemaRoot: strin
   } catch (error) {
     return report(ref, [error instanceof Error ? error.message : `Unable to resolve reference: ${ref}`]);
   }
+}
+
+export async function validateReferenceResource(repositoryRoot: string, schemaRoot: string, ref: string): Promise<import('./reference.js').ReferenceValidationReport> {
+  const syntax = await validateReference(schemaRoot, ref);
+  if (!syntax.valid) return syntax;
+  const resolved = await resolveReference(repositoryRoot, schemaRoot, ref);
+  if (!resolved.valid || !resolved.resolution) return syntax;
+  return {
+    ...syntax,
+    globalResourceId: resolved.resolution.globalResourceId,
+    repositoryPath: resolved.resolution.repositoryPath,
+  };
 }

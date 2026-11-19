@@ -224,7 +224,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^Q-[0-9]{3,}$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?Q-[0-9]{3,}$",
                 "description": "Stable identifier for the research question within this result.",
                 "examples": [
                   "Q-001"
@@ -652,7 +652,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^Q-[0-9]{3,}$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?Q-[0-9]{3,}$",
                 "description": "Stable identifier for the unresolved question within this result.",
                 "examples": [
                   "Q-002"
@@ -797,7 +797,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^R-[0-9]{3,}$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?R-[0-9]{3,}$",
                 "description": "Stable identifier for the recommendation within this result.",
                 "examples": [
                   "R-001"

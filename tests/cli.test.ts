@@ -153,6 +153,28 @@ describe('CLI interface', () => {
     expect(report.matches.some((match) => match.schemaId === schemaId)).toBe(true);
   });
 
+  it('returns global resource identity and repository path for canonical task-owned identifiers', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['ref', 'validate', '--ref', 'WI-0026-10000000_OBJ-001', '--json'])).resolves.toBe(0);
+    const validation = JSON.parse(output.at(-1)!) as { valid: boolean; globalResourceId: string; repositoryPath: string };
+    expect(validation).toEqual(expect.objectContaining({
+      valid: true,
+      globalResourceId: 'sdlc://repo/github.com%2Fmchandschuh%2Fsdlc/WI-0026-10000000#objective/WI-0026-10000000_OBJ-001',
+      repositoryPath: '.docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml',
+    }));
+
+    await expect(main(['ref', 'resolve', '--ref', 'WI-0026-10000000_OBJ-001', '--json'])).resolves.toBe(0);
+    const resolution = JSON.parse(output.at(-1)!) as { valid: boolean; resolution: { globalResourceId: string; repositoryPath: string; data: { id: string } } };
+    expect(resolution.valid).toBe(true);
+    expect(resolution.resolution).toEqual(expect.objectContaining({
+      globalResourceId: validation.globalResourceId,
+      repositoryPath: validation.repositoryPath,
+      data: expect.objectContaining({ id: 'WI-0026-10000000_OBJ-001' }),
+    }));
+  });
+
   it('validates every root example from every marked reference schema', async () => {
     const schemas = await discoverReferenceSchemas(process.cwd());
     expect(schemas.length).toBeGreaterThan(0);
@@ -894,21 +916,21 @@ describe('discovery commands', () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
 
-    await expect(main(['work-item', 'validate', '--work-item', 'WI-0008', '--json'])).resolves.toBe(0);
+    await expect(main(['work-item', 'validate', '--work-item', 'WI-0026', '--json'])).resolves.toBe(0);
 
     const report = JSON.parse(output.join('\n')) as { schema: string; valid: boolean; workItemId: string; objectCount: number; invalidObjectCount: number; objects: Array<Record<string, unknown>> };
     expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/work-item-validation/v1');
     expect(report.valid).toBe(true);
-    expect(report.workItemId).toBe('WI-0008');
+    expect(report.workItemId).toBe('WI-0026');
     expect(report.objectCount).toBe(3);
     expect(report.invalidObjectCount).toBe(0);
     expect(report.objects[0]).toEqual(expect.objectContaining({
       schema: 'sdlc/stat/v1',
-      repositoryPath: '.docs/work-items/WI-0008/work-item.json',
-      fullPath: join(process.cwd(), '.docs/work-items/WI-0008/work-item.json'),
+      repositoryPath: '.docs/work-items/WI-0026/work-item.json',
+      fullPath: join(process.cwd(), '.docs/work-items/WI-0026/work-item.json'),
       tracked: true,
       objectKind: 'file',
-      ref: 'WI-0008#work-item.json#work-item/WI-0008',
+      ref: 'WI-0026#work-item.json#work-item/WI-0026',
       objectType: 'work-item',
       objectSchemaPath: 'schemas/work-item/v2/work-item.schema.json',
     }));
@@ -917,10 +939,10 @@ describe('discovery commands', () => {
   it('validates one canonical task and reports structured reference metrics', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
-    await expect(main(['task', 'validate', '--task', 'WI-0008-10000000', '--json'])).resolves.toBe(0);
+    await expect(main(['task', 'validate', '--task', 'WI-0026-10000000', '--json'])).resolves.toBe(0);
     const report = JSON.parse(output.join('\n')) as { scope: string; taskUid: string; objectCount: number; referenceCount: number; references: Array<{ value: string; remediation: string }> };
     expect(report.scope).toBe('task');
-    expect(report.taskUid).toBe('WI-0008-10000000');
+    expect(report.taskUid).toBe('WI-0026-10000000');
     expect(report.objectCount).toBe(1);
     expect(report.referenceCount).toBeGreaterThan(0);
     expect(report.references.every((reference) => reference.remediation.length > 0)).toBe(true);

@@ -2,6 +2,7 @@ import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
 import YAML from 'yaml';
 import { DiscoveryError } from './discovery.js';
+import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
 
 export const TASK_LOCAL_MIGRATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1';
 
@@ -51,6 +52,30 @@ interface TaskContext {
   readonly taskUid: string;
   readonly path: string;
   readonly value: unknown;
+}
+
+function canonicalizeTaskOwnedText(source: string, task: TaskContext | undefined, path: string, unresolvable: UnresolvableReference[], replacements: Map<string, MigrationReplacement>): string {
+  if (!task) return source;
+  const envelope = objectValue(task.value);
+  if (envelope?.schema !== 'https://schemas.handschuh.dev/sdlc/task-envelope/v1') return source;
+  const pattern = /\b(?:INPUT|OBJ|TARGET|VAL|TC|CHANGE|EXEC|ART|FIND|PROC|INV|R|O|Q|UQ|AC)-[A-Za-z0-9][A-Za-z0-9-]*\b/gu;
+  return source.replace(pattern, (value, offset: number) => {
+    if (isTaskOwnedId(value)) return value;
+    if (!isTaskOwnedLocalId(value)) return value;
+    const paths: string[] = [];
+    const payload = objectValue(envelope?.task);
+    for (const root of ['intent', 'result'] as const) entityPaths(payload?.[root], [root], value, paths);
+    if (paths.length === 0) return value;
+    if (paths.length > 1) {
+      unresolvable.push(unresolved(path, value, task.taskUid, `Entity id ${value} is ambiguous across task-local paths: ${paths.join(', ')}.`));
+      return value;
+    }
+    const canonical = taskOwnedId(task.taskUid, value);
+    const key = `${value}\u0000${canonical}`;
+    const previous = replacements.get(key);
+    replacements.set(key, { from: value, to: canonical, count: (previous?.count ?? 0) + 1 });
+    return canonical;
+  });
 }
 
 const intentCollections: Readonly<Record<string, string>> = {
@@ -168,13 +193,16 @@ function resolvableSelector(context: TaskContext, kind: string, id: string): { r
   const task = objectValue(envelope?.task);
   if (!task) return { reason: 'Containing task document has no task payload.' };
   const paths: string[] = [];
+  const canonical = envelope?.schema === 'https://schemas.handschuh.dev/sdlc/task-envelope/v1';
+  const canonicalId = canonical && !isTaskOwnedId(id) && isTaskOwnedLocalId(id) ? taskOwnedId(context.taskUid, id) : id;
   for (const root of ['intent', 'result'] as const) {
     entityPaths(task[root], [root], id, paths);
+    if (paths.length === 0) entityPaths(task[root], [root], canonicalId, paths);
   }
   if (paths.length === 0) return { reason: `No task-local entity with id ${id} exists in intent or result.` };
   if (paths.length > 1) return { reason: `Entity id ${id} is ambiguous across task-local paths: ${paths.join(', ')}.` };
   const path = paths[0]!;
-  return { value: `#${path}/${id}` };
+  return { value: `#${path}/${canonicalId}` };
 }
 
 function unresolved(path: string, reference: string, context: string, reason: string): UnresolvableReference {
@@ -213,7 +241,7 @@ async function migrateText(
 ): Promise<{ text: string; replacements: MigrationReplacement[]; unresolvable: UnresolvableReference[] }> {
   const replacements = new Map<string, MigrationReplacement>();
   const unresolvable: UnresolvableReference[] = [];
-  const pattern = new RegExp(`${WORK_ITEM_ID}(?:\\||-)[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?!/)|${WORK_ITEM_ID}\\|${ORDER_KEY}#work-item/${WORK_ITEM_ID}|${WORK_ITEM_ID}\\|${ORDER_KEY}|#(?!intent/|result/)[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?!/)`, 'gu');
+  const pattern = new RegExp(`${WORK_ITEM_ID}(?:\\||-)[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?![/A-Za-z0-9._:-])|${WORK_ITEM_ID}\\|${ORDER_KEY}#work-item/${WORK_ITEM_ID}|${WORK_ITEM_ID}\\|${ORDER_KEY}|(?<![A-Za-z0-9_.#])#(?!intent/|result/)[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?![/A-Za-z0-9._:-])`, 'gu');
   const matches = [...source.matchAll(pattern)];
   let cursor = 0;
   let text = '';
@@ -265,6 +293,10 @@ async function migrateText(
       text += value;
       continue;
     }
+    if (isTaskOwnedId(id)) {
+      text += value;
+      continue;
+    }
     const resolved = resolvableSelector(targetContext, kind, id);
     if (!resolved.value) {
       unresolvable.push(unresolved(path, value, targetContext.taskUid, resolved.reason!));
@@ -277,6 +309,7 @@ async function migrateText(
     text += replacement;
   }
   text += source.slice(cursor);
+  text = canonicalizeTaskOwnedText(text, task, path, unresolvable, replacements);
   return { text, replacements: [...replacements.values()], unresolvable };
 }
 

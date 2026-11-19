@@ -85,6 +85,22 @@
           "No registered reference schema matched the supplied reference."
         ]
       ]
+    },
+    "globalResourceId": {
+      "type": "string",
+      "format": "uri",
+      "description": "The globally qualified SDLC reference of the successfully resolved resource, when the local repository can resolve it.",
+      "examples": [
+        "sdlc://repo/github.com%2Fmchandschuh%2Fsdlc/WI-0003-05000000#objective/WI-0003-05000000_OBJ-001"
+      ]
+    },
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The repository-relative path containing the successfully resolved resource, when the local repository can resolve it.",
+      "examples": [
+        ".docs/work-items/WI-0003/steps/WI-0003-05000000-implementation.yaml"
+      ]
     }
   },
   "$defs": {

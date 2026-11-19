@@ -20,6 +20,8 @@ export interface ReferenceValidationReport {
   readonly ref: string;
   readonly valid: boolean;
   readonly matches: readonly ReferenceMatch[];
+  readonly globalResourceId?: string;
+  readonly repositoryPath?: string;
   readonly findings: readonly string[];
 }
 

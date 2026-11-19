@@ -16,11 +16,11 @@
       "description": "A bare canonical task identity."
     },
     {
-      "pattern": "^#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A canonical task-local reference rooted at intent or result and expressed as a JSON-path-like selector."
     },
     {
-      "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A task-local reference resolved against the current task payload or result.",
       "examples": [
         "#outcome/O-001",
@@ -35,7 +35,7 @@
       ]
     },
     {
-      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
       "description": "A task-qualified reference resolved against the named task.",
       "examples": [
         "WI-0003-50000000#outcome/O-001",
