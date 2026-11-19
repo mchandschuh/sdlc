@@ -67,3 +67,27 @@ never silently change an existing version's meaning.
 A feature that introduces an input or output object is incomplete until its
 corresponding schema is present under `schemas/`, included in the repository
 schema audit, and covered by the feature's validation evidence.
+
+## Keep the SDLC agent skill current
+
+When a change updates SDLC CLI commands, work-item lifecycle behavior, branch or
+release enforcement, task-file conventions, or the agent's required process,
+update the SDLC agent skill at:
+
+```text
+/home/michael/.cline/skills/sdlc/SKILL.md
+```
+
+The skill must remain an operational guide, not a historical note. Keep its CLI
+examples, branch/start/validate workflow, task-processing rules, hook behavior,
+merge/tag/push requirements, and validation commands aligned with the current
+repository implementation. Include the skill update in the same work item and
+record the path in the task's references or owned paths when the repository
+process changes.
+
+At minimum, review the skill whenever changing:
+
+- `sdlc work-item` or `sdlc task` commands;
+- work-item or task schema versions;
+- branch, merge, hook, tag, or push enforcement; or
+- required agent sequencing, commit, validation, or release behavior.

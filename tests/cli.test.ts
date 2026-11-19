@@ -42,6 +42,15 @@ describe('CLI interface', () => {
     expect(output.join('\n')).toContain('-v, --version');
   });
 
+  it('exposes work-item start help', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'start', '--help'])).resolves.toBe(0);
+
+    expect(output.join('\n')).toContain('Usage: sdlc work-item start --work-item <work-item>');
+  });
+
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-operative-root-'));
     const nested = join(root, 'nested');
@@ -227,7 +236,7 @@ describe('CLI interface', () => {
       title: 'External fixture',
       objective: 'Validate an external repository without vendored schemas.',
       repository: { root, authority: 'local' },
-      context: { mergeTarget: { branch: 'main' }, branch: { name: 'main', created: false, rationale: 'fixture' } },
+      context: { mergeTarget: { branch: 'main' }, branch: { name: 'BTCUSD-0000-fixture', created: false, rationale: 'fixture' } },
       request: { source: 'conversation', text: 'fixture', sha256: '0'.repeat(64) },
       scope: [{ name: 'external-fixture', description: 'fixture', reason: 'fixture' }],
       nonGoals: [{ name: 'none', description: 'none', reason: 'fixture', forbiddenFileWrites: [], forbiddenFileReads: [] }],
@@ -236,6 +245,7 @@ describe('CLI interface', () => {
     }, null, 2));
     const before = await readFile(join(item, 'work-item.json'), 'utf8');
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
     await expect(main(['work-item', 'validate', '--work-item', 'BTCUSD-0000', '--repository-root', root, '--json'])).resolves.toBe(0);
@@ -323,6 +333,7 @@ describe('CLI interface', () => {
       '',
     ].join('\n'));
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
     const originalCwd = process.cwd();
@@ -395,6 +406,7 @@ describe('CLI interface', () => {
       'schemas/work-item-assessment/v1/work-item-assessment.schema.json',
       'schemas/work-item-requirements/v1/sdlc-work-item-requirements.schema.json',
       'schemas/work-item/v2/work-item.schema.json',
+      'schemas/work-item/v3/work-item.schema.json',
     ]);
   });
 
@@ -1248,7 +1260,7 @@ describe('discovery commands', () => {
     await expect(main(['work-item', 'validate', '--work-item', 'WI-0026', '--json'])).resolves.toBe(0);
 
     const report = JSON.parse(output.join('\n')) as { schema: string; valid: boolean; workItemId: string; objectCount: number; invalidObjectCount: number; objects: Array<Record<string, unknown>> };
-    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/work-item-validation/v1');
+    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/work-item-validation/v2');
     expect(report.valid).toBe(true);
     expect(report.workItemId).toBe('WI-0026');
     expect(report.objectCount).toBe(3);
@@ -1282,7 +1294,7 @@ describe('discovery commands', () => {
     const workItem = join(root, '.docs', 'work-items', 'WI-0099');
     await mkdir(join(workItem, 'steps'), { recursive: true });
     await writeFile(join(workItem, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Invalid fixture', objective: 'fixture', references: { required: ['#not-a-reference'] }, stepsPath: '.docs/work-items/WI-0099/steps/' }));
-    await writeFile(join(workItem, 'steps', 'WI-0099-10000000.yaml'), 'schema: invalid\ntaskUid: WI-0099-10000000\n');
+    await writeFile(join(workItem, 'steps', 'WI-0099-10000000.yaml'), 'not: a valid task envelope\n');
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
     const before = await readFile(join(workItem, 'work-item.json'), 'utf8');
     const output: string[] = [];
