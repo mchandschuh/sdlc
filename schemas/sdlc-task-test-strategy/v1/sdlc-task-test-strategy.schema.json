@@ -51,7 +51,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                 "description": "Stable alias for this input within the strategy intent.",
                 "examples": [
                   "INPUT-REQ-001"
@@ -79,20 +79,20 @@
                 "type": "string",
                 "oneOf": [
                   {
-                    "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                   },
                   {
-                    "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                     "description": "A work-item-local reference resolved against the selected work-item directory."
                   },
                   {
-                    "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                   },
                   {
-                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                   },
                   {
-                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                    "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                     "description": "A work-item-global reference resolved against a repository and work-item artifact."
                   }
                 ],
@@ -198,7 +198,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Strategy input alias supporting this requirement.",
                   "examples": [
                     "INPUT-REQ-001"
@@ -265,7 +265,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                 "description": "Stable invariant identifier within the strategy intent.",
                 "examples": [
                   "INV-001"
@@ -285,7 +285,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Strategy input alias establishing or motivating this invariant.",
                   "examples": [
                     "INPUT-DESIGN-001"
@@ -350,7 +350,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                 "description": "Stable objective identifier within the strategy intent.",
                 "examples": [
                   "OBJ-001"
@@ -370,7 +370,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Strategy input alias supporting this objective.",
                   "examples": [
                     "INPUT-REQ-001"
@@ -408,7 +408,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Invariant identifier that this objective must preserve.",
                   "examples": [
                     "INV-001"
@@ -581,7 +581,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                 "description": "Stable identifier used by coverage mappings and later implementation verification evidence.",
                 "examples": [
                   "TC-001"
@@ -904,20 +904,20 @@
                   "type": "string",
                   "oneOf": [
                     {
-                      "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                      "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                     },
                     {
-                      "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                      "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                       "description": "A work-item-local reference resolved against the selected work-item directory."
                     },
                     {
-                      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                     },
                     {
-                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
                     },
                     {
-                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                      "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                       "description": "A work-item-global reference resolved against a repository and work-item artifact."
                     }
                   ],
@@ -1013,7 +1013,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Invariant identifier covered by this mapping.",
                   "examples": [
                     "INV-001"
@@ -1032,7 +1032,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "Objective identifier addressed by this mapping.",
                   "examples": [
                     "OBJ-001"
@@ -1051,7 +1051,7 @@
                 "uniqueItems": true,
                 "items": {
                   "type": "string",
-                  "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+                  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
                   "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
                   "examples": [
                     "TC-001",
@@ -1120,7 +1120,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
             "examples": [
               "TC-001",
@@ -1139,7 +1139,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
             "examples": [
               "TC-001",
@@ -1251,20 +1251,20 @@
       "type": "string",
       "oneOf": [
         {
-          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
           "description": "A work-item-local reference resolved against the selected work-item directory."
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
           "description": "A work-item-global reference resolved against a repository and work-item artifact."
         }
       ],
@@ -1289,7 +1289,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable alias for this input within the strategy intent.",
           "examples": [
             "INPUT-REQ-001"
@@ -1317,20 +1317,20 @@
           "type": "string",
           "oneOf": [
             {
-              "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
             },
             {
-              "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+              "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
               "description": "A work-item-local reference resolved against the selected work-item directory."
             },
             {
-              "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
             },
             {
-              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
             },
             {
-              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+              "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
               "description": "A work-item-global reference resolved against a repository and work-item artifact."
             }
           ],
@@ -1412,7 +1412,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Strategy input alias supporting this requirement.",
             "examples": [
               "INPUT-REQ-001"
@@ -1459,7 +1459,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable invariant identifier within the strategy intent.",
           "examples": [
             "INV-001"
@@ -1479,7 +1479,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Strategy input alias establishing or motivating this invariant.",
             "examples": [
               "INPUT-DESIGN-001"
@@ -1526,7 +1526,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable objective identifier within the strategy intent.",
           "examples": [
             "OBJ-001"
@@ -1546,7 +1546,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Strategy input alias supporting this objective.",
             "examples": [
               "INPUT-REQ-001"
@@ -1584,7 +1584,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Invariant identifier that this objective must preserve.",
             "examples": [
               "INV-001"
@@ -1707,7 +1707,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable identifier used by coverage mappings and later implementation verification evidence.",
           "examples": [
             "TC-001"
@@ -1997,20 +1997,20 @@
             "type": "string",
             "oneOf": [
               {
-                "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
               },
               {
-                "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                 "description": "A work-item-local reference resolved against the selected work-item directory."
               },
               {
-                "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
               },
               {
-                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
               },
               {
-                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+                "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
                 "description": "A work-item-global reference resolved against a repository and work-item artifact."
               }
             ],
@@ -2086,7 +2086,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Invariant identifier covered by this mapping.",
             "examples": [
               "INV-001"
@@ -2105,7 +2105,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "Objective identifier addressed by this mapping.",
             "examples": [
               "OBJ-001"
@@ -2124,7 +2124,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+            "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
             "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
             "examples": [
               "TC-001",
@@ -2168,7 +2168,7 @@
     },
     "TestCaseId": {
       "type": "string",
-      "pattern": "^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
       "description": "A stable identifier for a strategy test case, used by coverage and implementation evidence.",
       "examples": [
         "TC-001",

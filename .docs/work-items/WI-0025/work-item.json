@@ -1,12 +1,12 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0025",
-  "status": "planned",
+  "status": "implemented",
   "title": "Require work-item-prefixed requirement and acceptance-criterion identifiers",
   "type": "feature",
   "objective": "Remove abbreviated requirement and acceptance-criterion identifier forms from supported schemas and validation, migrate legacy task-local references to work-item-prefixed forms, and report actionable findings until declarations and references are canonical.",
   "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
-  "context": {"mergeTarget": {"branch": "main"}, "branch": {"name": "WI-0025-prefixed-requirement-identifiers", "created": false, "rationale": "WI-0025 planning is being prepared on the current primary branch; task processing will use the declared work-item branch after start."}},
+  "context": {"mergeTarget": {"branch": "main"}, "branch": {"name": "WI-0025-prefixed-requirement-identifiers", "created": true, "rationale": "WI-0025 planning is being prepared on the current primary branch; task processing will use the declared work-item branch after start."}},
   "baseline": "45424762ef0f329fc925f0d45134e1ca1dd26fd4",
   "request": {"source": "conversation", "text": "Prepare a new .docs/work-items/*\nWe need to prevent the abbreviated requirement and acceptance criteria formats and require the work item prefixed format only.\nsdlc ref migrate-task-local-up needs to handle conversion to the work item prefixed format automatically.\nsdlc {work-item|task} validate needs to report findings when not in the work item prefixed format.\nrequirement/acceptance criteria identifier schemas need to only support the work item prefixed format.\n\nCommit the new work item.", "sha256": "8233b16bc38228c8dad03d7e21ee72a86702cdd79baa3cd8a2ef89675300f235"},
   "scope": [

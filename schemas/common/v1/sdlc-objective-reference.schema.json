@@ -8,14 +8,14 @@
   "type": "string",
   "oneOf": [
     {
-      "pattern": "^#objective/OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "pattern": "^#objective/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
       "description": "A reference to an objective declared in the current task payload.",
       "examples": [
         "#objective/OBJ-001"
       ]
     },
     {
-      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#objective/OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+      "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#objective/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?OBJ-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
       "description": "A reference to an objective declared by another task in the same or an authorized work item.",
       "examples": [
         "WI-0003-19100000#objective/OBJ-001"

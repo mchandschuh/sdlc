@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/task-owned-identifier/v1",
+  "title": "SDLC Task-Owned Identifier v1",
+  "x-sdlc-reference-type": true,
+  "description": "A repository-unique identifier for an entity declared by one task. The task UID is followed by an underscore and the entity's historical type-prefixed local identifier.",
+  "$comment": "TaskOwnedIdentifier has the form {TaskUid}_{TYPE-###}, for example WI-0003-05000000_OBJ-001 or WI-0003-05000000_CHANGE-001. The task UID makes the entity unique without relying on an implicit current-task context.",
+  "type": "string",
+  "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}_((?:INPUT|OBJ|TARGET|VAL|TC|CHANGE|EXEC|ART|FIND|PROC|INV|R|O|Q|UQ|AC)-[A-Za-z0-9][A-Za-z0-9-]*)$",
+  "examples": [
+    "WI-0003-05000000_OBJ-001",
+    "WI-0003-05000000_CHANGE-001",
+    "GH-0042-19000000_TC-001"
+  ]
+}

@@ -9,6 +9,7 @@ import YAML from 'yaml';
 import { discoverTasks, DiscoveryError, type TaskSummary } from './discovery.js';
 import { validateReference } from './reference.js';
 import { resolveReference, type TaskContext } from './reference-resolution.js';
+import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
 
 export const WORK_ITEM_VALIDATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/work-item-validation/v1';
 
@@ -28,6 +29,7 @@ export interface WorkItemObjectValidation {
   readonly schemaFindings?: readonly string[];
   readonly referenceFindings?: readonly ReferenceFinding[];
   readonly remediation?: readonly string[];
+  readonly identifierFindings?: readonly IdentifierFinding[];
 }
 
 export interface ReferenceFinding {
@@ -36,6 +38,15 @@ export interface ReferenceFinding {
   readonly category: 'syntax' | 'target' | 'context' | 'parse';
   readonly syntaxValid: boolean;
   readonly resolved: boolean;
+  readonly reason: string;
+  readonly remediation: string;
+}
+
+export interface IdentifierFinding {
+  readonly path: string;
+  readonly category: 'task-owned';
+  readonly value: string;
+  readonly requiredForm: string;
   readonly reason: string;
   readonly remediation: string;
 }
@@ -49,6 +60,7 @@ export interface WorkItemValidationReport {
   readonly invalidObjectCount: number;
   readonly objects: readonly WorkItemObjectValidation[];
   readonly findings: readonly string[];
+  readonly identifierFindings?: readonly IdentifierFinding[];
   readonly scope?: 'work-item' | 'task';
   readonly taskUid?: string;
   readonly referenceCount?: number;
@@ -95,6 +107,33 @@ async function writeJson(directory: string, name: string, value: unknown): Promi
 
 function looksLikeReference(value: string): boolean {
   return value.startsWith('#') || value.startsWith('sdlc://') || /^[A-Z]{1,10}-[0-9]+(?:-[0-9]{8})?(?:#|\|)/u.test(value);
+}
+
+function discoverIdentifierFindings(value: unknown, path: string, taskUid?: string): IdentifierFinding[] {
+  if (!taskUid) return [];
+  const findings: IdentifierFinding[] = [];
+  const visit = (current: unknown, currentPath: string): void => {
+    if (typeof current === 'string' && isTaskOwnedLocalId(current)) {
+      findings.push({
+        path: currentPath,
+        category: 'task-owned',
+        value: current,
+        requiredForm: taskOwnedId(taskUid, current),
+        reason: `Task-owned identifier ${current} is not repository-unique.`,
+        remediation: `Replace ${current} with ${taskOwnedId(taskUid, current)} or run sdlc ref migrate-task-local-up for the containing task.`,
+      });
+      return;
+    }
+    if (Array.isArray(current)) {
+      current.forEach((item, index) => visit(item, `${currentPath}[${index}]`));
+      return;
+    }
+    if (current && typeof current === 'object') {
+      Object.entries(current).forEach(([key, child]) => visit(child, `${currentPath}.${key}`));
+    }
+  };
+  visit(value, path);
+  return findings;
 }
 
 async function discoverReferenceFindings(repositoryRoot: string, value: unknown, path: string, taskContext?: TaskContext): Promise<ReferenceFinding[]> {
@@ -212,6 +251,7 @@ async function validateTask(repositoryRoot: string, temporaryDirectory: string, 
     document: { fullPath: path, repositoryPath: task.path, format: 'yaml', value: document },
   };
   const referenceFindings = await discoverReferenceFindings(repositoryRoot, document, '$', taskContext);
+  const identifierFindings = discoverIdentifierFindings(document, '$', task.taskUid).filter((finding) => !isTaskOwnedId(finding.value));
   const referenceErrors = referenceFindings.filter((finding) => !finding.resolved);
   const schemaFindings = findings.map((finding) => `${finding}\nRemediation: ${remediationForSchema(relativeTaskSchema, task.path)}`);
   const workItemPrefix = `.docs/work-items/${workItemId}/`;
@@ -222,11 +262,12 @@ async function validateTask(repositoryRoot: string, temporaryDirectory: string, 
     ...identity,
     objectType: 'task',
     taskUid: task.taskUid,
-    valid: schemaFindings.length === 0 && referenceErrors.length === 0,
-    findings: [...schemaFindings, ...referenceErrors.map((finding) => `${finding.path}: ${finding.reason}\nRemediation: ${finding.remediation}`)],
+    valid: schemaFindings.length === 0 && referenceErrors.length === 0 && identifierFindings.length === 0,
+    findings: [...schemaFindings, ...identifierFindings.map((finding) => `${finding.path}: ${finding.reason}; required=${finding.requiredForm}\nRemediation: ${finding.remediation}`), ...referenceErrors.map((finding) => `${finding.path}: ${finding.reason}\nRemediation: ${finding.remediation}`)],
     schemaFindings,
     referenceFindings,
-    remediation: [...schemaFindings.map((finding) => remediationForSchema(relativeTaskSchema, task.path)), ...referenceErrors.map((finding) => finding.remediation)],
+    remediation: [...schemaFindings.map((finding) => remediationForSchema(relativeTaskSchema, task.path)), ...identifierFindings.map((finding) => finding.remediation), ...referenceErrors.map((finding) => finding.remediation)],
+    identifierFindings,
   };
 }
 

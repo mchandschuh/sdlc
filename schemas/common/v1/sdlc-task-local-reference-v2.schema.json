@@ -6,7 +6,7 @@
   "description": "A deterministic JSON-path-like reference into the current task object, rooted at intent or result and ending with an entity ID.",
   "$comment": "The envelope task property is intentionally elided. #intent/objectives/OBJ-001 maps to task.intent.objectives[] where id=OBJ-001; #result/implementation/changes/CHANGE-001 maps to task.result.implementation.changes[] where id=CHANGE-001. The path is structural and does not require schema inference.",
   "type": "string",
-  "pattern": "^#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/[A-Za-z][A-Za-z0-9._:-]*$",
+  "pattern": "^#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
   "examples": [
     "#intent/objectives/OBJ-001",
     "#intent/requirements/REQ-001",

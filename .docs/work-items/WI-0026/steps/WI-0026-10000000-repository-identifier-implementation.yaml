@@ -1,0 +1,186 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0026
+taskUid: WI-0026-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: processing_completed
+title: Implement repository-unique identifier schemas and resolution
+objective: Audit the identifier vocabulary, add repository-unique schema forms, extend direct ref validation/resolution with global identity and path, and implement migration to full identifiers.
+references:
+  required:
+    - .docs/work-items/WI-0026/work-item.json
+    - .cline/README.md
+    - schemas/common/v1/
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/core/task-local-migration.ts
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0023/work-item.json
+    - .docs/work-items/WI-0025/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/
+    - schemas/work-item/v2/
+    - schemas/sdlc-ref/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+    - .docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml
+  commitSubject: 'WI-0026: feat(ref): add repository-unique identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: implemented
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement repository-unique identifier contracts and direct validation/resolution for every inventory row.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: WI-0026-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_001
+        purpose: Define and publish the identifier inventory table.
+        required: true
+      - id: WI-0026-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_002
+        purpose: Define repository-unique target forms.
+        required: true
+      - id: WI-0026-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_003
+        purpose: Define migration behavior.
+        required: true
+      - id: WI-0026-10000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_004
+        purpose: Define direct ref validation/resolution response behavior.
+        required: true
+      - id: WI-0026-10000000_INPUT-REQ-005
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_005
+        purpose: Define validation enforcement and compatibility.
+        required: true
+    objectives:
+      - id: WI-0026-10000000_OBJ-001
+        statement: Every audited identifier type has a documented repository-unique target prefix and schema contract.
+        inputRefs: [WI-0026-10000000_INPUT-REQ-001, WI-0026-10000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0026-10000000_TC-IDENTIFIER-INVENTORY', '#test-case/WI-0026-10000000_TC-IDENTIFIER-SCHEMAS']
+      - id: WI-0026-10000000_OBJ-002
+        statement: Direct ref validate/resolve and migration support the repository-unique forms with stable global identity and repository path output.
+        inputRefs: [WI-0026-10000000_INPUT-REQ-003, WI-0026-10000000_INPUT-REQ-004, WI-0026-10000000_INPUT-REQ-005]
+        testCaseRefs: ['#test-case/WI-0026-10000000_TC-REF-GLOBAL-ID', '#test-case/WI-0026-10000000_TC-REF-PATH', '#test-case/WI-0026-10000000_TC-REF-RESOLUTION', '#test-case/WI-0026-10000000_TC-MIGRATION-FULL-ID', '#test-case/WI-0026-10000000_TC-MIGRATION-AMBIGUOUS', '#test-case/WI-0026-10000000_TC-VALIDATION-FULL-ID', '#test-case/WI-0026-10000000_TC-READ-ONLY']
+    ownedPaths: [schemas/, src/core/, src/cli/, tests/]
+    nonGoals:
+      - Do not perform bulk historical migration automatically.
+      - Do not add remote lookup.
+    steps:
+      - Audit all identifier-bearing schemas and records and persist the table in the work-item/task planning artifacts.
+      - Add or update identifier schemas for work-item and work-item-task-prefixed forms.
+      - Extend reference validation responses with globally unique resource reference and repositoryPath on success.
+      - Extend reference resolution to return repository-unique resources directly.
+      - Extend task-local migration to rewrite all safely contextualized identifier forms and report ambiguous values.
+      - Add validation findings for non-canonical identifiers across work-item and task scope.
+      - Add complete tests and run all gates.
+  result:
+    status: implemented
+    implementation:
+      summary: Implemented repository-unique task-owned identifiers, global resource response identity, direct task-owned resolution, canonical migration, and actionable validation findings.
+      changes:
+        - id: WI-0026-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the identifier inventory and canonical prefix decisions in the WI-0026 work-item and task records.
+          objectiveRefs: [WI-0026-10000000_OBJ-001, WI-0026-10000000_OBJ-002]
+          paths: [.docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml]
+        - id: WI-0026-10000000_CHANGE-SCHEMA-001
+          type: schema
+          summary: Added the task-owned identifier schema and updated task reference contracts for canonical task-prefixed entities.
+          objectiveRefs: [WI-0026-10000000_OBJ-001]
+          paths: [schemas/common/v1/sdlc-task-owned-identifier.schema.json, schemas/common/v1/, schemas/sdlc-task-implementation/, schemas/sdlc-task-validation/]
+        - id: WI-0026-10000000_CHANGE-REF-001
+          type: production-code
+          summary: Added global resource IDs and repository paths to direct validation/resolution and implemented repository-local task-owned lookup.
+          objectiveRefs: [WI-0026-10000000_OBJ-002]
+          paths: [src/core/global-reference.ts, src/core/identifier.ts, src/core/reference.ts, src/core/reference-resolution.ts, src/cli/main.ts]
+        - id: WI-0026-10000000_CHANGE-MIGRATION-001
+          type: migration
+          summary: Extended migrate-task-local-up to canonicalize task-owned declarations and references only when task context resolves safely.
+          objectiveRefs: [WI-0026-10000000_OBJ-002]
+          paths: [src/core/task-local-migration.ts]
+        - id: WI-0026-10000000_CHANGE-VALIDATION-001
+          type: production-code
+          summary: Added task-owned identifier findings with required canonical form and remediation while preserving independent schema/reference findings.
+          objectiveRefs: [WI-0026-10000000_OBJ-002]
+          paths: [src/core/work-item-validation.ts, schemas/sdlc-work-item-validation/v1/sdlc-work-item-validation.schema.json]
+        - id: WI-0026-10000000_CHANGE-TEST-001
+          type: test-code
+          summary: Added global identity/path, canonical task-owned resolution, migration, schema registry, and WI-0026 validation coverage.
+          objectiveRefs: [WI-0026-10000000_OBJ-001, WI-0026-10000000_OBJ-002]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0026-10000000_TC-REF-GLOBAL-ID'
+          path: tests/cli.test.ts
+          selector: returns global resource identity and repository path for canonical task-owned identifiers
+        - testCaseRef: '#test-case/WI-0026-10000000_TC-MIGRATION-FULL-ID'
+          path: tests/cli.test.ts
+          selector: migrates recognized task-local and task-qualified references within the selected path
+    verification:
+      status: passed
+      objectiveRefs: [WI-0026-10000000_OBJ-001, WI-0026-10000000_OBJ-002]
+      tests:
+        - id: WI-0026-10000000_EXEC-TYPECHECK
+          type: static
+          testCaseRefs: ['#test-case/WI-0026-10000000_TC-REF-GLOBAL-ID']
+          command: yarn typecheck
+          status: passed
+          result: TypeScript typecheck completed successfully.
+        - id: WI-0026-10000000_EXEC-BUILD
+          type: static
+          testCaseRefs: ['#test-case/WI-0026-10000000_TC-REF-RESOLUTION']
+          command: yarn build
+          status: passed
+          result: TypeScript build completed successfully.
+        - id: WI-0026-10000000_EXEC-TEST
+          type: unit
+          testCaseRefs: ['#test-case/WI-0026-10000000_TC-MIGRATION-FULL-ID']
+          command: yarn test --run
+          status: passed
+          result: The complete test suite passed.
+        - id: WI-0026-10000000_EXEC-SCHEMA
+          type: static
+          testCaseRefs: ['#test-case/WI-0026-10000000_TC-IDENTIFIER-SCHEMAS']
+          command: node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: The repository schema audit passed.
+        - id: WI-0026-10000000_EXEC-WORK-ITEM
+          type: cli-audit
+          testCaseRefs: ['#test-case/WI-0026-10000000_TC-VALIDATION-FULL-ID']
+          command: node ./bin/cli.js work-item validate --work-item WI-0026 --json
+          status: passed
+          result: WI-0026 self-validation passed with three valid objects and zero invalid objects.
+    limitations:
+      - Historical task records remain unchanged until explicitly migrated with sdlc ref migrate-task-local-up.
+      - Resolution remains local and does not perform remote repository lookup.

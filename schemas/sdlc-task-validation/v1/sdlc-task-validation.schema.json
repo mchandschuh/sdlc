@@ -435,7 +435,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?INPUT-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable validation-local identifier for this input.",
           "examples": [
             "INPUT-DESIGN-001"
@@ -523,7 +523,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^TARGET-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?TARGET-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable validation-local identifier for this target.",
           "examples": [
             "TARGET-DESIGN-001"
@@ -623,7 +623,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable identifier for the procedure within this validation task.",
           "examples": [
             "VAL-001"
@@ -1194,7 +1194,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?EXEC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
           "description": "Stable identifier for this execution within the validation result.",
           "examples": [
             "EXEC-001"
@@ -1202,7 +1202,14 @@
         },
         "procedureRef": {
           "type": "string",
-          "pattern": "^#procedure/VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+          "oneOf": [
+            {
+              "pattern": "^#procedure/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+            },
+            {
+              "pattern": "^#intent/procedures/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?VAL-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+            }
+          ],
           "description": "Task-local reference to the procedure that was executed.",
           "examples": [
             "#procedure/VAL-001"
@@ -1621,20 +1628,26 @@
       "type": "string",
       "oneOf": [
         {
-          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "pattern": "^#(?:intent|result)(?:/[A-Za-z][A-Za-z0-9_-]*)+/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
+        },
+        {
+          "pattern": "^[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
           "description": "A work-item-local reference resolved against the selected work-item directory."
         },
         {
-          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$"
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+-[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$"
         },
         {
-          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/[A-Za-z][A-Za-z0-9._:-]*$",
+          "pattern": "^sdlc://repo/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+/[A-Z]{1,10}-[0-9]+#[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*(?:/[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)*%23[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?[A-Za-z][A-Za-z0-9._:-]*$",
           "description": "A work-item-global reference resolved against a repository and work-item artifact."
         }
       ],

@@ -355,6 +355,16 @@
           "examples": [
             []
           ]
+        },
+        "identifierFindings": {
+          "type": "array",
+          "description": "Identifier-specific findings for task-owned values that are not repository-unique.",
+          "items": {
+            "$ref": "#/$defs/IdentifierFinding"
+          },
+          "examples": [
+            []
+          ]
         }
       },
       "examples": [
@@ -457,6 +467,19 @@
           "remediation": "Update the reference to an existing target."
         }
       ]
+    }
+    ,"IdentifierFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "category", "value", "requiredForm", "reason", "remediation"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "category": {"const": "task-owned"},
+        "value": {"type": "string", "minLength": 1},
+        "requiredForm": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "remediation": {"type": "string", "minLength": 1}
+      }
     }
   },
   "examples": [

@@ -4,7 +4,7 @@
   "title": "SDLC Delivery Procedure ID v1",
   "description": "A stable identifier for a procedure declared by one delivery task.",
   "type": "string",
-  "pattern": "^PROC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
+  "pattern": "^(?:[A-Z]{1,10}-[0-9]+-[0-9]{8}_)?PROC-[A-Z0-9]+(?:-[A-Z0-9]+)*$",
   "examples": [
     "PROC-001",
     "PROC-VERIFY-PACKAGE"

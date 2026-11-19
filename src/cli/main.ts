@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary, type WorkItemSummary } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
-import { resolveReference } from '../core/reference-resolution.js';
+import { resolveReference, validateReferenceResource } from '../core/reference-resolution.js';
 import { migrateTaskLocalReferences, migrateTaskLocalReferencesForWorkItem } from '../core/task-local-migration.js';
 import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
@@ -347,9 +347,20 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
     }
   }
   if (!ref) throw new DiscoveryError(`Usage: sdlc ref ${command} --ref <reference>`);
+  let repositoryRoot: string | undefined;
+  try {
+    repositoryRoot = await resolveOperativeRoot();
+  } catch (error) {
+    if (command === 'validate') {
+      const result = await validateReference(schemaRoot, ref);
+      console.log(JSON.stringify(result, null, 2));
+      return result.valid ? 0 : 1;
+    }
+    throw error;
+  }
   const result = command === 'validate'
-    ? await validateReference(schemaRoot, ref)
-    : await resolveReference(await resolveOperativeRoot(), schemaRoot, ref, depth);
+    ? await validateReferenceResource(repositoryRoot, schemaRoot, ref)
+    : await resolveReference(repositoryRoot, schemaRoot, ref, depth);
   console.log(JSON.stringify(result, null, 2));
   return result.valid ? 0 : 1;
 }
