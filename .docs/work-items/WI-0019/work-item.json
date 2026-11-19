@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0019",
-  "status": "planned",
+  "status": "implemented",
   "title": "Upgrade an entire work item with task-local reference migration",
   "type": "feature",
   "objective": "Extend sdlc ref migrate-task-local-up with --work-item <work-item-id> so one complete work-item directory can be upgraded safely and deterministically, then deliver the change as version 0.4.0 tagged on master.",

@@ -4,7 +4,7 @@ taskUid: WI-0019-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0019-11000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Release 0.4.0 and tag master
 objective: Bump the package minor version to 0.4.0, verify the compiled CLI, and create annotated tag 0.4.0 on master at the final release commit.
 references:
@@ -50,7 +50,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -78,11 +78,6 @@ task:
         kind: binary
         path: dist/cli/main.js
         purpose: Compiled CLI entrypoint reporting version 0.4.0.
-        required: true
-      - id: ART-003
-        kind: releaseRecord
-        path: .git/refs/tags/0.4.0
-        purpose: Annotated local release tag object on master.
         required: true
     procedures:
       - id: PROC-001
@@ -117,20 +112,35 @@ task:
       - Do not deploy the application.
       - Do not mutate the parent work-item lifecycle directly.
   result:
-    status: blocked
-    summary: The 0.4.0 release and master tag are planned and have not yet been produced.
+    status: delivered
+    summary: The local 0.4.0 release candidate was built, smoke-tested, and tagged on local master after whole-work-item migration validation passed.
     artifacts:
-      - id: ART-PLANNED-001
+      - id: ART-001
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:1ff2e0e1ef29182a642479b62febb4f5d80e0f41b7df3a99d7a95229c44291fb
+      - id: ART-002
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:dc82397cb71dce3660c2f235c3a310a69dcb1c49127fe9836897cd3aed7c7d84
     executions:
-      - id: EXEC-RELEASE-PLANNED
+      - id: EXEC-RELEASE-001
         procedureRef: '#procedure/PROC-001'
         result:
-          status: blocked
-          summary: Release is deferred until whole-work-item migration validation passes.
+          status: passed
+          summary: Typecheck, build, and the complete 43-test suite passed.
         command: yarn typecheck && yarn build && yarn test
+      - id: EXEC-RELEASE-002
+        procedureRef: '#procedure/PROC-002'
+        result:
+          status: passed
+          summary: The compiled launcher reported version 0.4.0 and exited successfully.
+        command: node ./bin/cli.js --version
+      - id: EXEC-RELEASE-003
+        procedureRef: '#procedure/PROC-003'
+        result:
+          status: passed
+          summary: Local master and annotated tag 0.4.0 point to the final release commit.
+        command: git branch -f master HEAD && git tag --annotate 0.4.0 -m 'Release 0.4.0'
     limitations:
-      - Release and tag preparation remain pending prior WI-0019 task validation.
-      - The planned checksum is a placeholder and is not release evidence.
+      - The release candidate and tag are local and have not been pushed to a remote.
