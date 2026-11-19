@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0020",
-  "status": "planned",
+  "status": "implemented",
   "title": "Make task-local migration resolvability-aware and exhaustively validated",
   "type": "feature",
   "objective": "Thoroughly test sdlc ref migrate-task-local-up across every existing work item in the WI-0000 through WI-0018 range using an isolated work tree, prevent migration of references that cannot resolve as task-local references, and report every unresolvable candidate explicitly without modifying the source repository.",
