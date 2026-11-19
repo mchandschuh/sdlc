@@ -4,7 +4,7 @@ taskUid: WI-0024-20000000
 orderKey: "20000000"
 parentTaskUid: WI-0024-12000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Release version 0.7.0 on the primary branch
 objective: Merge the completed WI-0024 context branch into main, prepare the
   minor 0.7.0 release from versionSuggestion impact, create the annotated
@@ -73,7 +73,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -130,25 +130,30 @@ task:
       - Do not claim server-side enforcement from local hooks.
       - Do not deploy or publish a package registry artifact.
   result:
-    status: partially-delivered
-    summary: Release task is prepared; execution occurs on the primary branch after
-      the context branch is merged.
+    status: delivered
+    summary: Merged WI-0024 into main, prepared package version 0.7.0, and completed
+      local release gates. The annotated primary-branch tag and remote
+      publication are recorded after the release commit.
     artifacts:
       - id: WI-0024-20000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:5c92965d6d153c10787222cd225fb2fb988ee0a9231a7430287eac6acce80623
+      - id: WI-0024-20000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/0.7.0
+        checksum: sha256:9254de8770f6b952ea4346a4639a5256d43785a1d8fbbc758e90e7790ac42aef
     executions:
-      - id: WI-0024-20000000_EXEC-PLAN
+      - id: WI-0024-20000000_EXEC-RELEASE
         procedureRef: "#procedure/WI-0024-20000000_PROC-RELEASE"
         result:
-          status: inconclusive
-          summary: Release execution is deferred until the context branch is merged into
-            main and the primary-branch release gates are run.
+          status: passed
+          summary: Typecheck, build, tests, schema validation, and WI-0024 validation
+            passed on main before the 0.7.0 tag.
         command: yarn typecheck && yarn build && yarn test --run && schema-validate
           --root schemas schemas/work-item/v3/work-item.schema.json
           schemas/sdlc-work-item-validation/v2/sdlc-work-item-validation.schema.json
           && node ./bin/cli.js work-item validate --work-item WI-0024 --json
     limitations:
-      - The release task is not complete until primary-branch merge, tag, final
-        gates, and conditional remote push are executed.
+      - Remote branch/tag publication remains subject to remote server policy
+        and network availability.
