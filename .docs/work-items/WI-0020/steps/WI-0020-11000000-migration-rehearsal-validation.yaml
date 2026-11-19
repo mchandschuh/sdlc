@@ -1,0 +1,143 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0020
+taskUid: WI-0020-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0020-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Rehearse migration across all existing work items
+objective: Validate resolvability-aware migration across every existing WI-0000 through WI-0018 work item in a disposable Git worktree and discard all rehearsal changes afterward.
+references:
+  required:
+    - .docs/work-items/WI-0020/work-item.json
+    - .docs/work-items/WI-0020/steps/WI-0020-10000000-migration-resolvability-implementation.yaml
+    - src/cli/main.ts
+    - src/core/task-local-migration.ts
+    - src/core/reference-resolution.ts
+    - schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0011/steps/WI-0011-00000000-chat-session-store-test-strategy.yaml
+    - .docs/work-items/WI-0011/steps/WI-0011-80000000-chat-session-store-validation.yaml
+    - .docs/work-items/WI-0018/work-item.json
+dependsOn:
+  - WI-0020-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0020/steps/WI-0020-11000000-migration-rehearsal-validation.yaml
+    - .docs/work-items/WI-0020/work-item.json
+  commitSubject: 'WI-0020: test(ref): rehearse all work-item migrations'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Rehearse all existing work-item migrations in a disposable worktree, inspect the diff and unresolved report, then discard the worktree.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0020-10000000#result/R-001
+        purpose: Identify the resolvability-aware migration implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_001
+        purpose: Identify resolvable-only rewrite behavior.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_002
+        purpose: Identify unresolved reporting behavior.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_003
+        purpose: Identify exhaustive worktree rehearsal behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_005
+        purpose: Identify test-gate behavior.
+        required: true
+    targets:
+      - id: TARGET-MIGRATION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0020-10000000#result/R-001
+        purpose: Validate migration implementation and unresolved reporting.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-ALL-WORK-ITEMS-WORKTREE', '#test-case/TC-UNRESOLVABLE-REPORT', '#test-case/TC-DISCARD-WORKTREE', '#test-case/TC-TEST-GATE']
+    procedures:
+      - id: VAL-EXHAUSTIVE-MIGRATION
+        sequence: 1
+        name: validate-exhaustive-work-item-migration
+        description: Run full checks, enumerate WI-0000 through WI-0018, migrate each existing work item in a temporary Git worktree, inspect changed/unresolvable output, and remove the worktree.
+        reason: Prove historical migration confidence without dirtying the authoritative source worktree.
+        targetRefs: ['#target/TARGET-MIGRATION-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-ALL-WORK-ITEMS-WORKTREE', '#test-case/TC-UNRESOLVABLE-REPORT', '#test-case/TC-DISCARD-WORKTREE', '#test-case/TC-TEST-GATE']
+        method:
+          executionMode: executable
+          target: exhaustive disposable-worktree migration rehearsal
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Create a temporary Git worktree from the baseline.
+            - Enumerate WI-0000 through WI-0018 and migrate every existing work item with --work-item.
+            - Inspect changed files, replacements, and unresolvable entries for determinism and sibling/out-of-range isolation.
+            - Re-run representative WI-0011 depth-2 resolution and classify remaining findings.
+            - Remove the temporary worktree with force and verify the authoritative worktree is unchanged.
+            - Run the aggregate schema audit.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim that all historical references are resolvable; unresolved entries are expected evidence when appropriate.
+      - Do not retain bulk migration changes in the source worktree.
+  result:
+    status: implemented-unproven
+    summary: Exhaustive worktree migration rehearsal is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-EXHAUSTIVE-MIGRATION'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until the resolvability-aware implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Exhaustive WI-0000 through WI-0018 worktree migration validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The disposable worktree rehearsal has not yet been executed.
+    nonClaims:
+      - This planned result does not claim migration correctness, unresolved reporting, or source-tree cleanliness.

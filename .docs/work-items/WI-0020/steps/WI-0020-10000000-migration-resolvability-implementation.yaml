@@ -1,0 +1,112 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0020
+taskUid: WI-0020-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Make migration resolvability-aware
+objective: Prevent speculative task-local rewrites, report recognized unresolvable references, and correct migration/resolver context handling with complete regression coverage.
+references:
+  required:
+    - src/core/task-local-migration.ts
+    - src/core/reference-resolution.ts
+    - src/cli/main.ts
+    - schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0019/work-item.json
+    - .docs/work-items/WI-0020/work-item.json
+  informational:
+    - .docs/work-items/WI-0011/steps/WI-0011-80000000-chat-session-store-validation.yaml
+    - .docs/work-items/WI-0011/steps/WI-0011-00000000-chat-session-store-test-strategy.yaml
+    - .cline/README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - src/core/
+    - src/cli/
+    - tests/
+    - schemas/sdlc-ref/
+    - .docs/work-items/WI-0020/steps/WI-0020-10000000-migration-resolvability-implementation.yaml
+  commitSubject: 'WI-0020: feat(ref): report unresolvable migrations'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Make task-local migration validate canonical targets, preserve unresolvable candidates, report reasons, and retain current-task context for supported resolution paths.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_001
+        purpose: Define resolvable-only rewriting.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_002
+        purpose: Define unresolvable reporting.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_004
+        purpose: Define resolver context behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0020#work-item.json#requirement/WI-0020_REQ_005
+        purpose: Define the test gate.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Migration rewrites only references whose canonical target resolves and reports recognized candidates that cannot resolve.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-RESOLVABLE-REWRITE', '#test-case/TC-UNRESOLVABLE-REPORT']
+      - id: OBJ-002
+        statement: Resolver/migration context and response schema behavior are covered by a complete passing suite.
+        inputRefs: [INPUT-REQ-004, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-CONTEXT-PROPAGATION', '#test-case/TC-MIGRATION-RESPONSE', '#test-case/TC-TEST-GATE']
+    ownedPaths: [src/core/, src/cli/, tests/, schemas/sdlc-ref/]
+    nonGoals:
+      - Do not perform the exhaustive WI-0000–WI-0018 worktree rehearsal in this implementation task.
+      - Do not bump the package version or create tags.
+    steps:
+      - Add resolvability-aware candidate evaluation and explicit unresolvable output.
+      - Correct known collection/root mappings and current-task context handling.
+      - Add focused regression tests and run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Resolvability-aware migration implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the resolvability-aware migration implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0020/steps/WI-0020-10000000-migration-resolvability-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - Unresolvable candidates are not yet reported separately from migrated replacements.
