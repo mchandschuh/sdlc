@@ -4,7 +4,7 @@ taskUid: WI-0020-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Make migration resolvability-aware
 objective: Prevent speculative task-local rewrites, report recognized unresolvable references, and correct migration/resolver context handling with complete regression coverage.
 references:
@@ -47,7 +47,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -94,19 +94,55 @@ task:
       - Correct known collection/root mappings and current-task context handling.
       - Add focused regression tests and run the complete suite before commit.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Resolvability-aware migration implementation has not yet been processed.
+      summary: Made migration resolvability-aware, added explicit unresolvable reporting, corrected target-path construction, and propagated current-task context through depth expansion.
       changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the resolvability-aware migration implementation plan.
+        - id: CHANGE-001
+          type: production-code
+          summary: Added task-payload entity validation before migration and preserved/reportable unresolvable candidates.
+          objectiveRefs: [OBJ-001]
+          paths: [src/core/task-local-migration.ts]
+        - id: CHANGE-002
+          type: production-code
+          summary: Propagated current-task context through depth-limited reference expansion.
+          objectiveRefs: [OBJ-002]
+          paths: [src/core/reference-resolution.ts]
+        - id: CHANGE-003
+          type: schema
+          summary: Extended the migration response schema with deterministic unresolvable entries.
           objectiveRefs: [OBJ-001, OBJ-002]
-          paths: [.docs/work-items/WI-0020/steps/WI-0020-10000000-migration-resolvability-implementation.yaml]
-      testImplementations: []
+          paths: [schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json]
+        - id: CHANGE-004
+          type: test-code
+          summary: Added resolvable rewrite, unresolved preservation/reporting, and context regression coverage.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-RESOLVABLE-REWRITE'
+          path: tests/cli.test.ts
+          selector: migrates recognized task-local references within the selected path and reports replacements
+        - testCaseRef: '#test-case/TC-UNRESOLVABLE-REPORT'
+          path: tests/cli.test.ts
+          selector: preserves and reports recognized references whose task-local targets cannot resolve
+        - testCaseRef: '#test-case/TC-CONTEXT-PROPAGATION'
+          path: tests/cli.test.ts
+          selector: applies depth defaults and expands a flat deduplicated reference map by rounds
+        - testCaseRef: '#test-case/TC-MIGRATION-RESPONSE'
+          path: schemas/sdlc-ref/v1/sdlc-ref-task-local-migration.schema.json
+          selector: response schema validation
+        - testCaseRef: '#test-case/TC-TEST-GATE'
+          path: tests/cli.test.ts
+          selector: CLI interface test suite
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [OBJ-001, OBJ-002]
-      tests: []
+      tests:
+        - id: EXEC-RESOLVABILITY-IMPLEMENTATION-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-RESOLVABLE-REWRITE', '#test-case/TC-UNRESOLVABLE-REPORT', '#test-case/TC-CONTEXT-PROPAGATION', '#test-case/TC-MIGRATION-RESPONSE', '#test-case/TC-TEST-GATE']
+          command: yarn typecheck && yarn build && yarn test
+          status: passed
+          result: Resolvability-aware migration, unresolved reporting, context propagation, schema validation, and all 44 tests passed.
     limitations:
-      - Unresolvable candidates are not yet reported separately from migrated replacements.
+      - Exhaustive WI-0000 through WI-0018 worktree rehearsal remains pending the validation task.

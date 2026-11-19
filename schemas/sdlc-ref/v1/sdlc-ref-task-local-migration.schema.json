@@ -5,13 +5,14 @@
   "description": "Stable machine-readable result for a path-scoped migration of recognized legacy task-local and task-qualified references.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "path", "changedFiles", "files", "replacements", "findings"],
+  "required": ["schema", "path", "changedFiles", "files", "replacements", "unresolvable", "findings"],
   "properties": {
     "schema": {"const": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1", "description": "Response schema identifier.", "examples": ["https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1"]},
     "path": {"type": "string", "minLength": 1, "description": "Repository-relative path selected for migration.", "examples": [".docs/work-items/WI-0018/steps/"]},
     "changedFiles": {"type": "array", "uniqueItems": true, "description": "Repository-relative files whose bytes changed.", "items": {"type": "string", "minLength": 1}, "examples": [[".docs/work-items/WI-0018/steps/task.yaml"]]},
     "files": {"type": "array", "description": "Deterministically ordered file-level migration results.", "items": {"$ref": "#/$defs/File"}, "examples": [[{"path": "task.yaml", "changed": false, "replacements": []}]]},
     "replacements": {"type": "array", "description": "Aggregated source-to-target replacements and occurrence counts.", "items": {"$ref": "#/$defs/Replacement"}, "examples": [[{"from": "#objective/OBJ-001", "to": "#intent/objectives/OBJ-001", "count": 1}]]},
+    "unresolvable": {"type": "array", "description": "Recognized candidates preserved without rewriting because their canonical target or context could not be resolved.", "items": {"$ref": "#/$defs/Unresolvable"}, "examples": [[{"path": "task.yaml", "reference": "#objective/OBJ-999", "context": "WI-0001-10000000", "reason": "No task-local entity with id OBJ-999 exists in intent or result.", "preserved": true}]]},
     "findings": {"type": "array", "description": "Stable migration findings; empty means no migration error was recorded.", "items": {"type": "string", "minLength": 1}, "examples": [[]]}
   },
   "$defs": {
@@ -38,7 +39,21 @@
         "replacements": {"type": "array", "description": "Replacements made in this file.", "items": {"$ref": "#/$defs/Replacement"}, "examples": [[]]}
       },
       "examples": [{"path": "task.yaml", "changed": false, "replacements": []}]
+    },
+    "Unresolvable": {
+      "type": "object",
+      "description": "One recognized reference that was preserved because it could not be resolved safely.",
+      "additionalProperties": false,
+      "required": ["path", "reference", "context", "reason", "preserved"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "description": "Repository-relative source file path.", "examples": ["task.yaml"]},
+        "reference": {"type": "string", "minLength": 1, "description": "Original reference text preserved in the file.", "examples": ["#objective/OBJ-999"]},
+        "context": {"type": "string", "minLength": 1, "description": "Task, work-item, or context label used for resolution.", "examples": ["WI-0001-10000000"]},
+        "reason": {"type": "string", "minLength": 1, "description": "Reason the reference was not safely migrated.", "examples": ["No task-local entity with id OBJ-999 exists in intent or result."]},
+        "preserved": {"const": true, "description": "The original reference bytes were preserved.", "examples": [true]}
+      },
+      "examples": [{"path": "task.yaml", "reference": "#objective/OBJ-999", "context": "WI-0001-10000000", "reason": "No task-local entity with id OBJ-999 exists in intent or result.", "preserved": true}]
     }
   },
-  "examples": [{"schema": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1", "path": "task.yaml", "changedFiles": [], "files": [{"path": "task.yaml", "changed": false, "replacements": []}], "replacements": [], "findings": []}]
+  "examples": [{"schema": "https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1", "path": "task.yaml", "changedFiles": [], "files": [{"path": "task.yaml", "changed": false, "replacements": []}], "replacements": [], "unresolvable": [], "findings": []}]
 }

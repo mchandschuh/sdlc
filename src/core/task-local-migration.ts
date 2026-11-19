@@ -1,5 +1,6 @@
 import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
+import YAML from 'yaml';
 import { DiscoveryError } from './discovery.js';
 
 export const TASK_LOCAL_MIGRATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1';
@@ -16,12 +17,21 @@ export interface MigrationFile {
   readonly replacements: readonly MigrationReplacement[];
 }
 
+export interface UnresolvableReference {
+  readonly path: string;
+  readonly reference: string;
+  readonly context: string;
+  readonly reason: string;
+  readonly preserved: true;
+}
+
 export interface TaskLocalMigrationReport {
   readonly schema: typeof TASK_LOCAL_MIGRATION_SCHEMA;
   readonly path: string;
   readonly changedFiles: readonly string[];
   readonly files: readonly MigrationFile[];
   readonly replacements: readonly MigrationReplacement[];
+  readonly unresolvable: readonly UnresolvableReference[];
   readonly findings: readonly string[];
 }
 
@@ -33,7 +43,15 @@ const TASK_QUALIFIED = new RegExp(`^(${WORK_ITEM_ID})\\|(${ORDER_KEY})#([a-z][a-
 const HYPHEN_QUALIFIED = new RegExp(`^(${WORK_ITEM_ID})-([0-9]{8})#([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/(${ID})$`, 'u');
 const TASK_ID = new RegExp(`^(${WORK_ITEM_ID})\\|(${ORDER_KEY})$`, 'u');
 const TASK_LOCAL = new RegExp(`^#([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/(${ID})$`, 'u');
+const WORK_ITEM_LOCAL = new RegExp(`^(${WORK_ITEM_ID})\\|(${ORDER_KEY})#work-item/(${WORK_ITEM_ID})$`, 'u');
 const CANONICAL = /^#(?:intent|result)\/.+$/u;
+
+interface TaskContext {
+  readonly workItemId: string;
+  readonly taskUid: string;
+  readonly path: string;
+  readonly value: unknown;
+}
 
 const intentCollections: Readonly<Record<string, string>> = {
   objective: 'objectives',
@@ -81,10 +99,42 @@ async function filesUnder(root: string, selected: string): Promise<string[]> {
   return files;
 }
 
-function taskContextFor(path: string): { readonly workItemId: string; readonly taskUid: string } | undefined {
+function taskIdentityFor(path: string): { readonly workItemId: string; readonly taskUid: string } | undefined {
   const match = /(?:^|[/\\])([A-Z]{1,10}-[0-9]+)-([0-9]{8})[^/\\]*\.ya?ml$/u.exec(path);
   if (!match) return undefined;
   return { workItemId: match[1]!, taskUid: `${match[1]!}-${match[2]!}` };
+}
+
+async function taskContextFor(root: string, path: string): Promise<TaskContext | undefined> {
+  const identity = taskIdentityFor(path);
+  if (!identity) return undefined;
+  try {
+    const source = await readFile(path, 'utf8');
+    const value = extname(path).toLowerCase() === '.json' ? JSON.parse(source) : YAML.parse(source);
+    return { ...identity, path: repositoryPath(root, path), value };
+  } catch {
+    return undefined;
+  }
+}
+
+async function findTaskContext(root: string, taskUid: string, cache: Map<string, TaskContext | undefined>): Promise<TaskContext | undefined> {
+  if (cache.has(taskUid)) return cache.get(taskUid);
+  const match = /^([A-Z]{1,10}-[0-9]+)-([0-9]{8})$/u.exec(taskUid);
+  if (!match) {
+    cache.set(taskUid, undefined);
+    return undefined;
+  }
+  const steps = resolve(root, `.docs/work-items/${match[1]!}/steps`);
+  const files = await filesUnder(root, steps).catch(() => []);
+  for (const path of files) {
+    const context = await taskContextFor(root, path);
+    if (context?.taskUid === taskUid) {
+      cache.set(taskUid, context);
+      return context;
+    }
+  }
+  cache.set(taskUid, undefined);
+  return undefined;
 }
 
 function selector(kind: string, id: string): string | undefined {
@@ -93,6 +143,42 @@ function selector(kind: string, id: string): string | undefined {
   const result = resultCollections[kind];
   if (result) return `#result/${result}/${id}`;
   return undefined;
+}
+
+function objectValue(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+}
+
+function entityPaths(value: unknown, path: readonly string[], id: string, output: string[]): void {
+  if (Array.isArray(value)) {
+    for (const item of value) entityPaths(item, path, id, output);
+    return;
+  }
+  const object = objectValue(value);
+  if (!object) return;
+  if (object.id === id) output.push(path.join('/'));
+  for (const [key, child] of Object.entries(object)) {
+    if (key === 'task') continue;
+    entityPaths(child, [...path, key], id, output);
+  }
+}
+
+function resolvableSelector(context: TaskContext, kind: string, id: string): { readonly value?: string; readonly reason?: string } {
+  const envelope = objectValue(context.value);
+  const task = objectValue(envelope?.task);
+  if (!task) return { reason: 'Containing task document has no task payload.' };
+  const paths: string[] = [];
+  for (const root of ['intent', 'result'] as const) {
+    entityPaths(task[root], [root], id, paths);
+  }
+  if (paths.length === 0) return { reason: `No task-local entity with id ${id} exists in intent or result.` };
+  if (paths.length > 1) return { reason: `Entity id ${id} is ambiguous across task-local paths: ${paths.join(', ')}.` };
+  const path = paths[0]!;
+  return { value: `#${path}/${id}` };
+}
+
+function unresolved(path: string, reference: string, context: string, reason: string): UnresolvableReference {
+  return { path, reference, context, reason, preserved: true };
 }
 
 function migrateReference(value: string, task: { readonly workItemId: string; readonly taskUid: string } | undefined): { value: string; from: string; to: string } | undefined {
@@ -118,17 +204,80 @@ function migrateReference(value: string, task: { readonly workItemId: string; re
   return { value: target, from: value, to: target };
 }
 
-function migrateText(source: string, task: { readonly workItemId: string; readonly taskUid: string } | undefined): { text: string; replacements: MigrationReplacement[] } {
+async function migrateText(
+  root: string,
+  path: string,
+  source: string,
+  task: TaskContext | undefined,
+  taskCache: Map<string, TaskContext | undefined>,
+): Promise<{ text: string; replacements: MigrationReplacement[]; unresolvable: UnresolvableReference[] }> {
   const replacements = new Map<string, MigrationReplacement>();
-  const pattern = new RegExp(`${WORK_ITEM_ID}(?:\\||-)[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}|${WORK_ITEM_ID}\\|${ORDER_KEY}|#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}`, 'gu');
-  const text = source.replace(pattern, (value) => {
-    const migrated = migrateReference(value, task);
-    if (!migrated || (!task && value.startsWith('#'))) return value;
-    const previous = replacements.get(`${migrated.from}\u0000${migrated.to}`);
-    replacements.set(`${migrated.from}\u0000${migrated.to}`, { from: migrated.from, to: migrated.to, count: (previous?.count ?? 0) + 1 });
-    return migrated.value;
-  });
-  return { text, replacements: [...replacements.values()] };
+  const unresolvable: UnresolvableReference[] = [];
+  const pattern = new RegExp(`${WORK_ITEM_ID}(?:\\||-)[0-9]{2,8}#[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?!/)|${WORK_ITEM_ID}\\|${ORDER_KEY}#work-item/${WORK_ITEM_ID}|${WORK_ITEM_ID}\\|${ORDER_KEY}|#(?!intent/|result/)[a-z][a-z0-9]*(?:-[a-z0-9]+)*/${ID}(?!/)`, 'gu');
+  const matches = [...source.matchAll(pattern)];
+  let cursor = 0;
+  let text = '';
+  for (const match of matches) {
+    const value = match[0]!;
+    text += source.slice(cursor, match.index);
+    cursor = match.index! + value.length;
+    const qualifiedWorkItem = WORK_ITEM_LOCAL.exec(value);
+    if (qualifiedWorkItem) {
+      const workItemPath = resolve(root, `.docs/work-items/${qualifiedWorkItem[3]!}/work-item.json`);
+      try {
+        const workItem = JSON.parse(await readFile(workItemPath, 'utf8')) as { workItemId?: string };
+        if (workItem.workItemId === qualifiedWorkItem[3]!) {
+          const migrated = { from: value, to: `${qualifiedWorkItem[3]}#work-item.json#work-item/${qualifiedWorkItem[3]}` };
+          const previous = replacements.get(`${migrated.from}\u0000${migrated.to}`);
+          replacements.set(`${migrated.from}\u0000${migrated.to}`, { ...migrated, count: (previous?.count ?? 0) + 1 });
+          text += migrated.to;
+          continue;
+        }
+      } catch {
+        // Fall through to the explicit unresolved report.
+      }
+      unresolvable.push(unresolved(path, value, 'work-item', `Work-item target ${qualifiedWorkItem[3]} could not be resolved.`));
+      text += value;
+      continue;
+    }
+    const taskId = TASK_ID.exec(value);
+    if (taskId) {
+      const targetUid = `${taskId[1]!}-${taskId[2]!.padStart(8, '0')}`;
+      if (task?.taskUid === targetUid || await findTaskContext(root, targetUid, taskCache)) {
+        const previous = replacements.get(`${value}\u0000${targetUid}`);
+        replacements.set(`${value}\u0000${targetUid}`, { from: value, to: targetUid, count: (previous?.count ?? 0) + 1 });
+      } else {
+        unresolvable.push(unresolved(path, value, 'task', `Task ${targetUid} could not be resolved.`));
+      }
+      text += (replacements.has(`${value}\u0000${targetUid}`) ? targetUid : value);
+      continue;
+    }
+    const qualified = TASK_QUALIFIED.exec(value) ?? HYPHEN_QUALIFIED.exec(value);
+    const local = TASK_LOCAL.exec(value);
+    const targetUid = qualified ? `${qualified[1]!}-${qualified[2]!.padStart(8, '0')}` : undefined;
+    const targetContext = qualified
+      ? (task?.taskUid === targetUid ? task : await findTaskContext(root, targetUid!, taskCache))
+      : task;
+    const kind = qualified?.[3] ?? local?.[1];
+    const id = qualified?.[4] ?? local?.[2];
+    if (!targetContext || !kind || !id) {
+      unresolvable.push(unresolved(path, value, task ? task.taskUid : 'no-task-context', targetContext ? 'Reference selector could not be parsed.' : 'No containing task context is available.'));
+      text += value;
+      continue;
+    }
+    const resolved = resolvableSelector(targetContext, kind, id);
+    if (!resolved.value) {
+      unresolvable.push(unresolved(path, value, targetContext.taskUid, resolved.reason!));
+      text += value;
+      continue;
+    }
+    const replacement = qualified ? `${targetContext.taskUid}${resolved.value}` : resolved.value;
+    const previous = replacements.get(`${value}\u0000${replacement}`);
+    replacements.set(`${value}\u0000${replacement}`, { from: value, to: replacement, count: (previous?.count ?? 0) + 1 });
+    text += replacement;
+  }
+  text += source.slice(cursor);
+  return { text, replacements: [...replacements.values()], unresolvable };
 }
 
 export async function migrateTaskLocalReferences(repositoryRoot: string, requestedPath: string): Promise<TaskLocalMigrationReport> {
@@ -136,9 +285,11 @@ export async function migrateTaskLocalReferences(repositoryRoot: string, request
   const paths = await filesUnder(repositoryRoot, selected);
   const files: MigrationFile[] = [];
   const total = new Map<string, MigrationReplacement>();
+  const unresolvable: UnresolvableReference[] = [];
+  const taskCache = new Map<string, TaskContext | undefined>();
   for (const path of paths) {
     const source = await readFile(path, 'utf8');
-    const migrated = migrateText(source, taskContextFor(path));
+    const migrated = await migrateText(repositoryRoot, repositoryPath(repositoryRoot, path), source, await taskContextFor(repositoryRoot, path), taskCache);
     const filePath = repositoryPath(repositoryRoot, path);
     files.push({ path: filePath, changed: migrated.text !== source, replacements: migrated.replacements });
     for (const replacement of migrated.replacements) {
@@ -146,6 +297,7 @@ export async function migrateTaskLocalReferences(repositoryRoot: string, request
       const previous = total.get(key);
       total.set(key, { ...replacement, count: (previous?.count ?? 0) + replacement.count });
     }
+    unresolvable.push(...migrated.unresolvable);
     if (migrated.text !== source) await writeFile(path, migrated.text, 'utf8');
   }
   const replacements = [...total.values()];
@@ -155,6 +307,7 @@ export async function migrateTaskLocalReferences(repositoryRoot: string, request
     changedFiles: files.filter((file) => file.changed).map((file) => file.path),
     files,
     replacements,
+    unresolvable,
     findings: [],
   };
 }

@@ -33,6 +33,7 @@ interface ParsedDocument {
 }
 
 type Selector = { readonly root: 'intent' | 'result'; readonly path: readonly string[]; readonly id: string; readonly legacy?: boolean };
+type TaskContext = { readonly document: ParsedDocument; readonly taskUid: string };
 
 function report(ref: string, findings: readonly string[], resolution: ReferenceResolution | null = null, references: Readonly<Record<string, ReferenceResolution>> = {}): ReferenceResolutionReport {
   return {
@@ -208,7 +209,7 @@ async function taskDocument(repositoryRoot: string, workItemId: string, orderKey
   return { document: await parseDocument(repositoryRoot, task.path), taskUid: task.taskUid };
 }
 
-async function resolveLocal(repositoryRoot: string, ref: string): Promise<ReferenceResolutionReport> {
+async function resolveLocal(repositoryRoot: string, ref: string, currentTask?: TaskContext): Promise<ReferenceResolutionReport> {
   const bareWorkItem = workItemReference(ref);
   if (bareWorkItem) {
     const document = await parseDocument(repositoryRoot, `.docs/work-items/${bareWorkItem}/work-item.json`);
@@ -231,7 +232,12 @@ async function resolveLocal(repositoryRoot: string, ref: string): Promise<Refere
   }
 
   const localTask = taskLocalReference(ref);
-  if (localTask) return report(ref, ['Task-local references require an explicit current-task document context and cannot be resolved by this command root alone.']);
+  if (localTask) {
+    if (!currentTask) return report(ref, ['Task-local references require an explicit current-task document context and cannot be resolved by this command root alone.']);
+    const data = selectData(currentTask.document.value, localTask, currentTask.document.repositoryPath.split('/')[2] ?? '', currentTask.taskUid);
+    if (data === undefined) return report(ref, [`Selector not found in ${currentTask.document.repositoryPath}: ${localTask.root}/${localTask.path.join('/')}/${localTask.id}`]);
+    return success(ref, currentTask.document, data);
+  }
 
   const legacyLocalTask = legacyTaskLocalReference(ref);
   if (legacyLocalTask) return report(ref, ['Legacy task-local references require migration to an explicit intent/result path before resolution.']);
@@ -257,11 +263,22 @@ async function resolveLocal(repositoryRoot: string, ref: string): Promise<Refere
   return report(ref, [`Reference form is not supported for local resolution: ${ref}`]);
 }
 
-export async function resolveReference(repositoryRoot: string, schemaRoot: string, ref: string, depth = 1): Promise<ReferenceResolutionReport> {
+export async function resolveReference(repositoryRoot: string, schemaRoot: string, ref: string, depth = 1, currentTask?: TaskContext): Promise<ReferenceResolutionReport> {
   const syntax = await validateReference(schemaRoot, ref);
   if (!syntax.valid) return report(ref, syntax.findings);
   try {
-    const root = await resolveLocal(repositoryRoot, ref);
+    let rootContext = currentTask;
+    if (!rootContext) {
+      const bareTask = taskUidReference(ref);
+      const qualified = taskQualifiedReference(ref);
+      const workItemId = bareTask?.workItemId ?? qualified?.workItemId;
+      const orderKey = bareTask?.orderKey ?? qualified?.orderKey;
+      if (workItemId && orderKey) {
+        const task = await taskDocument(repositoryRoot, workItemId, orderKey);
+        if (task) rootContext = { document: task.document, taskUid: task.taskUid };
+      }
+    }
+    const root = await resolveLocal(repositoryRoot, ref, rootContext);
     if (!root.resolution || depth <= 1 || !root.valid) return root;
 
     const references: Record<string, ReferenceResolution> = {};
@@ -277,7 +294,7 @@ export async function resolveReference(repositoryRoot: string, schemaRoot: strin
       for (const candidate of candidates) {
         if (seen.has(candidate)) continue;
         seen.add(candidate);
-        const child = await resolveReference(repositoryRoot, schemaRoot, candidate, 1);
+        const child = await resolveReference(repositoryRoot, schemaRoot, candidate, 1, rootContext);
         if (!child.resolution) {
           findings.push(...child.findings.map((finding) => `Referenced ${candidate}: ${finding}`));
           continue;

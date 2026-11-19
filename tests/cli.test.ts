@@ -229,13 +229,23 @@ describe('CLI interface', () => {
     const target = join(selected, 'WI-0099-10000000-task.yaml');
     await writeFile(target, [
       'taskUid: WI-0099-10000000',
+      'task:',
+      '  intent:',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: objective',
+      '  result:',
+      '    results:',
+      '      - id: R-001',
+      '        summary: result',
+      '      - id: R-002',
+      '        summary: result',
       'references:',
       '  - "#objective/OBJ-001"',
       '  - "WI-0099|10000000#result/R-001"',
       '  - "WI-0099-10000000#result/R-002"',
       '  - "OBJ-001"',
       '  - "WI-0099|10000000"',
-      'malformed: [',
       '',
     ].join('\n'));
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
@@ -250,7 +260,7 @@ describe('CLI interface', () => {
       process.chdir(originalCwd);
     }
 
-    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; replacements: Array<{ from: string; to: string; count: number }> };
+    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; replacements: Array<{ from: string; to: string; count: number }>; unresolvable: Array<{ reference: string }> };
     expect(report.changedFiles).toEqual(['nested/WI-0099-10000000-task.yaml']);
     expect(report.replacements).toEqual(expect.arrayContaining([
       { from: '#objective/OBJ-001', to: '#intent/objectives/OBJ-001', count: 1 },
@@ -258,6 +268,7 @@ describe('CLI interface', () => {
       { from: 'WI-0099-10000000#result/R-002', to: 'WI-0099-10000000#result/results/R-002', count: 1 },
       { from: 'WI-0099|10000000', to: 'WI-0099-10000000', count: 1 },
     ]));
+    expect(report.unresolvable).toEqual([]);
     expect(await readFile(target, 'utf8')).toContain('#intent/objectives/OBJ-001');
     expect(await readFile(target, 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
     expect(await readFile(join(root, 'outside.yaml'), 'utf8')).toContain('WI-0099|10000000#result/R-001');
@@ -288,21 +299,61 @@ describe('CLI interface', () => {
     expect(errors.at(-1)).toContain('Path must remain within the repository');
   });
 
+  it('preserves and reports recognized references whose task-local targets cannot resolve', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-task-local-migration-unresolvable-'));
+    const target = join(root, 'WI-0099-10000000-task.yaml');
+    await writeFile(target, [
+      'taskUid: WI-0099-10000000',
+      'task:',
+      '  intent:',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: objective',
+      'references:',
+      '  - "#objective/OBJ-999"',
+      '  - "WI-0099|10000000#result/R-001"',
+      '',
+    ].join('\n'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['ref', 'migrate-task-local-up', '--path', 'WI-0099-10000000-task.yaml', '--json'])).resolves.toBe(0);
+    } finally {
+      process.chdir(originalCwd);
+    }
+    const report = JSON.parse(output.at(-1)!) as { changedFiles: string[]; unresolvable: Array<{ path: string; reference: string; reason: string; preserved: true }> };
+    expect(report.changedFiles).toEqual([]);
+    expect(report.unresolvable).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'WI-0099-10000000-task.yaml', reference: '#objective/OBJ-999', preserved: true }),
+      expect.objectContaining({ path: 'WI-0099-10000000-task.yaml', reference: 'WI-0099|10000000#result/R-001', preserved: true }),
+    ]));
+    const content = await readFile(target, 'utf8');
+    expect(content).toContain('#objective/OBJ-999');
+    expect(content).toContain('WI-0099|10000000#result/R-001');
+  });
+
   it('migrates an entire selected work item and leaves sibling work items unchanged', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-work-item-migration-'));
     const selected = join(root, '.docs', 'work-items', 'WI-0099');
     const sibling = join(root, '.docs', 'work-items', 'WI-0100');
     await mkdir(join(selected, 'steps'), { recursive: true });
     await mkdir(join(sibling, 'steps'), { recursive: true });
-    await writeFile(join(selected, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', ref: 'WI-0099|10000000#result/R-001', value: 'OBJ-001' }, null, 2));
+    await writeFile(join(selected, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', ref: 'WI-0099|10000000#work-item/WI-0099', value: 'OBJ-001' }, null, 2));
     await writeFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), [
       'taskUid: WI-0099-10000000',
+      'task:',
+      '  result:',
+      '    results:',
+      '      - id: R-001',
+      '        summary: result',
       'references:',
-      '  - "#objective/OBJ-001"',
       '  - "WI-0099|10000000#result/R-001"',
       '',
     ].join('\n'));
-    await writeFile(join(sibling, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0100', ref: 'WI-0100|10000000#result/R-001' }, null, 2));
+    await writeFile(join(sibling, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0100', ref: 'WI-0100|10000000#work-item/WI-0100' }, null, 2));
     await writeFile(join(sibling, 'steps', 'WI-0100-10000000-task.yaml'), 'ref: "#objective/OBJ-001"\n');
     await execFileAsync('git', ['-C', root, 'init', '--quiet']);
 
@@ -322,9 +373,9 @@ describe('CLI interface', () => {
       '.docs/work-items/WI-0099/steps/WI-0099-10000000-task.yaml',
       '.docs/work-items/WI-0099/work-item.json',
     ]);
-    expect(await readFile(join(selected, 'work-item.json'), 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
-    expect(await readFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), 'utf8')).toContain('#intent/objectives/OBJ-001');
-    expect(await readFile(join(sibling, 'work-item.json'), 'utf8')).toContain('WI-0100|10000000#result/R-001');
+    expect(await readFile(join(selected, 'work-item.json'), 'utf8')).toContain('WI-0099#work-item.json#work-item/WI-0099');
+    expect(await readFile(join(selected, 'steps', 'WI-0099-10000000-task.yaml'), 'utf8')).toContain('WI-0099-10000000#result/results/R-001');
+    expect(await readFile(join(sibling, 'work-item.json'), 'utf8')).toContain('WI-0100|10000000#work-item/WI-0100');
     expect(await readFile(join(sibling, 'steps', 'WI-0100-10000000-task.yaml'), 'utf8')).toContain('#objective/OBJ-001');
   });
 
