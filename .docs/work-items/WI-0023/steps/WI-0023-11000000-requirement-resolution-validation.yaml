@@ -1,0 +1,153 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0023
+taskUid: WI-0023-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0023-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate direct requirement identifier resolution
+objective: Validate the requirement declaration authority audit, strict identifier schema registration, local resolution, compatibility, errors, read-only behavior, and complete test gates.
+references:
+  required:
+    - .docs/work-items/WI-0023/work-item.json
+    - .docs/work-items/WI-0023/steps/WI-0023-10000000-requirement-resolution-implementation.yaml
+    - schemas/common/v1/sdlc-requirement-identifier.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/work-item-assessment/v1/work-item-assessment.schema.json
+    - schemas/work-item-requirements/v1/sdlc-work-item-requirements.schema.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+dependsOn:
+  - WI-0023-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0023/steps/WI-0023-11000000-requirement-resolution-validation.yaml
+  commitSubject: 'WI-0023: test(ref): validate direct requirement resolution'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0023, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate direct requirement identifier syntax, declaration authority, local resolution, compatibility, errors, and read-only behavior.
+    inputs:
+      - id: INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0023-10000000#result/R-001
+        purpose: Identify the direct requirement resolution implementation.
+        required: true
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_001
+        purpose: Identify the authority audit conditions.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_002
+        purpose: Identify strict schema and registry conditions.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_003
+        purpose: Identify local resolution conditions.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_004
+        purpose: Identify compatibility and error conditions.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_005
+        purpose: Identify the complete validation gate.
+        required: true
+    targets:
+      - id: TARGET-REQUIREMENT-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0023-10000000#result/R-001
+        purpose: Validate the identifier and resolver implementation.
+        required: true
+    objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+    testCaseRefs: ['#test-case/TC-REQUIREMENT-AUTHORITY-AUDIT', '#test-case/TC-REQUIREMENT-SCHEMA', '#test-case/TC-REQUIREMENT-REGISTRY', '#test-case/TC-REQUIREMENT-RESOLVE', '#test-case/TC-REQUIREMENT-ERRORS', '#test-case/TC-REQUIREMENT-COMPATIBILITY', '#test-case/TC-REQUIREMENT-READ-ONLY', '#test-case/TC-REQUIREMENT-TEST-GATE']
+    procedures:
+      - id: VAL-REQUIREMENT-RESOLUTION-001
+        sequence: 1
+        name: validate-direct-requirement-resolution
+        description: Audit declaration authority, run schema and package checks, validate direct identifiers, resolve valid and invalid local requirements from nested CWDs, preserve qualified selectors, and verify read-only behavior.
+        reason: Prove that strict requirement identifiers are both directly validated and semantically resolved only from authoritative work-item.json declarations.
+        targetRefs: ['#target/TARGET-REQUIREMENT-001']
+        objectiveRefs: ['#objective/OBJ-001', '#objective/OBJ-002']
+        testCaseRefs: ['#test-case/TC-REQUIREMENT-AUTHORITY-AUDIT', '#test-case/TC-REQUIREMENT-SCHEMA', '#test-case/TC-REQUIREMENT-REGISTRY', '#test-case/TC-REQUIREMENT-RESOLVE', '#test-case/TC-REQUIREMENT-ERRORS', '#test-case/TC-REQUIREMENT-COMPATIBILITY', '#test-case/TC-REQUIREMENT-READ-ONLY', '#test-case/TC-REQUIREMENT-TEST-GATE']
+        method:
+          executionMode: executable
+          target: sdlc ref validate/resolve requirement identifier and repository authority audit
+          steps:
+            - Audit every schema and all existing work-item/task artifacts for requirement declaration fields and record authoritative versus derived locations.
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run the complete repository schema audit.
+            - Validate valid and malformed requirement identifiers through the dynamic reference registry.
+            - Resolve a valid requirement from repository root and nested CWDs and verify the returned work-item.json data.
+            - Exercise missing work item, missing requirement, duplicate requirement, out-of-scope, and read-only cases.
+            - Resolve an existing qualified requirement selector and verify compatibility.
+            - Run sdlc work-item validate --work-item WI-0023 --json.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim global or remote requirement resolution.
+      - Do not claim mutation, approval, migration, or production readiness.
+  result:
+    status: implemented-unproven
+    summary: Direct requirement resolution validation is planned and has not yet been executed.
+    executions:
+      - id: EXEC-VAL-001
+        procedureRef: '#procedure/VAL-REQUIREMENT-RESOLUTION-001'
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: Validation task plan
+            claim: Requirement authority, identifier, and local resolution validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - The schema audit and direct resolution behavior have not yet been validated.
+    nonClaims:
+      - This planned result does not claim implementation, schema registration, or resolver completion.

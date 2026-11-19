@@ -1,0 +1,125 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0023
+taskUid: WI-0023-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement strict direct requirement identifier resolution
+objective: Add the registered requirement identifier schema, authoritative work-item requirement lookup, repository-local ref resolution, and focused regression coverage.
+references:
+  required:
+    - .docs/work-items/WI-0023/work-item.json
+    - .cline/README.md
+    - schemas/common/v1/sdlc-work-item-id.schema.json
+    - schemas/common/v1/sdlc-task-identifier.schema.json
+    - schemas/common/v1/sdlc-task-local-reference.schema.json
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/cli/main.ts
+    - tests/cli.test.ts
+  informational:
+    - schemas/work-item-requirements/v1/sdlc-work-item-requirements.schema.json
+    - schemas/work-item-assessment/v1/work-item-assessment.schema.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - .docs/work-items/WI-0022/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/sdlc-requirement-identifier.schema.json
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/cli/
+    - tests/
+    - .docs/work-items/WI-0023/steps/WI-0023-10000000-requirement-resolution-implementation.yaml
+  commitSubject: 'WI-0023: feat(ref): resolve direct requirement identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement strict directly validated requirement identifiers and read-only local resolution from work-item.json requirements.items.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_001
+        purpose: Define the authoritative requirement declaration boundary.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_002
+        purpose: Define the strict identifier schema and registry behavior.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_003
+        purpose: Define local direct resolution behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_004
+        purpose: Define failures and compatibility behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0023#work-item.json#requirement/WI-0023_REQ_005
+        purpose: Define implementation evidence and test gates.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: The strict requirement identifier is dynamically registered and syntactically validated as a direct reference type.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-REQUIREMENT-AUTHORITY-AUDIT', '#test-case/TC-REQUIREMENT-SCHEMA', '#test-case/TC-REQUIREMENT-REGISTRY']
+      - id: OBJ-002
+        statement: Bare requirement identifiers resolve locally to authoritative work-item requirement objects while existing qualified selectors and read-only boundaries remain intact.
+        inputRefs: [INPUT-REQ-003, INPUT-REQ-004, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-REQUIREMENT-RESOLVE', '#test-case/TC-REQUIREMENT-ERRORS', '#test-case/TC-REQUIREMENT-COMPATIBILITY', '#test-case/TC-REQUIREMENT-READ-ONLY', '#test-case/TC-REQUIREMENT-TEST-GATE']
+    ownedPaths: [schemas/common/v1/sdlc-requirement-identifier.schema.json, src/core/, src/cli/, tests/]
+    nonGoals:
+      - Do not add global or remote requirement resolution.
+      - Do not rewrite existing qualified requirement references.
+      - Do not treat assessment, projection, strategy, or task payload requirement fields as authoritative declarations.
+    steps:
+      - Audit schemas and existing artifacts for authoritative requirement declaration locations.
+      - Add the marked requirement-identifier/v1 schema with exact three-digit canonical syntax and examples.
+      - Extend local resolution from nested repository CWDs to select requirements.items by identifier.
+      - Add dynamic registry, valid/invalid, authority-boundary, compatibility, error, and read-only tests.
+      - Run the complete suite before commit.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Direct requirement identifier implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the strict identifier, authority audit, and local resolution implementation plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0023/steps/WI-0023-10000000-requirement-resolution-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - The requirement identifier schema and bare local resolution do not yet exist.
