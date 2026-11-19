@@ -7,6 +7,7 @@ import YAML from 'yaml';
 
 const WORK_ITEM_ID = /^[A-Z]{1,10}-[0-9]+$/u;
 const TASK_UID = /^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u;
+export const SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS = ['.json', '.yaml', '.yml', '.ts', '.md'] as const;
 const execFileAsync = promisify(execFile);
 
 export interface WorkItemSummary {
@@ -176,14 +177,14 @@ export async function discoverWorkItems(repositoryRoot: string): Promise<Discove
   return { items, findings };
 }
 
-async function taskFiles(directory: string, root = directory): Promise<string[]> {
+export async function enumerateWorkItemObjects(directory: string, root = directory): Promise<string[]> {
   if (!existsSync(directory)) return [];
   const entries = (await readdir(directory, { withFileTypes: true })).sort((left, right) => left.name.localeCompare(right.name, undefined, { numeric: true }));
   const files: string[] = [];
   for (const entry of entries) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await taskFiles(path, root));
-    else if (entry.isFile() && (entry.name.endsWith('.yaml') || entry.name.endsWith('.yml'))) files.push(path);
+    if (entry.isDirectory()) files.push(...await enumerateWorkItemObjects(path, root));
+    else if (entry.isFile() && SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS.some((extension) => entry.name.endsWith(extension))) files.push(path);
   }
   return files.sort((left, right) => relative(root, left).localeCompare(relative(root, right), undefined, { numeric: true }));
 }
@@ -196,7 +197,7 @@ export async function discoverTasks(repositoryRoot: string, workItemId: string):
   const stepsPath = typeof workItem.stepsPath === 'string' ? workItem.stepsPath : '';
   if (!stepsPath.endsWith('/')) throw new DiscoveryError(`Work item has no valid stepsPath: ${workItemId}`);
   const directory = containedPath(repositoryRoot, stepsPath);
-  const files = await taskFiles(directory);
+  const files = await enumerateWorkItemObjects(directory);
   const items: TaskSummary[] = [];
   const findings: string[] = [];
 

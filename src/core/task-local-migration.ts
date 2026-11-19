@@ -1,7 +1,7 @@
-import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
 import YAML from 'yaml';
-import { DiscoveryError } from './discovery.js';
+import { DiscoveryError, enumerateWorkItemObjects } from './discovery.js';
 import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
 
 export const TASK_LOCAL_MIGRATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/ref/task-local-migration/v1';
@@ -121,18 +121,11 @@ async function filesUnder(root: string, selected: string): Promise<string[]> {
   const metadata = await stat(selected).catch(() => undefined);
   if (!metadata) throw new DiscoveryError(`Migration path does not exist: ${repositoryPath(root, selected)}`);
   if (metadata.isFile()) return [selected];
-  const entries = (await readdir(selected, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-  const files: string[] = [];
-  for (const entry of entries) {
-    const path = join(selected, entry.name);
-    if (entry.isDirectory()) files.push(...await filesUnder(root, path));
-    else if (entry.isFile() && ['.json', '.yaml', '.yml', '.ts', '.md'].includes(extname(entry.name).toLowerCase())) files.push(path);
-  }
-  return files;
+  return enumerateWorkItemObjects(selected);
 }
 
 function taskIdentityFor(path: string): { readonly workItemId: string; readonly taskUid: string } | undefined {
-  const match = /(?:^|[/\\])([A-Z]{1,10}-[0-9]+)-([0-9]{8})[^/\\]*\.ya?ml$/u.exec(path);
+  const match = /(?:^|[/\\])([A-Z]{1,10}-[0-9]+)-([0-9]{8})[^/\\]*\.(?:json|ya?ml|ts|md)$/u.exec(path);
   if (!match) return undefined;
   return { workItemId: match[1]!, taskUid: `${match[1]!}-${match[2]!}` };
 }
@@ -157,7 +150,7 @@ async function findTaskContext(root: string, taskUid: string, cache: Map<string,
     return undefined;
   }
   const steps = resolve(root, `.docs/work-items/${match[1]!}/steps`);
-  const files = await filesUnder(root, steps).catch(() => []);
+  const files = await enumerateWorkItemObjects(steps).catch(() => []);
   for (const path of files) {
     const context = await taskContextFor(root, path);
     if (context?.taskUid === taskUid) {
