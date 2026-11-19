@@ -1,0 +1,124 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0026
+taskUid: WI-0026-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement repository-unique identifier schemas and resolution
+objective: Audit the identifier vocabulary, add repository-unique schema forms, extend direct ref validation/resolution with global identity and path, and implement migration to full identifiers.
+references:
+  required:
+    - .docs/work-items/WI-0026/work-item.json
+    - .cline/README.md
+    - schemas/common/v1/
+    - schemas/work-item/v2/work-item.schema.json
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/core/task-local-migration.ts
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0023/work-item.json
+    - .docs/work-items/WI-0025/work-item.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - schemas/common/v1/
+    - schemas/work-item/v2/
+    - schemas/sdlc-ref/v1/
+    - src/core/
+    - src/cli/
+    - tests/
+    - .docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml
+  commitSubject: 'WI-0026: feat(ref): add repository-unique identifiers'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement repository-unique identifier contracts and direct validation/resolution for every inventory row.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: INPUT-REQ-001
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_001
+        purpose: Define and publish the identifier inventory table.
+        required: true
+      - id: INPUT-REQ-002
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_002
+        purpose: Define repository-unique target forms.
+        required: true
+      - id: INPUT-REQ-003
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_003
+        purpose: Define migration behavior.
+        required: true
+      - id: INPUT-REQ-004
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_004
+        purpose: Define direct ref validation/resolution response behavior.
+        required: true
+      - id: INPUT-REQ-005
+        kind: requirement
+        ref: WI-0026#work-item.json#requirement/WI-0026_REQ_005
+        purpose: Define validation enforcement and compatibility.
+        required: true
+    objectives:
+      - id: OBJ-001
+        statement: Every audited identifier type has a documented repository-unique target prefix and schema contract.
+        inputRefs: [INPUT-REQ-001, INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-IDENTIFIER-INVENTORY', '#test-case/TC-IDENTIFIER-SCHEMAS']
+      - id: OBJ-002
+        statement: Direct ref validate/resolve and migration support the repository-unique forms with stable global identity and repository path output.
+        inputRefs: [INPUT-REQ-003, INPUT-REQ-004, INPUT-REQ-005]
+        testCaseRefs: ['#test-case/TC-REF-GLOBAL-ID', '#test-case/TC-REF-PATH', '#test-case/TC-REF-RESOLUTION', '#test-case/TC-MIGRATION-FULL-ID', '#test-case/TC-MIGRATION-AMBIGUOUS', '#test-case/TC-VALIDATION-FULL-ID', '#test-case/TC-READ-ONLY']
+    ownedPaths: [schemas/, src/core/, src/cli/, tests/]
+    nonGoals:
+      - Do not perform bulk historical migration automatically.
+      - Do not add remote lookup.
+    steps:
+      - Audit all identifier-bearing schemas and records and persist the table in the work-item/task planning artifacts.
+      - Add or update identifier schemas for work-item and work-item-task-prefixed forms.
+      - Extend reference validation responses with globally unique resource reference and repositoryPath on success.
+      - Extend reference resolution to return repository-unique resources directly.
+      - Extend task-local migration to rewrite all safely contextualized identifier forms and report ambiguous values.
+      - Add validation findings for non-canonical identifiers across work-item and task scope.
+      - Add complete tests and run all gates.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Repository-unique identifier implementation has not yet been processed.
+      changes:
+        - id: CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the identifier inventory, target prefix, migration, and reference response plan.
+          objectiveRefs: [OBJ-001, OBJ-002]
+          paths: [.docs/work-items/WI-0026/steps/WI-0026-10000000-repository-identifier-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [OBJ-001, OBJ-002]
+      tests: []
+    limitations:
+      - Repository-unique identifier schemas, migration, and direct resolution have not yet been implemented.
