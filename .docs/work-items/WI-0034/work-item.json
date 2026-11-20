@@ -1,0 +1,173 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0034",
+  "status": "planned",
+  "title": "Define type-specific task lifecycle status contracts",
+  "type": "feature",
+  "objective": "Make task lifecycle status type-specific and schema-declared, keep it distinct from envelope processingStatus and result outcome status, conditionally validate result fields by task status, document every x-sdlc-* convention, migrate existing task records, and release the breaking pre-1.0 schema change as a minor version.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0034-task-lifecycle-status",
+      "created": false,
+      "rationale": "The task contract and validator changes are breaking schema changes and must be processed on a dedicated context branch before the pre-1.0 minor release is prepared on the primary branch."
+    }
+  },
+  "baseline": "2034b87877c12fe497e88736841f637f4adf9bb2",
+  "request": {
+    "source": "conversation",
+    "text": "Define type-specific task lifecycle status contracts distinct from envelope processingStatus and result outcome status; require every task contract to declare its own status, add declarative conditional result validation, document all x-sdlc-* schema conventions in schemas/README.md, migrate existing task records, and release the pre-1.0 breaking schema change as a minor version.",
+    "sha256": "0e06f19c31c42b72f0f94dd62c879760f3868f76b99a8b71b939060c7bb42747"
+  },
+  "scope": [
+    {
+      "name": "processing-and-task-lifecycle-separation",
+      "description": "Preserve envelope processingStatus as the host processing boundary and define task.status as the selected task type lifecycle boundary.",
+      "reason": "Processing completion and task completion are different facts and must not be conflated."
+    },
+    {
+      "name": "type-specific-task-status-contracts",
+      "description": "Require a root status field in every task-specific contract with a task-specific enum, descriptions, and lifecycle semantics.",
+      "reason": "Each task kind has different milestones, blockers, gates, and terminal conditions."
+    },
+    {
+      "name": "declarative-result-requirements",
+      "description": "Declare status-dependent result and result-field requirements in task schemas using documented x-sdlc-* metadata interpreted by generic validation code.",
+      "reason": "Adding or changing a task contract should update conditional validation without adding task-type branches to the validator."
+    },
+    {
+      "name": "schema-convention-documentation",
+      "description": "Add schemas/README.md documenting every x-sdlc-* convention, schema annotation, registry behavior, and interpretation rule.",
+      "reason": "Schema metadata is executable contract information and must have one durable authoring and consumer guide."
+    },
+    {
+      "name": "persisted-record-migration",
+      "description": "Audit and migrate existing task records and examples to the new type-specific lifecycle status contract without confusing result.status values with task.status.",
+      "reason": "The new required field is a breaking change to all persisted task envelopes."
+    },
+    {
+      "name": "pre-v1-minor-release",
+      "description": "Release the breaking schema and validator change as a minor package version under the repository pre-1.0 compatibility policy.",
+      "reason": "The public schema contract changes, but the package remains below 1.0.0."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "processing-status-redesign",
+      "description": "Do not change the meaning or vocabulary of envelope processingStatus.",
+      "reason": "The host processing boundary already has a separate responsibility.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "result-outcome-collapse",
+      "description": "Do not remove or rename task-specific result.status fields or treat them as replacements for task lifecycle status.",
+      "reason": "Result outcomes describe observations; task status describes lifecycle.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "semantic-approval",
+      "description": "Do not infer approval, production readiness, or successful target behavior solely from task.status: complete.",
+      "reason": "A finalized validation or review task may record a failed, blocked, or rejected outcome.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0034_REQ_001",
+        "name": "task-contract-status-required",
+        "description": "Every task-specific contract must require a root status field in addition to intent and result, and the selected contract must own the allowed status values.",
+        "reason": "Task lifecycle vocabulary cannot be safely represented by one generic envelope enum because each task type has different milestones and terminal conditions.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0034_REQ_001_AC_001",
+            "description": "The decomposition, research, decision, design, implementation, test-strategy, validation, review, rework, and delivery schemas each require status, intent, and result at their task-contract root."
+          },
+          {
+            "id": "WI-0034_REQ_001_AC_002",
+            "description": "The envelope continues to require task.status but generic envelope validation does not reject a valid status solely because it belongs to a different task type; selected task-schema validation rejects unknown type-specific statuses."
+          }
+        ]
+      },
+      {
+        "id": "WI-0034_REQ_002",
+        "name": "lifecycle-status-separation",
+        "description": "The implementation must preserve distinct meanings for envelope processingStatus, task lifecycle status, and task-specific result status.",
+        "reason": "A processing-completed envelope can contain a planned task, and a complete validation task can record a failed validation result.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0034_REQ_002_AC_001",
+            "description": "Documentation and tests demonstrate processingStatus, task.status, and result.status with distinct values and meanings."
+          },
+          {
+            "id": "WI-0034_REQ_002_AC_002",
+            "description": "Validation never derives task lifecycle status from processingStatus or result.status."
+          }
+        ]
+      },
+      {
+        "id": "WI-0034_REQ_003",
+        "name": "declarative-conditional-results",
+        "description": "Each task schema must declare status-dependent result and result-field requirements through documented x-sdlc-* metadata, and generic validation must interpret that metadata without task-type-specific branches.",
+        "reason": "Incomplete tasks must persist with absent, null, empty, or partial results while finalized task statuses must enforce the appropriate task-specific result contract.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0034_REQ_003_AC_001",
+            "description": "Schemas declare which result paths are required for each lifecycle status, including any task-specific milestone and terminal requirements."
+          },
+          {
+            "id": "WI-0034_REQ_003_AC_002",
+            "description": "Tests cover omitted, null, empty, partial, invalid, and fully populated results across representative task statuses and task types."
+          }
+        ]
+      },
+      {
+        "id": "WI-0034_REQ_004",
+        "name": "schema-metadata-documentation",
+        "description": "schemas/README.md must document every x-sdlc-* convention, its allowed location and shape, its consumer, its interpretation, its validation behavior, and the process for adding a new convention.",
+        "reason": "Undocumented schema metadata creates hidden validator behavior and makes future schema extensions unsafe.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0034_REQ_004_AC_001",
+            "description": "schemas/README.md documents x-sdlc-reference-type, x-sdlc-task-lifecycle, x-field-role, lifecycle metadata paths, unknown metadata handling, and ordinary JSON Schema precedence."
+          },
+          {
+            "id": "WI-0034_REQ_004_AC_002",
+            "description": "A dynamic documentation/audit test fails when an x-sdlc-* metadata key is introduced without corresponding README coverage."
+          }
+        ]
+      },
+      {
+        "id": "WI-0034_REQ_005",
+        "name": "migration-and-release",
+        "description": "All persisted task records, examples, tests, validator projections, and schema references must be migrated and the breaking pre-1.0 change released as a minor version.",
+        "reason": "The new required task status invalidates existing task contracts unless every persisted record is updated consistently.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0034_REQ_005_AC_001",
+            "description": "Every existing task envelope has a valid task-type lifecycle status and remains distinct from its result status."
+          },
+          {
+            "id": "WI-0034_REQ_005_AC_002",
+            "description": "Typecheck, build, complete tests, schema audit, representative CLI validation, and WI-0034 validation pass before the minor release is prepared."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0034/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Introduces required type-specific task lifecycle status fields, declarative result validation metadata, schema documentation, persisted-record migration, and a pre-1.0 minor release boundary.",
+    "disclaimer": "This is an inferred recommendation; retain the minor impact unless the final implementation changes compatibility policy beyond the planned pre-1.0 schema break."
+  }
+}

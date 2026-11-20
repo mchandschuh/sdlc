@@ -1,0 +1,140 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0034
+taskUid: WI-0034-31000000
+orderKey: "31000000"
+parentTaskUid: WI-0034-30000000
+taskType: review
+processingStatus: unprocessed
+title: Review migrated task records and coverage
+objective: Independently review persisted status mappings, task/result status
+  separation, dynamic schema metadata coverage, and backward-incompatible
+  migration completeness.
+references:
+  required:
+    - .docs/work-items/WI-0034/work-item.json
+    - .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+    - package.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0034/steps/WI-0034-30000000-implementation.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0034-30000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0034/steps/WI-0034-31000000-review.yaml
+    - schemas/
+    - src/core/
+    - tests/
+  commitSubject: "WI-0034: review: review migrated task records and coverage"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: review-reference-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review migrated task records and dynamic coverage for the new task
+      lifecycle contract.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0034-30000000
+      result:
+        ref: WI-0034-30000000#result/R-001
+        sha256: null
+    gateId: implementation-result
+    policyRef:
+      ref: repository-local-review-policy
+      sha256: null
+    criteria:
+      - id: CRIT-001
+        statement: All four reference commands use yargs descriptors and appear in root
+          and command-specific help.
+        purpose: Verify complete dynamic registration for the reference family.
+        required: true
+        evidenceRefs:
+          - WI-0034-30000000#result/R-001
+      - id: CRIT-002
+        statement: Reference syntax, resolution depth, migration scope, path/work-item
+          exclusivity, and write boundaries are preserved.
+        purpose: Prevent a command-module refactor from weakening reference safety.
+        required: true
+        evidenceRefs:
+          - WI-0034-30000000#result/R-001
+      - id: CRIT-003
+        statement: Command-specific reference functions remain inside their command
+          files and main.ts contains no reference business logic.
+        purpose: Verify the explicit design-pattern encapsulation rule.
+        required: true
+        evidenceRefs:
+          - WI-0034-30000000#result/R-001
+    evidenceRequirements:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0034-30000000#result/R-001
+        purpose: Inspect reference command modules and main entrypoint.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not authorize migration writes or external deployment.
+    context:
+      - id: CTX-001
+        kind: other
+        ref: .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+        purpose: Verify the command-module pattern was followed.
+        required: true
+  result:
+    status: blocked
+    decision: null
+    summary: Review has not been executed because the implementation task remains
+      unprocessed.
+    actor:
+      id: code-review-agent
+      role: code-reviewer
+      authorityRef: repository-local-review-policy
+    criteriaEvaluations: []
+    findings: []
+    evidence: []
+    limitations:
+      - No implementation result or current source diff is available for
+        independent review.
+    nonClaims:
+      - This review is not an approval and does not establish provider or
+        production behavior.
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt:
+      executionId: WI-0034-31000000_EXEC-REVIEW
+      status: blocked
+      startedAt: 2026-11-20T00:00:00Z
+      finishedAt: 2026-11-20T00:00:00Z

@@ -1,0 +1,141 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0034
+taskUid: WI-0034-21000000
+orderKey: "21000000"
+parentTaskUid: WI-0034-20000000
+taskType: review
+processingStatus: unprocessed
+title: Review lifecycle-aware validation behavior
+objective: Independently review projection, conditional result validation,
+  incomplete-result handling, result-status separation, and read-only behavior.
+references:
+  required:
+    - .docs/work-items/WI-0034/work-item.json
+    - .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+    - package.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0034/steps/WI-0034-20000000-implementation.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0034-20000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0034/steps/WI-0034-21000000-review.yaml
+    - schemas/
+    - src/core/
+    - tests/
+  commitSubject: "WI-0034: review: review lifecycle-aware validation behavior"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: review-cli-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review generic conditional task result validation and lifecycle/outcome
+      separation.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0034-20000000
+      result:
+        ref: WI-0034-20000000#result/R-001
+        sha256: null
+    gateId: implementation-result
+    policyRef:
+      ref: repository-local-review-policy
+      sha256: null
+    criteria:
+      - id: CRIT-001
+        statement: work-item validate, task list, task validate, and task next each
+          expose complete yargs builders and generated command help.
+        purpose: Close the original missing-help defect without changing option
+          contracts.
+        required: true
+        evidenceRefs:
+          - WI-0034-20000000#result/R-001
+      - id: CRIT-002
+        statement: Existing validation, discovery, JSON output, identifier, and error
+          behavior is preserved.
+        purpose: Prevent a help refactor from changing command semantics.
+        required: true
+        evidenceRefs:
+          - WI-0034-20000000#result/R-001
+      - id: CRIT-003
+        statement: Every command-specific function is inside its command file and
+          main.ts remains composition-only.
+        purpose: Verify explicit design-pattern adherence and encapsulation.
+        required: true
+        evidenceRefs:
+          - WI-0034-20000000#result/R-001
+    evidenceRequirements:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0034-20000000#result/R-001
+        purpose: Inspect command files and main entrypoint.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment or infer correctness from
+          planned task payloads.
+    context:
+      - id: CTX-001
+        kind: other
+        ref: .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+        purpose: Verify the implementation followed the root design pattern.
+        required: true
+  result:
+    status: blocked
+    decision: null
+    summary: Review has not been executed because the implementation task remains
+      unprocessed.
+    actor:
+      id: code-review-agent
+      role: code-reviewer
+      authorityRef: repository-local-review-policy
+    criteriaEvaluations: []
+    findings: []
+    evidence: []
+    limitations:
+      - No implementation result or current source diff is available for
+        independent review.
+    nonClaims:
+      - This review is not an approval and does not establish runtime or
+        production evidence.
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt:
+      executionId: WI-0034-21000000_EXEC-REVIEW
+      status: blocked
+      startedAt: 2026-11-20T00:00:00Z
+      finishedAt: 2026-11-20T00:00:00Z

@@ -1,0 +1,148 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0034
+taskUid: WI-0034-10000000
+orderKey: "10000000"
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Define task lifecycle schema metadata and status contracts
+objective: Add the task-specific root status contract, lifecycle status enums,
+  x-sdlc-task-lifecycle metadata, schemas/README.md convention, and the
+  authoritative WI-0034 lifecycle matrix.
+references:
+  required:
+    - .docs/work-items/WI-0034/work-item.json
+    - .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+    - package.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0034/steps/WI-0034-10000000-implementation.yaml
+    - schemas/
+    - src/core/
+    - tests/
+  commitSubject: 'WI-0034: feat(schema): define lifecycle status contracts'
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: focused-command-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/command-discovery.test.ts
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Define type-specific task lifecycle statuses and declarative result
+      requirement metadata for all task contracts.
+    changeTypes:
+      - production-code
+      - test-code
+      - configuration
+      - dependency
+    changeIntent: refactor
+    inputs:
+      - id: WI-0034-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0034#work-item.json#requirement/WI-0034_REQ_001
+        purpose: Define the command factory and encapsulation contract.
+        required: true
+      - id: WI-0034-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0034#work-item.json#requirement/WI-0034_REQ_002
+        purpose: Define deterministic discovery and fail-closed registration.
+        required: true
+    objectives:
+      - id: WI-0034-10000000_OBJ-001
+        statement: The CLI discovers, validates, sorts, imports, and registers command
+          modules before yargs help or dispatch.
+        inputRefs:
+          - WI-0034-10000000_INPUT-REQ-001
+          - WI-0034-10000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/TC-DISCOVERY"
+          - "#test-case/TC-DUPLICATE-DESCRIPTOR"
+      - id: WI-0034-10000000_OBJ-002
+        statement: Work-item list, work-item start, and repository info are command
+          modules with encapsulated handlers and generated help.
+        inputRefs:
+          - WI-0034-10000000_INPUT-REQ-001
+        testCaseRefs:
+          - "#test-case/TC-FIRST-COMMAND-BATCH"
+    ownedPaths:
+      - package.json
+      - yarn.lock
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not conflate envelope processingStatus, task lifecycle status, and
+        result status.
+      - Do not infer approval, production readiness, or successful target
+        behavior from task.status alone.
+    steps:
+      - Add the task-specific root status contract, lifecycle status enums,
+        x-sdlc-task-lifecycle metadata, schemas/README.md convention, and the
+        authoritative WI-0034 lifecycle matrix.
+      - Preserve ordinary JSON Schema validation while interpreting documented
+        x-sdlc-* lifecycle metadata generically.
+      - Run focused tests and the complete repository validation gates.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: The dynamic command registry implementation is planned but has not been
+        processed.
+      changes:
+        - id: WI-0034-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the command-module contract and first implementation batch
+            plan.
+          objectiveRefs:
+            - WI-0034-10000000_OBJ-001
+            - WI-0034-10000000_OBJ-002
+          paths:
+            - .docs/work-items/WI-0034/steps/WI-0034-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - WI-0034-10000000_OBJ-001
+        - WI-0034-10000000_OBJ-002
+      tests: []
+    limitations:
+      - Implementation has not been processed; no yargs registry, discovery,
+        build, or test evidence exists yet.

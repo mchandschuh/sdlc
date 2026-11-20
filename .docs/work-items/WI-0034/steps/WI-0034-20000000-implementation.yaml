@@ -1,0 +1,146 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0034
+taskUid: WI-0034-20000000
+orderKey: "20000000"
+parentTaskUid: WI-0034-11000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement declarative conditional task result validation
+objective: Project task.status into task-specific validation, interpret
+  x-sdlc-task-lifecycle metadata generically, and allow incomplete results while
+  enforcing milestone and complete requirements.
+references:
+  required:
+    - .docs/work-items/WI-0034/work-item.json
+    - .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+    - package.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0034/steps/WI-0034-11000000-review.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0034-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0034/steps/WI-0034-20000000-implementation.yaml
+    - schemas/
+    - src/core/
+    - tests/
+  commitSubject: "WI-0034: feat(schema): implement declarative conditional task
+    result validation"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: work-item-task-help-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement generic lifecycle-aware task validation without hard-coded
+      task-type status branches.
+    changeTypes:
+      - production-code
+      - test-code
+    changeIntent: refactor
+    inputs:
+      - id: WI-0034-20000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0034#work-item.json#requirement/WI-0034_REQ_003
+        purpose: Require complete root and command-specific help.
+        required: true
+      - id: WI-0034-20000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0034#work-item.json#requirement/WI-0034_REQ_004
+        purpose: Preserve command options, output, and errors.
+        required: true
+    objectives:
+      - id: WI-0034-20000000_OBJ-001
+        statement: Work-item validate and task validate expose complete command-specific
+          help and remain dispatchable with their existing option interfaces.
+        inputRefs:
+          - WI-0034-20000000_INPUT-REQ-001
+          - WI-0034-20000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/TC-VALIDATION-HELP"
+          - "#test-case/TC-TASK-HELP"
+      - id: WI-0034-20000000_OBJ-002
+        statement: Task list and task next are registered from command files and
+          preserve JSON reports and stable option failures.
+        inputRefs:
+          - WI-0034-20000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/TC-TASK-DISPATCH"
+    ownedPaths:
+      - src/cli/commands/work-item/
+      - src/cli/commands/task/
+      - tests/
+    nonGoals:
+      - Do not conflate envelope processingStatus, task lifecycle status, and
+        result status.
+      - Do not infer approval, production readiness, or successful target
+        behavior from task.status alone.
+    steps:
+      - Project task.status into task-specific validation, interpret
+        x-sdlc-task-lifecycle metadata generically, and allow incomplete results
+        while enforcing milestone and complete requirements.
+      - Preserve ordinary JSON Schema validation while interpreting documented
+        x-sdlc-* lifecycle metadata generically.
+      - Run focused tests and the complete repository validation gates.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: The work-item and task command migration is planned but has not been
+        processed.
+      changes:
+        - id: WI-0034-20000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the work-item and task command migration plan.
+          objectiveRefs:
+            - WI-0034-20000000_OBJ-001
+            - WI-0034-20000000_OBJ-002
+          paths:
+            - .docs/work-items/WI-0034/steps/WI-0034-20000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - WI-0034-20000000_OBJ-001
+        - WI-0034-20000000_OBJ-002
+      tests: []
+    limitations:
+      - Implementation has not been processed; no command-specific help or
+        dispatch evidence exists yet.

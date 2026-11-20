@@ -1,0 +1,213 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0034
+taskUid: WI-0034-50000000
+orderKey: "50000000"
+parentTaskUid: WI-0034-31000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate type-specific task lifecycle contracts
+objective: Run the complete typecheck, build, test, schema audit,
+  incomplete-result matrix, persisted-record migration, work-item validation,
+  and release-readiness checks.
+references:
+  required:
+    - .docs/work-items/WI-0034/work-item.json
+    - .docs/work-items/WI-0034/task-lifecycle-status-contract.md
+    - package.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0034/steps/WI-0034-11000000-review.yaml
+    - .docs/work-items/WI-0034/steps/WI-0034-21000000-review.yaml
+    - .docs/work-items/WI-0034/steps/WI-0034-31000000-review.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0034-11000000
+  - WI-0034-21000000
+  - WI-0034-31000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0034/steps/WI-0034-50000000-validation.yaml
+    - schemas/
+    - src/core/
+    - tests/
+  commitSubject: "WI-0034: test(validate): validate type-specific task lifecycle contracts"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: installed-version
+      executable: sdlc
+      arguments:
+        - -v
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: sdlc
+      arguments:
+        - work-item
+        - validate
+        - --work-item
+        - WI-0034
+        - --json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the complete type-specific task lifecycle schema and
+      conditional result matrix.
+    inputs:
+      - id: WI-0034-50000000_INPUT-REVIEW-001
+        kind: review
+        ref: WI-0034-31000000#result/R-001
+        purpose: Identify the final integration review result.
+        required: true
+      - id: WI-0034-50000000_INPUT-REQUIREMENT-001
+        kind: requirement
+        ref: WI-0034#work-item.json#requirement/WI-0034_REQ_004
+        purpose: Define complete command behavior and package validation gates.
+        required: true
+    targets:
+      - id: WI-0034-50000000_TARGET-REPOSITORY-001
+        kind: repositoryState
+        ref: "#repository-state/HEAD"
+        purpose: Validate the current command source, compiled output, tests, and
+          installed executable.
+        required: true
+      - id: WI-0034-50000000_TARGET-WORK-ITEM-001
+        kind: task
+        taskType: review
+        ref: WI-0034-31000000#result/R-001
+        purpose: Validate the final integration review result and traceability.
+        required: true
+    objectiveRefs:
+      - "#objective/OBJ-001"
+      - "#objective/OBJ-002"
+    testCaseRefs:
+      - "#test-case/TC-ROOT-HELP"
+      - "#test-case/TC-COMMAND-HELP-MATRIX"
+      - "#test-case/TC-COMPLETE-DISPATCH"
+      - "#test-case/TC-PATTERN-CONFORMANCE"
+      - "#test-case/TC-INSTALLED-CLI"
+      - "#test-case/TC-WORK-ITEM"
+    procedures:
+      - id: WI-0034-50000000_VAL-COMPLETE-COMMAND-MATRIX
+        sequence: 1
+        name: validate-complete-command-matrix
+        description: Validate build, tests, root help, every command-specific help path,
+          representative dispatch, module conformance, installed CLI resolution,
+          and WI-0034 validation.
+        reason: Prove that every dynamically resolved command contributes help and
+          dispatches through the same yargs registry.
+        targetRefs:
+          - "#target/WI-0034-50000000_TARGET-REPOSITORY-001"
+          - "#target/WI-0034-50000000_TARGET-WORK-ITEM-001"
+        objectiveRefs: []
+        testCaseRefs:
+          - "#test-case/TC-ROOT-HELP"
+          - "#test-case/TC-COMMAND-HELP-MATRIX"
+          - "#test-case/TC-COMPLETE-DISPATCH"
+          - "#test-case/TC-PATTERN-CONFORMANCE"
+          - "#test-case/TC-INSTALLED-CLI"
+          - "#test-case/TC-WORK-ITEM"
+        method:
+          executionMode: executable
+          target: compiled and installed sdlc CLI command registry
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run HOME=$(mktemp -d) yarn test --run.
+            - Run sdlc -h, sdlc --help, sdlc -v, and sdlc --version.
+            - Run command-specific help for work-item list, work-item validate,
+              work-item start, repository info, task list, task validate, task
+              next, ref validate, ref resolve, ref migrate-task-local-up, ref
+              migrate-work-item-up, and stat.
+            - Verify all twelve commands appear in root help and every
+              command-specific help invocation exits zero.
+            - Verify duplicate or malformed command modules fail closed and that
+              command-specific functions remain in command files rather than
+              main.ts.
+            - Run command dispatch smoke tests for every command family without
+              provider or deployment access.
+            - Run command -v sdlc, readlink -f $(command -v sdlc), sdlc -v, and
+              sdlc work-item validate --work-item WI-0034 --json.
+          command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test --run &&
+            sdlc -h && sdlc work-item validate --help && sdlc task validate
+            --help && sdlc work-item validate --work-item WI-0034 --json
+        expected:
+          outcome: passed
+          exitCode: 0
+          assertions:
+            - The twelve-command registry is discovered and registered without
+              duplicate or malformed descriptors.
+            - Root and command-specific help are generated from the same yargs
+              registry.
+            - Command-specific functions are encapsulated in command files and
+              main.ts is composition-only.
+            - Build, complete tests, installed CLI, and WI-0034 validation pass.
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not conflate envelope processingStatus, task lifecycle status, and
+        result status.
+      - Do not infer approval, production readiness, or successful target
+        behavior from task.status alone.
+  result:
+    status: implemented-unproven
+    summary: The aggregate command/help/dispatch validation is planned but has not
+      been executed.
+    executions:
+      - id: WI-0034-50000000_EXEC-COMPLETE-COMMAND-MATRIX
+        procedureRef: "#procedure/WI-0034-50000000_VAL-COMPLETE-COMMAND-MATRIX"
+        status: not-run
+        observed:
+          outcome: not-run
+          exitCode: null
+          summary: Validation is pending implementation, review, and execution on the
+            WI-0034 context branch.
+          assertions: []
+        evidenceTier: cli-audit
+        evidence:
+          - kind: record
+            source: WI-0034-50000000 validation plan
+            claim: The complete command and help validation matrix is declared but not
+              executed.
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - No implementation, review, build, test, installed-CLI, or work-item
+        validation evidence has been produced yet.
+    nonClaims:
+      - This planned validation does not establish command correctness, release
+        readiness, deployment, or production behavior.
