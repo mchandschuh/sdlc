@@ -5,12 +5,17 @@
   "title": "Exercise installed Git hook wrappers and branch-aware release delivery",
   "type": "maintenance",
   "objective": "Add end-to-end coverage that installs every documented Git hook wrapper, exercises wrapper dispatch and branch-aware repository operations in disposable repositories, and completes the next computed revision release without introducing a duplicate repository-version source.",
-  "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
   "context": {
-    "mergeTarget": {"branch": "main"},
+    "mergeTarget": {
+      "branch": "main"
+    },
     "branch": {
       "name": "WI-0032-hook-delivery-tests",
-      "created": false,
+      "created": true,
       "rationale": "The installed-wrapper and branch/release exercise must be planned on main and processed on a dedicated context branch before a primary-branch revision release."
     }
   },
@@ -42,19 +47,22 @@
       "name": "hook-policy-change",
       "description": "Do not change the intended dispatcher policy or add new enforcement semantics; add coverage for existing behavior.",
       "reason": "This work item verifies the newly installed wrappers rather than expanding Git policy.",
-      "forbiddenFileWrites": [], "forbiddenFileReads": []
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
     },
     {
       "name": "duplicate-version-source",
       "description": "Do not add currentVersion, suggestedVersion, a release-version file, or any second tracked repository version source.",
       "reason": "Version impact is stored in versionSuggestion while the package and primary Git tag remain the release sources.",
-      "forbiddenFileWrites": [], "forbiddenFileReads": []
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
     },
     {
       "name": "server-enforcement",
       "description": "Do not claim server-side hook enforcement, package publication, or deployment from local repository tests.",
       "reason": "The evidence boundary is local Git/client behavior.",
-      "forbiddenFileWrites": [], "forbiddenFileReads": []
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
     }
   ],
   "requirements": {
@@ -65,8 +73,14 @@
         "description": "The implementation must install and exercise every hook in scripts/git_hooks.mjs ALL_GIT_HOOKS through the actual .git/hooks wrapper files.",
         "reason": "The user explicitly requested testing through the newly created webhooks and ensuring they are installed.",
         "acceptanceCriteria": [
-          {"id": "WI-0032_REQ_001_AC_001", "description": "The test installs 28 wrappers, confirms each is executable and dispatches its own hook name, and confirms repeated installation is byte-for-byte idempotent."},
-          {"id": "WI-0032_REQ_001_AC_002", "description": "The test preserves unmanaged hook content and verifies wrapper argument and stdin forwarding through an installed hook file."}
+          {
+            "id": "WI-0032_REQ_001_AC_001",
+            "description": "The test installs 28 wrappers, confirms each is executable and dispatches its own hook name, and confirms repeated installation is byte-for-byte idempotent."
+          },
+          {
+            "id": "WI-0032_REQ_001_AC_002",
+            "description": "The test preserves unmanaged hook content and verifies wrapper argument and stdin forwarding through an installed hook file."
+          }
         ]
       },
       {
@@ -75,8 +89,14 @@
         "description": "The validation must exercise work-item start, task-processing branch enforcement, merge/post-merge behavior, primary pre-push release checks, and local no-remote delivery behavior.",
         "reason": "Installed wrappers must work during the branch operations that precede a release, not only in isolated dispatcher calls.",
         "acceptanceCriteria": [
-          {"id": "WI-0032_REQ_002_AC_001", "description": "Disposable repository tests prove task processing is blocked on the wrong branch and allowed on the declared context branch after work-item start."},
-          {"id": "WI-0032_REQ_002_AC_002", "description": "Disposable repository tests prove post-merge reminders, primary-only release-tag checks, annotated-tag alignment, and no-remote local release evidence."}
+          {
+            "id": "WI-0032_REQ_002_AC_001",
+            "description": "Disposable repository tests prove task processing is blocked on the wrong branch and allowed on the declared context branch after work-item start."
+          },
+          {
+            "id": "WI-0032_REQ_002_AC_002",
+            "description": "Disposable repository tests prove post-merge reminders, primary-only release-tag checks, annotated-tag alignment, and no-remote local release evidence."
+          }
         ]
       },
       {
@@ -85,8 +105,14 @@
         "description": "After implementation, validation, and primary merge, perform the next computed revision release using package.json and an annotated SemVer tag without persisting a duplicate version value.",
         "reason": "The requested branch exercise must conclude with a new revision release.",
         "acceptanceCriteria": [
-          {"id": "WI-0032_REQ_003_AC_001", "description": "The release task derives the next revision from the latest reachable annotated tag and WI-0032 versionSuggestion impact, updates only the existing package version source, and tags the primary tip."},
-          {"id": "WI-0032_REQ_003_AC_002", "description": "WI-0032 task and work-item validation pass with zero invalid objects and no unresolved references before the release tag is pushed."}
+          {
+            "id": "WI-0032_REQ_003_AC_001",
+            "description": "The release task derives the next revision from the latest reachable annotated tag and WI-0032 versionSuggestion impact, updates only the existing package version source, and tags the primary tip."
+          },
+          {
+            "id": "WI-0032_REQ_003_AC_002",
+            "description": "WI-0032 task and work-item validation pass with zero invalid objects and no unresolved references before the release tag is pushed."
+          }
         ]
       }
     ]
