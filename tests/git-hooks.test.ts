@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, mkdtemp, readFile, stat, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
@@ -9,6 +9,11 @@ import { ALL_GIT_HOOKS } from '../scripts/git_hooks.mjs';
 const execFileAsync = promisify(execFile);
 const installerSource = join(process.cwd(), 'scripts/install.mjs');
 const dispatcherSource = join(process.cwd(), 'scripts/git_hooks.mjs');
+const cliSource = join(process.cwd(), 'bin/cli.js');
+const distSource = join(process.cwd(), 'dist');
+const schemasSource = join(process.cwd(), 'schemas');
+const packageSource = join(process.cwd(), 'package.json');
+const workItemSource = join(process.cwd(), '.docs/work-items/WI-0032');
 const DOCUMENTED_GIT_HOOKS = [
   'applypatch-msg',
   'pre-applypatch',
@@ -70,6 +75,7 @@ async function createRepository(options: TestRepositoryOptions = {}): Promise<{ 
   const home = join(root, 'home');
   await mkdir(scriptDirectory, { recursive: true });
   await mkdir(binDirectory, { recursive: true });
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'sdlc-hook-fixture', version: '0.7.2', type: 'module' }));
   await writeFile(join(scriptDirectory, 'install.mjs'), await readFile(installerSource));
   await writeFile(join(scriptDirectory, 'git_hooks.mjs'), await readFile(dispatcherSource));
   await writeFile(join(binDirectory, 'cli.js'), [
@@ -89,12 +95,15 @@ async function createRepository(options: TestRepositoryOptions = {}): Promise<{ 
   await git(root, ['init', '--quiet']);
   await git(root, ['config', 'user.email', 'sdlc-tests@example.invalid']);
   await git(root, ['config', 'user.name', 'sdlc tests']);
+  await writeFile(join(root, 'README.md'), 'fixture baseline\n');
   const hook = join(root, '.git/hooks/pre-commit');
   if (options.existingHook !== undefined) {
     await writeFile(hook, options.existingHook);
     await chmod(hook, 0o755);
   }
   await execFileAsync(process.execPath, [join(root, 'scripts/install.mjs'), '--hooks'], { cwd: root, env: { ...process.env, HOME: home } });
+  await git(root, ['add', '--', 'README.md']);
+  await git(root, ['commit', '--quiet', '-m', 'fixture baseline']);
   return { root, hook, log };
 }
 
@@ -159,6 +168,16 @@ describe('unified Git hook dispatcher', () => {
     expect(first.every((content, index) => content.includes(`git_hooks.mjs" dispatch "${HOOKS[index]}" "$@"`))).toBe(true);
     const normalized = first.map((content, index) => content.match(/# >>> sdlc managed hook >>>[\s\S]*?# <<< sdlc managed hook <<</u)?.[0]?.replace(`dispatch \"${HOOKS[index]}\"`, 'dispatch \"<hook>\"'));
     expect(new Set(normalized).size).toBe(1);
+  });
+
+  it('executes every actual installed hook wrapper and forwards the wrapper boundary', async () => {
+    const repository = await createRepository();
+    for (const hook of HOOKS) {
+      const wrapper = join(repository.root, '.git/hooks', hook);
+      expect((await stat(wrapper)).mode & 0o111, hook).not.toBe(0);
+      const result = await runProcess(wrapper, ['wrapper-argument'], { cwd: repository.root, input: `stdin for ${hook}\n` });
+      expect(result.code, hook).toBe(0);
+    }
   });
 
   it('replaces legacy split installer blocks without removing unmanaged content', async () => {
@@ -245,9 +264,91 @@ describe('unified Git hook dispatcher', () => {
     const repository = await createRepository();
     expect(await readFile(join(repository.root, '.git/hooks/post-merge'), 'utf8')).toContain('dispatch "post-merge"');
     expect(await readFile(join(repository.root, '.git/hooks/pre-push'), 'utf8')).toContain('dispatch "pre-push"');
-    const result = await runDispatcher(repository.root, 'post-merge');
+    const result = await runProcess(join(repository.root, '.git/hooks/post-merge'), [], { cwd: repository.root });
     expect(result.code).toBe(0);
     expect(result.output).toContain('Post-merge reminder');
+  });
+
+  it('exercises work-item start and task-processing branch enforcement through installed hooks', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-hook-branch-operations-'));
+    const home = join(root, 'home');
+    await mkdir(join(root, 'bin'), { recursive: true });
+    await cp(cliSource, join(root, 'bin/cli.js'));
+    await chmod(join(root, 'bin/cli.js'), 0o755);
+    await cp(distSource, join(root, 'dist'), { recursive: true });
+    await cp(schemasSource, join(root, 'schemas'), { recursive: true });
+    await cp(packageSource, join(root, 'package.json'));
+    await symlink(join(process.cwd(), 'node_modules'), join(root, 'node_modules'), 'dir');
+    await writeFile(join(root, '.gitignore'), 'node_modules\nhome/\n');
+    await mkdir(join(root, '.docs/work-items'), { recursive: true });
+    await cp(workItemSource, join(root, '.docs/work-items/WI-0032'), { recursive: true });
+    const implementationTaskPath = join(root, '.docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml');
+    const implementationTask = await readFile(implementationTaskPath, 'utf8');
+    await writeFile(implementationTaskPath, implementationTask.replace('processingStatus: processing_completed', 'processingStatus: unprocessed'));
+    const workItemPath = join(root, '.docs/work-items/WI-0032/work-item.json');
+    const workItem = JSON.parse(await readFile(workItemPath, 'utf8')) as { context: { branch: { created: boolean } } };
+    workItem.context.branch.created = false;
+    await writeFile(workItemPath, `${JSON.stringify(workItem, null, 2)}\n`);
+    await mkdir(join(root, 'scripts'), { recursive: true });
+    await writeFile(join(root, 'scripts/install.mjs'), await readFile(installerSource));
+    await writeFile(join(root, 'scripts/git_hooks.mjs'), await readFile(dispatcherSource));
+    await git(root, ['init', '--quiet']);
+    await git(root, ['checkout', '-b', 'main']);
+    await git(root, ['config', 'user.email', 'sdlc-tests@example.invalid']);
+    await git(root, ['config', 'user.name', 'sdlc tests']);
+    await writeFile(join(root, 'README.md'), 'fixture baseline\n');
+    await git(root, ['add', '--', 'README.md']);
+    await git(root, ['commit', '--quiet', '-m', 'fixture baseline']);
+    await execFileAsync(process.execPath, [join(root, 'scripts/install.mjs'), '--hooks'], { cwd: root, env: { ...process.env, HOME: home } });
+    await git(root, ['add', '--', '.docs/work-items/WI-0032', '.gitignore', 'bin/cli.js', 'dist', 'package.json', 'schemas', 'scripts']);
+    await git(root, ['commit', '--quiet', '-m', 'baseline WI-0032 fixture']);
+
+    const start = await runProcess(process.execPath, [join(root, 'bin/cli.js'), 'work-item', 'start', '--work-item', 'WI-0032', '--json'], { cwd: root, env: { HOME: home } });
+    expect(start.code, `${start.output}\nstatus=${await git(root, ['status', '--short'])}`).toBe(0);
+    expect(start.output).toContain('"started": true');
+    expect(await git(root, ['branch', '--show-current'])).toBe('WI-0032-hook-delivery-tests');
+
+    await git(root, ['switch', 'main']);
+    const taskPath = '.docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml';
+    const taskFile = join(root, taskPath);
+    const before = await readFile(taskFile, 'utf8');
+    await writeFile(taskFile, before.replace('processingStatus: unprocessed', 'processingStatus: processing_completed'));
+    await git(root, ['add', '--', taskPath]);
+    await expect(execFileAsync('git', ['-C', root, 'commit', '-m', 'wrong branch task processing'], { encoding: 'utf8' })).rejects.toThrow();
+    expect(await git(root, ['status', '--short'])).toContain(`M  ${taskPath}`);
+
+    await git(root, ['switch', 'WI-0032-hook-delivery-tests']);
+    await git(root, ['commit', '--quiet', '-m', 'process WI-0032 implementation task']);
+    expect(await git(root, ['log', '-1', '--format=%s'])).toBe('process WI-0032 implementation task');
+  }, 15_000);
+
+  it('exercises the installed primary pre-push wrapper for a local no-remote revision release', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-hook-local-release-'));
+    const scriptDirectory = join(root, 'scripts');
+    await mkdir(scriptDirectory, { recursive: true });
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'fixture', version: '0.7.2', type: 'module' }));
+    await writeFile(join(scriptDirectory, 'install.mjs'), await readFile(installerSource));
+    await writeFile(join(scriptDirectory, 'git_hooks.mjs'), await readFile(dispatcherSource));
+    await git(root, ['init', '--quiet']);
+    await git(root, ['checkout', '-b', 'main']);
+    await git(root, ['config', 'user.email', 'sdlc-tests@example.invalid']);
+    await git(root, ['config', 'user.name', 'sdlc tests']);
+    await git(root, ['add', '--', 'package.json', 'scripts']);
+    await git(root, ['commit', '--quiet', '-m', 'release fixture baseline']);
+    await git(root, ['tag', '--annotate', '0.7.2', '-m', 'Release 0.7.2']);
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'fixture', version: '0.7.3', type: 'module' }));
+    await mkdir(join(root, '.docs/work-items/WI-0099'), { recursive: true });
+    await writeFile(join(root, '.docs/work-items/WI-0099/work-item.json'), JSON.stringify({ status: 'complete', versionSuggestion: { impact: 'revision' } }));
+    await git(root, ['add', '--', 'package.json', '.docs/work-items/WI-0099/work-item.json']);
+    await git(root, ['commit', '--quiet', '-m', 'complete local revision fixture']);
+    const head = await git(root, ['rev-parse', 'HEAD']);
+    await git(root, ['tag', '--annotate', '0.7.3', '-m', 'Release 0.7.3']);
+    await execFileAsync(process.execPath, [join(root, 'scripts/install.mjs'), '--hooks'], { cwd: root, env: { ...process.env, HOME: join(root, 'home') } });
+    const tagObject = await git(root, ['rev-parse', 'refs/tags/0.7.3']);
+    const baseline = await git(root, ['rev-parse', 'HEAD~1']);
+    const input = [`refs/heads/main ${head} refs/heads/main ${baseline}`, `refs/tags/0.7.3 ${tagObject} refs/tags/0.7.3 ${'0'.repeat(40)}`].join('\n') + '\n';
+    const result = await runProcess(join(root, '.git/hooks/pre-push'), ['origin'], { cwd: root, input });
+    expect(result.code).toBe(0);
   });
 
   it('rejects a primary push when package.json is ahead of calculated impact', async () => {
