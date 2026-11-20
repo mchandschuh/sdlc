@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0031",
-  "status": "planned",
+  "status": "complete",
   "title": "Refactor Git hooks into a single dispatcher architecture",
   "type": "refactor",
   "objective": "Replace the split Git hook installers with scripts/git_hooks.mjs, a uniform dispatch-based hook body, and one named function for every Git hook documented by the supported Git githooks manual while preserving existing SDLC validation, branch, merge, tag, and push behavior.",
