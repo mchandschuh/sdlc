@@ -1,0 +1,132 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0032
+taskUid: WI-0032-11000000
+orderKey: "11000000"
+parentTaskUid: WI-0032-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate installed hook and branch-operation delivery
+objective: Validate the actual installed Git hook wrappers, branch operations,
+  primary release checks, complete package gates, and WI-0032 object tree.
+references:
+  required:
+    - .docs/work-items/WI-0032/work-item.json
+    - .docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml
+    - scripts/git_hooks.mjs
+    - scripts/install.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+dependsOn:
+  - WI-0032-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0032/steps/WI-0032-11000000-validation.yaml
+  commitSubject: "WI-0032: test(git): validate hook delivery operations"
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0032, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate all installed documented hook wrappers and branch-aware release operations.
+    inputs:
+      - id: WI-0032-11000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0032-10000000#result/R-001
+        purpose: Identify the installed-wrapper implementation under validation.
+        required: true
+      - id: WI-0032-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0032#work-item.json#requirement/WI-0032_REQ_001
+        purpose: Identify all-hook installation requirements.
+        required: true
+      - id: WI-0032-11000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0032#work-item.json#requirement/WI-0032_REQ_002
+        purpose: Identify branch and release operation requirements.
+        required: true
+    targets:
+      - id: WI-0032-11000000_TARGET-REPOSITORY-001
+        kind: record
+        ref: "#repository-state/HEAD"
+        purpose: Validate the production repository and installed hook output.
+        required: true
+    objectiveRefs:
+      - WI-0032-10000000#intent/objectives/WI-0032-10000000_OBJ-001
+      - WI-0032-10000000#intent/objectives/WI-0032-10000000_OBJ-002
+    testCaseRefs:
+      - "#test-case/WI-0032-11000000_TC-INSTALLED-HOOKS"
+      - "#test-case/WI-0032-11000000_TC-BRANCH-OPERATIONS"
+    procedures:
+      - id: WI-0032-11000000_VAL-DELIVERY
+        sequence: 1
+        name: validate-installed-hook-delivery
+        description: Run installed-wrapper, branch-operation, package, and work-item validation gates.
+        reason: Prove the newly installed hooks operate correctly through branch and release operations.
+        targetRefs: ["#target/WI-0032-11000000_TARGET-REPOSITORY-001"]
+        objectiveRefs:
+          - WI-0032-10000000#intent/objectives/WI-0032-10000000_OBJ-001
+          - WI-0032-10000000#intent/objectives/WI-0032-10000000_OBJ-002
+        testCaseRefs:
+          - "#test-case/WI-0032-11000000_TC-INSTALLED-HOOKS"
+          - "#test-case/WI-0032-11000000_TC-BRANCH-OPERATIONS"
+        method:
+          executionMode: executable
+          target: actual installed Git hook wrappers in disposable repositories
+          steps:
+            - Install all wrappers with node ./scripts/install.mjs --hooks.
+            - Execute every installed documented hook and verify wrapper routing.
+            - Exercise work-item start, branch gates, merge reminders, and release checks.
+            - Run typecheck, build, complete tests, and WI-0032 validation.
+          command: node ./scripts/install.mjs --hooks && yarn typecheck && yarn build && yarn test --run && node ./bin/cli.js work-item validate --work-item WI-0032 --json
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim server-side enforcement or production deployment.
+  result:
+    status: implemented-unproven
+    summary: Installed-wrapper and branch-operation validation is planned.
+    executions:
+      - id: WI-0032-11000000_EXEC-PLAN
+        procedureRef: "#procedure/WI-0032-11000000_VAL-DELIVERY"
+        status: inconclusive
+        observed:
+          outcome: not-run
+          summary: Validation is deferred until the implementation task is processed.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: WI-0032 validation task plan
+            claim: The installed-wrapper and branch-operation validation procedure is declared but not yet executed.
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - Validation evidence is not recorded until implementation is complete on the WI-0032 context branch.
+    nonClaims:
+      - This result does not claim remote publication, deployment, or production readiness.

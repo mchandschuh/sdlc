@@ -1,0 +1,104 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0032
+taskUid: WI-0032-10000000
+orderKey: "10000000"
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement installed hook and branch-operation exercise coverage
+objective: Add end-to-end test coverage that installs every documented Git hook
+  wrapper and exercises the branch-operation boundaries needed before release.
+references:
+  required:
+    - .docs/work-items/WI-0032/work-item.json
+    - scripts/git_hooks.mjs
+    - scripts/install.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - tests/
+    - .docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml
+  commitSubject: "WI-0032: test(git): exercise installed hook delivery"
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: focused-hook-tests
+      executable: yarn
+      arguments: [test, tests/git-hooks.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Exercise actual installed wrappers for all documented Git hooks and
+      branch/release operations in disposable repositories.
+    changeTypes: [test-code, documentation]
+    changeIntent: maintenance
+    inputs:
+      - id: WI-0032-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0032#work-item.json#requirement/WI-0032_REQ_001
+        purpose: Define installed all-hook coverage.
+        required: true
+      - id: WI-0032-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0032#work-item.json#requirement/WI-0032_REQ_002
+        purpose: Define branch and release operation coverage.
+        required: true
+    objectives:
+      - id: WI-0032-10000000_OBJ-001
+        statement: Tests install every documented Git hook wrapper and verify executable, uniform, idempotent, unmanaged-content, argv, and stdin behavior.
+        inputRefs: [WI-0032-10000000_INPUT-REQ-001]
+        testCaseRefs: ["#test-case/WI-0032-10000000_TC-INSTALLED-HOOKS"]
+      - id: WI-0032-10000000_OBJ-002
+        statement: Tests exercise branch start, task-processing branch enforcement, merge reminders, primary release checks, and local release operations through installed wrappers.
+        inputRefs: [WI-0032-10000000_INPUT-REQ-002]
+        testCaseRefs: ["#test-case/WI-0032-10000000_TC-BRANCH-OPERATIONS"]
+    ownedPaths:
+      - tests/git-hooks.test.ts
+    nonGoals:
+      - Do not change scripts/git_hooks.mjs policy behavior unless required to expose a testable defect.
+      - Do not claim server-side enforcement or external deployment.
+    steps:
+      - Add isolated-repository helpers that copy the production installer and dispatcher and invoke actual .git/hooks files.
+      - Assert all 28 ALL_GIT_HOOKS wrappers are installed, executable, uniform, and idempotent.
+      - Exercise work-item start, task-processing branch gates, post-merge reminders, pre-push release checks, and no-remote behavior.
+      - Run focused hook tests, typecheck, and build.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Installed-wrapper and branch-operation exercise implementation is planned.
+      changes:
+        - id: WI-0032-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the bounded installed-wrapper and branch-operation exercise plan.
+          objectiveRefs:
+            - WI-0032-10000000_OBJ-001
+            - WI-0032-10000000_OBJ-002
+          paths:
+            - .docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - WI-0032-10000000_OBJ-001
+        - WI-0032-10000000_OBJ-002
+      tests: []
+    limitations:
+      - Implementation evidence is not recorded until the task is processed on the WI-0032 context branch.

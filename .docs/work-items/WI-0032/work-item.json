@@ -1,0 +1,100 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0032",
+  "status": "planned",
+  "title": "Exercise installed Git hook wrappers and branch-aware release delivery",
+  "type": "maintenance",
+  "objective": "Add end-to-end coverage that installs every documented Git hook wrapper, exercises wrapper dispatch and branch-aware repository operations in disposable repositories, and completes the next computed revision release without introducing a duplicate repository-version source.",
+  "repository": {"root": "/home/michael/src/github/sdlc", "authority": "local"},
+  "context": {
+    "mergeTarget": {"branch": "main"},
+    "branch": {
+      "name": "WI-0032-hook-delivery-tests",
+      "created": false,
+      "rationale": "The installed-wrapper and branch/release exercise must be planned on main and processed on a dedicated context branch before a primary-branch revision release."
+    }
+  },
+  "baseline": "51d4d8f6e418e375a6daa2bffaf44c536b9cf696",
+  "request": {
+    "source": "conversation",
+    "text": "Generate a new .docs/work-items/* in order to test through the newly created webhooks. Ensure they are installed and go through branch operations followed by a new revision release. Commit the new work item. Implement the new work item and perform a release.",
+    "sha256": "f7cc6e6a7c536d708fe9f994c7e0f7301e610cee6193cbb9279f6f22d5b41de8"
+  },
+  "scope": [
+    {
+      "name": "installed-wrapper-exercise",
+      "description": "Install all 28 documented Git hook wrappers in disposable repositories and execute each installed wrapper through scripts/git_hooks.mjs dispatch.",
+      "reason": "The dispatcher implementation was tested through copied modules; this work item must exercise the actual installed hook files and installation output."
+    },
+    {
+      "name": "branch-operation-exercise",
+      "description": "Exercise work-item start, task-processing branch enforcement, merge completion, post-merge reminder, primary-branch release checks, and no-remote behavior in disposable repositories.",
+      "reason": "Branch operations and release gates are part of the installed hook behavior and need an end-to-end regression boundary."
+    },
+    {
+      "name": "revision-delivery",
+      "description": "Complete a new revision release using the existing package.json version source, computed impact, annotated primary tag, and remote push when configured.",
+      "reason": "The requested exercise ends with a real primary-branch revision delivery."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "hook-policy-change",
+      "description": "Do not change the intended dispatcher policy or add new enforcement semantics; add coverage for existing behavior.",
+      "reason": "This work item verifies the newly installed wrappers rather than expanding Git policy.",
+      "forbiddenFileWrites": [], "forbiddenFileReads": []
+    },
+    {
+      "name": "duplicate-version-source",
+      "description": "Do not add currentVersion, suggestedVersion, a release-version file, or any second tracked repository version source.",
+      "reason": "Version impact is stored in versionSuggestion while the package and primary Git tag remain the release sources.",
+      "forbiddenFileWrites": [], "forbiddenFileReads": []
+    },
+    {
+      "name": "server-enforcement",
+      "description": "Do not claim server-side hook enforcement, package publication, or deployment from local repository tests.",
+      "reason": "The evidence boundary is local Git/client behavior.",
+      "forbiddenFileWrites": [], "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0032_REQ_001",
+        "name": "installed-all-hook-coverage",
+        "description": "The implementation must install and exercise every hook in scripts/git_hooks.mjs ALL_GIT_HOOKS through the actual .git/hooks wrapper files.",
+        "reason": "The user explicitly requested testing through the newly created webhooks and ensuring they are installed.",
+        "acceptanceCriteria": [
+          {"id": "WI-0032_REQ_001_AC_001", "description": "The test installs 28 wrappers, confirms each is executable and dispatches its own hook name, and confirms repeated installation is byte-for-byte idempotent."},
+          {"id": "WI-0032_REQ_001_AC_002", "description": "The test preserves unmanaged hook content and verifies wrapper argument and stdin forwarding through an installed hook file."}
+        ]
+      },
+      {
+        "id": "WI-0032_REQ_002",
+        "name": "branch-and-release-operation-coverage",
+        "description": "The validation must exercise work-item start, task-processing branch enforcement, merge/post-merge behavior, primary pre-push release checks, and local no-remote delivery behavior.",
+        "reason": "Installed wrappers must work during the branch operations that precede a release, not only in isolated dispatcher calls.",
+        "acceptanceCriteria": [
+          {"id": "WI-0032_REQ_002_AC_001", "description": "Disposable repository tests prove task processing is blocked on the wrong branch and allowed on the declared context branch after work-item start."},
+          {"id": "WI-0032_REQ_002_AC_002", "description": "Disposable repository tests prove post-merge reminders, primary-only release-tag checks, annotated-tag alignment, and no-remote local release evidence."}
+        ]
+      },
+      {
+        "id": "WI-0032_REQ_003",
+        "name": "revision-release",
+        "description": "After implementation, validation, and primary merge, perform the next computed revision release using package.json and an annotated SemVer tag without persisting a duplicate version value.",
+        "reason": "The requested branch exercise must conclude with a new revision release.",
+        "acceptanceCriteria": [
+          {"id": "WI-0032_REQ_003_AC_001", "description": "The release task derives the next revision from the latest reachable annotated tag and WI-0032 versionSuggestion impact, updates only the existing package version source, and tags the primary tip."},
+          {"id": "WI-0032_REQ_003_AC_002", "description": "WI-0032 task and work-item validation pass with zero invalid objects and no unresolved references before the release tag is pushed."}
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0032/steps/",
+  "versionSuggestion": {
+    "impact": "revision",
+    "rationale": "Adds end-to-end regression coverage and performs a backwards-compatible revision delivery without changing dispatcher policy.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes add public behavior or broader compatibility effects."
+  }
+}
