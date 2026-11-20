@@ -1,0 +1,155 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0031",
+  "status": "planned",
+  "title": "Refactor Git hooks into a single dispatcher architecture",
+  "type": "refactor",
+  "objective": "Replace the split Git hook installers with scripts/git_hooks.mjs, a uniform dispatch-based hook body, and one named function per supported hook type while preserving existing SDLC validation, branch, merge, tag, and push behavior.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0031-git-hook-dispatcher",
+      "created": false,
+      "rationale": "The hook architecture refactor must be planned on main and processed on a dedicated context branch."
+    }
+  },
+  "baseline": "04ae023a393167e27eb5a3a60f439fc2b1a10c6a",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/* to refactor Git hook installation around one scripts/git_hooks.mjs dispatcher with one function per unique hook name. Every installed hook must have the same thin dispatch body. Remove install_sdlc_validate_git_hooks.mjs, preserve existing hook behavior through named dispatcher functions, update documentation and tests, then commit the work item.",
+    "sha256": "56715c7a5edfd4cb48a157914f2065a134669e1e5b1a8a307544e3def4e40710"
+  },
+  "scope": [
+    {
+      "name": "single-hook-dispatcher",
+      "description": "Create scripts/git_hooks.mjs as the only hook behavior dispatcher, exposing dispatch(args) and one named function per unique Git hook type.",
+      "reason": "Hook behavior should be centralized and changed by updating one dispatcher module."
+    },
+    {
+      "name": "uniform-installed-hook-body",
+      "description": "Install every supported Git hook with the same thin body that dispatches using the hook name and original arguments.",
+      "reason": "Installed hook files should not contain per-hook behavior or divergent wrapper logic."
+    },
+    {
+      "name": "installer-consolidation",
+      "description": "Remove scripts/install_sdlc_validate_git_hooks.mjs and make scripts/install.mjs install the unified dispatcher.",
+      "reason": "Two overlapping installers currently own overlapping hook behavior."
+    },
+    {
+      "name": "behavior-preserving-migration",
+      "description": "Preserve work-item validation, task-processing branch enforcement, post-merge reminders, deterministic pre-push release checks, and unmanaged hook content/idempotence.",
+      "reason": "The refactor is architectural and should not silently change enforcement semantics."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "hook-policy-expansion",
+      "description": "Do not add new Git policy behavior beyond the existing branch, validation, completion, tag, and push rules.",
+      "reason": "This work item is a dispatcher architecture refactor.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "remote-server-enforcement",
+      "description": "Do not claim Git server-side enforcement from local hook dispatch.",
+      "reason": "Local hooks remain client-side evidence.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "release-version-bump",
+      "description": "Do not release a package version as part of the architecture refactor unless a separate delivery task requires it.",
+      "reason": "The request is for a work item and architecture plan, not an implementation release.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0031_REQ_001",
+        "name": "dispatcher-contract",
+        "description": "scripts/git_hooks.mjs must expose dispatch(args) and one uniquely named function for every supported Git hook name, with dispatch selecting the function from the hook name argument.",
+        "reason": "The implementation needs one clear behavior ownership boundary.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0031_REQ_001_AC_001",
+            "description": "Dispatching each supported hook name calls exactly its named function and unknown hook names return an actionable non-zero error."
+          },
+          {
+            "id": "WI-0031_REQ_001_AC_002",
+            "description": "The dispatcher preserves Git hook arguments and stdin for hooks such as pre-push."
+          }
+        ]
+      },
+      {
+        "id": "WI-0031_REQ_002",
+        "name": "uniform-hook-body",
+        "description": "Every installed supported hook must contain the same thin executable body that calls scripts/git_hooks.mjs dispatch with the hook name and original arguments.",
+        "reason": "Hook files should be stable wrappers rather than duplicated policy implementations.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0031_REQ_002_AC_001",
+            "description": "All supported installed hook files have byte-equivalent dispatch bodies except for the hook-name argument."
+          },
+          {
+            "id": "WI-0031_REQ_002_AC_002",
+            "description": "Repeated installation is idempotent and unmanaged hook content is preserved."
+          }
+        ]
+      },
+      {
+        "id": "WI-0031_REQ_003",
+        "name": "installer-removal",
+        "description": "scripts/install_sdlc_validate_git_hooks.mjs must be removed and scripts/install.mjs must be the only installer for the unified dispatcher.",
+        "reason": "The current two-installer split causes overlapping ownership and confusing managed markers.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0031_REQ_003_AC_001",
+            "description": "The old installer is absent, no installed hook references it, and --hooks installs the unified dispatch wrappers."
+          }
+        ]
+      },
+      {
+        "id": "WI-0031_REQ_004",
+        "name": "behavior-preservation",
+        "description": "Existing work-item validation, branch processing, post-merge, pre-push release, no-remote, and failure-output behavior remains covered at the dispatcher boundary.",
+        "reason": "The refactor must not weaken or change existing SDLC enforcement.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0031_REQ_004_AC_001",
+            "description": "The complete hook and CLI test suite passes, including dispatcher routing and representative each-hook behavior."
+          },
+          {
+            "id": "WI-0031_REQ_004_AC_002",
+            "description": "The repository guidance and external SDLC SKILL.md document the unified dispatcher architecture and installation command."
+          }
+        ]
+      },
+      {
+        "id": "WI-0031_REQ_005",
+        "name": "work-item-traceability",
+        "description": "The implementation, validation, and architecture documentation remain separately traceable through task envelopes.",
+        "reason": "The repository requires task-level implementation and validation evidence.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0031_REQ_005_AC_001",
+            "description": "WI-0031 task artifacts validate with zero invalid objects and zero unresolved references."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0031/steps/",
+  "versionSuggestion": {
+    "impact": "revision",
+    "rationale": "Refactors local hook installation and dispatch without changing the intended SDLC enforcement behavior.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes are larger or more breaking than expected."
+  }
+}

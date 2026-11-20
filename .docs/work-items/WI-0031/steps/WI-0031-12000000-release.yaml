@@ -1,0 +1,166 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0031
+taskUid: WI-0031-12000000
+orderKey: "12000000"
+parentTaskUid: WI-0031-11000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release the unified Git hook dispatcher
+objective: Release the completed WI-0031 refactor from the primary branch using
+  the repository's computed SemVer delivery policy without persisting a duplicate
+  repository-version value.
+references:
+  required:
+    - package.json
+    - scripts/install.mjs
+    - scripts/git_hooks.mjs
+    - .docs/work-items/WI-0031/work-item.json
+    - .docs/work-items/WI-0031/steps/WI-0031-11000000-validation.yaml
+  informational:
+    - .cline/README.md
+dependsOn:
+  - WI-0031-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0031/steps/WI-0031-12000000-release.yaml
+  commitSubject: "WI-0031: chore(release): deliver unified Git hook dispatcher"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - work-item
+        - validate
+        - --work-item
+        - WI-0031
+        - --json
+      expectedExitCode: 0
+    - id: release-tag
+      executable: git
+      arguments:
+        - tag
+        - --annotate
+        - <computed-semver>
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Deliver WI-0031 from the primary branch after implementation and
+      validation pass, calculating the release number from repository state and
+      work-item impact at release time.
+    deliveryTypes:
+      - package
+      - release
+    inputs:
+      - id: WI-0031-12000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0031-11000000#result/WI-0031-11000000_R-001
+        purpose: Confirm the dispatcher implementation and behavior-preservation
+          validation passed before delivery.
+        required: true
+      - id: WI-0031-12000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: "#repository-state/HEAD"
+        purpose: Identify the primary-branch revision from which delivery is made.
+        required: true
+    artifacts:
+      - id: WI-0031-12000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Existing package metadata used to verify the computed release
+          version; no separate repository-version file is created.
+        required: true
+      - id: WI-0031-12000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/<computed-semver>
+        purpose: Annotated SemVer tag created at the primary-branch release tip.
+        required: true
+    procedures:
+      - id: WI-0031-12000000_PROC-COMPUTE
+        sequence: 1
+        name: compute-primary-release
+        description: On the primary branch after merge, calculate the next SemVer
+          from the highest reachable annotated SemVer tag and the completed
+          work-item impact, then verify package metadata agrees without adding a
+          currentVersion or suggestedVersion field.
+        steps:
+          - Confirm the context branch is merged into main or master.
+          - Read the highest reachable annotated SemVer tag.
+          - Aggregate completed work-item versionSuggestion impact.
+          - Calculate the next SemVer at execution time.
+          - Verify package.json already reports that computed value.
+        command: git tag --merged HEAD --list && node ./bin/cli.js --version
+        expected:
+          result: The release number is derived from tags, work-item impact, and
+            existing package metadata; no duplicate repository-version text is
+            persisted.
+        required: true
+      - id: WI-0031-12000000_PROC-TAG
+        sequence: 2
+        name: tag-and-push-primary-release
+        description: Create the annotated computed SemVer tag at the primary tip
+          and push the primary branch and tag when a remote exists.
+        steps:
+          - Create the annotated computed SemVer tag at the primary tip.
+          - Verify the annotated tag resolves to the primary tip.
+          - Push the primary branch and tag when origin accepts the update.
+        command: git tag --annotate <computed-semver> -m "Release <computed-semver>" HEAD
+        expected:
+          result: The annotated computed SemVer tag identifies the primary release
+            tip and remote publication succeeds when a remote is configured.
+        required: true
+    nonGoals:
+      - Do not persist currentVersion, suggestedVersion, or a duplicate repository
+        version in a work item, task, or standalone text file.
+      - Do not create or push release tags on the context branch.
+      - Do not publish a package registry artifact or deploy externally.
+  result:
+    status: blocked
+    summary: The primary-branch release procedure is planned and remains version-neutral
+      until completed work-item impact and reachable repository tags are evaluated.
+    artifacts:
+      - id: WI-0031-12000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0031-12000000_EXEC-PLAN
+        procedureRef: "#procedure/WI-0031-12000000_PROC-COMPUTE"
+        result:
+          status: blocked
+          summary: Release execution is blocked until the completed context branch
+            is merged into the primary branch and the computed release state is
+            available.
+    limitations:
+      - Release execution occurs only after the context branch is merged into the
+        primary branch.

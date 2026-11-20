@@ -1,0 +1,148 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0031
+taskUid: WI-0031-10000000
+orderKey: "10000000"
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement unified Git hook dispatcher
+objective: Replace the split hook installers with scripts/git_hooks.mjs and
+  uniform installed dispatch wrappers.
+references:
+  required:
+    - .docs/work-items/WI-0031/work-item.json
+    - scripts/install.mjs
+    - scripts/install_sdlc_validate_git_hooks.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - scripts/
+    - tests/
+    - .cline/README.md
+    - .docs/work-items/WI-0031/steps/WI-0031-10000000-implementation.yaml
+  commitSubject: "WI-0031: refactor(git): add unified hook dispatcher"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement scripts/git_hooks.mjs with dispatch(args) and one function
+      per supported hook; consolidate installer behavior; preserve existing hook
+      semantics.
+    changeTypes:
+      - production-code
+      - test-code
+      - configuration
+      - documentation
+    changeIntent: refactor
+    inputs:
+      - id: WI-0031-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_001
+        purpose: Define dispatcher routing.
+        required: true
+      - id: WI-0031-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_002
+        purpose: Define uniform hook bodies.
+        required: true
+      - id: WI-0031-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_003
+        purpose: Define installer consolidation.
+        required: true
+      - id: WI-0031-10000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_004
+        purpose: Define behavior preservation.
+        required: true
+    objectives:
+      - id: WI-0031-10000000_OBJ-001
+        statement: Every supported hook routes through one named dispatcher function
+          with uniform installed wrapper behavior.
+        inputRefs:
+          - WI-0031-10000000_INPUT-REQ-001
+          - WI-0031-10000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/WI-0031-10000000_TC-DISPATCH"
+          - "#test-case/WI-0031-10000000_TC-WRAPPERS"
+      - id: WI-0031-10000000_OBJ-002
+        statement: The old installer is removed and existing hook behavior remains
+          covered.
+        inputRefs:
+          - WI-0031-10000000_INPUT-REQ-003
+          - WI-0031-10000000_INPUT-REQ-004
+        testCaseRefs:
+          - "#test-case/WI-0031-10000000_TC-REMOVAL"
+          - "#test-case/WI-0031-10000000_TC-BEHAVIOR"
+    ownedPaths:
+      - scripts/
+      - tests/
+      - .cline/README.md
+    nonGoals:
+      - Do not change the intended hook enforcement policy.
+      - Do not claim server-side remote enforcement.
+    steps:
+      - Define one named hook function for every supported hook type.
+      - Implement dispatch(args) to select the hook function and preserve
+        argv/stdin.
+      - Make scripts/install.mjs install identical thin dispatch wrappers.
+      - Remove scripts/install_sdlc_validate_git_hooks.mjs.
+      - Update tests, .cline/README.md, and the external SKILL.md.
+      - Run complete typecheck, build, and test gates.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: The unified hook dispatcher architecture is planned.
+      changes:
+        - id: WI-0031-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the unified hook dispatcher architecture and
+            behavior-preservation boundary.
+          objectiveRefs:
+            - WI-0031-10000000_OBJ-001
+            - WI-0031-10000000_OBJ-002
+          paths:
+            - .docs/work-items/WI-0031/steps/WI-0031-10000000-implementation.yaml
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs:
+        - WI-0031-10000000_OBJ-001
+        - WI-0031-10000000_OBJ-002
+      tests: []
+    limitations:
+      - Implementation remains planned.

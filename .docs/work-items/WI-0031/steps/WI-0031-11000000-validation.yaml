@@ -1,0 +1,151 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0031
+taskUid: WI-0031-11000000
+orderKey: "11000000"
+parentTaskUid: WI-0031-10000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate unified Git hook dispatcher
+objective: Validate dispatcher routing, uniform installed wrappers, installer
+  removal, behavior preservation, documentation, and complete repository gates.
+references:
+  required:
+    - .docs/work-items/WI-0031/work-item.json
+    - .docs/work-items/WI-0031/steps/WI-0031-10000000-implementation.yaml
+    - scripts/install.mjs
+    - tests/git-hooks.test.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+dependsOn:
+  - WI-0031-10000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - tests/
+    - .cline/README.md
+    - .docs/work-items/WI-0031/steps/WI-0031-11000000-validation.yaml
+  commitSubject: "WI-0031: test(git): validate unified hook dispatcher"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: test
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the unified hook dispatcher and behavior preservation.
+    inputs:
+      - id: WI-0031-11000000_INPUT-IMPL-001
+        kind: implementation
+        ref: WI-0031-10000000#result/R-001
+        purpose: Identify dispatcher implementation.
+        required: true
+      - id: WI-0031-11000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_001
+        purpose: Identify dispatcher requirements.
+        required: true
+      - id: WI-0031-11000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0031#work-item.json#requirement/WI-0031_REQ_004
+        purpose: Identify behavior preservation requirements.
+        required: true
+    targets:
+      - id: WI-0031-11000000_TARGET-REPO-001
+        kind: record
+        ref: "#repository-state/HEAD"
+        purpose: Validate the current repository and hook architecture.
+        required: true
+    objectiveRefs:
+      - WI-0031-10000000#intent/objectives/WI-0031-10000000_OBJ-001
+      - WI-0031-10000000#intent/objectives/WI-0031-10000000_OBJ-002
+    testCaseRefs:
+      - "#test-case/WI-0031-11000000_TC-DISPATCH"
+      - "#test-case/WI-0031-11000000_TC-WRAPPERS"
+      - "#test-case/WI-0031-11000000_TC-REMOVAL"
+      - "#test-case/WI-0031-11000000_TC-BEHAVIOR"
+    procedures:
+      - id: WI-0031-11000000_VAL-DISPATCH
+        sequence: 1
+        name: validate-unified-hook-dispatcher
+        description: Validate every supported hook dispatches through the unified module
+          and existing behavior remains intact.
+        reason: The architecture refactor must not create hook-specific installed-file
+          drift or weaken enforcement.
+        targetRefs:
+          - "#intent/targets/WI-0031-11000000_TARGET-REPO-001"
+        objectiveRefs:
+          - WI-0031-10000000#intent/objectives/WI-0031-10000000_OBJ-001
+          - WI-0031-10000000#intent/objectives/WI-0031-10000000_OBJ-002
+        testCaseRefs:
+          - "#test-case/WI-0031-11000000_TC-DISPATCH"
+          - "#test-case/WI-0031-11000000_TC-WRAPPERS"
+          - "#test-case/WI-0031-11000000_TC-REMOVAL"
+          - "#test-case/WI-0031-11000000_TC-BEHAVIOR"
+        method:
+          executionMode: executable
+          target: scripts/git_hooks.mjs, scripts/install.mjs, tests, and repository
+            guidance
+          steps:
+            - Validate every hook wrapper is uniform and dispatches by hook name.
+            - Validate dispatch routes every supported hook and rejects unknown
+              names.
+            - Validate the old installer is absent and behavior-preservation
+              tests pass.
+            - Run typecheck, build, complete tests, and schema/work-item
+              validation.
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not change the intended hook enforcement policy.
+      - Do not claim server-side remote enforcement.
+  result:
+    status: implemented-unproven
+    summary: Validation is planned.
+    executions:
+      - id: WI-0031-11000000_EXEC-PLAN
+        procedureRef: "#procedure/WI-0031-11000000_VAL-DISPATCH"
+        status: not-run
+        observed:
+          outcome: not-run
+          summary: Validation remains planned.
+        evidenceTier: inspection
+        evidence:
+          - kind: record
+            source: WI-0031 validation plan
+            claim: Unified hook dispatcher validation is planned.
+    findings: []
+    evidenceTier: inspection
+    limitations:
+      - Validation remains planned.
+    nonClaims:
+      - This record does not claim implementation evidence.
