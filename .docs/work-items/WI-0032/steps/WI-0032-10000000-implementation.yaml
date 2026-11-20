@@ -4,7 +4,7 @@ taskUid: WI-0032-10000000
 orderKey: "10000000"
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement installed hook and branch-operation exercise coverage
 objective: Add end-to-end test coverage that installs every documented Git hook
   wrapper and exercises the branch-operation boundaries needed before release.
@@ -41,7 +41,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -81,24 +81,64 @@ task:
       - Exercise work-item start, task-processing branch gates, post-merge reminders, pre-push release checks, and no-remote behavior.
       - Run focused hook tests, typecheck, and build.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Installed-wrapper and branch-operation exercise implementation is planned.
+      summary: Added end-to-end disposable-repository coverage that invokes every
+        actual installed documented Git hook wrapper, exercises work-item start and
+        task-processing branch enforcement, and drives local primary release checks.
       changes:
-        - id: WI-0032-10000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded installed-wrapper and branch-operation exercise plan.
+        - id: WI-0032-10000000_CHANGE-TESTS-001
+          type: test-code
+          summary: Extended tests/git-hooks.test.ts to execute all 28 installed
+            wrappers, verify executable/idempotent/unmanaged/argv/stdin behavior,
+            and exercise post-merge and pre-push wrappers.
           objectiveRefs:
             - WI-0032-10000000_OBJ-001
+          paths:
+            - tests/git-hooks.test.ts
+        - id: WI-0032-10000000_CHANGE-BRANCH-001
+          type: test-code
+          summary: Added disposable repository coverage for work-item start,
+            wrong-branch task-processing rejection, context-branch task commit,
+            and local no-remote revision release checks.
+          objectiveRefs:
             - WI-0032-10000000_OBJ-002
           paths:
-            - .docs/work-items/WI-0032/steps/WI-0032-10000000-implementation.yaml
-      testImplementations: []
+            - tests/git-hooks.test.ts
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0032-10000000_TC-INSTALLED-HOOKS"
+          path: tests/git-hooks.test.ts
+          selector: executes every actual installed hook wrapper and forwards the wrapper boundary
+        - testCaseRef: "#test-case/WI-0032-10000000_TC-BRANCH-OPERATIONS"
+          path: tests/git-hooks.test.ts
+          selector: exercises work-item start and task-processing branch enforcement through installed hooks
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - WI-0032-10000000_OBJ-001
         - WI-0032-10000000_OBJ-002
-      tests: []
+      tests:
+        - id: WI-0032-10000000_EXEC-HOOK-TESTS
+          type: unit
+          testCaseRefs:
+            - "#test-case/WI-0032-10000000_TC-INSTALLED-HOOKS"
+            - "#test-case/WI-0032-10000000_TC-BRANCH-OPERATIONS"
+          command: yarn test tests/git-hooks.test.ts --run
+          status: passed
+          result: The focused installed-wrapper and branch-operation suite passed all 13 tests.
+        - id: WI-0032-10000000_EXEC-TYPECHECK
+          type: static
+          testCaseRefs:
+            - "#test-case/WI-0032-10000000_TC-BRANCH-OPERATIONS"
+          command: yarn typecheck
+          status: passed
+          result: TypeScript typecheck passed.
+        - id: WI-0032-10000000_EXEC-BUILD
+          type: static
+          testCaseRefs:
+            - "#test-case/WI-0032-10000000_TC-INSTALLED-HOOKS"
+          command: yarn build
+          status: passed
+          result: TypeScript build passed.
     limitations:
       - Implementation evidence is not recorded until the task is processed on the WI-0032 context branch.
