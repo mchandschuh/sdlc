@@ -4,7 +4,7 @@ taskUid: WI-0031-10000000
 orderKey: "10000000"
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement unified Git hook dispatcher
 objective: Replace the split hook installers with scripts/git_hooks.mjs and
   uniform installed dispatch wrappers.
@@ -12,7 +12,7 @@ references:
   required:
     - .docs/work-items/WI-0031/work-item.json
     - scripts/install.mjs
-    - scripts/install_sdlc_validate_git_hooks.mjs
+    - scripts/git_hooks.mjs
     - tests/git-hooks.test.ts
     - tests/cli.test.ts
   informational:
@@ -54,14 +54,14 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
   intent:
-    summary: Implement scripts/git_hooks.mjs with dispatch(args) and one function
-      per supported hook; consolidate installer behavior; preserve existing hook
-      semantics.
+    summary: Implement scripts/git_hooks.mjs with dispatch(args), a complete
+      documented Git hook listing, and one named function per documented hook;
+      consolidate installer behavior and preserve existing hook semantics.
     changeTypes:
       - production-code
       - test-code
@@ -91,8 +91,8 @@ task:
         required: true
     objectives:
       - id: WI-0031-10000000_OBJ-001
-        statement: Every supported hook routes through one named dispatcher function
-          with uniform installed wrapper behavior.
+        statement: Every documented Git hook routes through one named dispatcher
+          function with uniform installed wrapper behavior.
         inputRefs:
           - WI-0031-10000000_INPUT-REQ-001
           - WI-0031-10000000_INPUT-REQ-002
@@ -116,7 +116,8 @@ task:
       - Do not change the intended hook enforcement policy.
       - Do not claim server-side remote enforcement.
     steps:
-      - Define one named hook function for every supported hook type.
+      - Define one named hook function for every documented Git hook type and keep
+        the complete hook listing in scripts/git_hooks.mjs.
       - Implement dispatch(args) to select the hook function and preserve
         argv/stdin.
       - Make scripts/install.mjs install identical thin dispatch wrappers.
@@ -124,25 +125,104 @@ task:
       - Update tests, .cline/README.md, and the external SKILL.md.
       - Run complete typecheck, build, and test gates.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The unified hook dispatcher architecture is planned.
+      summary: Implemented the unified Git hook dispatcher, consolidated installation
+        in scripts/install.mjs, removed the split installer, preserved existing hook
+        enforcement behavior, and added dispatcher-boundary regression coverage.
       changes:
-        - id: WI-0031-10000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the unified hook dispatcher architecture and
-            behavior-preservation boundary.
+        - id: WI-0031-10000000_CHANGE-DISPATCHER-001
+          type: production-code
+          summary: Added scripts/git_hooks.mjs with dispatch(args), the complete
+            documented Git hook listing, explicit named handlers for every hook,
+            preserved pre-commit,
+            post-merge, and pre-push behavior, and actionable unknown-hook errors.
+          objectiveRefs:
+            - WI-0031-10000000_OBJ-001
+          paths:
+            - scripts/git_hooks.mjs
+        - id: WI-0031-10000000_CHANGE-INSTALLER-001
+          type: production-code
+          summary: Made scripts/install.mjs the only installer and made all installed
+            hooks use one managed dispatch wrapper while preserving unmanaged content
+            and migrating legacy managed blocks.
           objectiveRefs:
             - WI-0031-10000000_OBJ-001
             - WI-0031-10000000_OBJ-002
           paths:
-            - .docs/work-items/WI-0031/steps/WI-0031-10000000-implementation.yaml
-      testImplementations: []
+            - scripts/install.mjs
+            - scripts/install_sdlc_validate_git_hooks.mjs
+        - id: WI-0031-10000000_CHANGE-TEST-001
+          type: test-code
+          summary: Replaced split-installer tests with dispatcher routing, wrapper
+            uniformity, stdin/argv forwarding, migration, behavior, idempotence,
+            and unmanaged-content coverage.
+          objectiveRefs:
+            - WI-0031-10000000_OBJ-001
+            - WI-0031-10000000_OBJ-002
+          paths:
+            - tests/git-hooks.test.ts
+        - id: WI-0031-10000000_CHANGE-DOCS-001
+          type: documentation
+          summary: Documented the unified dispatcher and installation command in
+            repository guidance and the external SDLC skill.
+          objectiveRefs:
+            - WI-0031-10000000_OBJ-001
+          paths:
+            - .cline/README.md
+        - id: WI-0031-10000000_CHANGE-REQUIREMENTS-001
+          type: documentation
+          summary: Expanded the authoritative WI-0031 requirements and listing
+            language to cover every documented Git hook and to require the installer
+            to derive all wrapper files from scripts/git_hooks.mjs.
+          objectiveRefs:
+            - WI-0031-10000000_OBJ-001
+            - WI-0031-10000000_OBJ-002
+          paths:
+            - .docs/work-items/WI-0031/work-item.json
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0031-10000000_TC-DISPATCH"
+          path: tests/git-hooks.test.ts
+          selector: routes every documented Git hook and rejects unknown hook names
+        - testCaseRef: "#test-case/WI-0031-10000000_TC-WRAPPERS"
+          path: tests/git-hooks.test.ts
+          selector: installs uniform executable wrappers idempotently and forwards stdin and arguments
+        - testCaseRef: "#test-case/WI-0031-10000000_TC-REMOVAL"
+          path: tests/git-hooks.test.ts
+          selector: removes legacy managed blocks and preserves unmanaged hook content
+        - testCaseRef: "#test-case/WI-0031-10000000_TC-BEHAVIOR"
+          path: tests/git-hooks.test.ts
+          selector: preserves validation, post-merge, pre-push, failure-output, and commit-blocking behavior
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - WI-0031-10000000_OBJ-001
         - WI-0031-10000000_OBJ-002
-      tests: []
+      tests:
+        - id: WI-0031-10000000_EXEC-NODE-CHECK
+          type: static
+          testCaseRefs:
+            - "#test-case/WI-0031-10000000_TC-DISPATCH"
+          command: node --check scripts/git_hooks.mjs && node --check scripts/install.mjs
+          status: passed
+          result: Both JavaScript hook modules passed syntax validation.
+        - id: WI-0031-10000000_EXEC-TYPECHECK
+          type: static
+          testCaseRefs:
+            - "#test-case/WI-0031-10000000_TC-BEHAVIOR"
+          command: yarn typecheck
+          status: passed
+          result: TypeScript typecheck passed.
+        - id: WI-0031-10000000_EXEC-HOOK-TESTS
+          type: unit
+          testCaseRefs:
+            - "#test-case/WI-0031-10000000_TC-DISPATCH"
+            - "#test-case/WI-0031-10000000_TC-WRAPPERS"
+            - "#test-case/WI-0031-10000000_TC-REMOVAL"
+            - "#test-case/WI-0031-10000000_TC-BEHAVIOR"
+          command: yarn test tests/git-hooks.test.ts --run
+          status: passed
+          result: The focused unified Git hook suite passed all 10 tests.
     limitations:
-      - Implementation remains planned.
+      - Runtime evidence covers local repository hooks only; it does not claim
+        server-side enforcement or remote publication.

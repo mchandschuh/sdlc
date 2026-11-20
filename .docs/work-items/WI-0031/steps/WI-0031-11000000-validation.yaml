@@ -4,10 +4,11 @@ taskUid: WI-0031-11000000
 orderKey: "11000000"
 parentTaskUid: WI-0031-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate unified Git hook dispatcher
-objective: Validate dispatcher routing, uniform installed wrappers, installer
-  removal, behavior preservation, documentation, and complete repository gates.
+objective: Validate every documented Git hook dispatcher route, uniform installed
+  wrappers, installer removal, behavior preservation, documentation, and complete
+  repository gates.
 references:
   required:
     - .docs/work-items/WI-0031/work-item.json
@@ -54,12 +55,13 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
   intent:
-    summary: Validate the unified hook dispatcher and behavior preservation.
+    summary: Validate every documented Git hook dispatcher route, uniform wrapper
+      installation, behavior preservation, and complete repository gates.
     inputs:
       - id: WI-0031-11000000_INPUT-IMPL-001
         kind: implementation
@@ -94,8 +96,8 @@ task:
       - id: WI-0031-11000000_VAL-DISPATCH
         sequence: 1
         name: validate-unified-hook-dispatcher
-        description: Validate every supported hook dispatches through the unified module
-          and existing behavior remains intact.
+        description: Validate every documented Git hook dispatches through the unified
+          module and existing behavior remains intact.
         reason: The architecture refactor must not create hook-specific installed-file
           drift or weaken enforcement.
         targetRefs:
@@ -114,7 +116,7 @@ task:
             guidance
           steps:
             - Validate every hook wrapper is uniform and dispatches by hook name.
-            - Validate dispatch routes every supported hook and rejects unknown
+            - Validate dispatch routes every documented Git hook and rejects unknown
               names.
             - Validate the old installer is absent and behavior-preservation
               tests pass.
@@ -129,23 +131,59 @@ task:
       - Do not change the intended hook enforcement policy.
       - Do not claim server-side remote enforcement.
   result:
-    status: implemented-unproven
-    summary: Validation is planned.
+    status: passed
+    summary: Unified Git hook dispatcher validation passed complete documented-hook
+      routing, uniform wrapper, migration, behavior-preservation, package, test,
+      and WI-0031 self-validation gates.
     executions:
-      - id: WI-0031-11000000_EXEC-PLAN
+      - id: WI-0031-11000000_EXEC-VALIDATE
         procedureRef: "#procedure/WI-0031-11000000_VAL-DISPATCH"
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation remains planned.
+          outcome: passed
+          exitCode: 0
+          summary: Syntax checks, typecheck, build, isolated-HOME complete tests,
+            focused hook tests, documented-hook coverage, and WI-0031 validation
+            all passed.
+          assertions:
+            - ALL_GIT_HOOKS contains 28 unique documented Git hooks.
+            - Every listed hook has one named exported handler and one dispatcher
+              map entry.
+            - The installer created 28 wrappers from ALL_GIT_HOOKS, and every
+              wrapper had the same managed body except for its hook-name argument.
+            - Repeated installation was byte-for-byte idempotent and preserved
+              unmanaged content while removing legacy managed blocks.
+            - Wrapper execution preserved original arguments and stdin.
+            - Pre-commit validation, post-merge reminder, pre-push release checks,
+              failure output, and commit blocking remained covered.
+            - The isolated-HOME complete suite passed 85 tests and the focused
+              hook suite passed 10 tests.
         evidenceTier: inspection
         evidence:
-          - kind: record
-            source: WI-0031 validation plan
-            claim: Unified hook dispatcher validation is planned.
+          - kind: command
+            source: WI-0031-11000000_EXEC-VALIDATE
+            claim: Hook modules passed syntax checks and package typecheck/build.
+            command: node --check scripts/git_hooks.mjs && node --check scripts/install.mjs && yarn typecheck && yarn build
+          - kind: command
+            source: WI-0031-11000000_EXEC-VALIDATE
+            claim: The focused unified Git hook suite passed.
+            command: yarn test tests/git-hooks.test.ts --run
+          - kind: command
+            source: WI-0031-11000000_EXEC-VALIDATE
+            claim: The complete suite passed with repository configuration isolated.
+            command: HOME=$(mktemp -d) yarn test --run
+          - kind: command
+            source: WI-0031-11000000_EXEC-VALIDATE
+            claim: WI-0031 schema, reference, branch, and delivery validation passed.
+            command: node ./bin/cli.js work-item validate --work-item WI-0031 --json
     findings: []
-    evidenceTier: inspection
+    evidenceTier: cli-audit
     limitations:
-      - Validation remains planned.
+      - Runtime evidence covers local repository hooks only; it does not claim
+        server-side enforcement or remote publication.
+      - The normal HOME complete-suite invocation is affected by the pre-existing
+        /home/michael/.sdlc/config.json repository selection, so the recorded full
+        suite uses an isolated HOME.
     nonClaims:
-      - This record does not claim implementation evidence.
+      - This result does not claim remote publication, deployment, provider
+        behavior, or production readiness.

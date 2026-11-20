@@ -91,3 +91,35 @@ At minimum, review the skill whenever changing:
 - work-item or task schema versions;
 - branch, merge, hook, tag, or push enforcement; or
 - required agent sequencing, commit, validation, or release behavior.
+
+## Git hook installation
+
+Git hook behavior is centralized in `scripts/git_hooks.mjs`. The module exposes
+`dispatch(args)`, a complete `ALL_GIT_HOOKS` listing, and one named handler for
+each documented Git hook:
+
+```text
+applypatch-msg, pre-applypatch, post-applypatch, pre-commit,
+pre-merge-commit, prepare-commit-msg, commit-msg, post-commit, pre-rebase,
+post-checkout, post-merge, pre-push, pre-receive, update, proc-receive,
+post-receive, post-update, reference-transaction, push-to-checkout,
+pre-auto-gc, post-rewrite, sendemail-validate, fsmonitor-watchman,
+p4-changelist, p4-prepare-changelist, p4-post-changelist, p4-pre-submit,
+post-index-change
+```
+
+Installed hooks are uniform thin wrappers that pass the hook name, original
+arguments, and inherited stdin to the dispatcher. The installer derives its
+complete hook-file list from `ALL_GIT_HOOKS`, so adding a documented hook only
+requires updating `scripts/git_hooks.mjs`, not an individual Git hook file.
+Install or refresh all wrappers with:
+
+```bash
+node ./scripts/install.mjs --hooks
+```
+
+`scripts/install.mjs` is the only hook installer. Repeated installation is
+idempotent and preserves unmanaged hook content. The former
+`scripts/install_sdlc_validate_git_hooks.mjs` installer is removed; pre-commit
+validation, post-merge reminders, and primary-branch pre-push release checks
+remain dispatcher handlers.
