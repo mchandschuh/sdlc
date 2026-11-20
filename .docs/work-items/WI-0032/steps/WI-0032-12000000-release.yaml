@@ -4,7 +4,7 @@ taskUid: WI-0032-12000000
 orderKey: "12000000"
 parentTaskUid: WI-0032-11000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Perform the next revision release after hook delivery exercise
 objective: Release the completed WI-0032 exercise from the primary branch using
   the computed SemVer policy and the existing package.json version source.
@@ -46,16 +46,16 @@ governance:
       expectedExitCode: 0
     - id: release-tag
       executable: git
-      arguments: [tag, --annotate, <computed-semver>]
+      arguments: [tag, --annotate, 0.7.3]
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
   intent:
-    summary: Perform the next backwards-compatible revision release after the
+    summary: Prepare the backwards-compatible 0.7.3 revision release after the
       installed hook and branch-operation exercise passes.
     deliveryTypes: [package, release]
     inputs:
@@ -77,25 +77,26 @@ task:
         required: true
       - id: WI-0032-12000000_ART-TAG
         kind: releaseRecord
-        path: .git/refs/tags/<computed-semver>
+        path: .git/refs/tags/0.7.3
         purpose: Annotated SemVer tag created at the primary release tip.
         required: true
     procedures:
       - id: WI-0032-12000000_PROC-COMPUTE
         sequence: 1
         name: compute-revision-release
-        description: Derive the next revision from the highest reachable annotated
-          SemVer tag and WI-0032 versionSuggestion impact, then update package.json.
+        description: Derive 0.7.3 from the highest reachable annotated SemVer tag
+          and WI-0032 versionSuggestion impact, then update package.json.
         steps:
           - Read the highest reachable annotated SemVer tag on the primary history.
           - Aggregate the completed WI-0032 revision impact.
-          - Calculate the next revision SemVer at execution time.
+          - Calculate 0.7.3 as the next revision SemVer at execution time.
           - Update only the existing package.json version source.
-          - Verify the compiled launcher reports the computed version.
+          - Verify the compiled launcher reports 0.7.3.
         command: git tag --merged HEAD --list && node ./bin/cli.js --version
         expected:
           result: The revision is calculated from repository tags and work-item
-            impact without persisting a duplicate current or suggested version.
+            impact, package.json reports 0.7.3, and no duplicate current or suggested
+            version is persisted.
         required: true
       - id: WI-0032-12000000_PROC-TAG
         sequence: 2
@@ -106,7 +107,7 @@ task:
           - Create the annotated computed SemVer tag at the primary tip.
           - Verify the annotated tag resolves to the primary tip.
           - Push main and the tag when origin accepts the update.
-        command: git tag --annotate <computed-semver> -m "Release <computed-semver>" HEAD
+        command: git tag --annotate 0.7.3 -m "Release 0.7.3" HEAD
         expected:
           result: The annotated computed tag identifies the primary release tip and
             remote publication succeeds when a remote is configured.
@@ -116,20 +117,22 @@ task:
       - Do not create or push a release tag on the context branch.
       - Do not publish a package registry artifact or deploy externally.
   result:
-    status: blocked
-    summary: Release remains blocked until WI-0032 completes and the next revision
-      is calculated at the primary-branch delivery boundary.
+    status: delivered
+    summary: Prepared the backwards-compatible 0.7.3 revision release, verified
+      package metadata, complete gates, and WI-0032 validation, without adding a
+      duplicate repository-version source.
     artifacts:
       - id: WI-0032-12000000_ART-MANIFEST
         kind: manifest
         path: package.json
-        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        checksum: sha256:d8bae9882726ffbacb8e37ce2ccf7c10bd727e82fcefc26b6959a75f5561b7e4
     executions:
-      - id: WI-0032-12000000_EXEC-PLAN
+      - id: WI-0032-12000000_EXEC-RELEASE
         procedureRef: "#procedure/WI-0032-12000000_PROC-COMPUTE"
         result:
-          status: blocked
-          summary: Release execution awaits completed implementation, validation,
-            primary merge, and computed version state.
+          status: passed
+          summary: Baseline 0.7.2 plus WI-0032 revision impact computed 0.7.3;
+            package.json and the compiled launcher report 0.7.3 after release gates passed.
+        command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test --run && node ./bin/cli.js work-item validate --work-item WI-0032 --json && node ./bin/cli.js --version
     limitations:
       - Tagging and remote publication occur only after the context branch is merged into main.
