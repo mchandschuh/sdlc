@@ -4,7 +4,7 @@ taskUid: WI-0033-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement command contract, discovery, registry, and first command batch
 objective: Add the typed yargs command-module contract, deterministic source/compiled discovery, fail-closed registry, root help registration, and the work-item list, work-item start, and repository info command modules.
 references:
@@ -43,7 +43,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -82,19 +82,58 @@ task:
       - Move work-item list, work-item start, and repository info behavior into command files with local implementation functions.
       - Register all resolved descriptors through the root yargs parser and add focused discovery/help/dispatch tests.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The dynamic command registry implementation is planned but has not been processed.
+      summary: Added the typed command-module boundary, deterministic source/compiled command discovery, fail-closed descriptor validation, yargs registration, and the work-item list, work-item start, and repository info command modules.
       changes:
-        - id: WI-0033-10000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the command-module contract and first implementation batch plan.
+        - id: WI-0033-10000000_CHANGE-001
+          type: production-code
+          summary: Added command types, recursive command discovery, duplicate rejection, registry registration, and composition-only dynamic routing for the first command families.
           objectiveRefs: [WI-0033-10000000_OBJ-001, WI-0033-10000000_OBJ-002]
-          paths: [.docs/work-items/WI-0033/steps/WI-0033-10000000-implementation.yaml]
-      testImplementations: []
+          paths:
+            - src/cli/command-types.ts
+            - src/cli/command-discovery.ts
+            - src/cli/command-runner.ts
+            - src/cli/main.ts
+        - id: WI-0033-10000000_CHANGE-002
+          type: production-code
+          summary: Moved work-item list, work-item start, and repository info behavior into yargs command modules while preserving existing core service boundaries.
+          objectiveRefs: [WI-0033-10000000_OBJ-002]
+          paths:
+            - src/cli/commands/work-item/list.command.ts
+            - src/cli/commands/work-item/start.command.ts
+            - src/cli/commands/repository/info.command.ts
+        - id: WI-0033-10000000_CHANGE-003
+          type: dependency
+          summary: Added yargs and its TypeScript declarations for generated help and command registration.
+          objectiveRefs: [WI-0033-10000000_OBJ-001]
+          paths:
+            - package.json
+            - yarn.lock
+        - id: WI-0033-10000000_CHANGE-004
+          type: test-code
+          summary: Added deterministic discovery, valid descriptor, and duplicate command regression tests.
+          objectiveRefs: [WI-0033-10000000_OBJ-001]
+          paths:
+            - tests/command-discovery.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-DISCOVERY'
+          path: tests/command-discovery.test.ts
+          selector: enumerates current command modules deterministically
+        - testCaseRef: '#test-case/TC-DUPLICATE-DESCRIPTOR'
+          path: tests/command-discovery.test.ts
+          selector: loads valid descriptors and rejects duplicate command paths
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0033-10000000_OBJ-001, WI-0033-10000000_OBJ-002]
-      tests: []
+      tests:
+        - id: WI-0033-10000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-DISCOVERY', '#test-case/TC-DUPLICATE-DESCRIPTOR']
+          command: HOME=$(mktemp -d) yarn test --run tests/command-discovery.test.ts tests/cli.test.ts --testTimeout 15000
+          status: passed
+          result: The command-discovery tests and CLI suite passed in an isolated HOME; the configured-home outside-Git stat assertion is an environment-specific limitation.
     limitations:
-      - Implementation has not been processed; no yargs registry, discovery, build, or test evidence exists yet.
+      - The remaining command families continue through the legacy dispatcher until their dedicated WI-0033 implementation tasks migrate them.
+      - The isolated focused suite uses an increased test timeout for two existing schema-validation tests whose runtime is close to the default five-second Vitest limit.
+      - The configured user-local repository root can make the existing outside-Git stat test observe the configured repository rather than report no repository.

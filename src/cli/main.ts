@@ -9,6 +9,7 @@ import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationR
 import { repositoryInfo, REPOSITORY_INFO_SCHEMA, type RepositoryInfoReport } from '../core/repository.js';
 import { resolveCommandContext, resolveOperativeRoot } from '../core/operative-root.js';
 import { startWorkItem } from '../core/work-item-start.js';
+import { runDiscoveredCommands } from './command-runner.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -430,7 +431,7 @@ async function handleReference(args: readonly string[], schemaRoot: string): Pro
   return result.valid ? 0 : 1;
 }
 
-export async function main(args: readonly string[] = process.argv.slice(2)): Promise<number> {
+async function legacyMain(args: readonly string[]): Promise<number> {
   const [first] = args;
 
   if (!first || first === '-h' || first === '--help') {
@@ -467,4 +468,22 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
   console.error(`Unknown option: ${first}`);
   console.error('Run "sdlc --help" to see available options.');
   return 2;
+}
+
+export async function main(args: readonly string[] = process.argv.slice(2)): Promise<number> {
+  try {
+    const dynamicInvocation = args.length === 0
+      || args.includes('-h')
+      || args.includes('--help')
+      || args.includes('-v')
+      || args.includes('--version')
+      || (args[0] === 'work-item' && (args[1] === 'list' || args[1] === 'start'))
+      || (args[0] === 'repository' && args[1] === 'info');
+    if (!dynamicInvocation) return await legacyMain(args);
+    const dynamicResult = await runDiscoveredCommands(args, import.meta.url, packageRoot, await version());
+    return dynamicResult === undefined ? await legacyMain(args) : dynamicResult;
+  } catch (error) {
+    console.error(error instanceof DiscoveryError ? error.message : error instanceof Error ? error.message : 'Command failed');
+    return 1;
+  }
 }
