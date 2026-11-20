@@ -4,7 +4,7 @@
   "status": "planned",
   "title": "Refactor Git hooks into a single dispatcher architecture",
   "type": "refactor",
-  "objective": "Replace the split Git hook installers with scripts/git_hooks.mjs, a uniform dispatch-based hook body, and one named function per supported hook type while preserving existing SDLC validation, branch, merge, tag, and push behavior.",
+  "objective": "Replace the split Git hook installers with scripts/git_hooks.mjs, a uniform dispatch-based hook body, and one named function for every Git hook documented by the supported Git githooks manual while preserving existing SDLC validation, branch, merge, tag, and push behavior.",
   "repository": {
     "root": "/home/michael/src/github/sdlc",
     "authority": "local"
@@ -28,12 +28,12 @@
   "scope": [
     {
       "name": "single-hook-dispatcher",
-      "description": "Create scripts/git_hooks.mjs as the only hook behavior dispatcher, exposing dispatch(args) and one named function per unique Git hook type.",
+      "description": "Create scripts/git_hooks.mjs as the only hook behavior dispatcher, exposing dispatch(args) and one named function for every Git hook documented by the supported Git githooks manual.",
       "reason": "Hook behavior should be centralized and changed by updating one dispatcher module."
     },
     {
       "name": "uniform-installed-hook-body",
-      "description": "Install every supported Git hook with the same thin body that dispatches using the hook name and original arguments.",
+      "description": "Install every documented Git hook with the same thin body that dispatches using the hook name and original arguments.",
       "reason": "Installed hook files should not contain per-hook behavior or divergent wrapper logic."
     },
     {
@@ -75,12 +75,12 @@
       {
         "id": "WI-0031_REQ_001",
         "name": "dispatcher-contract",
-        "description": "scripts/git_hooks.mjs must expose dispatch(args) and one uniquely named function for every supported Git hook name, with dispatch selecting the function from the hook name argument.",
+        "description": "scripts/git_hooks.mjs must expose dispatch(args) and one uniquely named function for every Git hook documented by the supported Git githooks manual, with dispatch selecting the function from the hook name argument.",
         "reason": "The implementation needs one clear behavior ownership boundary.",
         "acceptanceCriteria": [
           {
             "id": "WI-0031_REQ_001_AC_001",
-            "description": "Dispatching each supported hook name calls exactly its named function and unknown hook names return an actionable non-zero error."
+            "description": "The dispatcher listing contains every documented Git hook, dispatching each listed hook calls its named function, and unknown hook names return an actionable non-zero error."
           },
           {
             "id": "WI-0031_REQ_001_AC_002",
@@ -91,12 +91,12 @@
       {
         "id": "WI-0031_REQ_002",
         "name": "uniform-hook-body",
-        "description": "Every installed supported hook must contain the same thin executable body that calls scripts/git_hooks.mjs dispatch with the hook name and original arguments.",
+        "description": "Every installed documented Git hook must contain the same thin executable body that calls scripts/git_hooks.mjs dispatch with the hook name and original arguments.",
         "reason": "Hook files should be stable wrappers rather than duplicated policy implementations.",
         "acceptanceCriteria": [
           {
             "id": "WI-0031_REQ_002_AC_001",
-            "description": "All supported installed hook files have byte-equivalent dispatch bodies except for the hook-name argument."
+            "description": "All documented Git hook files have byte-equivalent dispatch bodies except for the hook-name argument, and the installer derives its complete file list from scripts/git_hooks.mjs."
           },
           {
             "id": "WI-0031_REQ_002_AC_002",
@@ -112,7 +112,7 @@
         "acceptanceCriteria": [
           {
             "id": "WI-0031_REQ_003_AC_001",
-            "description": "The old installer is absent, no installed hook references it, and --hooks installs the unified dispatch wrappers."
+            "description": "The old installer is absent, no installed hook references it, and --hooks installs the unified dispatch wrappers for every documented Git hook."
           }
         ]
       },

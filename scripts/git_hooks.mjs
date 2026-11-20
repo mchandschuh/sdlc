@@ -1,19 +1,43 @@
 #!/usr/bin/env node
 
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const SCRIPT_NAME = 'install_sdlc_validate_git_hooks.mjs';
-const HOOK_NAME = 'pre-commit';
-const HOOK_NAMES = ['pre-commit', 'post-merge', 'pre-push'];
-const START_MARKER = '# >>> sdlc work-item validation >>>';
-const END_MARKER = '# <<< sdlc work-item validation <<<';
+export const ALL_GIT_HOOKS = [
+  'applypatch-msg',
+  'pre-applypatch',
+  'post-applypatch',
+  'pre-commit',
+  'pre-merge-commit',
+  'prepare-commit-msg',
+  'commit-msg',
+  'post-commit',
+  'pre-rebase',
+  'post-checkout',
+  'post-merge',
+  'pre-push',
+  'pre-receive',
+  'update',
+  'proc-receive',
+  'post-receive',
+  'post-update',
+  'reference-transaction',
+  'push-to-checkout',
+  'pre-auto-gc',
+  'post-rewrite',
+  'sendemail-validate',
+  'fsmonitor-watchman',
+  'p4-changelist',
+  'p4-prepare-changelist',
+  'p4-post-changelist',
+  'p4-pre-submit',
+  'post-index-change',
+];
+
 const WORK_ITEM_PATH = /^\.docs\/work-items\/([A-Z]{1,10}-[0-9]+)(?:\/|$)/u;
 const SEMVER_TAG = /^\d+\.\d+\.\d+$/u;
-const scriptPath = resolve(dirname(fileURLToPath(import.meta.url)), SCRIPT_NAME);
+const ZERO_SHA = '0'.repeat(40);
 
 function git(repositoryRoot, args) {
   return execFileSync('git', ['-C', repositoryRoot, ...args], { encoding: 'utf8' }).trim();
@@ -23,105 +47,28 @@ function repositoryRoot() {
   return git(process.cwd(), ['rev-parse', '--show-toplevel']);
 }
 
-function hookPath(root) {
-  return resolve(root, git(root, ['rev-parse', '--git-path', 'hooks']), HOOK_NAME);
-}
-
-function hookFilePath(root, name) {
-  return resolve(root, git(root, ['rev-parse', '--git-path', 'hooks']), name);
-}
-
-function managedHook(name) {
-  if (name === 'post-merge') return [
-    '# >>> sdlc work-item completion reminder >>>',
-    'node "$(git rev-parse --show-toplevel)/scripts/install_sdlc_validate_git_hooks.mjs" --post-merge-reminder || exit 0',
-    '# <<< sdlc work-item completion reminder <<<',
-  ].join('\n');
-  if (name === 'pre-push') return [
-    '# >>> sdlc primary release validation >>>',
-    'node "$(git rev-parse --show-toplevel)/scripts/install_sdlc_validate_git_hooks.mjs" --pre-push "$@"',
-    '# <<< sdlc primary release validation <<<',
-  ].join('\n');
-  return [
-    START_MARKER,
-    'sdlc_hook_status=0',
-    `node "$(git rev-parse --show-toplevel)/scripts/${SCRIPT_NAME}" --run-hook || sdlc_hook_status=$?`,
-    'if [ "$sdlc_hook_status" -ne 0 ]; then',
-    '  exit "$sdlc_hook_status"',
-    'fi',
-    END_MARKER,
-  ].join('\n');
-}
-
-function managedMarkers(name) {
-  if (name === 'post-merge') return ['# >>> sdlc work-item completion reminder >>>', '# <<< sdlc work-item completion reminder <<<'];
-  if (name === 'pre-push') return ['# >>> sdlc primary release validation >>>', '# <<< sdlc primary release validation <<<'];
-  return [START_MARKER, END_MARKER];
-}
-
-function removeManagedHook(content, name) {
-  const [startMarker, endMarker] = managedMarkers(name);
-  const start = content.indexOf(startMarker);
-  if (start < 0) return content;
-  const end = content.indexOf(endMarker, start);
-  if (end < 0) return content;
-  const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-  let after = end + endMarker.length;
-  while (content[after] === '\n' || content[after] === '\r') after += 1;
-  return content.slice(0, lineStart) + content.slice(after);
-}
-
-function addManagedHook(content, name) {
-  const normalized = removeManagedHook(content, name);
-  const lines = normalized.split('\n');
-  const exitIndex = lines.findLastIndex((line) => line.trim() === 'exit 0');
-  const block = managedHook(name).split('\n');
-  if (exitIndex >= 0) lines.splice(exitIndex, 0, ...block, '');
-  else {
-    if (lines.length > 0 && lines.at(-1) !== '') lines.push('');
-    lines.push(...block, '');
-  }
-  return lines.join('\n');
-}
-
-async function install() {
-  const root = repositoryRoot();
-  for (const name of HOOK_NAMES) {
-    const target = hookFilePath(root, name);
-    await mkdir(dirname(target), { recursive: true });
-    const existing = existsSync(target) ? await readFile(target, 'utf8') : '#!/bin/sh\n';
-    await writeFile(target, addManagedHook(existing, name), 'utf8');
-    await chmod(target, 0o755);
-    console.log(`Installed ${name} hook at ${target}`);
-  }
-}
-
-function stagedWorkItems(root) {
-  const staged = git(root, ['diff', '--cached', '--name-only', '-z']);
-  const ids = new Set();
-  for (const path of staged.split('\0')) {
-    const match = WORK_ITEM_PATH.exec(path);
-    if (match?.[1]) ids.add(match[1]);
-  }
-  return [...ids].sort();
-}
-
-function stagedEntries(root) {
-  const output = git(root, ['diff', '--cached', '--name-status', '-z']);
-  const parts = output.split('\0').filter(Boolean);
-  const entries = [];
-  for (let index = 0; index < parts.length; index += 2) {
-    entries.push({ status: parts[index] ?? '', path: parts[index + 1] ?? '' });
-  }
-  return entries;
-}
-
 function output(result, stream) {
   const value = typeof result === 'string' ? result : result ? result.toString() : '';
   if (value) stream.write(value);
 }
 
-function runHook() {
+export function applypatchMsg() { return 0; }
+export function preApplypatch() { return 0; }
+export function postApplypatch() { return 0; }
+export function postMerge() {
+  const root = repositoryRoot();
+  const branch = currentBranch(root);
+  console.error(`Post-merge reminder for ${branch}: verify completed work items, calculate the required SemVer impact, create the annotated release tag only on main/master, and push the primary branch and tag when a remote exists.`);
+  return 0;
+}
+
+export function postUpdate() { return 0; }
+export function commitMsg() { return 0; }
+export function postCommit() { return 0; }
+export function preRebase() { return 0; }
+export function postCheckout() { return 0; }
+
+export function preCommit() {
   const root = repositoryRoot();
   const workItems = stagedWorkItems(root);
   const taskProcessing = new Map();
@@ -160,19 +107,13 @@ function runHook() {
   return status;
 }
 
-function currentBranch(root) {
-  return git(root, ['branch', '--show-current']);
-}
+export function preMergeCommit() { return 0; }
 
-function stagedTaskProcessingPaths(root) {
-  return git(root, ['diff', '--cached', '--name-only', '-z']).split('\0').filter((path) => /\.docs\/work-items\/[A-Z]{1,10}-[0-9]+\/steps\/.*\.(?:yaml|yml|json)$/u.test(path));
-}
-
-function runPrePush() {
+export function prePush(args = [], stdin = '') {
   const root = repositoryRoot();
   const branch = currentBranch(root);
-  const remoteName = process.argv[process.argv.indexOf('--pre-push') + 1] || '';
-  const updates = readFileSync(0, 'utf8').trim().split('\n').filter(Boolean).map((line) => {
+  const remoteName = args[0] || '';
+  const updates = stdin.trim().split('\n').filter(Boolean).map((line) => {
     const [localRef, localSha, remoteRef, remoteSha] = line.trim().split(/\s+/u);
     return { localRef, localSha, remoteRef, remoteSha };
   });
@@ -187,8 +128,8 @@ function runPrePush() {
 
   const branchUpdate = updates.find((update) => update.localRef === `refs/heads/${branch}`);
   const localSha = branchUpdate?.localSha || git(root, ['rev-parse', 'HEAD']);
-  const previousSha = branchUpdate?.remoteSha || '0000000000000000000000000000000000000000';
-  const baseSha = previousSha === '0000000000000000000000000000000000000000' ? localSha : previousSha;
+  const previousSha = branchUpdate?.remoteSha || ZERO_SHA;
+  const baseSha = previousSha === ZERO_SHA ? localSha : previousSha;
   const completed = changedCompletedWorkItems(root, baseSha, localSha);
   const packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
   const packageChanged = git(root, ['diff', '--name-only', `${baseSha}..${localSha}`]).split('\n').includes('package.json');
@@ -201,6 +142,90 @@ function runPrePush() {
     return 1;
   }
   return validatePrimaryTagUpdates(root, updates, remoteName, localSha, expected);
+}
+
+export function prepareCommitMsg() { return 0; }
+export function pushToCheckout() { return 0; }
+export function preReceive() { return 0; }
+export function update() { return 0; }
+export function procReceive() { return 0; }
+export function postReceive() { return 0; }
+export function referenceTransaction() { return 0; }
+export function preAutoGc() { return 0; }
+export function postRewrite() { return 0; }
+export function sendemailValidate() { return 0; }
+export function fsmonitorWatchman() { return 0; }
+export function p4Changelist() { return 0; }
+export function p4PrepareChangelist() { return 0; }
+export function p4PostChangelist() { return 0; }
+export function p4PreSubmit() { return 0; }
+export function postIndexChange() { return 0; }
+
+const HANDLERS = new Map([
+  ['applypatch-msg', applypatchMsg],
+  ['pre-applypatch', preApplypatch],
+  ['post-applypatch', postApplypatch],
+  ['pre-commit', preCommit],
+  ['pre-merge-commit', preMergeCommit],
+  ['prepare-commit-msg', prepareCommitMsg],
+  ['commit-msg', commitMsg],
+  ['post-commit', postCommit],
+  ['pre-rebase', preRebase],
+  ['post-checkout', postCheckout],
+  ['post-merge', postMerge],
+  ['pre-push', prePush],
+  ['pre-receive', preReceive],
+  ['update', update],
+  ['proc-receive', procReceive],
+  ['post-receive', postReceive],
+  ['post-update', postUpdate],
+  ['reference-transaction', referenceTransaction],
+  ['push-to-checkout', pushToCheckout],
+  ['pre-auto-gc', preAutoGc],
+  ['post-rewrite', postRewrite],
+  ['sendemail-validate', sendemailValidate],
+  ['fsmonitor-watchman', fsmonitorWatchman],
+  ['p4-changelist', p4Changelist],
+  ['p4-prepare-changelist', p4PrepareChangelist],
+  ['p4-post-changelist', p4PostChangelist],
+  ['p4-pre-submit', p4PreSubmit],
+  ['post-index-change', postIndexChange],
+]);
+
+export function dispatch(args = process.argv.slice(2), stdin = readFileSync(0, 'utf8')) {
+  const [hookName, ...hookArgs] = args;
+  if (hookName !== 'dispatch') throw new Error('Usage: node scripts/git_hooks.mjs dispatch <hook-name> [args...]');
+  const handler = HANDLERS.get(hookArgs[0]);
+  if (!handler) {
+    const supported = ALL_GIT_HOOKS.join(', ');
+    console.error(`Unknown Git hook "${hookArgs[0] ?? ''}". Supported hooks: ${supported}`);
+    return 1;
+  }
+  return handler(hookArgs.slice(1), stdin);
+}
+
+function stagedWorkItems(root) {
+  const staged = git(root, ['diff', '--cached', '--name-only', '-z']);
+  const ids = new Set();
+  for (const path of staged.split('\0')) {
+    const match = WORK_ITEM_PATH.exec(path);
+    if (match?.[1]) ids.add(match[1]);
+  }
+  return [...ids].sort();
+}
+
+function stagedEntries(root) {
+  const output = git(root, ['diff', '--cached', '--name-status', '-z']);
+  const parts = output.split('\0').filter(Boolean);
+  const entries = [];
+  for (let index = 0; index < parts.length; index += 2) {
+    entries.push({ status: parts[index] ?? '', path: parts[index + 1] ?? '' });
+  }
+  return entries;
+}
+
+function currentBranch(root) {
+  return git(root, ['branch', '--show-current']);
 }
 
 function changedCompletedWorkItems(root, oldSha, newSha) {
@@ -223,13 +248,13 @@ function changedCompletedWorkItems(root, oldSha, newSha) {
 }
 
 function highestAnnotatedSemverTag(root, sha) {
-  const tags = git(root, ['tag', '--merged', sha, '--list']).split('\n').filter((tag) => /^\d+\.\d+\.\d+$/u.test(tag));
+  const tags = git(root, ['tag', '--merged', sha, '--list']).split('\n').filter((tag) => SEMVER_TAG.test(tag));
   const valid = tags.filter((tag) => {
     const type = spawnSync('git', ['-C', root, 'cat-file', '-t', `refs/tags/${tag}`], { encoding: 'utf8' });
     const ancestor = spawnSync('git', ['-C', root, 'merge-base', '--is-ancestor', `${tag}^{}`, sha]);
     return type.status === 0 && type.stdout.trim() === 'tag' && ancestor.status === 0;
   });
-  return valid.sort((left, right) => compareVersions(left, right)).at(-1) || null;
+  return valid.sort(compareVersions).at(-1) || null;
 }
 
 function compareVersions(left, right) {
@@ -248,7 +273,7 @@ function nextVersion(base, impact) {
 function validatePrimaryTagUpdates(root, updates, remoteName, localSha, expected) {
   const semverTagUpdates = updates.filter((update) => update.remoteRef?.startsWith('refs/tags/') && SEMVER_TAG.test(update.remoteRef.slice('refs/tags/'.length)));
   if (!expected) {
-    if (semverTagUpdates.some((update) => update.localSha === '0000000000000000000000000000000000000000')) {
+    if (semverTagUpdates.some((update) => update.localSha === ZERO_SHA)) {
       console.error('Deleting a primary-branch SemVer release tag is not allowed.');
       return 1;
     }
@@ -264,7 +289,7 @@ function validatePrimaryTagUpdates(root, updates, remoteName, localSha, expected
   }
   for (const update of semverTagUpdates) {
     const name = update.remoteRef.slice('refs/tags/'.length);
-    if (name !== expected || update.localSha === '0000000000000000000000000000000000000000' || (update.remoteSha !== '0000000000000000000000000000000000000000' && update.remoteSha !== update.localSha)) {
+    if (name !== expected || update.localSha === ZERO_SHA || (update.remoteSha !== ZERO_SHA && update.remoteSha !== update.localSha)) {
       console.error(`SemVer tag update ${name} is not the required immutable primary release tag ${expected}.`);
       return 1;
     }
@@ -276,19 +301,6 @@ function validatePrimaryTagUpdates(root, updates, remoteName, localSha, expected
   return 0;
 }
 
-function runPostMergeReminder() {
-  const root = repositoryRoot();
-  const branch = currentBranch(root);
-  console.error(`Post-merge reminder for ${branch}: verify completed work items, calculate the required SemVer impact, create the annotated release tag only on main/master, and push the primary branch and tag when a remote exists.`);
-  return 0;
-}
-
-try {
-  if (process.argv.includes('--run-hook')) process.exitCode = runHook();
-  else if (process.argv.includes('--pre-push')) process.exitCode = runPrePush();
-  else if (process.argv.includes('--post-merge-reminder')) process.exitCode = runPostMergeReminder();
-  else await install();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : 'Git hook installation failed');
-  process.exitCode = 1;
+if (process.argv[2] === 'dispatch') {
+  process.exitCode = dispatch(process.argv.slice(2));
 }
