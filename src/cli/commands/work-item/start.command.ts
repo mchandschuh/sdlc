@@ -13,6 +13,7 @@ export default function createWorkItemStartCommand(_context: SdlcCommandContext)
       .option('repository-root', { type: 'string', describe: 'Use an explicit repository root' })
       .option('json', { type: 'boolean', default: false, describe: 'Emit JSON output' }),
     handler: async (argv) => {
+      if (Array.isArray(argv.workItem)) throw new DiscoveryError('Duplicate --work-item option.');
       if (typeof argv.workItem !== 'string' || argv.workItem.length === 0) throw new DiscoveryError('Usage: sdlc work-item start --work-item <work-item>');
       const context = await resolveCommandContext(typeof argv.repositoryRoot === 'string' ? argv.repositoryRoot : undefined);
       const report = await startWorkItem(context.repositoryRoot, argv.workItem);

@@ -10,6 +10,7 @@ export default function createRepositoryInfoCommand(_context: SdlcCommandContext
       .option('path', { type: 'string', describe: 'Path from which to search' })
       .option('json', { type: 'boolean', default: false, describe: 'Emit JSON output' }),
     handler: async (argv) => {
+      if (Array.isArray(argv.path)) throw new Error('Duplicate --path option.');
       if (typeof argv.path !== 'string' || argv.path.length === 0) throw new Error('Usage: sdlc repository info --path <path> [--json]');
       const report = await repositoryInfo(argv.path);
       if (argv.json === true) console.log(JSON.stringify(report, null, 2));

@@ -19,7 +19,8 @@ export async function runDiscoveredCommands(
   // The first task migrates only the work-item and repository command families;
   // leave all other command families on the legacy dispatcher until their
   // dedicated command-module tasks move them into the discovered registry.
-  const dynamicFamily = (args[0] === 'work-item' && (args[1] === 'list' || args[1] === 'start'))
+  const dynamicFamily = (args[0] === 'work-item' && ['list', 'start', 'validate'].includes(args[1] ?? ''))
+    || (args[0] === 'task' && ['list', 'validate', 'next'].includes(args[1] ?? ''))
     || (args[0] === 'repository' && args[1] === 'info');
   if (!rootHelpOrVersion(args) && !dynamicFamily) return undefined;
   const context: SdlcCommandContext = { schemaRegistryRoot };
@@ -38,7 +39,8 @@ export async function runDiscoveredCommands(
     .alias('v', 'version')
     .strict()
     .fail((message, error) => {
-      throw error ?? new Error(message ?? 'Invalid command invocation.');
+      const normalized = message?.replace(/^Unknown argument:/u, 'Unknown option:');
+      throw error ?? new Error(normalized ?? 'Invalid command invocation.');
     });
   const groups = new Map<string, readonly SdlcCommandModule[]>();
   for (const command of commands) {
@@ -73,8 +75,9 @@ export async function runDiscoveredCommands(
   }
   else {
     const originalLog = console.log;
+    const splitHelpOutput = args.includes('-h') || args.includes('--help');
     console.log = (...values: unknown[]) => {
-      if (values.length === 1 && typeof values[0] === 'string' && values[0].includes('\n')) {
+      if (splitHelpOutput && values.length === 1 && typeof values[0] === 'string' && values[0].includes('\n')) {
         for (const line of values[0].split('\n')) originalLog(line);
       } else originalLog(...values);
     };

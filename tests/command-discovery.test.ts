@@ -15,8 +15,12 @@ describe('dynamic command discovery', () => {
     const files = await enumerateCommandFiles(new URL('../src/cli/main.ts', import.meta.url).href);
     expect(files.map((file) => file.replaceAll('\\', '/').split('/src/').at(-1))).toEqual([
       'cli/commands/repository/info.command.ts',
+      'cli/commands/task/list.command.ts',
+      'cli/commands/task/next.command.ts',
+      'cli/commands/task/validate.command.ts',
       'cli/commands/work-item/list.command.ts',
       'cli/commands/work-item/start.command.ts',
+      'cli/commands/work-item/validate.command.ts',
     ]);
   });
 

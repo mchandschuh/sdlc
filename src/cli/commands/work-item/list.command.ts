@@ -11,6 +11,7 @@ export default function createWorkItemListCommand(_context: SdlcCommandContext):
       .option('work-item', { type: 'string', describe: 'Limit output to one work-item ID' })
       .option('json', { type: 'boolean', default: false, describe: 'Emit JSON output' }),
     handler: async (argv) => {
+      if (Array.isArray(argv.workItem)) throw new Error('Duplicate --work-item option.');
       const context = await resolveCommandContext();
       const discovered = await discoverWorkItems(context.repositoryRoot);
       const report = typeof argv.workItem === 'string'

@@ -4,7 +4,7 @@ taskUid: WI-0033-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0033-10000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement work-item and task command modules
 objective: Migrate work-item validate, task list, task validate, and task next into yargs command modules with complete generated help and encapsulated command functions.
 references:
@@ -42,7 +42,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -79,19 +79,52 @@ task:
       - Implement task/list.command.ts, task/validate.command.ts, and task/next.command.ts.
       - Add yargs help and dispatch regression tests for all four commands.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The work-item and task command migration is planned but has not been processed.
+      summary: Migrated work-item validate, task list, task validate, and task next into dynamically discovered yargs command modules while preserving existing JSON reports, option errors, and validation behavior.
       changes:
-        - id: WI-0033-20000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the work-item and task command migration plan.
+        - id: WI-0033-20000000_CHANGE-001
+          type: production-code
+          summary: Added the work-item validation and task command modules with local builders, handlers, output shaping, and stable error translation.
           objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
-          paths: [.docs/work-items/WI-0033/steps/WI-0033-20000000-implementation.yaml]
-      testImplementations: []
+          paths:
+            - src/cli/commands/work-item/validate.command.ts
+            - src/cli/commands/task/list.command.ts
+            - src/cli/commands/task/validate.command.ts
+            - src/cli/commands/task/next.command.ts
+        - id: WI-0033-20000000_CHANGE-002
+          type: production-code
+          summary: Extended dynamic routing and removed the migrated work-item/task handlers and formatting functions from main.ts.
+          objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
+          paths:
+            - src/cli/command-runner.ts
+            - src/cli/main.ts
+        - id: WI-0033-20000000_CHANGE-003
+          type: test-code
+          summary: Extended discovery and CLI regression coverage for all seven dynamically registered command modules and exact option/help behavior.
+          objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
+          paths:
+            - tests/command-discovery.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-VALIDATION-HELP'
+          path: tests/cli.test.ts
+          selector: documents the work-item inventory and normalized task option forms in command help
+        - testCaseRef: '#test-case/TC-TASK-HELP'
+          path: tests/cli.test.ts
+          selector: validates one canonical task and reports structured reference metrics
+        - testCaseRef: '#test-case/TC-TASK-DISPATCH'
+          path: tests/cli.test.ts
+          selector: selects the first unprocessed task and reports no task when exhausted
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
-      tests: []
+      tests:
+        - id: WI-0033-20000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-VALIDATION-HELP', '#test-case/TC-TASK-HELP', '#test-case/TC-TASK-DISPATCH']
+          command: HOME=$(mktemp -d) yarn test --run tests/cli.test.ts tests/command-discovery.test.ts --testTimeout 15000
+          status: passed
+          result: Typecheck, build, 77 focused CLI/discovery tests, and the complete migrated command-family assertions passed in an isolated HOME.
     limitations:
-      - Implementation has not been processed; no command-specific help or dispatch evidence exists yet.
+      - Reference and stat command families remain on the legacy path until their dedicated WI-0033 implementation tasks.
+      - Static and local CLI evidence does not establish production deployment or external plugin security.

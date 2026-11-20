@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { discoverNextTask, discoverTasks, DiscoveryError, statTrackedPath, type DiscoveryReport, type TaskSummary } from '../core/discovery.js';
+import { DiscoveryError, statTrackedPath } from '../core/discovery.js';
 import { validateReference } from '../core/reference.js';
 import { resolveReference, validateReferenceResource } from '../core/reference-resolution.js';
 import { migrateTaskLocalReferences, migrateTaskLocalReferencesForWorkItem, migrateWorkItemReferences } from '../core/task-local-migration.js';
-import { validateWorkItem, WORK_ITEM_VALIDATION_SCHEMA, type WorkItemValidationReport } from '../core/work-item-validation.js';
-import { resolveCommandContext, resolveOperativeRoot } from '../core/operative-root.js';
+import { WORK_ITEM_VALIDATION_SCHEMA } from '../core/work-item-validation.js';
+import { resolveOperativeRoot } from '../core/operative-root.js';
 import { runDiscoveredCommands } from './command-runner.js';
 
 const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
@@ -20,55 +20,6 @@ async function version(): Promise<string> {
 
 function jsonRequested(args: readonly string[]): boolean {
   return args.includes('--json');
-}
-
-function printTasks(workItemId: string, report: DiscoveryReport<TaskSummary>, json: boolean): void {
-  if (json) {
-    console.log(JSON.stringify({ schema: 'sdlc-task-list/v1', workItemId, ...report }, null, 2));
-    return;
-  }
-  console.log(`Tasks for ${workItemId}:`);
-  for (const task of report.items) console.log(`  ${task.taskUid}  ${task.taskType.padEnd(14)} ${task.processingStatus.padEnd(22)} ${task.path}`);
-  if (report.items.length === 0) console.log('  none');
-  for (const finding of report.findings) console.error(`Finding: ${finding}`);
-}
-
-function commandHelp(): number {
-  console.log('Usage: sdlc task list --work-item <work-item> [--json]');
-  console.log('List canonical task envelopes below the selected work item stepsPath.');
-  return 0;
-}
-
-function printNextTask(workItemId: string, task: TaskSummary | null, json: boolean): void {
-  const response = {
-    schema: 'https://schemas.handschuh.dev/sdlc/task-next/v1',
-    workItemId,
-    selection: task ? 'selected' : 'none',
-    task,
-  } as const;
-  if (json) {
-    console.log(JSON.stringify(response, null, 2));
-    return;
-  }
-  if (task) {
-    console.log(`Next task for ${workItemId}:`);
-    console.log(`  ${task.taskUid}  ${task.taskType.padEnd(14)} ${task.processingStatus.padEnd(22)} ${task.path}`);
-  } else {
-    console.log(`No task requires processing for ${workItemId}.`);
-  }
-}
-
-function printWorkItemValidation(report: WorkItemValidationReport, json: boolean): void {
-  if (json) {
-    console.log(JSON.stringify(report, null, 2));
-    return;
-  }
-  console.log(`Work item validation for ${report.workItemId}: ${report.valid ? 'passed' : 'failed'}`);
-  console.log(`  Objects: ${report.validObjectCount}/${report.objectCount} valid`);
-  for (const object of report.objects) {
-    console.log(`  ${object.valid ? 'PASS' : 'FAIL'} ${object.objectType} ${object.path}`);
-    for (const finding of object.findings) console.error(`Finding: ${finding}`);
-  }
 }
 
 function optionValue(args: readonly string[], name: string): { value?: string; duplicate: boolean; unknown?: string } {
@@ -109,58 +60,6 @@ function selectedOptions(args: readonly string[], names: readonly string[]): { r
     values[name] = value;
   }
   return { values };
-}
-
-async function handleWorkItemValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
-  if (args[0] !== 'work-item' || args[1] !== 'validate') return undefined;
-  const selected = selectedOptions(args.slice(2), ['--work-item', '--repository-root']);
-  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-  const workItem = selected.values['--work-item'];
-  if (!workItem) throw new DiscoveryError('Usage: sdlc work-item validate --work-item <work-item> [--repository-root <path>] [--json]');
-  const context = await resolveCommandContext(selected.values['--repository-root']);
-  const report = await validateWorkItem(context.repositoryRoot, workItem, undefined, context.schemaRegistryRoot);
-  printWorkItemValidation(report, jsonRequested(args));
-  return report.valid ? 0 : 1;
-}
-
-async function handleTaskValidation(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
-  if (args[0] !== 'task' || args[1] !== 'validate') return undefined;
-  const selected = selectedOptions(args.slice(2), ['--task', '--repository-root']);
-  if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-  const task = selected.values['--task'];
-  if (!task) throw new DiscoveryError('Usage: sdlc task validate --task <task-identifier> [--repository-root <path>] [--json]');
-  if (!/^[A-Z]{1,10}-[0-9]+-[0-9]{8}$/u.test(task)) throw new DiscoveryError(`Invalid task identifier: ${task}`);
-  const workItemId = task.slice(0, task.lastIndexOf('-'));
-  const context = await resolveCommandContext(selected.values['--repository-root']);
-  const report = await validateWorkItem(context.repositoryRoot, workItemId, task, context.schemaRegistryRoot);
-  printWorkItemValidation(report, jsonRequested(args));
-  return report.valid ? 0 : 1;
-}
-
-async function handleDiscovery(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
-  const [first, second] = args;
-  if (first === 'task' && (second === '--help' || second === '-h')) return commandHelp();
-  if (first === 'task' && second === 'list' && (args.includes('--help') || args.includes('-h'))) return commandHelp();
-  if (first === 'task' && second === 'list') {
-    const selected = optionValue(args.slice(2), '--work-item');
-    if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
-    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-    if (!selected.value) throw new DiscoveryError('Usage: sdlc task list --work-item <work-item> [--json]');
-    const report = await discoverTasks(await getOperativeRoot(), selected.value);
-    printTasks(selected.value, report, jsonRequested(args));
-    return report.findings.length > 0 ? 1 : 0;
-  }
-  if (first === 'task' && second === 'next') {
-    const selected = optionValue(args.slice(2), '--work-item');
-    if (selected.duplicate) throw new DiscoveryError('Duplicate --work-item option.');
-    if (selected.unknown) throw new DiscoveryError(`Unknown option: ${selected.unknown}`);
-    if (!selected.value) throw new DiscoveryError('Usage: sdlc task next --work-item <work-item> [--json]');
-    if (!/^[A-Z]{1,10}-[0-9]+$/u.test(selected.value)) throw new DiscoveryError(`Invalid work-item ID: ${selected.value}`);
-    const task = await discoverNextTask(await getOperativeRoot(), selected.value);
-    printNextTask(selected.value, task, jsonRequested(args));
-    return 0;
-  }
-  return undefined;
 }
 
 async function handleStat(args: readonly string[], getOperativeRoot: OperativeRootSupplier): Promise<number | undefined> {
@@ -349,14 +248,8 @@ async function legacyMain(args: readonly string[]): Promise<number> {
     const getOperativeRoot = (): Promise<string> => resolveOperativeRoot();
     const referenceResult = await handleReference(args, packageRoot);
     if (referenceResult !== undefined) return referenceResult;
-    const workItemValidationResult = await handleWorkItemValidation(args, getOperativeRoot);
-    if (workItemValidationResult !== undefined) return workItemValidationResult;
-    const taskValidationResult = await handleTaskValidation(args, getOperativeRoot);
-    if (taskValidationResult !== undefined) return taskValidationResult;
     const statResult = await handleStat(args, getOperativeRoot);
     if (statResult !== undefined) return statResult;
-    const discoveryResult = await handleDiscovery(args, getOperativeRoot);
-    if (discoveryResult !== undefined) return discoveryResult;
   } catch (error) {
     console.error(error instanceof DiscoveryError ? error.message : 'Discovery failed');
     return 1;
@@ -374,7 +267,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       || args.includes('--help')
       || args.includes('-v')
       || args.includes('--version')
-      || (args[0] === 'work-item' && (args[1] === 'list' || args[1] === 'start'))
+      || (args[0] === 'work-item' && ['list', 'start', 'validate'].includes(args[1] ?? ''))
+      || (args[0] === 'task' && ['list', 'validate', 'next'].includes(args[1] ?? ''))
       || (args[0] === 'repository' && args[1] === 'info');
     if (!dynamicInvocation) return await legacyMain(args);
     const dynamicResult = await runDiscoveredCommands(args, import.meta.url, packageRoot, await version());
