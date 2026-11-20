@@ -1,0 +1,96 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-31000000
+orderKey: '31000000'
+parentTaskUid: WI-0033-30000000
+taskType: review
+processingStatus: unprocessed
+title: Review reference command modules
+objective: Independently review the four reference command modules for pattern adherence, exact yargs interfaces, safe migration boundaries, generated help, and encapsulated functions.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - .docs/work-items/WI-0033/steps/WI-0033-30000000-implementation.yaml
+    - src/cli/main.ts
+    - src/cli/commands/ref/validate.command.ts
+    - src/cli/commands/ref/resolve.command.ts
+    - src/cli/commands/ref/migrate-task-local-up.command.ts
+    - src/cli/commands/ref/migrate-work-item-up.command.ts
+    - tests/cli.test.ts
+  informational: [.cline/README.md]
+dependsOn: [WI-0033-30000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0033/steps/WI-0033-31000000-review.yaml]
+  commitSubject: 'WI-0033: review(cli): inspect reference command modules'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: review-reference-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review reference command modules against the WI-0033 design and exact implementation result.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0033-30000000
+      result: {ref: WI-0033-30000000#result/R-001, sha256: null}
+    gateId: implementation-result
+    policyRef: {ref: repository-local-review-policy, sha256: null}
+    criteria:
+      - id: CRIT-001
+        statement: All four reference commands use yargs descriptors and appear in root and command-specific help.
+        purpose: Verify complete dynamic registration for the reference family.
+        required: true
+        evidenceRefs: [WI-0033-30000000#result/R-001]
+      - id: CRIT-002
+        statement: Reference syntax, resolution depth, migration scope, path/work-item exclusivity, and write boundaries are preserved.
+        purpose: Prevent a command-module refactor from weakening reference safety.
+        required: true
+        evidenceRefs: [WI-0033-30000000#result/R-001]
+      - id: CRIT-003
+        statement: Command-specific reference functions remain inside their command files and main.ts contains no reference business logic.
+        purpose: Verify the explicit design-pattern encapsulation rule.
+        required: true
+        evidenceRefs: [WI-0033-30000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0033-30000000#result/R-001
+        purpose: Inspect reference command modules and main entrypoint.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not authorize migration writes or external deployment.
+    context:
+      - id: CTX-001
+        kind: other
+        ref: .docs/work-items/WI-0033/command-module-pattern.md
+        purpose: Verify the command-module pattern was followed.
+        required: true
+  result:
+    status: blocked
+    decision: null
+    summary: Review has not been executed because the implementation task remains unprocessed.
+    actor: {id: code-review-agent, role: code-reviewer, authorityRef: repository-local-review-policy}
+    criteriaEvaluations: []
+    findings: []
+    evidence: []
+    limitations: [No implementation result or current source diff is available for independent review.]
+    nonClaims: [This review is not an approval and does not establish provider or production behavior.]
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt: {executionId: WI-0033-31000000_EXEC-REVIEW, status: blocked, startedAt: '2026-11-20T00:00:00Z', finishedAt: '2026-11-20T00:00:00Z'}

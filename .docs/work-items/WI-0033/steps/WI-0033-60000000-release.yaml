@@ -1,0 +1,130 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-60000000
+orderKey: '60000000'
+parentTaskUid: WI-0033-50000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release dynamic CLI command help
+objective: Release the completed WI-0033 command-module refactor from the primary branch after aggregate validation and review gates pass.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - .docs/work-items/WI-0033/steps/WI-0033-50000000-validation.yaml
+    - package.json
+    - yarn.lock
+    - src/cli/main.ts
+  informational: [.cline/README.md]
+dependsOn: [WI-0033-50000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0033/steps/WI-0033-60000000-release.yaml
+    - package.json
+  commitSubject: 'WI-0033: chore(release): complete dynamic command help'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: sdlc
+      arguments: [work-item, validate, --work-item, WI-0033, --json]
+      expectedExitCode: 0
+    - id: release-version
+      executable: sdlc
+      arguments: [-v]
+      expectedExitCode: 0
+    - id: release-tag
+      executable: git
+      arguments: [tag, --annotate, '<computed-next-version>']
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Perform the primary-branch revision release for the validated dynamic command-module refactor.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: WI-0033-60000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0033-50000000#result/R-001
+        purpose: Confirm the complete command/help/dispatch validation passed.
+        required: true
+      - id: WI-0033-60000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the primary branch release revision.
+        required: true
+    artifacts:
+      - id: WI-0033-60000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Existing package metadata used as the sole tracked package version source.
+        required: true
+      - id: WI-0033-60000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/<computed-next-version>
+        purpose: Annotated SemVer tag created at the primary release tip.
+        required: true
+    procedures:
+      - id: WI-0033-60000000_PROC-COMPUTE-REVISION
+        sequence: 1
+        name: compute-revision-release
+        description: Derive the next revision from the highest reachable annotated SemVer tag and WI-0033 version impact.
+        steps:
+          - Verify the context branch has been merged into main.
+          - Read the highest reachable annotated SemVer tag.
+          - Confirm WI-0033 validation passed and its versionSuggestion impact is revision.
+          - Update only the existing package.json version source.
+          - Build and verify sdlc -v reports the computed version.
+        command: git tag --merged HEAD --list && sdlc -v
+        expected:
+          result: The computed revision is recorded in package.json and the installed/compiled CLI reports the same version.
+        required: true
+      - id: WI-0033-60000000_PROC-TAG-PRIMARY
+        sequence: 2
+        name: tag-primary-release
+        description: Create the annotated computed SemVer tag at the primary branch tip and push when a remote exists.
+        steps:
+          - Create the annotated computed tag on main.
+          - Verify the tag resolves to the primary release tip.
+          - Push main and the tag when the configured remote accepts the update.
+        command: git tag --annotate <computed-next-version> -m 'Release <computed-next-version>' HEAD
+        expected:
+          result: The primary branch contains the annotated computed release tag; remote publication is recorded only when configured and successful.
+        required: true
+    nonGoals:
+      - Do not create a release tag on the context branch.
+      - Do not publish a package registry artifact or deploy externally.
+      - Do not add a duplicate currentVersion or suggestedVersion source.
+  result:
+    status: blocked
+    summary: Release is planned but cannot execute until implementation, review, aggregate validation, merge, and primary-branch gates pass.
+    artifacts:
+      - id: WI-0033-60000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0033-60000000_EXEC-RELEASE
+        procedureRef: '#procedure/WI-0033-60000000_PROC-COMPUTE-REVISION'
+        result:
+          status: blocked
+          summary: Release has not been attempted because WI-0033 implementation and validation are not complete.
+    limitations:
+      - No release version, package checksum, annotated tag, or remote publication evidence exists yet.

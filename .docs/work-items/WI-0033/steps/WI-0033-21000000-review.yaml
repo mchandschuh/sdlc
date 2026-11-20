@@ -1,0 +1,98 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-21000000
+orderKey: '21000000'
+parentTaskUid: WI-0033-20000000
+taskType: review
+processingStatus: unprocessed
+title: Review work-item and task command modules
+objective: Independently review the work-item and task command batch for exact yargs option contracts, complete generated help, preserved behavior, and command-file encapsulation.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - .docs/work-items/WI-0033/steps/WI-0033-20000000-implementation.yaml
+    - src/cli/main.ts
+    - src/cli/commands/work-item/validate.command.ts
+    - src/cli/commands/task/list.command.ts
+    - src/cli/commands/task/validate.command.ts
+    - src/cli/commands/task/next.command.ts
+    - tests/cli.test.ts
+  informational: [.cline/README.md]
+dependsOn: [WI-0033-20000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0033/steps/WI-0033-21000000-review.yaml]
+  commitSubject: 'WI-0033: review(cli): inspect work-item and task modules'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: review-cli-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review work-item and task command modules against the WI-0033 command-module pattern and exact implementation result.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0033-20000000
+      result:
+        ref: WI-0033-20000000#result/R-001
+        sha256: null
+    gateId: implementation-result
+    policyRef: {ref: repository-local-review-policy, sha256: null}
+    criteria:
+      - id: CRIT-001
+        statement: work-item validate, task list, task validate, and task next each expose complete yargs builders and generated command help.
+        purpose: Close the original missing-help defect without changing option contracts.
+        required: true
+        evidenceRefs: [WI-0033-20000000#result/R-001]
+      - id: CRIT-002
+        statement: Existing validation, discovery, JSON output, identifier, and error behavior is preserved.
+        purpose: Prevent a help refactor from changing command semantics.
+        required: true
+        evidenceRefs: [WI-0033-20000000#result/R-001]
+      - id: CRIT-003
+        statement: Every command-specific function is inside its command file and main.ts remains composition-only.
+        purpose: Verify explicit design-pattern adherence and encapsulation.
+        required: true
+        evidenceRefs: [WI-0033-20000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0033-20000000#result/R-001
+        purpose: Inspect command files and main entrypoint.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment or infer correctness from planned task payloads.
+    context:
+      - id: CTX-001
+        kind: other
+        ref: .docs/work-items/WI-0033/command-module-pattern.md
+        purpose: Verify the implementation followed the root design pattern.
+        required: true
+  result:
+    status: blocked
+    decision: null
+    summary: Review has not been executed because the implementation task remains unprocessed.
+    actor: {id: code-review-agent, role: code-reviewer, authorityRef: repository-local-review-policy}
+    criteriaEvaluations: []
+    findings: []
+    evidence: []
+    limitations: [No implementation result or current source diff is available for independent review.]
+    nonClaims: [This review is not an approval and does not establish runtime or production evidence.]
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt: {executionId: WI-0033-21000000_EXEC-REVIEW, status: blocked, startedAt: '2026-11-20T00:00:00Z', finishedAt: '2026-11-20T00:00:00Z'}

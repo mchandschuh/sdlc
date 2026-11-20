@@ -1,0 +1,97 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-30000000
+orderKey: '30000000'
+parentTaskUid: WI-0033-20000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement reference command modules
+objective: Migrate ref validate, ref resolve, ref migrate-task-local-up, and ref migrate-work-item-up into dynamically discovered yargs modules while preserving reference and migration boundaries.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - src/cli/main.ts
+    - src/core/reference.ts
+    - src/core/reference-resolution.ts
+    - src/core/task-local-migration.ts
+    - tests/cli.test.ts
+  informational: [README.md]
+dependsOn: [WI-0033-20000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0033/steps/WI-0033-30000000-implementation.yaml
+    - src/cli/commands/ref/
+    - tests/
+  commitSubject: 'WI-0033: refactor(cli): migrate reference commands'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: reference-command-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Migrate the reference validation, resolution, and bounded migration commands into encapsulated yargs modules.
+    changeTypes: [production-code, test-code]
+    changeIntent: refactor
+    inputs:
+      - id: WI-0033-30000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_003
+        purpose: Require every reference command to contribute help through its descriptor.
+        required: true
+      - id: WI-0033-30000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_004
+        purpose: Preserve reference output, validation, depth, and migration behavior.
+        required: true
+    objectives:
+      - id: WI-0033-30000000_OBJ-001
+        statement: All four ref commands are registered from command files and expose complete yargs help and dispatch.
+        inputRefs: [WI-0033-30000000_INPUT-REQ-001]
+        testCaseRefs: ['#test-case/TC-REFERENCE-HELP', '#test-case/TC-REFERENCE-DISPATCH']
+      - id: WI-0033-30000000_OBJ-002
+        statement: Reference validation, resolution depth, migration scope, and path/work-item exclusivity remain unchanged.
+        inputRefs: [WI-0033-30000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-REFERENCE-BOUNDARIES']
+    ownedPaths: [src/cli/commands/ref/, tests/]
+    nonGoals:
+      - Do not change reference syntax, resolution semantics, or migration write boundaries.
+      - Do not implement reference command functions in src/cli/main.ts.
+    steps:
+      - Implement ref/validate.command.ts and ref/resolve.command.ts.
+      - Implement ref/migrate-task-local-up.command.ts and ref/migrate-work-item-up.command.ts.
+      - Add help, dispatch, depth, exclusivity, and migration safety regression tests.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: The reference command migration is planned but has not been processed.
+      changes:
+        - id: WI-0033-30000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the reference command migration plan.
+          objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
+          paths: [.docs/work-items/WI-0033/steps/WI-0033-30000000-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
+      tests: []
+    limitations:
+      - Implementation has not been processed; no reference command evidence exists yet.

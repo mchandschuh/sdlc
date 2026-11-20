@@ -1,0 +1,168 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0033",
+  "status": "planned",
+  "title": "Generate complete help from dynamically discovered yargs command modules",
+  "type": "refactor",
+  "objective": "Refactor the sdlc CLI so the main entry point recursively discovers yargs command modules, registers every resolved command for dispatch and help, and keeps command-specific implementation functions encapsulated in their command files.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0033-dynamic-command-help",
+      "created": false,
+      "rationale": "The command-module refactor must be planned on main and processed on a dedicated context branch before primary-branch release."
+    }
+  },
+  "baseline": "2034b87877c12fe497e88736841f637f4adf9bb2",
+  "request": {
+    "source": "conversation",
+    "text": "Determine why work-item validate exists but is missing from sdlc -h, then prepare a new work item that refactors help and dispatch around dynamically discovered yargs command files. Each resolved command must automatically contribute help, command-specific implementation functions must remain inside command files, implementation and review work must be split into bounded batches, and final validation and release tasks must be included.",
+    "sha256": "ef148cc1a959a500ab89997c18d06b8ac279dae837290bcb672d67ca72ad5d60"
+  },
+  "scope": [
+    {
+      "name": "command-module-contract",
+      "description": "Define and apply a typed yargs-compatible command factory contract for every current sdlc command.",
+      "reason": "A shared descriptor is required for one registry to drive both dispatch and help."
+    },
+    {
+      "name": "dynamic-command-discovery",
+      "description": "Recursively enumerate, sort, dynamically import, validate, and register command files from source and compiled command directories.",
+      "reason": "The current manually maintained help table omits implemented commands such as work-item validate and task validate."
+    },
+    {
+      "name": "complete-command-migration",
+      "description": "Migrate work-item, repository, task, reference, and stat command paths into command files while preserving current interfaces and output contracts.",
+      "reason": "All resolved commands must automatically appear in help and remain dispatchable."
+    },
+    {
+      "name": "encapsulated-command-functions",
+      "description": "Keep command-specific option handling, orchestration, output shaping, and handlers in the corresponding command file; keep main.ts as composition only.",
+      "reason": "Command files must own their behavior so adding a command does not require editing a central dispatch/help table."
+    },
+    {
+      "name": "release-evidence",
+      "description": "Validate the complete command/help surface and perform the next primary-branch revision release after all implementation and review gates pass.",
+      "reason": "The requested change modifies the public CLI interface and requires a traceable release boundary."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "command-semantics-change",
+      "description": "Do not change the domain behavior, JSON response schemas, option meanings, reference semantics, or task identifier syntax of existing commands.",
+      "reason": "This work item addresses command resolution, help generation, and encapsulation rather than command business logic.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "untrusted-plugin-loading",
+      "description": "Do not introduce network command discovery, arbitrary plugin execution, shell command execution, or an authorization bypass through filesystem enumeration.",
+      "reason": "Only repository-owned command modules under the declared command roots are in scope.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": [".env", ".env.*", "credentials/", "secrets/"]
+    },
+    {
+      "name": "production-deployment",
+      "description": "Do not claim production deployment, remote publication, or server-side enforcement from local CLI tests and release evidence.",
+      "reason": "The evidence boundary is the local package, linked executable, repository tests, and primary-branch tag.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0033_REQ_001",
+        "name": "command-module-contract",
+        "description": "Every command file must export a typed yargs-compatible command factory with command, describe, builder, and handler members, and command-specific implementation functions must remain in that file.",
+        "reason": "A stable contract enables dynamic registration while preserving command encapsulation.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0033_REQ_001_AC_001",
+            "description": "The design document defines the command factory interface, required yargs members, source/compiled module paths, and the rule that command-specific functions are implemented inside each command file."
+          },
+          {
+            "id": "WI-0033_REQ_001_AC_002",
+            "description": "All twelve current command paths are represented by command files conforming to the interface, and main.ts contains only root composition, discovery, registration, parsing, and exit-code mapping."
+          }
+        ]
+      },
+      {
+        "id": "WI-0033_REQ_002",
+        "name": "dynamic-command-discovery",
+        "description": "The main CLI dynamically enumerates repository-owned command files, imports them deterministically, rejects invalid or duplicate descriptors, and registers all valid commands before help or dispatch.",
+        "reason": "Root help must automatically include every command that the CLI can resolve and execute.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0033_REQ_002_AC_001",
+            "description": "Recursive source and compiled command-folder enumeration is deterministic, suffix-aware, relative to the executing module, and fails closed on module-load or descriptor errors."
+          },
+          {
+            "id": "WI-0033_REQ_002_AC_002",
+            "description": "Duplicate command paths and malformed command modules are rejected before yargs exposes help or dispatch."
+          }
+        ]
+      },
+      {
+        "id": "WI-0033_REQ_003",
+        "name": "complete-command-help",
+        "description": "Root and command-specific help must be generated by yargs from the same registered command descriptors used for dispatch.",
+        "reason": "The current hard-coded printHelp table omits work-item validate and task validate even though their handlers exist.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0033_REQ_003_AC_001",
+            "description": "sdlc -h and sdlc --help list work-item validate, task validate, and every other resolved command without a second manually maintained command inventory."
+          },
+          {
+            "id": "WI-0033_REQ_003_AC_002",
+            "description": "Every current command-specific --help path exits successfully and documents its yargs options, including work-item validate --help and task validate --help."
+          }
+        ]
+      },
+      {
+        "id": "WI-0033_REQ_004",
+        "name": "behavior-preservation",
+        "description": "The migration preserves existing command paths, option forms, output schemas, errors, repository-root resolution, read/write boundaries, and global help/version aliases.",
+        "reason": "The refactor must correct help completeness without silently changing established CLI behavior.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0033_REQ_004_AC_001",
+            "description": "The complete test suite, typecheck, build, command-help matrix, representative dispatch smoke tests, and WI-0033 validation pass."
+          },
+          {
+            "id": "WI-0033_REQ_004_AC_002",
+            "description": "The installed user-local sdlc executable is verified after linking/build delivery and reports the released package version."
+          }
+        ]
+      },
+      {
+        "id": "WI-0033_REQ_005",
+        "name": "review-and-release-traceability",
+        "description": "Bounded implementation/review pairs, aggregate validation, the root design document, and a primary-branch revision release remain traceable in the WI-0033 task graph.",
+        "reason": "The command refactor spans multiple command families and needs small review contexts plus a final release gate.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0033_REQ_005_AC_001",
+            "description": "Every implementation and review task references command-module-pattern.md; every review checks adherence and command-file encapsulation; final validation and release reference the same design."
+          },
+          {
+            "id": "WI-0033_REQ_005_AC_002",
+            "description": "The complete WI-0033 object tree validates with no unresolved references before merge or release."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0033/steps/",
+  "versionSuggestion": {
+    "impact": "revision",
+    "rationale": "Refactors the public CLI command registration and help generation while preserving existing command semantics and output contracts.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes add breaking command behavior or broader compatibility effects."
+  }
+}

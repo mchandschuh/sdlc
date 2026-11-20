@@ -1,0 +1,97 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0033-10000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement work-item and task command modules
+objective: Migrate work-item validate, task list, task validate, and task next into yargs command modules with complete generated help and encapsulated command functions.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - src/cli/main.ts
+    - src/core/work-item-validation.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+  informational: [README.md]
+dependsOn: [WI-0033-10000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0033/steps/WI-0033-20000000-implementation.yaml
+    - src/cli/commands/work-item/
+    - src/cli/commands/task/
+    - tests/
+  commitSubject: 'WI-0033: refactor(cli): migrate work-item and task commands'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: work-item-task-help-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Migrate the work-item and task command family into encapsulated yargs command modules.
+    changeTypes: [production-code, test-code]
+    changeIntent: refactor
+    inputs:
+      - id: WI-0033-20000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_003
+        purpose: Require complete root and command-specific help.
+        required: true
+      - id: WI-0033-20000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_004
+        purpose: Preserve command options, output, and errors.
+        required: true
+    objectives:
+      - id: WI-0033-20000000_OBJ-001
+        statement: Work-item validate and task validate expose complete command-specific help and remain dispatchable with their existing option interfaces.
+        inputRefs: [WI-0033-20000000_INPUT-REQ-001, WI-0033-20000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-VALIDATION-HELP', '#test-case/TC-TASK-HELP']
+      - id: WI-0033-20000000_OBJ-002
+        statement: Task list and task next are registered from command files and preserve JSON reports and stable option failures.
+        inputRefs: [WI-0033-20000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-TASK-DISPATCH']
+    ownedPaths: [src/cli/commands/work-item/, src/cli/commands/task/, tests/]
+    nonGoals:
+      - Do not alter work-item validation rules, task identifier syntax, discovery ordering, or output schemas.
+      - Do not implement command-specific functions in src/cli/main.ts.
+    steps:
+      - Implement work-item/list.command.ts and work-item/validate.command.ts.
+      - Implement task/list.command.ts, task/validate.command.ts, and task/next.command.ts.
+      - Add yargs help and dispatch regression tests for all four commands.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: The work-item and task command migration is planned but has not been processed.
+      changes:
+        - id: WI-0033-20000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the work-item and task command migration plan.
+          objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
+          paths: [.docs/work-items/WI-0033/steps/WI-0033-20000000-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0033-20000000_OBJ-001, WI-0033-20000000_OBJ-002]
+      tests: []
+    limitations:
+      - Implementation has not been processed; no command-specific help or dispatch evidence exists yet.

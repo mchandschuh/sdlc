@@ -1,0 +1,121 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0033-10000000
+taskType: review
+processingStatus: unprocessed
+title: Review command contract, discovery, registry, and first command batch
+objective: Independently review the first command-module implementation for pattern adherence, deterministic discovery, yargs registration, generated help, dispatch, and command-file encapsulation.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - .docs/work-items/WI-0033/steps/WI-0033-10000000-implementation.yaml
+    - src/cli/main.ts
+    - src/cli/command-types.ts
+    - src/cli/command-discovery.ts
+    - src/cli/commands/work-item/list.command.ts
+    - src/cli/commands/work-item/start.command.ts
+    - src/cli/commands/repository/info.command.ts
+    - tests/command-discovery.test.ts
+  informational:
+    - .cline/README.md
+dependsOn: [WI-0033-10000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0033/steps/WI-0033-11000000-review.yaml]
+  commitSubject: 'WI-0033: review(cli): inspect command registry foundation'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: review-inspection
+      executable: yarn
+      arguments: [test, tests/command-discovery.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review the first command-module batch against the WI-0033 design pattern and exact implementation result.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0033-10000000
+      result:
+        ref: WI-0033-10000000#result/R-001
+        sha256: null
+    gateId: implementation-result
+    policyRef:
+      ref: repository-local-review-policy
+      sha256: null
+    criteria:
+      - id: CRIT-001
+        statement: The command factory contract matches command-module-pattern.md and yargs descriptor requirements.
+        purpose: Ensure all future command modules can be resolved through one typed interface.
+        required: true
+        evidenceRefs: [WI-0033-10000000#result/R-001]
+      - id: CRIT-002
+        statement: Discovery is deterministic, recursively enumerates the intended source or compiled folder, rejects duplicates and malformed modules, and fails closed before help or dispatch.
+        purpose: Prevent partial or nondeterministic command registries.
+        required: true
+        evidenceRefs: [WI-0033-10000000#result/R-001]
+      - id: CRIT-003
+        statement: Work-item list, work-item start, and repository info are encapsulated command files and are registered through the same registry used for help and dispatch.
+        purpose: Ensure the first command batch proves the extensible pattern rather than adding another central table.
+        required: true
+        evidenceRefs: [WI-0033-10000000#result/R-001]
+      - id: CRIT-004
+        statement: src/cli/main.ts contains no command-specific handler, option parsing, output, or business logic functions after the batch.
+        purpose: Enforce command-file encapsulation.
+        required: true
+        evidenceRefs: [WI-0033-10000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0033-10000000#result/R-001
+        purpose: Inspect the implementation result and changed command files.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve production deployment or prove external plugin security beyond the repository-owned loader boundary.
+      - id: NON-002
+        statement: This review does not mutate task or work-item lifecycle state.
+    context:
+      - id: CTX-001
+        kind: other
+        ref: .docs/work-items/WI-0033/command-module-pattern.md
+        purpose: Apply the authoritative command-module pattern.
+        required: true
+      - id: CTX-002
+        kind: repository-guidance
+        ref: .cline/README.md
+        purpose: Apply repository-local SDLC guidance; the required nodejs-cli-pattern skill is named in the work-item task references.
+        required: true
+  result:
+    status: blocked
+    decision: null
+    summary: Review has not been executed because the implementation task remains unprocessed.
+    actor:
+      id: code-review-agent
+      role: code-reviewer
+      authorityRef: repository-local-review-policy
+    criteriaEvaluations: []
+    findings: []
+    evidence: []
+    limitations: [The implementation result and current source diff are not yet available for independent review.]
+    nonClaims: [This review is not an approval and does not establish implementation correctness or production readiness.]
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt:
+      executionId: WI-0033-11000000_EXEC-REVIEW
+      status: blocked
+      startedAt: '2026-11-20T00:00:00Z'
+      finishedAt: '2026-11-20T00:00:00Z'

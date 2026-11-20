@@ -1,0 +1,101 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0033
+taskUid: WI-0033-40000000
+orderKey: '40000000'
+parentTaskUid: WI-0033-30000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement stat command and cross-family integration
+objective: Migrate stat into a command module, remove the monolithic command handlers and manual root help table, and complete yargs integration for all command families.
+references:
+  required:
+    - .docs/work-items/WI-0033/work-item.json
+    - .docs/work-items/WI-0033/command-module-pattern.md
+    - src/cli/main.ts
+    - src/core/discovery.ts
+    - tests/cli.test.ts
+  informational: [README.md]
+dependsOn: [WI-0033-30000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0033/steps/WI-0033-40000000-implementation.yaml
+    - src/cli/main.ts
+    - src/cli/commands/stat.command.ts
+    - tests/
+  commitSubject: 'WI-0033: refactor(cli): complete command module integration'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-cli-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, tests/command-discovery.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Complete the stat command migration and reduce src/cli/main.ts to composition, discovery, yargs registration, parsing, and exit-code mapping.
+    changeTypes: [production-code, test-code]
+    changeIntent: refactor
+    inputs:
+      - id: WI-0033-40000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_001
+        purpose: Enforce command-file encapsulation and the composition-only main entry point.
+        required: true
+      - id: WI-0033-40000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_003
+        purpose: Ensure root and command-specific help come from the same registry.
+        required: true
+      - id: WI-0033-40000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0033#work-item.json#requirement/WI-0033_REQ_004
+        purpose: Preserve global aliases and complete command behavior.
+        required: true
+    objectives:
+      - id: WI-0033-40000000_OBJ-001
+        statement: Stat is a discovered command module and all twelve current command paths are registered before help or dispatch.
+        inputRefs: [WI-0033-40000000_INPUT-REQ-002, WI-0033-40000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/TC-STAT-HELP', '#test-case/TC-COMPLETE-REGISTRY']
+      - id: WI-0033-40000000_OBJ-002
+        statement: Main CLI composition contains no command-specific handler, option parsing, output, or business logic functions.
+        inputRefs: [WI-0033-40000000_INPUT-REQ-001]
+        testCaseRefs: ['#test-case/TC-MAIN-COMPOSITION']
+    ownedPaths: [src/cli/main.ts, src/cli/commands/stat.command.ts, tests/]
+    nonGoals:
+      - Do not change stat output or tracked-path semantics.
+      - Do not keep a second command inventory in main.ts.
+    steps:
+      - Implement stat.command.ts with local option handling and stat execution functions.
+      - Remove legacy handler routing and hard-coded printHelp command entries from main.ts.
+      - Add cross-family registry, root-help, command-help, and encapsulation tests.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Cross-family command integration is planned but has not been processed.
+      changes:
+        - id: WI-0033-40000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the stat and main-entrypoint integration plan.
+          objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
+          paths: [.docs/work-items/WI-0033/steps/WI-0033-40000000-implementation.yaml]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
+      tests: []
+    limitations:
+      - Implementation has not been processed; complete registry and encapsulation evidence does not yet exist.
