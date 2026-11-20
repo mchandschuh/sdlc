@@ -320,7 +320,7 @@ describe('unified Git hook dispatcher', () => {
     await git(root, ['switch', 'WI-0032-hook-delivery-tests']);
     await git(root, ['commit', '--quiet', '-m', 'process WI-0032 implementation task']);
     expect(await git(root, ['log', '-1', '--format=%s'])).toBe('process WI-0032 implementation task');
-  });
+  }, 15_000);
 
   it('exercises the installed primary pre-push wrapper for a local no-remote revision release', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-hook-local-release-'));

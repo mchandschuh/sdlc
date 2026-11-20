@@ -4,7 +4,7 @@ taskUid: WI-0032-11000000
 orderKey: "11000000"
 parentTaskUid: WI-0032-10000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate installed hook and branch-operation delivery
 objective: Validate the actual installed Git hook wrappers, branch operations,
   primary release checks, complete package gates, and WI-0032 object tree.
@@ -46,7 +46,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -110,23 +110,46 @@ task:
     nonGoals:
       - Do not claim server-side enforcement or production deployment.
   result:
-    status: implemented-unproven
-    summary: Installed-wrapper and branch-operation validation is planned.
+    status: passed
+    summary: Installed-wrapper and branch-operation validation passed actual wrapper
+      execution, branch lifecycle, package, complete-test, and WI-0032 validation gates.
     executions:
-      - id: WI-0032-11000000_EXEC-PLAN
+      - id: WI-0032-11000000_EXEC-DELIVERY
         procedureRef: "#procedure/WI-0032-11000000_VAL-DELIVERY"
-        status: inconclusive
+        status: passed
         observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
+          outcome: passed
+          exitCode: 0
+          summary: Actual installed wrapper execution, branch-operation coverage,
+            typecheck, build, isolated-HOME complete tests, and WI-0032 validation
+            passed.
+          assertions:
+            - All 28 actual .git/hooks wrapper files were executable and dispatched
+              through the production dispatcher.
+            - Wrapper idempotence, unmanaged content, original arguments, and stdin
+              forwarding passed through installed files.
+            - Real work-item start created WI-0032-hook-delivery-tests and committed
+              context.branch.created=true.
+            - Installed pre-commit rejected task processing on main and allowed the
+              same task commit on the declared context branch.
+            - Installed post-merge and pre-push wrappers exercised reminder and local
+              no-remote revision release behavior.
+            - The focused hook suite passed 13 tests and the complete suite passed
+              88 tests.
+        evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: WI-0032 validation task plan
-            claim: The installed-wrapper and branch-operation validation procedure is declared but not yet executed.
+          - kind: command
+            source: WI-0032-11000000_EXEC-DELIVERY
+            claim: The focused installed-wrapper and branch-operation suite passed.
+            command: yarn test tests/git-hooks.test.ts --run
+          - kind: command
+            source: WI-0032-11000000_EXEC-DELIVERY
+            claim: Typecheck, build, complete tests, and WI-0032 validation passed.
+            command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test --run && node ./bin/cli.js work-item validate --work-item WI-0032 --json
     findings: []
     evidenceTier: cli-audit
     limitations:
-      - Validation evidence is not recorded until implementation is complete on the WI-0032 context branch.
+      - Evidence covers local repository hooks and disposable repositories only; it
+        does not claim server-side enforcement or production deployment.
     nonClaims:
       - This result does not claim remote publication, deployment, or production readiness.

@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0032",
-  "status": "planned",
+  "status": "complete",
   "title": "Exercise installed Git hook wrappers and branch-aware release delivery",
   "type": "maintenance",
   "objective": "Add end-to-end coverage that installs every documented Git hook wrapper, exercises wrapper dispatch and branch-aware repository operations in disposable repositories, and completes the next computed revision release without introducing a duplicate repository-version source.",
