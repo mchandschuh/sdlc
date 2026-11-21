@@ -107,14 +107,55 @@ function taskSchemaPath(schemaUri: string): string {
 interface TaskLifecyclePolicy {
   readonly statusProperty: string;
   readonly resultProperty: string;
-  readonly statuses: Readonly<Record<string, { readonly kind?: string; readonly result?: string; readonly requiredResultPaths?: readonly string[] }>>;
+  readonly initialStatuses: readonly string[];
+  readonly statuses: Readonly<Record<string, {
+    readonly kind?: string;
+    readonly result?: string;
+    readonly resultPresence?: 'empty-only' | 'partial' | 'required';
+    readonly allowedResultPaths?: readonly string[];
+    readonly requiredResultPaths?: readonly string[];
+    readonly forbiddenResultPaths?: readonly string[];
+  }>>;
+  readonly transitions: Readonly<Record<string, readonly string[]>>;
 }
 
 function readTaskLifecyclePolicy(schemaRoot: string, schemaPath: string): TaskLifecyclePolicy {
   const document = JSON.parse(readFileSync(join(schemaRoot, schemaPath), 'utf8')) as Record<string, unknown>;
   const policy = document['x-sdlc-task-lifecycle'] as TaskLifecyclePolicy | undefined;
-  if (!policy || policy.statusProperty !== '/status' || policy.resultProperty !== '/result' || !policy.statuses || typeof policy.statuses !== 'object') {
+  const statuses = document.properties && typeof document.properties === 'object'
+    ? (document.properties as Record<string, { readonly enum?: readonly string[] }>).status?.enum
+    : undefined;
+  if (!policy || policy.statusProperty !== '/status' || policy.resultProperty !== '/result' || !policy.initialStatuses?.length || !policy.statuses || typeof policy.statuses !== 'object' || !policy.transitions || typeof policy.transitions !== 'object') {
     throw new DiscoveryError(`Invalid x-sdlc-task-lifecycle metadata: ${schemaPath}`);
+  }
+  const statusNames = new Set(statuses ?? []);
+  const policyNames = Object.keys(policy.statuses);
+  if (!statuses || statusNames.size !== policyNames.length || policyNames.some((status) => !statusNames.has(status))) {
+    throw new DiscoveryError(`Lifecycle metadata statuses do not match the task schema enum: ${schemaPath}`);
+  }
+  if (policy.initialStatuses.some((status) => !statusNames.has(status))) {
+    throw new DiscoveryError(`Lifecycle metadata initialStatuses contains an undeclared status: ${schemaPath}`);
+  }
+  if (Object.keys(policy.transitions).some((status) => !statusNames.has(status)) || policyNames.some((status) => !(status in policy.transitions))) {
+    throw new DiscoveryError(`Lifecycle metadata transitions do not match the task schema statuses: ${schemaPath}`);
+  }
+  const resultPaths = new Set(lifecycleResultFields(schemaRoot, schemaPath).map((field) => `/result/${field}`));
+  for (const [status, entry] of Object.entries(policy.statuses)) {
+    if (!entry.kind || !entry.resultPresence || !['empty-only', 'partial', 'required'].includes(entry.resultPresence)) {
+      throw new DiscoveryError(`Invalid lifecycle status policy for ${status}: ${schemaPath}`);
+    }
+    const allowed = entry.allowedResultPaths ?? [];
+    const required = entry.requiredResultPaths ?? [];
+    const forbidden = entry.forbiddenResultPaths ?? [];
+    if ([...allowed, ...required, ...forbidden].some((path) => !resultPaths.has(path))) {
+      throw new DiscoveryError(`Lifecycle metadata result paths do not match the task result schema: ${schemaPath} (${status})`);
+    }
+    if (required.some((path) => !allowed.includes(path)) || forbidden.some((path) => allowed.includes(path) || required.includes(path))) {
+      throw new DiscoveryError(`Lifecycle result paths overlap or are not allowed: ${schemaPath} (${status})`);
+    }
+    if (policy.transitions[status]!.some((target) => !statusNames.has(target) || target === status)) {
+      throw new DiscoveryError(`Lifecycle metadata contains an invalid transition from ${status}: ${schemaPath}`);
+    }
   }
   return policy;
 }
@@ -131,7 +172,28 @@ function pointerValue(value: unknown, pointer: string): { readonly found: boolea
   return { found: true, value: current };
 }
 
-function lifecycleFindings(schemaRoot: string, schemaPath: string, payload: Record<string, unknown>): string[] {
+function lifecycleResultFields(schemaRoot: string, schemaPath: string): readonly string[] {
+  const document = JSON.parse(readFileSync(join(schemaRoot, schemaPath), 'utf8')) as {
+    readonly properties?: Readonly<Record<string, { readonly $ref?: string; readonly properties?: Readonly<Record<string, unknown>> }>>;
+    readonly $defs?: Readonly<Record<string, { readonly properties?: Readonly<Record<string, unknown>> }>>;
+  };
+  const result = document.properties?.result;
+  const definitionName = result?.$ref?.split('/').at(-1);
+  const resultDefinition = definitionName ? document.$defs?.[definitionName] : result;
+  return Object.keys(resultDefinition?.properties ?? {});
+}
+
+function lifecycleResultObject(payload: Record<string, unknown>, resultProperty: string): { readonly present: boolean; readonly value: unknown } {
+  const result = pointerValue(payload, resultProperty);
+  return { present: result.found && result.value !== null && result.value !== undefined, value: result.value };
+}
+
+export function validateTaskLifecycleTransition(
+  schemaRoot: string,
+  schemaPath: string,
+  previousStatus: string | null,
+  payload: Record<string, unknown>,
+): string[] {
   let policy: TaskLifecyclePolicy;
   try {
     policy = readTaskLifecyclePolicy(schemaRoot, schemaPath);
@@ -140,14 +202,47 @@ function lifecycleFindings(schemaRoot: string, schemaPath: string, payload: Reco
   }
   const statusResult = pointerValue(payload, policy.statusProperty);
   if (!statusResult.found || typeof statusResult.value !== 'string') return [`Task payload is missing lifecycle status at ${policy.statusProperty}: ${schemaPath}`];
-  const entry = policy.statuses[statusResult.value];
-  if (!entry) return [`Task lifecycle status is not declared by ${schemaPath}: ${statusResult.value}`];
+  const status = statusResult.value;
+  const entry = policy.statuses[status];
+  if (!entry) return [`Task lifecycle status is not declared by ${schemaPath}: ${status}`];
   const findings: string[] = [];
-  for (const requiredPath of entry.requiredResultPaths ?? []) {
+  if (previousStatus === null) {
+    if (!policy.initialStatuses.includes(status)) findings.push(`Task lifecycle status ${status} is not an initial status in ${schemaPath}.`);
+  } else if (!policy.statuses[previousStatus]) {
+    findings.push(`Previous task lifecycle status is not declared by ${schemaPath}: ${previousStatus}`);
+  } else if (previousStatus !== status && !policy.transitions[previousStatus]!.includes(status)) {
+    findings.push(`Invalid task lifecycle transition in ${schemaPath}: ${previousStatus} -> ${status}.`);
+  }
+  const result = lifecycleResultObject(payload, policy.resultProperty);
+  const resultObject = result.value && typeof result.value === 'object' && !Array.isArray(result.value)
+    ? result.value as Record<string, unknown>
+    : undefined;
+  const populatedResultFields = resultObject ? Object.keys(resultObject) : [];
+  const allowed = new Set(entry.allowedResultPaths ?? []);
+  const required = new Set(entry.requiredResultPaths ?? []);
+  const forbidden = new Set(entry.forbiddenResultPaths ?? []);
+  if (entry.resultPresence === 'empty-only' && populatedResultFields.length > 0) {
+    findings.push(`Lifecycle status ${status} permits only an omitted, null, or empty result in ${schemaPath}.`);
+  }
+  if (entry.resultPresence === 'required' && !resultObject) {
+    findings.push(`Lifecycle status ${status} requires a result object in ${schemaPath}.`);
+  }
+  for (const field of populatedResultFields) {
+    const path = `${policy.resultProperty}/${field}`;
+    if (!allowed.has(path)) findings.push(`Lifecycle status ${status} does not allow ${path} in ${schemaPath}.`);
+  }
+  for (const forbiddenPath of forbidden) {
+    if (pointerValue(payload, forbiddenPath).found) findings.push(`Lifecycle status ${status} forbids ${forbiddenPath} in ${schemaPath}.`);
+  }
+  for (const requiredPath of required) {
     const result = pointerValue(payload, requiredPath);
     if (!result.found || result.value === null || result.value === undefined) findings.push(`Lifecycle status ${statusResult.value} requires ${requiredPath} in ${schemaPath}.`);
   }
   return findings;
+}
+
+function lifecycleFindings(schemaRoot: string, schemaPath: string, payload: Record<string, unknown>): string[] {
+  return validateTaskLifecycleTransition(schemaRoot, schemaPath, null, payload).filter((finding) => !finding.includes('is not an initial status'));
 }
 
 async function validateTaskPayload(

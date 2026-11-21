@@ -1739,22 +1739,87 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "awaiting-decision": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/decision",
@@ -1767,11 +1832,26 @@
           "/result/nonClaims",
           "/result/reproducibility",
           "/result/executionReceipt"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "reviewed": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/decision",
@@ -1784,11 +1864,26 @@
           "/result/nonClaims",
           "/result/reproducibility",
           "/result/executionReceipt"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/decision",
@@ -1801,12 +1896,14 @@
           "/result/nonClaims",
           "/result/reproducibility",
           "/result/executionReceipt"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "superseded": {
-        "kind": "milestone",
-        "result": "required",
-        "requiredResultPaths": [
+        "kind": "superseded",
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
           "/result/status",
           "/result/decision",
           "/result/summary",
@@ -1818,12 +1915,66 @@
           "/result/nonClaims",
           "/result/reproducibility",
           "/result/executionReceipt"
-        ]
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "awaiting-decision"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "awaiting-decision": [
+        "reviewed",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "reviewed": [
+        "complete",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "complete": [],
+      "superseded": [
+        "planned",
+        "active",
+        "blocked"
+      ],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }

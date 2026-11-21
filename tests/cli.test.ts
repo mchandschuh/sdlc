@@ -10,7 +10,7 @@ import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enumerateWorkItemObjects, SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS, statTrackedPath } from '../src/core/discovery.js';
 import { collectionDefinitions, collectionNamesForCommand, listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
-import { validateWorkItem } from '../src/core/work-item-validation.js';
+import { validateTaskLifecycleTransition, validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
 import { commandContext, resolveSdlcConfig } from '../src/core/configuration.js';
 
@@ -1858,19 +1858,52 @@ describe('discovery commands', () => {
       const path = join(process.cwd(), 'schemas', `sdlc-task-${type}`, 'v1', `sdlc-task-${type}.schema.json`);
       const schema = JSON.parse(await readFile(path, 'utf8')) as {
         properties?: { status?: { enum?: string[] } };
-        ['x-sdlc-task-lifecycle']?: { statusProperty?: string; resultProperty?: string; statuses?: Record<string, { kind?: string; result?: string }> };
+        ['x-sdlc-task-lifecycle']?: {
+          statusProperty?: string;
+          resultProperty?: string;
+          initialStatuses?: string[];
+          statuses?: Record<string, { kind?: string; result?: string; resultPresence?: string; allowedResultPaths?: string[]; requiredResultPaths?: string[]; forbiddenResultPaths?: string[] }>;
+          transitions?: Record<string, string[]>;
+        };
       };
       const statuses = schema.properties?.status?.enum ?? [];
       const policy = schema['x-sdlc-task-lifecycle'];
       expect(statuses.length, type).toBeGreaterThanOrEqual(6);
       expect(policy?.statusProperty, type).toBe('/status');
       expect(policy?.resultProperty, type).toBe('/result');
+      expect(policy?.initialStatuses, type).toEqual(['planned']);
       expect(Object.keys(policy?.statuses ?? {}), type).toEqual(statuses);
+      expect(Object.keys(policy?.transitions ?? {}), type).toEqual(statuses);
       for (const status of statuses) {
         expect(policy?.statuses?.[status]?.kind, `${type}:${status}`).toBeTruthy();
         expect(['optional', 'required']).toContain(policy?.statuses?.[status]?.result);
+        expect(['empty-only', 'partial', 'required']).toContain(policy?.statuses?.[status]?.resultPresence);
+        expect(policy?.statuses?.[status]?.requiredResultPaths?.some((path) => policy?.statuses?.[status]?.allowedResultPaths?.includes(path) !== true), `${type}:${status}`).toBe(false);
+        expect(policy?.statuses?.[status]?.forbiddenResultPaths?.some((path) => policy?.statuses?.[status]?.allowedResultPaths?.includes(path) || policy?.statuses?.[status]?.requiredResultPaths?.includes(path)), `${type}:${status}`).toBe(false);
+        expect(policy?.transitions?.[status]?.includes(status), `${type}:${status}`).toBe(false);
       }
     }
+  });
+
+  it('enforces generic lifecycle result policies and transition graphs', async () => {
+    const schemaRoot = join(process.cwd(), 'schemas');
+    const schemaPath = 'sdlc-task-implementation/v1/sdlc-task-implementation.schema.json';
+    const planned = { status: 'planned', intent: {}, result: { status: 'implemented' } };
+    expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, null, planned)).toEqual([
+      'Lifecycle status planned permits only an omitted, null, or empty result in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json.',
+      'Lifecycle status planned does not allow /result/status in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json.',
+      'Lifecycle status planned forbids /result/status in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json.',
+    ]);
+
+    expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'planned', { status: 'implemented', intent: {}, result: {} })).toContain(
+      'Invalid task lifecycle transition in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json: planned -> implemented.',
+    );
+    expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'complete', { status: 'active', intent: {}, result: {} })).toContain(
+      'Invalid task lifecycle transition in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json: complete -> active.',
+    );
+    expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'implemented-unproven', { status: 'complete', intent: {}, result: {} })).toContain(
+      'Invalid task lifecycle transition in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json: implemented-unproven -> complete.',
+    );
   });
 
   it('continues reference validation after schema failure and preserves remediation context', async () => {

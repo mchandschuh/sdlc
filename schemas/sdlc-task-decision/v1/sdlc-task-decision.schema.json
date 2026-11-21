@@ -1555,22 +1555,67 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "awaiting-approval": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
         "requiredResultPaths": [
           "/result/selected",
           "/result/consequences",
@@ -1578,11 +1623,21 @@
           "/result/affectedRefs",
           "/result/status",
           "/result/approval"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "decided": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
         "requiredResultPaths": [
           "/result/selected",
           "/result/consequences",
@@ -1590,11 +1645,21 @@
           "/result/affectedRefs",
           "/result/status",
           "/result/approval"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
         "requiredResultPaths": [
           "/result/selected",
           "/result/consequences",
@@ -1602,24 +1667,75 @@
           "/result/affectedRefs",
           "/result/status",
           "/result/approval"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "superseded": {
-        "kind": "milestone",
-        "result": "required",
-        "requiredResultPaths": [
+        "kind": "superseded",
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
           "/result/selected",
           "/result/consequences",
           "/result/reversibility",
           "/result/affectedRefs",
           "/result/status",
           "/result/approval"
-        ]
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "awaiting-approval"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "awaiting-approval": [
+        "decided",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "decided": [
+        "complete",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "complete": [],
+      "superseded": [
+        "planned",
+        "active",
+        "blocked"
+      ],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }
