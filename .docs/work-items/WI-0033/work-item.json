@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0033-dynamic-command-help",
-      "created": false,
+      "created": true,
       "rationale": "The command-module refactor must be planned on main and processed on a dedicated context branch before primary-branch release."
     }
   },
@@ -65,7 +65,12 @@
       "description": "Do not introduce network command discovery, arbitrary plugin execution, shell command execution, or an authorization bypass through filesystem enumeration.",
       "reason": "Only repository-owned command modules under the declared command roots are in scope.",
       "forbiddenFileWrites": [],
-      "forbiddenFileReads": [".env", ".env.*", "credentials/", "secrets/"]
+      "forbiddenFileReads": [
+        ".env",
+        ".env.*",
+        "credentials/",
+        "secrets/"
+      ]
     },
     {
       "name": "production-deployment",
