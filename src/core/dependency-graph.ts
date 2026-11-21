@@ -148,3 +148,15 @@ export async function buildDependencyGraph(repositoryRoot: string, workItemId: s
   }
   return { schema: 'https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1', workItemId, valid: true, algorithm: 'explicit-depends-on-topological-order-v1', nodes, linearization, findings: [] };
 }
+
+export async function selectNextDependencyTask(repositoryRoot: string, workItemId: string): Promise<{ readonly task: DependencyNode | null; readonly findings: readonly DependencyFinding[] }> {
+  const graph = await buildDependencyGraph(repositoryRoot, workItemId);
+  if (!graph.valid) return { task: null, findings: graph.findings };
+  const byUid = new Map(graph.nodes.map((node) => [node.taskUid, node]));
+  for (const item of graph.linearization) {
+    const node = byUid.get(item.taskUid)!;
+    if (node.taskStatus === 'complete') continue;
+    if (node.dependsOn.every((dependency) => byUid.get(dependency)?.taskStatus === 'complete')) return { task: node, findings: [] };
+  }
+  return { task: null, findings: [] };
+}

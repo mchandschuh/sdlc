@@ -1692,11 +1692,56 @@ describe('discovery commands', () => {
     expect(await readFile(join(workItems, 'WI-0099-20000000.yaml'), 'utf8')).toBe(selectedBytes);
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
-    output.length = 0;
-    await expect(main(['task', 'next', '--work-item', 'WI-0008', '--json'])).resolves.toBe(0);
-    const none = JSON.parse(output.join('\n')) as { selection: string; task: null };
-    expect(none.selection).toBe('none');
-    expect(none.task).toBeNull();
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      output.length = 0;
+      await expect(main(['task', 'next', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+      const selectedAgain = JSON.parse(output.join('\n')) as { schema: string; selection: string; task: { taskUid: string } };
+      expect(selectedAgain.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-task-next/v1');
+      expect(selectedAgain.selection).toBe('selected');
+      expect(selectedAgain.task.taskUid).toBe('WI-0099-10000000');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('selects dependency-aware tasks and initial non-complete work items read-only', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-next-dependency-'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
+    const workItemDir = join(root, '.docs', 'work-items', 'WI-0099');
+    const steps = join(workItemDir, 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(workItemDir, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Fixture', stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    const task = (uid: string, orderKey: string, dependsOn: string[], taskStatus: string) => YAML.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/task-envelope/v1', workItemId: 'WI-0099', taskUid: uid, orderKey, parentTaskUid: null, taskType: 'implementation', processingStatus: 'unprocessed', title: 'Fixture', objective: 'Fixture', references: { required: [], informational: [] }, dependsOn, task: { status: taskStatus, taskSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1', intentSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent', resultSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result', intent: {}, result: {} } });
+    const first = join(steps, 'WI-0099-10000000.yaml');
+    const second = join(steps, 'WI-0099-20000000.yaml');
+    const firstBefore = task('WI-0099-10000000', '10000000', [], 'active');
+    await writeFile(first, firstBefore);
+    await writeFile(second, task('WI-0099-20000000', '20000000', ['WI-0099-10000000'], 'planned'));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['task', 'next', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+      const active = JSON.parse(output.join('\n')) as { schema: string; selection: string; task: { taskUid: string; taskStatus: string } };
+      expect(active.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-task-next/v1');
+      expect(active.selection).toBe('selected');
+      expect(active.task).toEqual(expect.objectContaining({ taskUid: 'WI-0099-10000000', taskStatus: 'active' }));
+      expect(await readFile(first, 'utf8')).toBe(firstBefore);
+      output.length = 0;
+      await expect(main(['work-item', 'next', '--json'])).resolves.toBe(0);
+      const workItem = JSON.parse(output.join('\n')) as { schema: string; selection: string; workItem: { workItemId: string } };
+      expect(workItem.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-work-item-next/v1');
+      expect(workItem.selection).toBe('selected');
+      expect(workItem.workItem.workItemId).toBe('WI-0099');
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 
   it('rejects invalid task-next selectors', async () => {
