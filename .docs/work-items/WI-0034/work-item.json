@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0034",
-  "status": "planned",
+  "status": "complete",
   "title": "Define type-specific task lifecycle status contracts",
   "type": "feature",
   "objective": "Make task lifecycle status type-specific and schema-declared, keep it distinct from envelope processingStatus and result outcome status, conditionally validate result fields by task status, document every x-sdlc-* convention, migrate existing task records, and release the breaking pre-1.0 schema change as a minor version.",
