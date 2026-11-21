@@ -4,7 +4,7 @@ taskUid: WI-0036-20000000
 orderKey: "20000000"
 parentTaskUid: WI-0036-11000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 02
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 2: sdlc task validation-procedure
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -133,3 +133,49 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Extended the declarative collection registry for validation procedures, decomposition children/subranges, and research questions/sources, with schema-specific selection through the shared indexer.
+      changes:
+        - id: WI-0036-20000000_CHANGE-001
+          type: production-code
+          summary: Added batch 02 collection definitions using task-envelope, decomposition, and research schema keys with exact paths and declared selectors.
+          objectiveRefs:
+            - WI-0036-20000000_OBJ-001
+            - WI-0036-20000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-20000000_CHANGE-002
+          type: test-code
+          summary: Added schema-specific non-empty decomposition and research fixture coverage while retaining CLI regression coverage.
+          objectiveRefs:
+            - WI-0036-20000000_OBJ-001
+            - WI-0036-20000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-20000000_TC-SCHEMA-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes decomposition children/subranges and research questions/sources through schema-specific definitions
+        - testCaseRef: '#test-case/WI-0036-20000000_TC-EMPTY-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: validates empty batch 02 collections on real task documents without fabricating data
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-20000000_OBJ-001
+        - WI-0036-20000000_OBJ-002
+      tests:
+        - id: WI-0036-20000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-20000000_TC-SCHEMA-COLLECTIONS'
+            - '#test-case/WI-0036-20000000_TC-EMPTY-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 89 CLI tests, existing collection/reference regressions, schema-specific batch 02 fixture indexing, and empty real-document collection checks passed.
+    limitations:
+      - This task implements batch 02 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 02 decomposition/research non-empty evidence uses disposable schema-valid fixtures; existing repository task records provide empty collection coverage.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

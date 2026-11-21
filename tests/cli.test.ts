@@ -1217,6 +1217,53 @@ describe('discovery commands', () => {
     expect(report.findings).toEqual([]);
   });
 
+  it('indexes batch 02 decomposition and research collections through the generic boundary', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-02-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'decomposition.yaml'), [
+      'task:',
+      '  intent:',
+      '    range:',
+      '      subranges:',
+      '        - name: pre-work',
+      '          description: Research and decisions.',
+      '  result:',
+      '    tasks:',
+      '      - ref: WI-0099-10000000#task/T-001',
+      '        taskType: research',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'research.yaml'), [
+      'task:',
+      '  intent:',
+      '    questions:',
+      '      - id: Q-001',
+      '        question: Which collection is authoritative?',
+      '        reason: Define the index boundary.',
+      '        impact: 80',
+      '        confidence: 90',
+      '        status: open',
+      '    sources:',
+      '      - id: SRC-001',
+      '        location: README.md',
+      '        sourceType: file',
+      '        purpose: Explain the collection contract.',
+      '  result:',
+      '    findings: []',
+      '    unresolvedQuestions: []',
+      '    recommendations: []',
+      '    evidenceLimitations: []',
+      ''].join('\n'));
+
+    const child = await listCollection(root, '.docs/tasks/decomposition.yaml', 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1', 'child');
+    expect(child).toEqual(expect.objectContaining({ valid: true, data: [{ ref: 'WI-0099-10000000#task/T-001', taskType: 'research' }], findings: [] }));
+    const subrange = await listCollection(root, '.docs/tasks/decomposition.yaml', 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1', 'subrange');
+    expect(subrange.data).toEqual([{ name: 'pre-work', description: 'Research and decisions.' }]);
+    const question = await listCollection(root, '.docs/tasks/research.yaml', 'https://schemas.handschuh.dev/sdlc/task-research/v1', 'question');
+    expect(question.data[0]).toEqual(expect.objectContaining({ id: 'Q-001', question: 'Which collection is authoritative?' }));
+    const source = await listCollection(root, '.docs/tasks/research.yaml', 'https://schemas.handschuh.dev/sdlc/task-research/v1', 'source');
+    expect(source.data[0]).toEqual(expect.objectContaining({ id: 'SRC-001', sourceType: 'file', purpose: 'Explain the collection contract.' }));
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

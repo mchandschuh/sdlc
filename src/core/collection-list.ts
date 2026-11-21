@@ -199,6 +199,34 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', title: '/name', text: '/expected/result' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1',
+    name: 'child',
+    index: { collectionPath: '/task/result/tasks' },
+    display: { identifier: '/ref', text: '/taskType' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1',
+    name: 'subrange',
+    index: { collectionPath: '/task/intent/range/subranges' },
+    display: { identifier: '/name', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-research/v1',
+    name: 'question',
+    index: { collectionPath: '/task/intent/questions' },
+    display: { identifier: '/id', text: '/question' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-research/v1',
+    name: 'source',
+    index: { collectionPath: '/task/intent/sources' },
+    display: { identifier: '/id', title: '/sourceType', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
