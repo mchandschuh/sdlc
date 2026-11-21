@@ -1300,6 +1300,47 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'criterion')).data).toEqual([{ id: 'CRIT-001', description: 'The registry must remain schema keyed.' }]);
   });
 
+  it('indexes batch 04 decision and design collections through schema-specific paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-04-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'decision.yaml'), [
+      'task:',
+      '  intent:',
+      '    assumptions:',
+      '      - id: A-001',
+      '        statement: The registry is authoritative.',
+      '    alternatives: []',
+      '    criteria: []',
+      '  result:',
+      '    consequences:',
+      '      risks:',
+      '        - id: RISK-001',
+      '          description: A stale registry could hide supported collections.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'design.yaml'), [
+      'task:',
+      '  intent:',
+      '    considerations:',
+      '      - id: CON-001',
+      '        statement: Keep selectors declarative.',
+      '    activities:',
+      '      - id: ACT-001',
+      '        summary: Review schema collection paths.',
+      '  result:',
+      '    elements:',
+      '      - id: ELEM-001',
+      '        description: A versioned collection response.',
+      ''].join('\n'));
+
+    const decision = 'https://schemas.handschuh.dev/sdlc/task-decision/v1';
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'assumption')).data).toEqual([{ id: 'A-001', statement: 'The registry is authoritative.' }]);
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'risk')).data).toEqual([{ id: 'RISK-001', description: 'A stale registry could hide supported collections.' }]);
+    const design = 'https://schemas.handschuh.dev/sdlc/task-design/v1';
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'consideration')).data).toEqual([{ id: 'CON-001', statement: 'Keep selectors declarative.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'activity')).data).toEqual([{ id: 'ACT-001', summary: 'Review schema collection paths.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'element')).data).toEqual([{ id: 'ELEM-001', description: 'A versioned collection response.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

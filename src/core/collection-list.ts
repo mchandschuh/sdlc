@@ -262,6 +262,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', text: '/description' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decision/v1',
+    name: 'assumption',
+    index: { collectionPath: '/task/intent/assumptions' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decision/v1',
+    name: 'risk',
+    index: { collectionPath: '/task/result/consequences/risks' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'consideration',
+    index: { collectionPath: '/task/intent/considerations' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'activity',
+    index: { collectionPath: '/task/intent/activities' },
+    display: { identifier: '/id', text: '/summary' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'element',
+    index: { collectionPath: '/task/result/elements' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
