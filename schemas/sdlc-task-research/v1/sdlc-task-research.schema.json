@@ -1119,11 +1119,23 @@
       },
       "researched": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ]
       },
       "deferred": {
         "kind": "transitional",

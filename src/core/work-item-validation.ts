@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -102,6 +102,79 @@ function taskSchemaPath(schemaUri: string): string {
   if (!match) throw new DiscoveryError(`Unsupported task schema URI: ${schemaUri}`);
   const type = match[1]!;
   return `sdlc-${type}/v${match[2]}/sdlc-${type}.schema.json`;
+}
+
+interface TaskLifecyclePolicy {
+  readonly statusProperty: string;
+  readonly resultProperty: string;
+  readonly statuses: Readonly<Record<string, { readonly kind?: string; readonly result?: string; readonly requiredResultPaths?: readonly string[] }>>;
+}
+
+function readTaskLifecyclePolicy(schemaRoot: string, schemaPath: string): TaskLifecyclePolicy {
+  const document = JSON.parse(readFileSync(join(schemaRoot, schemaPath), 'utf8')) as Record<string, unknown>;
+  const policy = document['x-sdlc-task-lifecycle'] as TaskLifecyclePolicy | undefined;
+  if (!policy || policy.statusProperty !== '/status' || policy.resultProperty !== '/result' || !policy.statuses || typeof policy.statuses !== 'object') {
+    throw new DiscoveryError(`Invalid x-sdlc-task-lifecycle metadata: ${schemaPath}`);
+  }
+  return policy;
+}
+
+function pointerValue(value: unknown, pointer: string): { readonly found: boolean; readonly value?: unknown } {
+  if (pointer === '') return { found: true, value };
+  if (!pointer.startsWith('/')) return { found: false };
+  let current: unknown = value;
+  for (const rawSegment of pointer.slice(1).split('/')) {
+    const segment = rawSegment.replaceAll('~1', '/').replaceAll('~0', '~');
+    if (!current || typeof current !== 'object' || !(segment in (current as Record<string, unknown>))) return { found: false };
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return { found: true, value: current };
+}
+
+function lifecycleFindings(schemaRoot: string, schemaPath: string, payload: Record<string, unknown>): string[] {
+  let policy: TaskLifecyclePolicy;
+  try {
+    policy = readTaskLifecyclePolicy(schemaRoot, schemaPath);
+  } catch (error) {
+    return [error instanceof Error ? error.message : `Invalid x-sdlc-task-lifecycle metadata: ${schemaPath}`];
+  }
+  const statusResult = pointerValue(payload, policy.statusProperty);
+  if (!statusResult.found || typeof statusResult.value !== 'string') return [`Task payload is missing lifecycle status at ${policy.statusProperty}: ${schemaPath}`];
+  const entry = policy.statuses[statusResult.value];
+  if (!entry) return [`Task lifecycle status is not declared by ${schemaPath}: ${statusResult.value}`];
+  const findings: string[] = [];
+  for (const requiredPath of entry.requiredResultPaths ?? []) {
+    const result = pointerValue(payload, requiredPath);
+    if (!result.found || result.value === null || result.value === undefined) findings.push(`Lifecycle status ${statusResult.value} requires ${requiredPath} in ${schemaPath}.`);
+  }
+  return findings;
+}
+
+async function validateTaskPayload(
+  schemaRoot: string,
+  schemaPath: string,
+  documentPath: string,
+  cwd: string,
+  payload: Record<string, unknown>,
+  temporaryDirectory: string,
+  taskUid: string,
+): Promise<string[]> {
+  const policy = readTaskLifecyclePolicy(join(schemaRoot, 'schemas'), schemaPath);
+  const lifecycleStatus = pointerValue(payload, policy.statusProperty).value;
+  const statusPolicy = typeof lifecycleStatus === 'string' ? policy.statuses[lifecycleStatus] : undefined;
+  if (statusPolicy?.result !== 'optional') return validateDocument(join(schemaRoot, 'schemas'), schemaPath, documentPath, cwd);
+
+  const relaxedRegistry = join(temporaryDirectory, `${taskUid}-schemas`);
+  await cp(join(schemaRoot, 'schemas'), relaxedRegistry, { recursive: true });
+  const relaxedSchemaPath = join(relaxedRegistry, schemaPath);
+  const relaxedSchema = JSON.parse(await readFile(relaxedSchemaPath, 'utf8')) as {
+    required?: string[];
+    properties?: Record<string, unknown>;
+  };
+  relaxedSchema.required = (relaxedSchema.required ?? []).filter((property) => property !== 'result');
+  relaxedSchema.properties = { ...(relaxedSchema.properties ?? {}), result: {} };
+  await writeFile(relaxedSchemaPath, JSON.stringify(relaxedSchema, null, 2));
+  return validateDocument(relaxedRegistry, schemaPath, documentPath, cwd);
 }
 
 async function validateDocument(schemaRoot: string, schemaPath: string, documentPath: string, cwd: string): Promise<string[]> {
@@ -259,7 +332,8 @@ async function validateTask(repositoryRoot: string, schemaRoot: string, temporar
   const payloadPath = await writeJson(temporaryDirectory, `${task.taskUid}.payload.json`, { status: document.task?.status, intent: document.task?.intent, result: document.task?.result });
   const findings = [
     ...await validateDocument(join(schemaRoot, 'schemas'), 'sdlc-task-envelope/v1/sdlc-task-envelope.schema.json', envelopePath, repositoryRoot),
-    ...await validateDocument(join(schemaRoot, 'schemas'), relativeTaskSchema, payloadPath, repositoryRoot),
+    ...await validateTaskPayload(schemaRoot, relativeTaskSchema, payloadPath, repositoryRoot, { status: document.task?.status, intent: document.task?.intent, result: document.task?.result }, temporaryDirectory, task.taskUid),
+    ...lifecycleFindings(join(schemaRoot, 'schemas'), relativeTaskSchema, { status: document.task?.status, intent: document.task?.intent, result: document.task?.result }),
   ];
   const taskContext: TaskContext = {
     taskUid: task.taskUid,

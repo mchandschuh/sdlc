@@ -1570,19 +1570,51 @@
       },
       "awaiting-approval": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
       },
       "decided": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
       },
       "superseded": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
       },
       "deferred": {
         "kind": "transitional",

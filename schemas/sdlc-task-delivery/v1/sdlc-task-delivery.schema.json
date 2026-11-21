@@ -1057,15 +1057,36 @@
       },
       "awaiting-release": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/artifacts",
+          "/result/executions",
+          "/result/limitations"
+        ]
       },
       "delivered": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/artifacts",
+          "/result/executions",
+          "/result/limitations"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/artifacts",
+          "/result/executions",
+          "/result/limitations"
+        ]
       },
       "deferred": {
         "kind": "transitional",

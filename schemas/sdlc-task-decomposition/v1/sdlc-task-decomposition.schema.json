@@ -787,11 +787,21 @@
       },
       "decomposed": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ]
       },
       "deferred": {
         "kind": "transitional",

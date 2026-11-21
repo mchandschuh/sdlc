@@ -1200,15 +1200,39 @@
       },
       "corrected": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "awaiting-review": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "deferred": {
         "kind": "transitional",

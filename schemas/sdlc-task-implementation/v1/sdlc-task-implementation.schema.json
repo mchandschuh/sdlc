@@ -1422,15 +1422,33 @@
       },
       "implemented": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
       },
       "implemented-unproven": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
       },
       "deferred": {
         "kind": "transitional",

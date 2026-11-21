@@ -2347,19 +2347,55 @@
       },
       "defined": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ]
       },
       "awaiting-review": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ]
       },
       "superseded": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ]
       },
       "deferred": {
         "kind": "transitional",

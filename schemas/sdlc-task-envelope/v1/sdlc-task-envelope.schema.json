@@ -195,8 +195,7 @@
         "taskSchema",
         "intentSchema",
         "resultSchema",
-        "intent",
-        "result"
+        "intent"
       ],
       "description": "The task workflow wrapper. status is the task's workflow/lifecycle state; taskSchema is the canonical selector for the complete task contract; intent and result are the only task payload roots; intentSchema and resultSchema identify the corresponding subschemas. This wrapper is not the same as the envelope processing state.",
       "properties": {
@@ -253,8 +252,11 @@
           ]
         },
         "result": {
-          "type": "object",
-          "description": "The observed task output, validated against resultSchema. A result may record a task-specific status, decision, evidence, findings, limitations, or non-claims; it does not directly mutate the envelope or work-item lifecycle.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "The observed task output, validated against resultSchema when the task lifecycle status requires a result. Transitional statuses may omit, null, or partially populate this value; a result does not directly mutate the envelope or work-item lifecycle.",
           "additionalProperties": true,
           "examples": [
             {

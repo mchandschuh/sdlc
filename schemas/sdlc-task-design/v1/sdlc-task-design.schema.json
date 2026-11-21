@@ -5060,19 +5060,67 @@
       },
       "drafted": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ]
       },
       "awaiting-validation": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ]
       },
       "superseded": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ]
       },
       "deferred": {
         "kind": "transitional",

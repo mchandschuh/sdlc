@@ -1754,19 +1754,71 @@
       },
       "awaiting-decision": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ]
       },
       "reviewed": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ]
       },
       "superseded": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/decision",
+          "/result/summary",
+          "/result/actor",
+          "/result/criteriaEvaluations",
+          "/result/findings",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims",
+          "/result/reproducibility",
+          "/result/executionReceipt"
+        ]
       },
       "deferred": {
         "kind": "transitional",

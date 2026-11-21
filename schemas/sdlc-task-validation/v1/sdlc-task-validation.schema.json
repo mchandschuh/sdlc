@@ -1804,15 +1804,42 @@
       },
       "validated": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "inconclusive": {
         "kind": "milestone",
-        "result": "optional"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "complete": {
         "kind": "terminal",
-        "result": "required"
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "deferred": {
         "kind": "transitional",
