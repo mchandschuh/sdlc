@@ -550,6 +550,14 @@ export function collectionDefinitions(): readonly CollectionDefinition[] {
   return definitions;
 }
 
+export function collectionNamesForCommand(command: 'task' | 'work-item'): readonly string[] {
+  const documentTypeMatches = command === 'work-item'
+    ? (documentType: string) => documentType === 'https://schemas.handschuh.dev/sdlc/work-item/v3'
+    : (documentType: string) => documentType.startsWith('https://schemas.handschuh.dev/sdlc/task-');
+  return [...new Set(definitions.filter((definition) => documentTypeMatches(definition.documentType)).map((definition) => definition.name))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
 function selectCollection(document: unknown, definition: CollectionDefinition, arguments_: Readonly<Record<string, string>>): readonly unknown[] {
   const collectionPath = definition.index.variants
     ? definition.index.variants[arguments_[definition.index.argument ?? ''] ?? '']

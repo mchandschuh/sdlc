@@ -1,6 +1,7 @@
 import yargs from 'yargs/yargs';
 import type { ArgumentsCamelCase } from 'yargs';
 import type { SdlcCommandContext, SdlcCommandModule } from './command-types.js';
+import { collectionNamesForCommand } from '../core/collection-list.js';
 import { commandMatchesArguments, discoverCommands } from './command-discovery.js';
 
 function rootHelpOrVersion(args: readonly string[]): boolean {
@@ -91,7 +92,8 @@ export async function runDiscoveredCommands(
   }
   const groups = new Map<string, readonly SdlcCommandModule[]>();
   for (const command of commands) {
-    if (command.command.includes('<') || command.command.includes('[')) continue;
+    const isCollectionCommand = command.command === 'task <collection> list' || command.command === 'work-item <collection> list';
+    if (!isCollectionCommand && (command.command.includes('<') || command.command.includes('['))) continue;
     const [group] = command.command.split(/\s+/u);
     groups.set(group!, [...(groups.get(group!) ?? []), command]);
   }
@@ -120,6 +122,17 @@ export async function runDiscoveredCommands(
       (groupArgv) => {
         groupArgv.showHelpOnFail(false);
         for (const command of groupCommands) {
+          if (command.command === `${group} <collection> list`) {
+            for (const collection of collectionNamesForCommand(group as 'task' | 'work-item')) {
+              groupArgv.command(
+                `${collection} list`,
+                command.describe,
+                (childArgv) => childArgv.showHelpOnFail(false),
+                () => undefined,
+              );
+            }
+            continue;
+          }
           const child = command.command.split(/\s+/u).slice(1).join(' ');
           groupArgv.command(
             child,

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import YAML from 'yaml';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enumerateWorkItemObjects, SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS, statTrackedPath } from '../src/core/discovery.js';
-import { listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
+import { collectionDefinitions, collectionNamesForCommand, listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
@@ -50,6 +50,19 @@ describe('CLI interface', () => {
     await expect(main(['work-item', 'start', '--help'])).resolves.toBe(0);
 
     expect(output.join('\n')).toContain('Usage: sdlc work-item start --work-item <work-item>');
+  });
+
+  it('lists every registry-backed collection under its resource help', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['task', '--help'])).resolves.toBe(0);
+    await expect(main(['work-item', '--help'])).resolves.toBe(0);
+
+    const help = output.join('\n');
+    expect(collectionDefinitions().length).toBeGreaterThan(collectionNamesForCommand('task').length);
+    for (const collection of collectionNamesForCommand('task')) expect(help).toContain(`sdlc task ${collection} list`);
+    for (const collection of collectionNamesForCommand('work-item')) expect(help).toContain(`sdlc work-item ${collection} list`);
   });
 
   it('resolves repository-dependent commands from a nested CWD repository', async () => {
