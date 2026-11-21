@@ -4,7 +4,7 @@ taskUid: WI-0033-40000000
 orderKey: '40000000'
 parentTaskUid: WI-0033-30000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement stat command and cross-family integration
 objective: Migrate stat into a command module, remove the monolithic command handlers and manual root help table, and complete yargs integration for all command families.
 references:
@@ -41,7 +41,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -83,19 +83,44 @@ task:
       - Remove legacy handler routing and hard-coded printHelp command entries from main.ts.
       - Add cross-family registry, root-help, command-help, and encapsulation tests.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Cross-family command integration is planned but has not been processed.
+      summary: Migrated stat into a discovered command module, made the descriptor registry authoritative for help and dispatch, and reduced main.ts to version lookup, composition, and exit-code mapping.
       changes:
-        - id: WI-0033-40000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the stat and main-entrypoint integration plan.
+        - id: WI-0033-40000000_CHANGE-001
+          type: production-code
+          summary: Added the stat command module with local option validation, tracked-path execution, JSON output, and preserved errors.
           objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
-          paths: [.docs/work-items/WI-0033/steps/WI-0033-40000000-implementation.yaml]
-      testImplementations: []
+          paths: [src/cli/commands/stat.command.ts]
+        - id: WI-0033-40000000_CHANGE-002
+          type: production-code
+          summary: Completed shared-registry integration for all twelve command paths, generated root inventory help from discovered descriptors, preserved command-family dispatch, and removed legacy stat/dispatcher logic from main.ts.
+          objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
+          paths: [src/cli/command-runner.ts, src/cli/main.ts]
+        - id: WI-0033-40000000_CHANGE-003
+          type: test-code
+          summary: Extended deterministic discovery coverage for the stat module and retained complete CLI regression coverage across every command family.
+          objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
+          paths: [tests/command-discovery.test.ts, tests/cli.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-STAT-HELP'
+          path: tests/cli.test.ts
+          selector: prints repository-dependent command help without requiring a Git repository
+        - testCaseRef: '#test-case/TC-COMPLETE-REGISTRY'
+          path: tests/cli.test.ts
+          selector: documents the work-item inventory and normalized task option forms in command help
+        - testCaseRef: '#test-case/TC-MAIN-COMPOSITION'
+          path: tests/command-discovery.test.ts
+          selector: enumerates current command modules deterministically
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0033-40000000_OBJ-001, WI-0033-40000000_OBJ-002]
-      tests: []
+      tests:
+        - id: WI-0033-40000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-STAT-HELP', '#test-case/TC-COMPLETE-REGISTRY', '#test-case/TC-MAIN-COMPOSITION']
+          command: HOME=$(mktemp -d) yarn typecheck && HOME=$(mktemp -d) yarn build && HOME=$(mktemp -d) yarn test tests/cli.test.ts tests/command-discovery.test.ts --run
+          status: passed
+          result: Typecheck, build, 79 complete CLI/discovery tests, generated stat and command-family help, twelve-command root inventory, representative dispatch, preserved stat behavior, and composition checks passed in an isolated HOME.
     limitations:
-      - Implementation has not been processed; complete registry and encapsulation evidence does not yet exist.
+      - Aggregate installed-CLI validation, final review, release, and external deployment evidence remain pending later WI-0033 tasks.

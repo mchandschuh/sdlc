@@ -19,6 +19,7 @@ describe('dynamic command discovery', () => {
       'cli/commands/ref/resolve.command.ts',
       'cli/commands/ref/validate.command.ts',
       'cli/commands/repository/info.command.ts',
+      'cli/commands/stat.command.ts',
       'cli/commands/task/list.command.ts',
       'cli/commands/task/next.command.ts',
       'cli/commands/task/validate.command.ts',
