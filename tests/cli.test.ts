@@ -1485,6 +1485,42 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/strategy.yaml', strategy, 'coverage')).data).toEqual([{ id: 'COV-001', rationale: 'Covers the required behavior.' }]);
   });
 
+  it('indexes batch 09 review and validation result collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-09-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'review.yaml'), [
+      'task:',
+      '  intent:',
+      '    criteria:',
+      '      - id: CRIT-001',
+      '        statement: The implementation is bounded.',
+      '    evidenceRequirements:',
+      '      - id: EVID-REQ-001',
+      '        purpose: Inspect the implementation diff.',
+      '  result:',
+      '    criteriaEvaluations:',
+      '      - criterionRef: "#criterion/CRIT-001"',
+      '        summary: The scope is bounded.',
+      '    evidence:',
+      '      - id: EVID-001',
+      '        claim: The tests passed.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'validation.yaml'), [
+      'task:',
+      '  result:',
+      '    findings:',
+      '      - code: FIND-001',
+      '        message: No findings.',
+      ''].join('\n'));
+    const review = 'https://schemas.handschuh.dev/sdlc/task-review/v1';
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'criterion')).data).toEqual([{ id: 'CRIT-001', statement: 'The implementation is bounded.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'evidence-requirement')).data).toEqual([{ id: 'EVID-REQ-001', purpose: 'Inspect the implementation diff.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'criterion-evaluation')).data).toEqual([{ criterionRef: '#criterion/CRIT-001', summary: 'The scope is bounded.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'evidence')).data).toEqual([{ id: 'EVID-001', claim: 'The tests passed.' }]);
+    const validation = 'https://schemas.handschuh.dev/sdlc/task-validation/v1';
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'finding')).data).toEqual([{ code: 'FIND-001', message: 'No findings.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

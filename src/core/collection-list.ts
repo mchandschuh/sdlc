@@ -447,6 +447,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', text: '/observed/summary' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-review/v1',
+    name: 'criterion',
+    index: { collectionPath: '/task/intent/criteria' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-review/v1',
+    name: 'evidence-requirement',
+    index: { collectionPath: '/task/intent/evidenceRequirements' },
+    display: { identifier: '/id', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-review/v1',
+    name: 'criterion-evaluation',
+    index: { collectionPath: '/task/result/criteriaEvaluations' },
+    display: { identifier: '/criterionRef', text: '/summary' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-review/v1',
+    name: 'evidence',
+    index: { collectionPath: '/task/result/evidence' },
+    display: { identifier: '/id', text: '/claim' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-validation/v1',
+    name: 'finding',
+    index: { collectionPath: '/task/result/findings' },
+    display: { identifier: '/code', text: '/message' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
