@@ -1,6 +1,6 @@
 {
   "name": "sdlc",
-  "version": "0.7.4",
+  "version": "0.8.0",
   "description": "TypeScript Node.js CLI plumbing for sdlc, following the nodejs-cli-pattern skill conventions.",
   "type": "module",
   "private": true,
