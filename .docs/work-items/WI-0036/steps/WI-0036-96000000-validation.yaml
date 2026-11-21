@@ -4,7 +4,7 @@ taskUid: WI-0036-96000000
 orderKey: "96000000"
 parentTaskUid: WI-0036-95000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate declarative collection listing
 objective: Run complete typecheck, build, tests, schema audit, collection-list
   response validation, representative human/JSON CLI checks, and WI-0036
@@ -80,7 +80,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -157,3 +157,78 @@ task:
       - Do not claim provider, deployment, remote publication, or production
         evidence.
       - Do not mutate the work-item lifecycle as a side effect of validation.
+  result:
+    status: passed
+    summary: The complete WI-0036 collection registry, constrained indexer, parameterized CLI surface, response envelope, compatibility boundary, schema audit, and work-item object tree passed aggregate validation.
+    executions:
+      - id: WI-0036-96000000_EXEC-PACKAGE
+        procedureRef: '#procedure/WI-0036-96000000_VAL-001'
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, and the complete 117-test suite passed.
+          assertions:
+            - All four test files passed with 117 total tests.
+            - Existing command, repository-root, Git-hook, and reference-resolution regressions remained green.
+        evidenceTier: cli-audit
+        evidence:
+          - kind: command
+            source: WI-0036-96000000_EXEC-PACKAGE
+            claim: The complete package test gate passed.
+            command: yarn typecheck && yarn build && yarn test --run --testTimeout=20000
+      - id: WI-0036-96000000_EXEC-SCHEMA
+        procedureRef: '#procedure/WI-0036-96000000_VAL-001'
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: The 40-schema registry audit and both governance rules passed.
+          assertions:
+            - schema-validate passed all 40 registered schemas.
+            - task-governance-contract passed.
+            - task-type-schema-parity passed.
+        evidenceTier: static
+        evidence:
+          - kind: command
+            source: WI-0036-96000000_EXEC-SCHEMA
+            claim: The repository schema registry and governance rules passed.
+            command: node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+      - id: WI-0036-96000000_EXEC-CLI
+        procedureRef: '#procedure/WI-0036-96000000_VAL-001'
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: Representative human/JSON requirement, nested acceptance-criterion, objective, and task collection commands returned valid collection-list/v1 envelopes with no findings.
+          assertions:
+            - Work-item requirement listing returned five complete objects.
+            - Nested acceptance-criterion listing returned three complete objects.
+            - Task objective listing returned two complete objects.
+        evidenceTier: cli-audit
+        evidence:
+          - kind: command
+            source: WI-0036-96000000_EXEC-CLI
+            claim: Representative collection-listing commands passed in human/JSON-compatible CLI execution.
+            command: node ./bin/cli.js work-item requirement list --work-item WI-0036 --json; node ./bin/cli.js work-item acceptance-criterion list --work-item WI-0036 --requirement WI-0036_REQ_001 --json; node ./bin/cli.js task objective list --task WI-0036-10000000 --json
+      - id: WI-0036-96000000_EXEC-WORK-ITEM
+        procedureRef: '#procedure/WI-0036-96000000_VAL-001'
+        status: passed
+        observed:
+          outcome: passed
+          exitCode: 0
+          summary: Complete WI-0036 validation reported 25 valid objects, zero invalid objects, and zero unresolved references.
+          assertions:
+            - The work-item, all ordered tasks, and complete references validated successfully.
+        evidenceTier: static
+        evidence:
+          - kind: command
+            source: WI-0036-96000000_EXEC-WORK-ITEM
+            claim: The complete WI-0036 object tree passed schema/reference validation.
+            command: node ./bin/cli.js work-item validate --work-item WI-0036 --json
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - Evidence covers local source, compiled CLI, repository schema registry, disposable fixtures, and local work-item validation; it does not establish provider behavior, deployment, remote publication, or production readiness.
+    nonClaims:
+      - This validation result does not approve or publish the release.
