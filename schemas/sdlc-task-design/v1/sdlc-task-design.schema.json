@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -116,6 +117,20 @@
           "unresolvedQuestions": []
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "drafted",
+        "awaiting-validation",
+        "complete",
+        "superseded",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a design task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -5023,7 +5038,46 @@
         "unresolvedQuestions": [],
         "outputs": [],
         "verificationObligations": []
+      },
+      "status": "drafted"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "drafted": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "awaiting-validation": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required"
+      },
+      "superseded": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

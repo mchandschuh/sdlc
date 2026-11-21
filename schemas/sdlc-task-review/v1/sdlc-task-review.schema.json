@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -148,6 +149,20 @@
         }
       ],
       "x-field-role": "authoritative"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "awaiting-decision",
+        "reviewed",
+        "complete",
+        "superseded",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a review task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1717,7 +1732,46 @@
           "startedAt": "2026-10-16T00:00:00Z",
           "finishedAt": "2026-10-16T00:02:00Z"
         }
+      },
+      "status": "reviewed"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "awaiting-decision": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "reviewed": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required"
+      },
+      "superseded": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

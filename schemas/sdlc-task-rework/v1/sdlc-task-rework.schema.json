@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -133,6 +134,19 @@
           ]
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "corrected",
+        "awaiting-review",
+        "complete",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a rework task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1164,7 +1178,42 @@
           "This result is not review approval.",
           "The source review decision does not transfer to this result."
         ]
+      },
+      "status": "corrected"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "corrected": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "awaiting-review": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required"
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

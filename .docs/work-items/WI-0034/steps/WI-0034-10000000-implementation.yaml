@@ -4,7 +4,7 @@ taskUid: WI-0034-10000000
 orderKey: "10000000"
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Define task lifecycle schema metadata and status contracts
 objective: Add the task-specific root status contract, lifecycle status enums,
   x-sdlc-task-lifecycle metadata, schemas/README.md convention, and the
@@ -63,7 +63,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -122,27 +122,55 @@ task:
         x-sdlc-* lifecycle metadata generically.
       - Run focused tests and the complete repository validation gates.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The dynamic command registry implementation is planned but has not been
-        processed.
+      summary: Added type-specific task lifecycle status enums and x-sdlc-task-lifecycle metadata to all ten task contracts, documented schema conventions, and projected envelope task.status into task payload validation while preserving current records.
       changes:
-        - id: WI-0034-10000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the command-module contract and first implementation batch
-            plan.
+        - id: WI-0034-10000000_CHANGE-001
+          type: schema
+          summary: Added task-specific lifecycle status fields, enums, descriptions, and x-sdlc-task-lifecycle metadata to decomposition, research, decision, design, implementation, test-strategy, validation, review, rework, and delivery schemas.
           objectiveRefs:
             - WI-0034-10000000_OBJ-001
             - WI-0034-10000000_OBJ-002
           paths:
-            - .docs/work-items/WI-0034/steps/WI-0034-10000000-implementation.yaml
-      testImplementations: []
+            - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+            - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+            - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+            - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+            - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+            - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+            - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+            - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+            - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+            - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+        - id: WI-0034-10000000_CHANGE-002
+          type: documentation
+          summary: Added schemas/README.md documenting lifecycle metadata, status/result/processing separation, reference schemas, field roles, and registry boundaries.
+          objectiveRefs: [WI-0034-10000000_OBJ-001, WI-0034-10000000_OBJ-002]
+          paths: [schemas/README.md]
+        - id: WI-0034-10000000_CHANGE-003
+          type: production-code
+          summary: Projected persisted envelope task.status into the task-specific validation payload so the new root status contract validates existing task records before lifecycle-aware conditional checks are added.
+          objectiveRefs: [WI-0034-10000000_OBJ-001]
+          paths: [src/core/work-item-validation.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-STATUS-CONTRACTS'
+          path: schemas/
+          selector: task schemas expose root lifecycle status and x-sdlc-task-lifecycle metadata
+        - testCaseRef: '#test-case/TC-PROJECTION-COMPATIBILITY'
+          path: tests/cli.test.ts
+          selector: validates every object in a complete work item
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - WI-0034-10000000_OBJ-001
         - WI-0034-10000000_OBJ-002
-      tests: []
+      tests:
+        - id: WI-0034-10000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-STATUS-CONTRACTS', '#test-case/TC-PROJECTION-COMPATIBILITY']
+          command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test tests/cli.test.ts --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: All ten lifecycle status contracts, schema metadata documentation, task.status projection, typecheck, build, 77 CLI tests, and the 40-schema audit passed.
     limitations:
-      - Implementation has not been processed; no yargs registry, discovery,
-        build, or test evidence exists yet.
+      - Generic lifecycle-aware conditional result enforcement, persisted record migration, independent review, aggregate validation, and release remain pending later WI-0034 tasks.

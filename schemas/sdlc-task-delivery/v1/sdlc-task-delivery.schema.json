@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -141,6 +142,19 @@
           ]
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "awaiting-release",
+        "delivered",
+        "complete",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a delivery task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1021,7 +1035,42 @@
         "limitations": [
           "The package was verified locally and was not deployed to a production environment."
         ]
+      },
+      "status": "delivered"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "awaiting-release": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "delivered": {
+        "kind": "milestone",
+        "result": "optional"
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required"
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

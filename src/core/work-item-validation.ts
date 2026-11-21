@@ -256,7 +256,7 @@ async function validateTask(repositoryRoot: string, schemaRoot: string, temporar
     : '');
   const document = YAML.parse(await readFile(path, 'utf8')) as Record<string, any>;
   const envelopePath = await writeJson(temporaryDirectory, `${task.taskUid}.envelope.json`, document);
-  const payloadPath = await writeJson(temporaryDirectory, `${task.taskUid}.payload.json`, { intent: document.task?.intent, result: document.task?.result });
+  const payloadPath = await writeJson(temporaryDirectory, `${task.taskUid}.payload.json`, { status: document.task?.status, intent: document.task?.intent, result: document.task?.result });
   const findings = [
     ...await validateDocument(join(schemaRoot, 'schemas'), 'sdlc-task-envelope/v1/sdlc-task-envelope.schema.json', envelopePath, repositoryRoot),
     ...await validateDocument(join(schemaRoot, 'schemas'), relativeTaskSchema, payloadPath, repositoryRoot),
