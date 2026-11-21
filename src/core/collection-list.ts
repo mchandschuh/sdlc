@@ -482,6 +482,62 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/code', text: '/message' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'evidence',
+    index: { collectionPath: '/task/result/evidence' },
+    display: { identifier: '/id', text: '/claim' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'objective',
+    index: { collectionPath: '/task/intent/objectives' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'acceptance-criterion',
+    index: { collectionPath: '/task/intent/acceptanceCriteria' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-rework/v1',
+    name: 'correction',
+    index: { collectionPath: '/task/result/corrections' },
+    display: { identifier: '/id', text: '/summary' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'input',
+    index: { collectionPath: '/task/intent/inputs' },
+    display: { identifier: '/id', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'artifact',
+    index: { collectionPath: '', argument: 'phase', variants: { intent: '/task/intent/artifacts', result: '/task/result/artifacts' } },
+    display: { identifier: '/id', title: '/kind', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'procedure',
+    index: { collectionPath: '/task/intent/procedures' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-delivery/v1',
+    name: 'execution',
+    index: { collectionPath: '/task/result/executions' },
+    display: { identifier: '/id', text: '/result/summary' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));

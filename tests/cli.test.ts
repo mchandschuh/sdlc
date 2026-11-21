@@ -1521,6 +1521,58 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'finding')).data).toEqual([{ code: 'FIND-001', message: 'No findings.' }]);
   });
 
+  it('indexes batch 10 delivery, rework, and task-input collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-10-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'delivery.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Confirm delivery input.',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: Deliver the collection feature.',
+      '    acceptanceCriteria:',
+      '      - id: AC-001',
+      '        description: The release candidate builds.',
+      '    artifacts:',
+      '      - id: ART-INT-001',
+      '        kind: manifest',
+      '        purpose: Intent manifest.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Build the release candidate.',
+      '  result:',
+      '    artifacts:',
+      '      - id: ART-RES-001',
+      '        kind: binary',
+      '        path: dist/cli/main.js',
+      '        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        result:',
+      '          summary: Release candidate built.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'rework.yaml'), [
+      'task:',
+      '  result:',
+      '    corrections:',
+      '      - id: COR-001',
+      '        summary: Corrected the collection selector.',
+      ''].join('\n'));
+    const delivery = 'https://schemas.handschuh.dev/sdlc/task-delivery/v1';
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Confirm delivery input.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'Deliver the collection feature.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'acceptance-criterion')).data).toEqual([{ id: 'AC-001', description: 'The release candidate builds.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'intent' })).data).toEqual([{ id: 'ART-INT-001', kind: 'manifest', purpose: 'Intent manifest.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'result' })).data).toEqual([{ id: 'ART-RES-001', kind: 'binary', path: 'dist/cli/main.js', checksum: 'sha256:0000000000000000000000000000000000000000000000000000000000000000' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Build the release candidate.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'execution')).data).toEqual([{ id: 'EXEC-001', result: { summary: 'Release candidate built.' } }]);
+    const rework = 'https://schemas.handschuh.dev/sdlc/task-rework/v1';
+    expect((await listCollection(root, '.docs/tasks/rework.yaml', rework, 'correction')).data).toEqual([{ id: 'COR-001', summary: 'Corrected the collection selector.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
