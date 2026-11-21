@@ -373,6 +373,45 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', text: '/result' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'requirement',
+    index: {
+      collectionPath: '/task/intent/requirements',
+      argument: 'kind',
+      filter: { argument: 'kind', path: '/kind' },
+    },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'invariant',
+    index: { collectionPath: '/task/intent/invariants' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'objective',
+    index: { collectionPath: '/task/intent/objectives' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'test-case',
+    index: { collectionPath: '/task/result/testCases' },
+    display: { identifier: '/id', title: '/title', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'fixture',
+    index: { collectionPath: '/task/result/fixtures' },
+    display: { identifier: '/id', title: '/name', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));

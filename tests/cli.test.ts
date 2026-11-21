@@ -1406,6 +1406,48 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'verification-test')).data).toEqual([{ id: 'EXEC-001', result: 'The test passed.' }]);
   });
 
+  it('indexes batch 07 test-strategy collections and supports the kind filter', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-07-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'strategy.yaml'), [
+      'task:',
+      '  intent:',
+      '    requirements:',
+      '      - id: REQ-001',
+      '        kind: requirement',
+      '        statement: Requirements are covered.',
+      '        inputRefs: [INPUT-001]',
+      '        required: true',
+      '      - id: REQ-002',
+      '        kind: acceptanceCriterion',
+      '        statement: Acceptance criteria are covered.',
+      '        inputRefs: [INPUT-001]',
+      '        required: true',
+      '    invariants:',
+      '      - id: INV-001',
+      '        statement: Existing reference semantics remain unchanged.',
+      '        required: true',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: The strategy is complete.',
+      '  result:',
+      '    testCases:',
+      '      - id: TC-001',
+      '        title: Strategy test',
+      '        purpose: Validate the strategy.',
+      '    fixtures:',
+      '      - id: FIX-001',
+      '        name: Strategy fixture',
+      '        purpose: Supply deterministic inputs.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1';
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'requirement', { kind: 'requirement' })).data).toEqual([{ id: 'REQ-001', kind: 'requirement', statement: 'Requirements are covered.', inputRefs: ['INPUT-001'], required: true }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'invariant')).data).toEqual([{ id: 'INV-001', statement: 'Existing reference semantics remain unchanged.', required: true }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'The strategy is complete.' }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'test-case')).data).toEqual([{ id: 'TC-001', title: 'Strategy test', purpose: 'Validate the strategy.' }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'fixture')).data).toEqual([{ id: 'FIX-001', name: 'Strategy fixture', purpose: 'Supply deterministic inputs.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

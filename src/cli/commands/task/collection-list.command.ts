@@ -11,11 +11,16 @@ export default function createTaskCollectionListCommand(_context: SdlcCommandCon
       .usage('Usage: sdlc task <collection> list --task <task-id> [--json]')
       .positional('collection', { type: 'string', describe: 'Registered collection name' })
       .option('task', { type: 'string', describe: 'Canonical task ID' })
+      .option('kind', { type: 'string', describe: 'Collection kind filter' })
+      .option('phase', { type: 'string', describe: 'Collection phase selector' })
       .option('json', { type: 'boolean', default: false, describe: 'Emit JSON output' }),
     handler: async (argv) => {
       if (Array.isArray(argv.collection) || typeof argv.collection !== 'string' || argv.collection.length === 0) throw new DiscoveryError('Usage: sdlc task <collection> list --task <task-id> [--json]');
       if (Array.isArray(argv.task) || typeof argv.task !== 'string' || argv.task.length === 0) throw new DiscoveryError('Usage: sdlc task <collection> list --task <task-id> [--json]');
-      const report = await listTaskCollection(await resolveOperativeRoot(), argv.task, argv.collection);
+      const args: Record<string, string> = {};
+      if (typeof argv.kind === 'string') args.kind = argv.kind;
+      if (typeof argv.phase === 'string') args.phase = argv.phase;
+      const report = await listTaskCollection(await resolveOperativeRoot(), argv.task, argv.collection, args);
       const definition = resolveCollectionDefinition(report.documentType, report.collection);
       if (argv.json === true) console.log(JSON.stringify(report, null, 2));
       else {
