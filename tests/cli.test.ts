@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import YAML from 'yaml';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enumerateWorkItemObjects, SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS, statTrackedPath } from '../src/core/discovery.js';
+import { listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
@@ -1184,6 +1185,72 @@ describe('discovery commands', () => {
       'WI-0001-40000000',
     ]);
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml');
+  });
+
+  it('lists declarative work-item collections with human and lossless JSON projections', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'requirement', 'list', '--work-item', 'WI-0036'])).resolves.toBe(0);
+    expect(output.join('\n')).toContain('WI-0036_REQ_001');
+    expect(output.join('\n')).toContain('declarative-collection-indexes');
+
+    output.length = 0;
+    await expect(main(['work-item', 'acceptance-criterion', 'list', '--work-item', 'WI-0036', '--requirement', 'WI-0036_REQ_001', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; collection: string; data: Array<Record<string, unknown>>; source: { format: string } };
+    expect(report).toEqual(expect.objectContaining({
+      schema: 'https://schemas.handschuh.dev/sdlc/collection-list/v1',
+      collection: 'acceptance-criterion',
+      source: expect.objectContaining({ format: 'json' }),
+    }));
+    expect(report.data[0]).toEqual(expect.objectContaining({ id: 'WI-0036_REQ_001_AC_001', description: expect.any(String) }));
+  });
+
+  it('lists declarative task collections and preserves plain-string dependencies', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['task', 'dependency', 'list', '--task', 'WI-0036-20000000', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; data: unknown[]; findings: string[] };
+    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/collection-list/v1');
+    expect(report.data).toEqual(['WI-0036-11000000']);
+    expect(report.findings).toEqual([]);
+  });
+
+  it('reports collection selection failures without fabricating items', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'acceptance-criterion', 'list', '--work-item', 'WI-0036', '--json'])).resolves.toBe(1);
+    const report = JSON.parse(output.join('\n')) as { valid: boolean; data: unknown[]; findings: string[] };
+    expect(report.valid).toBe(false);
+    expect(report.data).toEqual([]);
+    expect(report.findings[0]).toContain('requires --requirement');
+  });
+
+  it('preserves valid empty collections and reports constrained path failures', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-list-'));
+    const workItemDirectory = join(root, '.docs', 'work-items', 'WI-0099');
+    await mkdir(workItemDirectory, { recursive: true });
+    await writeFile(join(workItemDirectory, 'work-item.json'), JSON.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/work-item/v3',
+      workItemId: 'WI-0099',
+      requirements: { items: [] },
+      scope: [],
+      nonGoals: [],
+    }));
+
+    const empty = await listWorkItemCollection(root, 'WI-0099', 'scope');
+    expect(empty).toEqual(expect.objectContaining({ valid: true, data: [], findings: [] }));
+
+    const invalid = await listCollection(
+      root,
+      '.docs/work-items/WI-0099/work-item.json',
+      'https://schemas.handschuh.dev/sdlc/work-item/v3',
+      'not-registered',
+    );
+    expect(invalid).toEqual(expect.objectContaining({ valid: false, data: [] }));
+    expect(invalid.findings[0]).toContain('Unknown collection definition');
   });
 
   it('selects the first unprocessed task and reports no task when exhausted', async () => {
