@@ -4,7 +4,7 @@ taskUid: WI-0036-21000000
 orderKey: "21000000"
 parentTaskUid: WI-0036-20000000
 taskType: review
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Review collection-listing command batch 02
 objective: "Independently review the implementation result for command batch 2:
   sdlc task validation-procedure list --task <task-id>; sdlc task child list
@@ -56,7 +56,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
@@ -128,3 +128,58 @@ task:
         ref: .docs/work-items/WI-0036/reference-implementation.md
         purpose: Confirm the intended generic function boundary and safety constraints.
         required: true
+  result:
+    status: complete
+    decision: accepted
+    summary: Batch 02 adds only schema-specific declarative definitions and focused fixture coverage on top of the shared batch 01 boundary; validation-procedure, decomposition, and research collection selection remains exact-path and lossless.
+    actor:
+      id: code-review-agent
+      role: code-reviewer
+      authorityRef: repository-local-review-policy
+    criteriaEvaluations:
+      - criterionRef: '#criterion/CRIT-001'
+        status: satisfied
+        summary: The batch extends the shared registry/indexer boundary without adding command-specific selection logic or arbitrary path evaluation.
+        evidenceRefs:
+          - WI-0036-20000000#result/R-001
+        findingRefs: []
+      - criterionRef: '#criterion/CRIT-002'
+        status: satisfied
+        summary: Validation procedures use the common envelope path, while child/subrange/question/source collections use their effective decomposition or research schemas and declared selectors.
+        evidenceRefs:
+          - WI-0036-20000000#result/R-001
+        findingRefs: []
+      - criterionRef: '#criterion/CRIT-003'
+        status: satisfied
+        summary: JSON output preserves complete selected values, empty real collections remain valid, and non-empty decomposition/research fixture collections are indexed with no findings.
+        evidenceRefs:
+          - WI-0036-20000000#result/R-001
+        findingRefs: []
+    findings: []
+    evidence:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0036-20000000#result/R-001
+        claim: Batch 02 adds schema-keyed definitions for the five declared collections and no unrelated runtime boundary.
+        tier: inspection
+        source: repository
+      - id: EVID-002
+        kind: validation
+        ref: WI-0036-20000000#result/R-001
+        claim: Typecheck, build, and 89 focused CLI tests passed, including schema-specific fixture indexing and empty collection checks.
+        tier: cli-audit
+        source: host
+    limitations:
+      - Review evidence is local source, schema, fixture, and CLI evidence; it does not establish deployment, remote publication, provider behavior, or production readiness.
+    nonClaims:
+      - This accepted review is not a release approval or production-readiness claim.
+    reproducibility:
+      policyDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      renderedPromptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      agentConfigurationDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executionReceipt:
+      executionId: WI-0036-21000000_EXEC-REVIEW
+      status: succeeded
+      startedAt: '2026-11-20T22:05:00Z'
+      finishedAt: '2026-11-20T22:06:00Z'

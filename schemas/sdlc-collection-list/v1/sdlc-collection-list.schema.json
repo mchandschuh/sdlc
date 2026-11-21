@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/collection-list/v1",
+  "title": "SDLC Collection List v1",
+  "description": "Closed response envelope for one declaratively indexed document collection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "valid", "documentType", "collection", "indexExpression", "source", "data", "findings"],
+  "properties": {
+    "schema": {"const": "https://schemas.handschuh.dev/sdlc/collection-list/v1"},
+    "valid": {"type": "boolean"},
+    "documentType": {"type": "string", "minLength": 1},
+    "collection": {"type": "string", "minLength": 1},
+    "indexExpression": {"type": "string", "minLength": 1},
+    "source": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["fullPath", "repositoryPath", "format"],
+      "properties": {
+        "fullPath": {"type": "string", "pattern": "^/.+"},
+        "repositoryPath": {"type": "string", "minLength": 1},
+        "format": {"type": "string", "enum": ["json", "yaml"]}
+      }
+    },
+    "data": {"type": "array", "items": {}},
+    "findings": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  }
+}

@@ -8,6 +8,14 @@ function rootHelpOrVersion(args: readonly string[]): boolean {
   return args.every((argument) => argument === '-h' || argument === '--help' || argument === '-v' || argument === '--version');
 }
 
+function parameterizedCommandMatches(command: string, args: readonly string[]): boolean {
+  if (!command.includes('<') && !command.includes('[')) return false;
+  const expected = command.split(/\s+/u).filter((token) => !token.startsWith('-'));
+  const actual = args.slice(0, args.findIndex((argument) => argument.startsWith('-')) === -1 ? args.length : args.findIndex((argument) => argument.startsWith('-')));
+  if (expected.length !== actual.length) return false;
+  return expected.every((token, index) => token.startsWith('<') || token.startsWith('[') || token === actual[index]);
+}
+
 export async function runDiscoveredCommands(
   args: readonly string[],
   moduleUrl: string,
@@ -45,8 +53,45 @@ export async function runDiscoveredCommands(
         console.error('Run \"sdlc --help\" to see available options.');
       }
     });
+  const parameterizedCommand = commands.find((command) => parameterizedCommandMatches(command.command, args));
+  if (parameterizedCommand) {
+    let parameterizedExitCode = 0;
+    let parameterizedParseFailed = false;
+    const parameterizedParser = yargs(args)
+      .scriptName('sdlc')
+      .exitProcess(false)
+      .usage(`Usage: sdlc ${parameterizedCommand.command}`)
+      .wrap(160)
+      .help()
+      .showHelpOnFail(false)
+      .alias('h', 'help')
+      .version(version)
+      .alias('v', 'version')
+      .strict()
+      .fail((message, error) => {
+        parameterizedParseFailed = true;
+        console.error(message ?? error?.message ?? 'Invalid command invocation.');
+      });
+    parameterizedParser.command(
+      parameterizedCommand.command,
+      parameterizedCommand.describe,
+      parameterizedCommand.builder as any,
+      async (argv: ArgumentsCamelCase<Record<string, unknown>>) => {
+        try {
+          const result = await parameterizedCommand.handler(argv);
+          if (typeof result === 'number') parameterizedExitCode = result;
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : 'Command failed');
+          parameterizedExitCode = 1;
+        }
+      },
+    );
+    await parameterizedParser.parseAsync();
+    return parameterizedParseFailed ? 2 : parameterizedExitCode;
+  }
   const groups = new Map<string, readonly SdlcCommandModule[]>();
   for (const command of commands) {
+    if (command.command.includes('<') || command.command.includes('[')) continue;
     const [group] = command.command.split(/\s+/u);
     groups.set(group!, [...(groups.get(group!) ?? []), command]);
   }

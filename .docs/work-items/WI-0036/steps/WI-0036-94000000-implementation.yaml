@@ -4,7 +4,7 @@ taskUid: WI-0036-94000000
 orderKey: "94000000"
 parentTaskUid: WI-0036-93000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 11
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 11: sdlc task artifact list
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -143,3 +143,46 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Completed the final delivery artifact/procedure/execution collection definitions with phase-aware artifact selection and focused fixture coverage.
+      changes:
+        - id: WI-0036-94000000_CHANGE-001
+          type: production-code
+          summary: Added the final task-delivery artifact, procedure, and execution definitions using intent/result phase selection for artifacts.
+          objectiveRefs:
+            - WI-0036-94000000_OBJ-001
+            - WI-0036-94000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+            - src/cli/commands/task/collection-list.command.ts
+        - id: WI-0036-94000000_CHANGE-002
+          type: test-code
+          summary: Added delivery intent/result artifact, procedure, and execution fixture coverage.
+          objectiveRefs:
+            - WI-0036-94000000_OBJ-001
+            - WI-0036-94000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-94000000_TC-DELIVERY-FINAL-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes delivery artifacts by intent/result phase plus procedures and executions
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-94000000_OBJ-001
+        - WI-0036-94000000_OBJ-002
+      tests:
+        - id: WI-0036-94000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-94000000_TC-DELIVERY-FINAL-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 98 CLI tests, existing collection/reference regressions, and final delivery artifact/procedure/execution fixture indexing passed.
+    limitations:
+      - This task completes the implementation batches; aggregate validation, review, and local delivery remain in later WI-0036 tasks.
+      - Batch 11 non-empty evidence uses a disposable schema-shaped delivery fixture; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

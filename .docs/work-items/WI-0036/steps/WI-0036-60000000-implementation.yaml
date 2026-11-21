@@ -4,7 +4,7 @@ taskUid: WI-0036-60000000
 orderKey: "60000000"
 parentTaskUid: WI-0036-51000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 06
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 6: sdlc task input list --task
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -144,3 +144,45 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Added task-implementation input, objective, change, test-implementation, and verification-test collection definitions with focused fixture coverage.
+      changes:
+        - id: WI-0036-60000000_CHANGE-001
+          type: production-code
+          summary: Added task-implementation schema-keyed paths and declared identity/text selectors for all five batch 06 collections.
+          objectiveRefs:
+            - WI-0036-60000000_OBJ-001
+            - WI-0036-60000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-60000000_CHANGE-002
+          type: test-code
+          summary: Added schema-shaped implementation fixture coverage for inputs, objectives, changes, test implementations, and verification tests.
+          objectiveRefs:
+            - WI-0036-60000000_OBJ-001
+            - WI-0036-60000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-60000000_TC-IMPLEMENTATION-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes all five task-implementation collections through exact schema paths
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-60000000_OBJ-001
+        - WI-0036-60000000_OBJ-002
+      tests:
+        - id: WI-0036-60000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-60000000_TC-IMPLEMENTATION-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 93 CLI tests, existing collection/reference regressions, and task-implementation fixture indexing passed.
+    limitations:
+      - This task implements batch 06 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 06 non-empty evidence uses a disposable schema-shaped implementation fixture; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

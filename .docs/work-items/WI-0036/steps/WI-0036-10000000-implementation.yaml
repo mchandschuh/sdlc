@@ -4,7 +4,7 @@ taskUid: WI-0036-10000000
 orderKey: "10000000"
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 01
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 1: sdlc work-item requirement
@@ -20,8 +20,13 @@ references:
     - .docs/work-items/WI-0036/reference-implementation.md
     - schemas/work-item/v3/work-item.schema.json
     - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-collection-list/v1/sdlc-collection-list.schema.json
     - src/core/reference-resolution.ts
+    - src/core/collection-list.ts
     - src/cli/command-discovery.ts
+    - src/cli/command-runner.ts
+    - src/cli/commands/work-item/collection-list.command.ts
+    - src/cli/commands/task/collection-list.command.ts
     - tests/cli.test.ts
     - .docs/work-items/WI-0036/steps/WI-0036-10000000-implementation.yaml
   informational:
@@ -67,7 +72,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -135,3 +140,83 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Added a constrained schema-backed collection registry and indexer, a versioned collection-list response schema, parameterized CLI routing, and batch 01 work-item/task collection commands.
+      changes:
+        - id: WI-0036-10000000_CHANGE-001
+          type: production-code
+          summary: Added exact JSON Pointer-like collection indexing with optional declared parent selection, source-order preservation, identity validation, human projection, and lossless JSON reports.
+          objectiveRefs:
+            - WI-0036-10000000_OBJ-001
+            - WI-0036-10000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-10000000_CHANGE-002
+          type: schema
+          summary: Added the closed https://schemas.handschuh.dev/sdlc/collection-list/v1 response envelope.
+          objectiveRefs:
+            - WI-0036-10000000_OBJ-002
+          paths:
+            - schemas/sdlc-collection-list/v1/sdlc-collection-list.schema.json
+        - id: WI-0036-10000000_CHANGE-003
+          type: production-code
+          summary: Added generic work-item and task collection-list command adapters for requirements, acceptance criteria, scope, non-goals, dependencies, and validation procedures, including parameterized command routing.
+          objectiveRefs:
+            - WI-0036-10000000_OBJ-001
+            - WI-0036-10000000_OBJ-002
+          paths:
+            - src/cli/command-runner.ts
+            - src/cli/commands/work-item/collection-list.command.ts
+            - src/cli/commands/task/collection-list.command.ts
+        - id: WI-0036-10000000_CHANGE-004
+          type: test-code
+          summary: Added focused human/JSON, nested-parent, plain-string, empty-collection, invalid-selection, and existing-CLI regression coverage.
+          objectiveRefs:
+            - WI-0036-10000000_OBJ-001
+            - WI-0036-10000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-10000000_TC-COLLECTION-HUMAN-JSON'
+          path: tests/cli.test.ts
+          selector: lists requirements and nested acceptance criteria with human and lossless JSON projections
+        - testCaseRef: '#test-case/WI-0036-10000000_TC-COLLECTION-TASK'
+          path: tests/cli.test.ts
+          selector: lists task dependencies while preserving plain-string collection items
+        - testCaseRef: '#test-case/WI-0036-10000000_TC-COLLECTION-ERRORS'
+          path: tests/cli.test.ts
+          selector: reports missing parent selectors, unknown collections, and empty collections without fabricated data
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-10000000_OBJ-001
+        - WI-0036-10000000_OBJ-002
+      tests:
+        - id: WI-0036-10000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-10000000_TC-COLLECTION-HUMAN-JSON'
+            - '#test-case/WI-0036-10000000_TC-COLLECTION-TASK'
+            - '#test-case/WI-0036-10000000_TC-COLLECTION-ERRORS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 88 CLI tests, existing reference-resolution regressions, collection human/JSON projections, nested selection, empty collections, and structured error behavior passed.
+        - id: WI-0036-10000000_EXEC-SCHEMA-AUDIT
+          type: static
+          testCaseRefs:
+            - '#test-case/WI-0036-10000000_TC-SCHEMA-AUDIT'
+          command: node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: The 40-schema registry audit, task-governance contract rule, and task-type schema parity rule passed.
+        - id: WI-0036-10000000_EXEC-CLI-SMOKE
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-10000000_TC-CLI-SMOKE'
+          command: node ./bin/cli.js work-item requirement list --work-item WI-0036 --json; node ./bin/cli.js work-item acceptance-criterion list --work-item WI-0036 --requirement WI-0036_REQ_001 --json; node ./bin/cli.js task dependency list --task WI-0036-20000000 --json
+          status: passed
+          result: Representative requirement, nested acceptance-criterion, and task dependency commands returned valid collection-list/v1 envelopes with complete selected data and no findings.
+    limitations:
+      - This task implements batch 01 only; the remaining collection batches are declared in later WI-0036 tasks.
+      - Collection listing is local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

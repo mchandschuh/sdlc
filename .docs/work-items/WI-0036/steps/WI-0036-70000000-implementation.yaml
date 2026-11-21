@@ -4,7 +4,7 @@ taskUid: WI-0036-70000000
 orderKey: "70000000"
 parentTaskUid: WI-0036-61000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 07
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 7: sdlc task requirement list
@@ -68,7 +68,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -145,3 +145,46 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Added task-test-strategy requirements, invariants, objectives, test cases, and fixtures with explicit kind filtering for requirement versus acceptance-criterion listings.
+      changes:
+        - id: WI-0036-70000000_CHANGE-001
+          type: production-code
+          summary: Added task-test-strategy schema definitions and shared collection filtering support for the batch 07 kind selector.
+          objectiveRefs:
+            - WI-0036-70000000_OBJ-001
+            - WI-0036-70000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+            - src/cli/commands/task/collection-list.command.ts
+        - id: WI-0036-70000000_CHANGE-002
+          type: test-code
+          summary: Added schema-shaped test-strategy fixture coverage for filtered requirements, invariants, objectives, test cases, and fixtures.
+          objectiveRefs:
+            - WI-0036-70000000_OBJ-001
+            - WI-0036-70000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-70000000_TC-TEST-STRATEGY-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes test-strategy collections and filters requirements by kind
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-70000000_OBJ-001
+        - WI-0036-70000000_OBJ-002
+      tests:
+        - id: WI-0036-70000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-70000000_TC-TEST-STRATEGY-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 94 CLI tests, existing collection/reference regressions, test-strategy fixture indexing, and requirement kind filtering passed.
+    limitations:
+      - This task implements batch 07 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 07 non-empty evidence uses a disposable schema-shaped test-strategy fixture; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import YAML from 'yaml';
 import { main } from '../src/cli/main.js';
 import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enumerateWorkItemObjects, SUPPORTED_WORK_ITEM_OBJECT_EXTENSIONS, statTrackedPath } from '../src/core/discovery.js';
+import { listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateWorkItem } from '../src/core/work-item-validation.js';
 import { repositoryInfo } from '../src/core/repository.js';
@@ -1184,6 +1185,459 @@ describe('discovery commands', () => {
       'WI-0001-40000000',
     ]);
     expect(report.items[0]?.path).toBe('.docs/work-items/WI-0001/steps/WI-0001-10000000-implementation.yaml');
+  });
+
+  it('lists declarative work-item collections with human and lossless JSON projections', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'requirement', 'list', '--work-item', 'WI-0036'])).resolves.toBe(0);
+    expect(output.join('\n')).toContain('WI-0036_REQ_001');
+    expect(output.join('\n')).toContain('declarative-collection-indexes');
+
+    output.length = 0;
+    await expect(main(['work-item', 'acceptance-criterion', 'list', '--work-item', 'WI-0036', '--requirement', 'WI-0036_REQ_001', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; collection: string; data: Array<Record<string, unknown>>; source: { format: string } };
+    expect(report).toEqual(expect.objectContaining({
+      schema: 'https://schemas.handschuh.dev/sdlc/collection-list/v1',
+      collection: 'acceptance-criterion',
+      source: expect.objectContaining({ format: 'json' }),
+    }));
+    expect(report.data[0]).toEqual(expect.objectContaining({ id: 'WI-0036_REQ_001_AC_001', description: expect.any(String) }));
+  });
+
+  it('lists declarative task collections and preserves plain-string dependencies', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['task', 'dependency', 'list', '--task', 'WI-0036-20000000', '--json'])).resolves.toBe(0);
+    const report = JSON.parse(output.join('\n')) as { schema: string; data: unknown[]; findings: string[] };
+    expect(report.schema).toBe('https://schemas.handschuh.dev/sdlc/collection-list/v1');
+    expect(report.data).toEqual(['WI-0036-11000000']);
+    expect(report.findings).toEqual([]);
+  });
+
+  it('indexes batch 02 decomposition and research collections through the generic boundary', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-02-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'decomposition.yaml'), [
+      'task:',
+      '  intent:',
+      '    range:',
+      '      subranges:',
+      '        - name: pre-work',
+      '          description: Research and decisions.',
+      '  result:',
+      '    tasks:',
+      '      - ref: WI-0099-10000000#task/T-001',
+      '        taskType: research',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'research.yaml'), [
+      'task:',
+      '  intent:',
+      '    questions:',
+      '      - id: Q-001',
+      '        question: Which collection is authoritative?',
+      '        reason: Define the index boundary.',
+      '        impact: 80',
+      '        confidence: 90',
+      '        status: open',
+      '    sources:',
+      '      - id: SRC-001',
+      '        location: README.md',
+      '        sourceType: file',
+      '        purpose: Explain the collection contract.',
+      '  result:',
+      '    findings: []',
+      '    unresolvedQuestions: []',
+      '    recommendations: []',
+      '    evidenceLimitations: []',
+      ''].join('\n'));
+
+    const child = await listCollection(root, '.docs/tasks/decomposition.yaml', 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1', 'child');
+    expect(child).toEqual(expect.objectContaining({ valid: true, data: [{ ref: 'WI-0099-10000000#task/T-001', taskType: 'research' }], findings: [] }));
+    const subrange = await listCollection(root, '.docs/tasks/decomposition.yaml', 'https://schemas.handschuh.dev/sdlc/task-decomposition/v1', 'subrange');
+    expect(subrange.data).toEqual([{ name: 'pre-work', description: 'Research and decisions.' }]);
+    const question = await listCollection(root, '.docs/tasks/research.yaml', 'https://schemas.handschuh.dev/sdlc/task-research/v1', 'question');
+    expect(question.data[0]).toEqual(expect.objectContaining({ id: 'Q-001', question: 'Which collection is authoritative?' }));
+    const source = await listCollection(root, '.docs/tasks/research.yaml', 'https://schemas.handschuh.dev/sdlc/task-research/v1', 'source');
+    expect(source.data[0]).toEqual(expect.objectContaining({ id: 'SRC-001', sourceType: 'file', purpose: 'Explain the collection contract.' }));
+  });
+
+  it('indexes batch 03 research result and decision intent collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-03-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'research.yaml'), [
+      'task:',
+      '  result:',
+      '    findings:',
+      '      - id: F-001',
+      '        statement: The registry is schema keyed.',
+      '    unresolvedQuestions:',
+      '      - id: Q-002',
+      '        question: Which future schemas need collection definitions?',
+      '    recommendations:',
+      '      - id: R-001',
+      '        recommendation: Keep the registry declarative.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'decision.yaml'), [
+      'task:',
+      '  intent:',
+      '    alternatives:',
+      '      - id: ALT-001',
+      '        description: Keep command-specific collection implementations.',
+      '    criteria:',
+      '      - id: CRIT-001',
+      '        description: The registry must remain schema keyed.',
+      ''].join('\n'));
+
+    const research = 'https://schemas.handschuh.dev/sdlc/task-research/v1';
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'finding')).data).toEqual([{ id: 'F-001', statement: 'The registry is schema keyed.' }]);
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'unresolved-question')).data).toEqual([{ id: 'Q-002', question: 'Which future schemas need collection definitions?' }]);
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'recommendation')).data).toEqual([{ id: 'R-001', recommendation: 'Keep the registry declarative.' }]);
+    const decision = 'https://schemas.handschuh.dev/sdlc/task-decision/v1';
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'alternative')).data).toEqual([{ id: 'ALT-001', description: 'Keep command-specific collection implementations.' }]);
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'criterion')).data).toEqual([{ id: 'CRIT-001', description: 'The registry must remain schema keyed.' }]);
+  });
+
+  it('indexes batch 04 decision and design collections through schema-specific paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-04-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'decision.yaml'), [
+      'task:',
+      '  intent:',
+      '    assumptions:',
+      '      - id: A-001',
+      '        statement: The registry is authoritative.',
+      '    alternatives: []',
+      '    criteria: []',
+      '  result:',
+      '    consequences:',
+      '      risks:',
+      '        - id: RISK-001',
+      '          description: A stale registry could hide supported collections.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'design.yaml'), [
+      'task:',
+      '  intent:',
+      '    considerations:',
+      '      - id: CON-001',
+      '        statement: Keep selectors declarative.',
+      '    activities:',
+      '      - id: ACT-001',
+      '        summary: Review schema collection paths.',
+      '  result:',
+      '    elements:',
+      '      - id: ELEM-001',
+      '        description: A versioned collection response.',
+      ''].join('\n'));
+
+    const decision = 'https://schemas.handschuh.dev/sdlc/task-decision/v1';
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'assumption')).data).toEqual([{ id: 'A-001', statement: 'The registry is authoritative.' }]);
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'risk')).data).toEqual([{ id: 'RISK-001', description: 'A stale registry could hide supported collections.' }]);
+    const design = 'https://schemas.handschuh.dev/sdlc/task-design/v1';
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'consideration')).data).toEqual([{ id: 'CON-001', statement: 'Keep selectors declarative.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'activity')).data).toEqual([{ id: 'ACT-001', summary: 'Review schema collection paths.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'element')).data).toEqual([{ id: 'ELEM-001', description: 'A versioned collection response.' }]);
+  });
+
+  it('indexes batch 05 design result collections through the shared registry', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-05-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'design.yaml'), [
+      'task:',
+      '  result:',
+      '    relations:',
+      '      - id: REL-001',
+      '        description: Relates the registry to the CLI.',
+      '    views:',
+      '      - id: VIEW-001',
+      '        name: Human view',
+      '        description: Shows identifiers and text.',
+      '    artifacts:',
+      '      - id: ART-001',
+      '        name: Response schema',
+      '        description: Defines the JSON envelope.',
+      '    outcomes:',
+      '      - id: OUT-001',
+      '        statement: Complete objects are preserved.',
+      '    verificationObligations:',
+      '      - id: VO-001',
+      '        description: Verify lossless JSON output.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-design/v1';
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'relation')).data).toEqual([{ id: 'REL-001', description: 'Relates the registry to the CLI.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'view')).data).toEqual([{ id: 'VIEW-001', name: 'Human view', description: 'Shows identifiers and text.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'artifact')).data).toEqual([{ id: 'ART-001', name: 'Response schema', description: 'Defines the JSON envelope.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'outcome')).data).toEqual([{ id: 'OUT-001', statement: 'Complete objects are preserved.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'verification-obligation')).data).toEqual([{ id: 'VO-001', description: 'Verify lossless JSON output.' }]);
+  });
+
+  it('indexes batch 06 implementation collections through task-implementation paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-06-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'implementation.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Define the implementation boundary.',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: Preserve selected objects.',
+      '  result:',
+      '    implementation:',
+      '      changes:',
+      '        - id: CHANGE-001',
+      '          summary: Add the indexer.',
+      '      testImplementations:',
+      '        - testCaseRef: "#test-case/TC-001"',
+      '          selector: indexes the collection',
+      '    verification:',
+      '      tests:',
+      '        - id: EXEC-001',
+      '          result: The test passed.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-implementation/v1';
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Define the implementation boundary.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'Preserve selected objects.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'change')).data).toEqual([{ id: 'CHANGE-001', summary: 'Add the indexer.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'test-implementation')).data).toEqual([{ testCaseRef: '#test-case/TC-001', selector: 'indexes the collection' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'verification-test')).data).toEqual([{ id: 'EXEC-001', result: 'The test passed.' }]);
+  });
+
+  it('indexes batch 07 test-strategy collections and supports the kind filter', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-07-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'strategy.yaml'), [
+      'task:',
+      '  intent:',
+      '    requirements:',
+      '      - id: REQ-001',
+      '        kind: requirement',
+      '        statement: Requirements are covered.',
+      '        inputRefs: [INPUT-001]',
+      '        required: true',
+      '      - id: REQ-002',
+      '        kind: acceptanceCriterion',
+      '        statement: Acceptance criteria are covered.',
+      '        inputRefs: [INPUT-001]',
+      '        required: true',
+      '    invariants:',
+      '      - id: INV-001',
+      '        statement: Existing reference semantics remain unchanged.',
+      '        required: true',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: The strategy is complete.',
+      '  result:',
+      '    testCases:',
+      '      - id: TC-001',
+      '        title: Strategy test',
+      '        purpose: Validate the strategy.',
+      '    fixtures:',
+      '      - id: FIX-001',
+      '        name: Strategy fixture',
+      '        purpose: Supply deterministic inputs.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1';
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'requirement', { kind: 'requirement' })).data).toEqual([{ id: 'REQ-001', kind: 'requirement', statement: 'Requirements are covered.', inputRefs: ['INPUT-001'], required: true }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'invariant')).data).toEqual([{ id: 'INV-001', statement: 'Existing reference semantics remain unchanged.', required: true }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'The strategy is complete.' }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'test-case')).data).toEqual([{ id: 'TC-001', title: 'Strategy test', purpose: 'Validate the strategy.' }]);
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'fixture')).data).toEqual([{ id: 'FIX-001', name: 'Strategy fixture', purpose: 'Supply deterministic inputs.' }]);
+  });
+
+  it('indexes batch 08 test-strategy and validation collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-08-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'validation.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Define the validation input.',
+      '    targets:',
+      '      - id: TARGET-001',
+      '        purpose: Select the validation target.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Run the validation.',
+      '  result:',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        observed:',
+      '          summary: Validation passed.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'strategy.yaml'), [
+      'task:',
+      '  result:',
+      '    coverage:',
+      '      - id: COV-001',
+      '        rationale: Covers the required behavior.',
+      ''].join('\n'));
+    const validation = 'https://schemas.handschuh.dev/sdlc/task-validation/v1';
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Define the validation input.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'target')).data).toEqual([{ id: 'TARGET-001', purpose: 'Select the validation target.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Run the validation.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'execution')).data).toEqual([{ id: 'EXEC-001', observed: { summary: 'Validation passed.' } }]);
+    const strategy = 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1';
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', strategy, 'coverage')).data).toEqual([{ id: 'COV-001', rationale: 'Covers the required behavior.' }]);
+  });
+
+  it('indexes batch 09 review and validation result collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-09-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'review.yaml'), [
+      'task:',
+      '  intent:',
+      '    criteria:',
+      '      - id: CRIT-001',
+      '        statement: The implementation is bounded.',
+      '    evidenceRequirements:',
+      '      - id: EVID-REQ-001',
+      '        purpose: Inspect the implementation diff.',
+      '  result:',
+      '    criteriaEvaluations:',
+      '      - criterionRef: "#criterion/CRIT-001"',
+      '        summary: The scope is bounded.',
+      '    evidence:',
+      '      - id: EVID-001',
+      '        claim: The tests passed.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'validation.yaml'), [
+      'task:',
+      '  result:',
+      '    findings:',
+      '      - code: FIND-001',
+      '        message: No findings.',
+      ''].join('\n'));
+    const review = 'https://schemas.handschuh.dev/sdlc/task-review/v1';
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'criterion')).data).toEqual([{ id: 'CRIT-001', statement: 'The implementation is bounded.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'evidence-requirement')).data).toEqual([{ id: 'EVID-REQ-001', purpose: 'Inspect the implementation diff.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'criterion-evaluation')).data).toEqual([{ criterionRef: '#criterion/CRIT-001', summary: 'The scope is bounded.' }]);
+    expect((await listCollection(root, '.docs/tasks/review.yaml', review, 'evidence')).data).toEqual([{ id: 'EVID-001', claim: 'The tests passed.' }]);
+    const validation = 'https://schemas.handschuh.dev/sdlc/task-validation/v1';
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'finding')).data).toEqual([{ code: 'FIND-001', message: 'No findings.' }]);
+  });
+
+  it('indexes batch 10 delivery, rework, and task-input collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-10-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'delivery.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Confirm delivery input.',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: Deliver the collection feature.',
+      '    acceptanceCriteria:',
+      '      - id: AC-001',
+      '        description: The release candidate builds.',
+      '    artifacts:',
+      '      - id: ART-INT-001',
+      '        kind: manifest',
+      '        purpose: Intent manifest.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Build the release candidate.',
+      '  result:',
+      '    artifacts:',
+      '      - id: ART-RES-001',
+      '        kind: binary',
+      '        path: dist/cli/main.js',
+      '        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        result:',
+      '          summary: Release candidate built.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'rework.yaml'), [
+      'task:',
+      '  result:',
+      '    corrections:',
+      '      - id: COR-001',
+      '        summary: Corrected the collection selector.',
+      ''].join('\n'));
+    const delivery = 'https://schemas.handschuh.dev/sdlc/task-delivery/v1';
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Confirm delivery input.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'Deliver the collection feature.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'acceptance-criterion')).data).toEqual([{ id: 'AC-001', description: 'The release candidate builds.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'intent' })).data).toEqual([{ id: 'ART-INT-001', kind: 'manifest', purpose: 'Intent manifest.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'result' })).data).toEqual([{ id: 'ART-RES-001', kind: 'binary', path: 'dist/cli/main.js', checksum: 'sha256:0000000000000000000000000000000000000000000000000000000000000000' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Build the release candidate.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'execution')).data).toEqual([{ id: 'EXEC-001', result: { summary: 'Release candidate built.' } }]);
+    const rework = 'https://schemas.handschuh.dev/sdlc/task-rework/v1';
+    expect((await listCollection(root, '.docs/tasks/rework.yaml', rework, 'correction')).data).toEqual([{ id: 'COR-001', summary: 'Corrected the collection selector.' }]);
+  });
+
+  it('indexes batch 11 delivery artifact/procedure/execution collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-11-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'delivery.yaml'), [
+      'task:',
+      '  intent:',
+      '    artifacts:',
+      '      - id: ART-INT-001',
+      '        kind: manifest',
+      '        purpose: Intent manifest.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Build the release candidate.',
+      '  result:',
+      '    artifacts:',
+      '      - id: ART-RES-001',
+      '        kind: binary',
+      '        path: dist/cli/main.js',
+      '        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        result:',
+      '          summary: Release candidate built.',
+      ''].join('\n'));
+    const delivery = 'https://schemas.handschuh.dev/sdlc/task-delivery/v1';
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'intent' })).data).toEqual([{ id: 'ART-INT-001', kind: 'manifest', purpose: 'Intent manifest.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Build the release candidate.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'result' })).data).toEqual([{ id: 'ART-RES-001', kind: 'binary', path: 'dist/cli/main.js', checksum: 'sha256:0000000000000000000000000000000000000000000000000000000000000000' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'execution')).data).toEqual([{ id: 'EXEC-001', result: { summary: 'Release candidate built.' } }]);
+  });
+
+  it('reports collection selection failures without fabricating items', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main(['work-item', 'acceptance-criterion', 'list', '--work-item', 'WI-0036', '--json'])).resolves.toBe(1);
+    const report = JSON.parse(output.join('\n')) as { valid: boolean; data: unknown[]; findings: string[] };
+    expect(report.valid).toBe(false);
+    expect(report.data).toEqual([]);
+    expect(report.findings[0]).toContain('requires --requirement');
+  });
+
+  it('preserves valid empty collections and reports constrained path failures', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-list-'));
+    const workItemDirectory = join(root, '.docs', 'work-items', 'WI-0099');
+    await mkdir(workItemDirectory, { recursive: true });
+    await writeFile(join(workItemDirectory, 'work-item.json'), JSON.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/work-item/v3',
+      workItemId: 'WI-0099',
+      requirements: { items: [] },
+      scope: [],
+      nonGoals: [],
+    }));
+
+    const empty = await listWorkItemCollection(root, 'WI-0099', 'scope');
+    expect(empty).toEqual(expect.objectContaining({ valid: true, data: [], findings: [] }));
+
+    const invalid = await listCollection(
+      root,
+      '.docs/work-items/WI-0099/work-item.json',
+      'https://schemas.handschuh.dev/sdlc/work-item/v3',
+      'not-registered',
+    );
+    expect(invalid).toEqual(expect.objectContaining({ valid: false, data: [] }));
+    expect(invalid.findings[0]).toContain('Unknown collection definition');
   });
 
   it('selects the first unprocessed task and reports no task when exhausted', async () => {

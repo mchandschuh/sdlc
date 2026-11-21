@@ -4,7 +4,7 @@ taskUid: WI-0036-92000000
 orderKey: "92000000"
 parentTaskUid: WI-0036-91000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 10
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 10: sdlc task evidence list
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -143,3 +143,46 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Added delivery evidence/objective/acceptance-criterion/input/procedure/execution and rework correction definitions, including phase-aware delivery artifact selection.
+      changes:
+        - id: WI-0036-92000000_CHANGE-001
+          type: production-code
+          summary: Added task-delivery and task-rework definitions plus shared phase variant support for intent/result artifact collection.
+          objectiveRefs:
+            - WI-0036-92000000_OBJ-001
+            - WI-0036-92000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+            - src/cli/commands/task/collection-list.command.ts
+        - id: WI-0036-92000000_CHANGE-002
+          type: test-code
+          summary: Added delivery/rework fixture coverage for inputs, objectives, acceptance criteria, evidence, artifacts, procedures, executions, and corrections.
+          objectiveRefs:
+            - WI-0036-92000000_OBJ-001
+            - WI-0036-92000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-92000000_TC-DELIVERY-REWORK-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes delivery/rework collections and selects intent/result artifact phases
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-92000000_OBJ-001
+        - WI-0036-92000000_OBJ-002
+      tests:
+        - id: WI-0036-92000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-92000000_TC-DELIVERY-REWORK-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 97 CLI tests, existing collection/reference regressions, delivery/rework fixture indexing, and intent/result artifact phase selection passed.
+    limitations:
+      - This task implements batch 10 only; batch 11 remains declared in the next WI-0036 task.
+      - Batch 10 non-empty evidence uses disposable schema-shaped fixtures; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

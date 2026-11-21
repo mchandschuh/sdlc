@@ -4,7 +4,7 @@ taskUid: WI-0036-97000000
 orderKey: "97000000"
 parentTaskUid: WI-0036-96000000
 taskType: delivery
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Release declarative collection listing
 objective: Prepare and verify the local release boundary for WI-0036 after
   aggregate validation passes; do not publish or deploy.
@@ -58,7 +58,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
@@ -124,3 +124,31 @@ task:
       - Do not publish packages or push branches or tags.
       - Do not deploy or install into production.
       - Do not approve the release or mutate work-item lifecycle state directly.
+  result:
+    status: delivered
+    summary: Prepared the local WI-0036 release candidate after aggregate validation passed; the compiled CLI exposes the generic collection-listing command surface and representative collection JSON commands passed without publication or deployment.
+    artifacts:
+      - id: WI-0036-97000000_ART-001
+        kind: manifest
+        path: package.json
+        checksum: sha256:fe6e2599859f870b0a175851a6f199ffb89daa92b5b4229109ff976610f7b3cc
+      - id: WI-0036-97000000_ART-002
+        kind: binary
+        path: dist/cli/main.js
+        checksum: sha256:077982a1242cbf31917fd11068292ebb0b9631bae710134452513b21d6dc5d1d
+    executions:
+      - id: WI-0036-97000000_EXEC-BUILD
+        procedureRef: '#procedure/WI-0036-97000000_PROC-001'
+        result:
+          status: passed
+          summary: yarn build completed successfully and produced dist/cli/main.js.
+        command: yarn build
+      - id: WI-0036-97000000_EXEC-SMOKE
+        procedureRef: '#procedure/WI-0036-97000000_PROC-002'
+        result:
+          status: passed
+          summary: CLI help, representative work-item requirement JSON, and task objective JSON commands passed; the compiled launcher reported version 0.9.0.
+        command: node ./bin/cli.js --help; node ./bin/cli.js work-item requirement list --work-item WI-0036 --json; node ./bin/cli.js task objective list --task WI-0036-10000000 --json; node ./bin/cli.js --version
+    limitations:
+      - This is a local release candidate only; no package publication, remote push, deployment, or production readiness was established.
+      - The package version remains 0.9.0; no release tag was created by this delivery task.

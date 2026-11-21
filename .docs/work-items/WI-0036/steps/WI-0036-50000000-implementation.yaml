@@ -4,7 +4,7 @@ taskUid: WI-0036-50000000
 orderKey: "50000000"
 parentTaskUid: WI-0036-41000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 05
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 5: sdlc task relation list --task
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -144,3 +144,45 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Completed the batch 05 design-result collection boundary for relations, views, artifacts, outcomes, and verification obligations, including fixture coverage and typed selector handling.
+      changes:
+        - id: WI-0036-50000000_CHANGE-001
+          type: production-code
+          summary: Added declarative design schema definitions for relations, views, artifacts, outcomes, and verification obligations and hardened filtered collection selection typing.
+          objectiveRefs:
+            - WI-0036-50000000_OBJ-001
+            - WI-0036-50000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-50000000_CHANGE-002
+          type: test-code
+          summary: Added non-empty task-design result fixture coverage for all five batch 05 collections.
+          objectiveRefs:
+            - WI-0036-50000000_OBJ-001
+            - WI-0036-50000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-50000000_TC-DESIGN-RESULT-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes relations, views, artifacts, outcomes, and verification obligations through task-design result paths
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-50000000_OBJ-001
+        - WI-0036-50000000_OBJ-002
+      tests:
+        - id: WI-0036-50000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-50000000_TC-DESIGN-RESULT-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 92 CLI tests, existing collection/reference regressions, filtered selection typing, and all batch 05 design-result fixture collections passed.
+    limitations:
+      - This task implements batch 05 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 05 non-empty evidence uses disposable schema-shaped fixtures; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.
