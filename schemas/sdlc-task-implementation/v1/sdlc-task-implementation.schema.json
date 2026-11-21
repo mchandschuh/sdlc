@@ -1532,6 +1532,7 @@
       ],
       "implemented": [
         "implemented-unproven",
+        "complete",
         "blocked",
         "deferred"
       ],

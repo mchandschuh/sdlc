@@ -1844,6 +1844,9 @@ describe('discovery commands', () => {
       const allowed = lifecycleStatuses.get(document.task.taskSchema);
       if (!allowed?.has(document.task.status)) invalid.push(`${path}: ${document.task.status}`);
       expect(document.processingStatus).toMatch(/^processing_|^unprocessed$/u);
+      if (document.task.status === 'planned') {
+        expect(document.task.result === undefined || document.task.result === null || (typeof document.task.result === 'object' && Object.keys(document.task.result).length === 0), path).toBe(true);
+      }
       if (document.task.result && typeof document.task.result === 'object' && 'status' in document.task.result) {
         expect(typeof document.task.status).toBe('string');
         expect(typeof document.task.result.status).toBe('string');
@@ -1904,6 +1907,78 @@ describe('discovery commands', () => {
     expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'implemented-unproven', { status: 'complete', intent: {}, result: {} })).toContain(
       'Invalid task lifecycle transition in sdlc-task-implementation/v1/sdlc-task-implementation.schema.json: implemented-unproven -> complete.',
     );
+  });
+
+  it('covers lifecycle matrix edges for every supported task type', async () => {
+    const taskTypes = ['decomposition', 'research', 'decision', 'design', 'implementation', 'test-strategy', 'validation', 'review', 'rework', 'delivery'];
+    const schemaRoot = join(process.cwd(), 'schemas');
+    for (const type of taskTypes) {
+      const schemaPath = `sdlc-task-${type}/v1/sdlc-task-${type}.schema.json`;
+      const schema = JSON.parse(await readFile(join(schemaRoot, schemaPath), 'utf8')) as {
+        properties: { status: { enum: string[] } };
+        ['x-sdlc-task-lifecycle']: {
+          statuses: Record<string, { resultPresence: string; allowedResultPaths: string[]; requiredResultPaths: string[]; forbiddenResultPaths: string[] }>;
+          transitions: Record<string, string[]>;
+        };
+      };
+      const policy = schema['x-sdlc-task-lifecycle'];
+      const statuses = schema.properties.status.enum;
+      const populatedResult = Object.fromEntries(policy.statuses[statuses.find((status) => policy.statuses[status].allowedResultPaths.length > 0)!]!.allowedResultPaths.map((path) => [path.slice('/result/'.length), null]));
+      const requiredStatus = statuses.find((status) => policy.statuses[status].resultPresence === 'required')!;
+      const requiredPolicy = policy.statuses[requiredStatus]!;
+      const completeResult = Object.fromEntries(requiredPolicy.requiredResultPaths.map((path) => [path.slice('/result/'.length), {}]));
+
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, null, { status: 'planned', intent: {}, result: {} }), `${type}: planned`).toEqual([]);
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, null, { status: requiredStatus, intent: {}, result: completeResult }), `${type}: initial milestone`).toEqual(expect.arrayContaining([expect.stringContaining('is not an initial status')]));
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'planned', { status: requiredStatus, intent: {}, result: completeResult }), `${type}: planned transition`).toEqual(expect.arrayContaining([expect.stringContaining(`planned -> ${requiredStatus}`)]));
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'complete', { status: 'active', intent: {}, result: {} }), `${type}: terminal closure`).toEqual(expect.arrayContaining([expect.stringContaining('complete -> active')]));
+
+      const partialStatus = statuses.find((status) => policy.statuses[status].resultPresence === 'partial')!;
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'planned', { status: partialStatus, intent: {}, result: populatedResult }), `${type}: partial result`).toEqual([]);
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, 'planned', { status: 'planned', intent: {}, result: { unexpected: true } }), `${type}: planned allowlist`).toEqual(expect.arrayContaining([
+        expect.stringContaining('permits only an omitted, null, or empty result'),
+        expect.stringContaining('does not allow /result/unexpected'),
+      ]));
+
+      const superseded = statuses.find((status) => policy.statuses[status].resultPresence === 'partial' && policy.transitions[status]?.includes('planned') && status !== 'deferred');
+      if (superseded) {
+        expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, superseded, { status: 'planned', intent: {}, result: {} }), `${type}: superseded recovery`).toEqual([]);
+      }
+      const forwardStatus = statuses.find((status) => policy.transitions[status]?.includes('complete') && status !== 'complete');
+      expect(forwardStatus, `${type}: complete predecessor`).toBeTruthy();
+      expect(validateTaskLifecycleTransition(schemaRoot, schemaPath, forwardStatus!, { status: 'complete', intent: {}, result: completeResult }), `${type}: complete edge`).toEqual([]);
+    }
+  });
+
+  it('preserves independent processing, lifecycle, outcome, review, validation, and work-item statuses', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-lifecycle-independence-'));
+    for (const entry of ['.docs/work-items/WI-0026', 'schemas', '.cline', 'src', 'tests']) {
+      await cp(join(process.cwd(), entry), join(root, entry), { recursive: true });
+    }
+    for (const entry of ['package.json', 'tsconfig.json', 'README.md', 'yarn.lock']) {
+      await cp(join(process.cwd(), entry), join(root, entry));
+    }
+    const taskPath = join(root, '.docs', 'work-items', 'WI-0026', 'steps', 'WI-0026-10000000-repository-identifier-implementation.yaml');
+    const task = YAML.parse(await readFile(taskPath, 'utf8')) as Record<string, any>;
+    task.processingStatus = 'processing_completed';
+    task.task.status = 'implemented';
+    task.task.result = {
+      status: 'failed',
+      implementation: {
+        summary: 'Implementation exists.',
+        changes: [{ id: 'WI-0026-10000000_CHANGE-001', type: 'production-code', summary: 'A representative implementation change.', objectiveRefs: ['WI-0026-10000000_OBJ-001'], paths: ['src/example.ts'] }],
+        testImplementations: [],
+      },
+      verification: { status: 'not-run', objectiveRefs: [], tests: [] },
+      limitations: ['Verification was not run.'],
+    };
+    await writeFile(taskPath, YAML.stringify(task));
+
+    const report = await validateWorkItem(root, 'WI-0026', 'WI-0026-10000000', process.cwd());
+    expect(report.valid, report.findings.join('\n')).toBe(true);
+    expect(task.processingStatus).toBe('processing_completed');
+    expect(task.task.status).toBe('implemented');
+    expect(task.task.result.status).toBe('failed');
   });
 
   it('continues reference validation after schema failure and preserves remediation context', async () => {
