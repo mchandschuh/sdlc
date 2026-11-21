@@ -72,14 +72,14 @@ function withManagedBlock(content, root, name) {
   return lines.join('\n');
 }
 
-async function installConfig(root) {
+async function installConfig() {
   const home = process.env.HOME;
   if (!home) throw new Error('HOME is required to install ~/.sdlc/config.json.');
   const directory = resolve(home, '.sdlc');
   const path = resolve(directory, 'config.json');
   if (existsSync(path)) return { path, created: false };
   await mkdir(directory, { recursive: true });
-  await writeFile(path, `${JSON.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/config/v1', repositoryRoot: root }, null, 2)}\n`, 'utf8');
+  await writeFile(path, `${JSON.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/config/v1' }, null, 2)}\n`, 'utf8');
   return { path, created: true };
 }
 
@@ -97,7 +97,7 @@ async function installHooks(root) {
 
 try {
   const root = repositoryRoot();
-  const config = await installConfig(root);
+  const config = await installConfig();
   const hooks = process.argv.includes('--hooks') ? await installHooks(root) : [];
   console.log(JSON.stringify({ repositoryRoot: root, config, hooks }, null, 2));
 } catch (error) {

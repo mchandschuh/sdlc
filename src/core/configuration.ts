@@ -1,15 +1,15 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ConfigError, resolveConfigJson } from 'nodejs-common/dist/src/config/index.js';
 import { DiscoveryError } from './discovery.js';
-import { repositoryInfo } from './repository.js';
+import { resolveRepositoryRoot } from './repository-root.js';
 
 export const SDLC_CONFIG_SCHEMA = 'https://schemas.handschuh.dev/sdlc/config/v1';
 
 export interface SdlcConfig {
   readonly schema?: typeof SDLC_CONFIG_SCHEMA;
+  /** Deprecated legacy field; retained for config compatibility but never selected. */
   readonly repositoryRoot?: string;
   readonly schemaRegistryRoot?: string;
 }
@@ -62,9 +62,9 @@ function assertConfig(value: Record<string, unknown>): SdlcConfig {
   const unexpected = Object.keys(value).find((key) => !allowed.has(key));
   if (unexpected) throw new DiscoveryError(`Unsupported sdlc config property: ${unexpected}`);
   if (value.schema !== SDLC_CONFIG_SCHEMA) throw new DiscoveryError(`Configuration schema must be ${SDLC_CONFIG_SCHEMA}.`);
-  const repositoryRoot = assertConfigPath(value.repositoryRoot, 'repositoryRoot');
+  const repositoryRoot = value.repositoryRoot === undefined ? undefined : assertConfigPath(value.repositoryRoot, 'repositoryRoot');
   const schemaRegistryRoot = value.schemaRegistryRoot === undefined ? undefined : assertConfigPath(value.schemaRegistryRoot, 'schemaRegistryRoot');
-  return { schema: SDLC_CONFIG_SCHEMA, repositoryRoot, ...(schemaRegistryRoot ? { schemaRegistryRoot } : {}) };
+  return { schema: SDLC_CONFIG_SCHEMA, ...(repositoryRoot ? { repositoryRoot } : {}), ...(schemaRegistryRoot ? { schemaRegistryRoot } : {}) };
 }
 
 export async function resolveSdlcConfig(options: SdlcConfigResolutionOptions = {}): Promise<SdlcConfigResolution> {
@@ -91,31 +91,9 @@ export async function resolveSdlcConfig(options: SdlcConfigResolutionOptions = {
 
 export async function commandContext(explicitRepositoryRoot?: string, options: SdlcConfigResolutionOptions = {}): Promise<SdlcCommandContext> {
   const selected = await resolveSdlcConfig(options);
-  const explicit = await existingDirectory(explicitRepositoryRoot, '--repository-root');
-  let current: string | undefined;
-  let currentError: unknown;
-  try {
-    current = (await repositoryInfo(process.cwd())).repositoryRoot;
-  } catch (error) {
-    currentError = error;
-  }
-  const configuredRoot = await existingDirectory(selected.config?.repositoryRoot, 'repositoryRoot');
-  const repositoryRoot = explicit ?? current ?? configuredRoot;
-  if (!repositoryRoot) {
-    throw new DiscoveryError(currentError instanceof Error ? currentError.message : 'No repository root was found. Run from a Git repository, pass --repository-root, or configure ~/.sdlc/config.json.');
-  }
+  const repositoryRoot = (await resolveRepositoryRoot({ startingPath: explicitRepositoryRoot ?? process.cwd() })).repositoryRoot;
   const schemaRegistryRoot = await existingDirectory(selected.config?.schemaRegistryRoot, 'schemaRegistryRoot') ?? packageRoot;
   const schemas = resolve(schemaRegistryRoot, 'schemas');
   if (!(await stat(schemas).catch(() => undefined))?.isDirectory()) throw new DiscoveryError(`Schema registry does not contain schemas/: ${schemas}`);
   return { repositoryRoot, schemaRegistryRoot, config: selected.config, configSource: selected.source, configSourcePath: selected.sourcePath };
-}
-
-export async function installDefaultConfig(repositoryRoot: string, overwrite = false): Promise<{ readonly path: string; readonly created: boolean }> {
-  const directory = join(homedir(), '.sdlc');
-  const path = join(directory, 'config.json');
-  const exists = await readFile(path, 'utf8').then(() => true).catch(() => false);
-  if (exists && !overwrite) return { path, created: false };
-  await mkdir(directory, { recursive: true });
-  await writeFile(path, `${JSON.stringify({ schema: SDLC_CONFIG_SCHEMA, repositoryRoot }, null, 2)}\n`, 'utf8');
-  return { path, created: true };
 }

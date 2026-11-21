@@ -4,7 +4,7 @@ taskUid: WI-0035-10000000
 orderKey: '10000000'
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement reusable Git repository-root resolution
 objective: Add the shared Git-backed repository-root component, migrate command/context consumers, separate schema registry resolution, and remove singleton configured repository-root fallback behavior.
 references:
@@ -52,7 +52,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -106,19 +106,50 @@ task:
       - Remove or migrate repositoryRoot config/installer behavior that creates a stale singleton fallback.
       - Add isolated multi-repository, worktree, non-repository, schema-registry, and command-consumer tests.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: Git-based repository-root replacement is planned but has not been processed.
+      summary: Added the reusable Git repository-root resolver, removed configured repository-root fallback selection, separated schema-registry resolution, migrated reference-schema discovery, and added focused multi-repository tests.
       changes:
-        - id: WI-0035-10000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the Git-root authority, schema-registry separation, consumer migration, and multi-repository test plan.
+        - id: WI-0035-10000000_CHANGE-001
+          type: production-code
+          summary: Added the Git-backed repository-root component with explicit starting paths, normalized roots, worktree support, stable error codes, and safe execFile-based Git invocation.
           objectiveRefs: [WI-0035-10000000_OBJ-001, WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
-          paths: [.docs/work-items/WI-0035/steps/WI-0035-10000000-implementation.yaml, .docs/work-items/WI-0035/repository-root-resolution-pattern.md]
-      testImplementations: []
+          paths: [src/core/repository-root.ts, src/core/repository.ts, src/core/configuration.ts, src/core/operative-root.ts]
+        - id: WI-0035-10000000_CHANGE-002
+          type: production-code
+          summary: Removed the singleton configured repositoryRoot fallback from command selection, stopped installer-created configs from writing repositoryRoot, made schemaRegistryRoot independent, and changed work-item validation/reference schema discovery to use the installed registry.
+          objectiveRefs: [WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
+          paths: [scripts/install.mjs, schemas/sdlc-config/v1/sdlc-config.schema.json, src/core/work-item-validation.ts, src/core/reference.ts]
+        - id: WI-0035-10000000_CHANGE-003
+          type: test-code
+          summary: Added Git-root, nested-path, file-path, non-repository, stale-config, worktree, installer, CLI, and hook regression coverage.
+          objectiveRefs: [WI-0035-10000000_OBJ-001, WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
+          paths: [tests/repository-root.test.ts, tests/cli.test.ts, tests/git-hooks.test.ts]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-GIT-ROOT'
+          path: tests/repository-root.test.ts
+          selector: resolves nested directories and files to the Git top-level root
+        - testCaseRef: '#test-case/TC-GIT-WORKTREE'
+          path: tests/repository-root.test.ts
+          selector: resolves a Git worktree to its worktree root
+        - testCaseRef: '#test-case/TC-MULTI-REPOSITORY'
+          path: tests/repository-root.test.ts
+          selector: ignores stale configured repository roots when the current path is inside Git
+        - testCaseRef: '#test-case/TC-SCHEMA-REGISTRY-SEPARATION'
+          path: tests/cli.test.ts
+          selector: validates every example from every schema-registered reference type dynamically
+        - testCaseRef: '#test-case/TC-PACKAGE-GATES'
+          path: tests/cli.test.ts
+          selector: validates every canonical task-owned identifier prefix directly
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0035-10000000_OBJ-001, WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
-      tests: []
+      tests:
+        - id: WI-0035-10000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-GIT-ROOT', '#test-case/TC-GIT-WORKTREE', '#test-case/TC-MULTI-REPOSITORY', '#test-case/TC-SCHEMA-REGISTRY-SEPARATION', '#test-case/TC-PACKAGE-GATES']
+          command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test tests/repository-root.test.ts tests/cli.test.ts tests/git-hooks.test.ts --run
+          status: passed
+          result: Typecheck, build, 94 focused repository-root/CLI/hook tests, Git nested-path/file/worktree coverage, stale-config safety, installed schema-registry reference validation, and installer assertions passed.
     limitations:
-      - Implementation, consumer migration, package gates, and schema-registry separation evidence do not exist yet.
+      - Complete repository-wide validation, independent review, release, and remote publication remain pending later WI-0035 tasks.
