@@ -1573,6 +1573,37 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/rework.yaml', rework, 'correction')).data).toEqual([{ id: 'COR-001', summary: 'Corrected the collection selector.' }]);
   });
 
+  it('indexes batch 11 delivery artifact/procedure/execution collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-11-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'delivery.yaml'), [
+      'task:',
+      '  intent:',
+      '    artifacts:',
+      '      - id: ART-INT-001',
+      '        kind: manifest',
+      '        purpose: Intent manifest.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Build the release candidate.',
+      '  result:',
+      '    artifacts:',
+      '      - id: ART-RES-001',
+      '        kind: binary',
+      '        path: dist/cli/main.js',
+      '        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        result:',
+      '          summary: Release candidate built.',
+      ''].join('\n'));
+    const delivery = 'https://schemas.handschuh.dev/sdlc/task-delivery/v1';
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'intent' })).data).toEqual([{ id: 'ART-INT-001', kind: 'manifest', purpose: 'Intent manifest.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Build the release candidate.' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'artifact', { phase: 'result' })).data).toEqual([{ id: 'ART-RES-001', kind: 'binary', path: 'dist/cli/main.js', checksum: 'sha256:0000000000000000000000000000000000000000000000000000000000000000' }]);
+    expect((await listCollection(root, '.docs/tasks/delivery.yaml', delivery, 'execution')).data).toEqual([{ id: 'EXEC-001', result: { summary: 'Release candidate built.' } }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
