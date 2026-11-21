@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0036",
-  "status": "planned",
+  "status": "complete",
   "title": "Add declarative schema-backed collection listing",
   "type": "feature",
   "objective": "Add a declarative schema-backed collection listing capability that maps each supported document schema and collection name to a constrained index expression, stable identifier selector, and human-readable text selector. Expose generic work-item and task list commands that show identifiers and textual descriptions in terminal output while preserving complete indexed objects in a versioned JSON response envelope.",

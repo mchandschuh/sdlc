@@ -63,9 +63,7 @@ task:
   intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
   intent:
-    summary: Prepare a local release candidate for declarative schema-backed
-      collection listing after all implementation, review, and validation gates
-      pass.
+    summary: Release declarative schema-backed collection listing on the primary branch after all implementation, review, and validation gates pass.
     deliveryTypes:
       - package
       - release
@@ -78,15 +76,13 @@ task:
       - id: WI-0036-97000000_INPUT-REPOSITORY-001
         kind: repositoryState
         ref: "#repository-state/HEAD"
-        purpose: Identify the committed repository revision used for the local release
-          candidate.
+        purpose: Identify the primary-branch revision used for the release.
         required: true
     artifacts:
       - id: WI-0036-97000000_ART-001
         kind: manifest
         path: package.json
-        purpose: Record the package version selected for the additive collection-listing
-          release.
+        purpose: Record the package version selected for the additive collection-listing release.
         required: true
       - id: WI-0036-97000000_ART-002
         kind: binary
@@ -96,42 +92,38 @@ task:
     procedures:
       - id: WI-0036-97000000_PROC-001
         sequence: 1
-        name: build-release-candidate
-        description: Build the compiled CLI and verify the package metadata.
+        name: build-primary-release
+        description: Build the compiled CLI and verify the primary-branch package metadata.
         steps:
           - Confirm validation and review dependencies are complete.
           - Run yarn build.
-          - Confirm the compiled CLI exists.
+          - Confirm the compiled CLI exists and reports 0.10.0.
         command: yarn build
         expected:
-          result: The compiled CLI is produced from the validated WI-0036 source tree.
+          result: The compiled CLI is produced from the validated WI-0036 source tree and reports 0.10.0.
         required: true
       - id: WI-0036-97000000_PROC-002
         sequence: 2
-        name: smoke-release-candidate
-        description: Run representative collection-list help and JSON commands against
-          the release candidate.
+        name: smoke-primary-release
+        description: Run representative collection-list help and JSON commands against the primary release tip.
         steps:
           - Run node ./bin/cli.js --help.
           - Run representative work-item and task list commands with --json.
-          - Confirm no publication or deployment is attempted.
-        command: node ./bin/cli.js --help
+          - Confirm the compiled launcher reports 0.10.0.
+        command: node ./bin/cli.js --help; node ./bin/cli.js --version
         expected:
-          result: The release candidate exposes the validated collection-listing command
-            surface.
+          result: The primary release tip exposes the validated collection-listing command surface and reports 0.10.0.
         required: true
     nonGoals:
-      - Do not publish packages or push branches or tags.
-      - Do not deploy or install into production.
-      - Do not approve the release or mutate work-item lifecycle state directly.
+      - Do not publish a package registry artifact or deploy externally.
   result:
     status: delivered
-    summary: Prepared the local WI-0036 release candidate after aggregate validation passed; the compiled CLI exposes the generic collection-listing command surface and representative collection JSON commands passed without publication or deployment.
+    summary: Released WI-0036 on main after merging the context branch; the compiled CLI reports 0.10.0 and the annotated 0.10.0 tag was pushed with main to origin.
     artifacts:
       - id: WI-0036-97000000_ART-001
         kind: manifest
         path: package.json
-        checksum: sha256:fe6e2599859f870b0a175851a6f199ffb89daa92b5b4229109ff976610f7b3cc
+        checksum: sha256:9b6d4ab09ac91a707450f89e77e9d25a67f0847df6407ccbcbc3d891b713fd36
       - id: WI-0036-97000000_ART-002
         kind: binary
         path: dist/cli/main.js
@@ -141,14 +133,25 @@ task:
         procedureRef: '#procedure/WI-0036-97000000_PROC-001'
         result:
           status: passed
-          summary: yarn build completed successfully and produced dist/cli/main.js.
+          summary: yarn build completed successfully and produced dist/cli/main.js from main.
         command: yarn build
       - id: WI-0036-97000000_EXEC-SMOKE
         procedureRef: '#procedure/WI-0036-97000000_PROC-002'
         result:
           status: passed
-          summary: CLI help, representative work-item requirement JSON, and task objective JSON commands passed; the compiled launcher reported version 0.9.0.
+          summary: CLI help, representative work-item requirement JSON, and task objective JSON commands passed; the compiled launcher reported version 0.10.0.
         command: node ./bin/cli.js --help; node ./bin/cli.js work-item requirement list --work-item WI-0036 --json; node ./bin/cli.js task objective list --task WI-0036-10000000 --json; node ./bin/cli.js --version
+      - id: WI-0036-97000000_EXEC-MERGE
+        procedureRef: '#procedure/WI-0036-97000000_PROC-001'
+        result:
+          status: passed
+          summary: WI-0036-declarative-collection-listing was merged into main at merge commit 9c099e1.
+        command: git merge --no-ff WI-0036-declarative-collection-listing
+      - id: WI-0036-97000000_EXEC-TAG-PUSH
+        procedureRef: '#procedure/WI-0036-97000000_PROC-002'
+        result:
+          status: passed
+          summary: Annotated tag 0.10.0 was created at the main release tip and main plus the tag were pushed to origin.
+        command: git tag --annotate 0.10.0 -m 'Release 0.10.0' HEAD; git push origin main 0.10.0
     limitations:
-      - This is a local release candidate only; no package publication, remote push, deployment, or production readiness was established.
-      - The package version remains 0.9.0; no release tag was created by this delivery task.
+      - No package registry publication, deployment, or production readiness was established.
