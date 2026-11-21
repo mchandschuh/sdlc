@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0035-git-repository-root",
-      "created": false,
+      "created": true,
       "rationale": "Repository-root selection affects every repository-dependent command and must be implemented, reviewed, and validated on a dedicated context branch before primary-branch release."
     }
   },
