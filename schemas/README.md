@@ -62,3 +62,9 @@ be added to this document with its location, shape, consumer, interpretation,
 and validation behavior before it is introduced. Unknown metadata is ignored by
 ordinary JSON Schema but is rejected by lifecycle-aware host validation unless it
 has an explicitly documented interpretation.
+
+The `x-identifier-prefix-conventions` convention may be attached to a
+reference schema to declare entity-kind prefixes, examples, and naming guidance
+for repository-unique identifiers. Reference discovery treats it as descriptive
+metadata; identifier validation and migration consume the declared conventions
+where the selected reference type supports them.

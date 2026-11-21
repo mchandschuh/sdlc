@@ -1362,6 +1362,50 @@ describe('discovery commands', () => {
     expect(report.findings.some((finding) => finding.includes('Lifecycle status implemented requires /result/implementation'))).toBe(true);
   });
 
+  it('audits every persisted task status against its selected task contract', async () => {
+    const lifecycleStatuses = new Map<string, Set<string>>();
+    for (const path of await filesUnder(join(process.cwd(), 'schemas'))) {
+      if (!path.match(/sdlc-task-[^/]+\/v1\/sdlc-task-[^/]+\.schema\.json$/u)) continue;
+      const schema = JSON.parse(readFileSync(path, 'utf8')) as { $id?: string; properties?: { status?: { enum?: string[] } } };
+      if (schema.$id && schema.properties?.status?.enum) lifecycleStatuses.set(schema.$id, new Set(schema.properties.status.enum));
+    }
+    const invalid: string[] = [];
+    for (const path of await filesUnder(join(process.cwd(), '.docs', 'work-items'))) {
+      if (!path.endsWith('.yaml')) continue;
+      const document = YAML.parse(await readFile(path, 'utf8')) as Record<string, any>;
+      if (!document.taskType || !document.task?.taskSchema) continue;
+      const allowed = lifecycleStatuses.get(document.task.taskSchema);
+      if (!allowed?.has(document.task.status)) invalid.push(`${path}: ${document.task.status}`);
+      expect(document.processingStatus).toMatch(/^processing_|^unprocessed$/u);
+      if (document.task.result && typeof document.task.result === 'object' && 'status' in document.task.result) {
+        expect(typeof document.task.status).toBe('string');
+        expect(typeof document.task.result.status).toBe('string');
+      }
+    }
+    expect(invalid).toEqual([]);
+  });
+
+  it('covers the declared lifecycle vocabulary and result policy for every task type', async () => {
+    const expectedTypes = ['decomposition', 'research', 'decision', 'design', 'implementation', 'test-strategy', 'validation', 'review', 'rework', 'delivery'];
+    for (const type of expectedTypes) {
+      const path = join(process.cwd(), 'schemas', `sdlc-task-${type}`, 'v1', `sdlc-task-${type}.schema.json`);
+      const schema = JSON.parse(await readFile(path, 'utf8')) as {
+        properties?: { status?: { enum?: string[] } };
+        ['x-sdlc-task-lifecycle']?: { statusProperty?: string; resultProperty?: string; statuses?: Record<string, { kind?: string; result?: string }> };
+      };
+      const statuses = schema.properties?.status?.enum ?? [];
+      const policy = schema['x-sdlc-task-lifecycle'];
+      expect(statuses.length, type).toBeGreaterThanOrEqual(6);
+      expect(policy?.statusProperty, type).toBe('/status');
+      expect(policy?.resultProperty, type).toBe('/result');
+      expect(Object.keys(policy?.statuses ?? {}), type).toEqual(statuses);
+      for (const status of statuses) {
+        expect(policy?.statuses?.[status]?.kind, `${type}:${status}`).toBeTruthy();
+        expect(['optional', 'required']).toContain(policy?.statuses?.[status]?.result);
+      }
+    }
+  });
+
   it('continues reference validation after schema failure and preserves remediation context', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-validation-continuation-'));
     const workItem = join(root, '.docs', 'work-items', 'WI-0099');
