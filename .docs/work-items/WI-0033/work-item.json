@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0033",
-  "status": "planned",
+  "status": "complete",
   "title": "Generate complete help from dynamically discovered yargs command modules",
   "type": "refactor",
   "objective": "Refactor the sdlc CLI so the main entry point recursively discovers yargs command modules, registers every resolved command for dispatch and help, and keeps command-specific implementation functions encapsulated in their command files.",
