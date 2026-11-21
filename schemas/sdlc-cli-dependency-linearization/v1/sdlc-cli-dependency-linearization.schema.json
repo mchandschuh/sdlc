@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1",
+  "title": "SDLC CLI Dependency Linearization v1",
+  "description": "Closed JSON response envelope for a complete explicit task dependency graph and deterministic topological ordering.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "workItemId", "valid", "algorithm", "nodes", "linearization", "findings"],
+  "properties": {
+    "schema": {"const": "https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1"},
+    "workItemId": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+$"},
+    "valid": {"type": "boolean"},
+    "algorithm": {"const": "explicit-depends-on-topological-order-v1"},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/Node"}},
+    "linearization": {"type": "array", "items": {"$ref": "#/$defs/LinearizedNode"}},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/Finding"}}
+  },
+  "$defs": {
+    "Node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskUid", "orderKey", "taskType", "path", "processingStatus", "taskStatus", "dependsOn"],
+      "properties": {
+        "taskUid": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$"},
+        "orderKey": {"type": "string", "pattern": "^[0-9]{8}$"},
+        "taskType": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+        "processingStatus": {"type": "string", "minLength": 1},
+        "taskStatus": {"type": "string", "minLength": 1},
+        "dependsOn": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$"}}
+      }
+    },
+    "LinearizedNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rank", "taskUid", "dependencies"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1},
+        "taskUid": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$"},
+        "dependencies": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$"}}
+      }
+    },
+    "Finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": {"type": "string", "enum": ["DUPLICATE_TASK_UID", "DUPLICATE_ORDER_KEY", "MISSING_DEPENDENCY", "SELF_DEPENDENCY", "DEPENDENCY_CYCLE"]},
+        "severity": {"const": "blocking"},
+        "taskUids": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z]{1,10}-[0-9]+-[0-9]{8}$"}},
+        "message": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "examples": [{
+    "schema": "https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1",
+    "workItemId": "WI-0038",
+    "valid": true,
+    "algorithm": "explicit-depends-on-topological-order-v1",
+    "nodes": [],
+    "linearization": [],
+    "findings": []
+  }]
+}

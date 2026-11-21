@@ -73,6 +73,19 @@ the `x-sdlc-reference-type` convention with value `true`, have a stable absolute
 one root-level string example. Reference-schema discovery is recursive under the
 installed schema registry and is separate from the target repository root.
 
+## CLI response schemas
+
+Task-type payload contracts use the `sdlc-task-*` family. Command response
+contracts use the `sdlc-cli-*` family and are persisted under matching versioned
+paths such as `schemas/sdlc-cli-task-next/v1/` with IDs such as
+`https://schemas.handschuh.dev/sdlc/cli-task-next/v1`.
+
+CLI response objects should be closed, include a canonical `schema` property when
+they are versioned envelopes, and provide representative examples. New response
+schemas must be discovered by the complete schema audit and validated with
+representative success and failure instances before commit. A CLI response must
+not be named as a task-type schema merely because it selects or summarizes tasks.
+
 ## Field roles and registry
 
 The `x-field-role` convention documents whether a schema field is authoritative or derived. Schema

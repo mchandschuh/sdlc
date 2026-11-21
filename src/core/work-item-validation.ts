@@ -11,6 +11,7 @@ import { validateReference } from './reference.js';
 import { resolveReference, type TaskContext } from './reference-resolution.js';
 import { isTaskOwnedId, isTaskOwnedLocalId, taskOwnedId } from './identifier.js';
 import { validateBranchContext } from './branch-validation.js';
+import { buildDependencyGraph } from './dependency-graph.js';
 
 export const WORK_ITEM_VALIDATION_SCHEMA = 'https://schemas.handschuh.dev/sdlc/work-item-validation/v2';
 
@@ -510,6 +511,26 @@ export async function validateWorkItem(repositoryRoot: string, workItemId: strin
     }
     for (const task of taskReport.items) {
       if (!selectedTaskUid || task.taskUid === selectedTaskUid) objects.push(await validateTask(repositoryRoot, schemaRoot, temporaryDirectory, workItemId, task));
+    }
+    if (!selectedTaskUid) {
+      const graph = await buildDependencyGraph(repositoryRoot, workItemId);
+      if (!graph.valid) {
+        objects.push({
+          path: `.docs/work-items/${workItemId}/steps/`,
+          schema: 'sdlc/stat/v1',
+          repositoryPath: `.docs/work-items/${workItemId}/steps/`,
+          fullPath: resolve(repositoryRoot, `.docs/work-items/${workItemId}/steps/`),
+          tracked: true,
+          objectKind: 'file',
+          ref: null,
+          objectType: 'task',
+          objectSchemaPath: 'schemas/sdlc-cli-dependency-linearization/v1/sdlc-cli-dependency-linearization.schema.json',
+          valid: false,
+          findings: graph.findings.map((item) => `[${item.code}] ${item.message}`),
+          schemaFindings: graph.findings.map((item) => `[${item.code}] ${item.message}`),
+          remediation: ['Fix the dependency graph findings, then rerun work-item validation.'],
+        });
+      }
     }
     const validObjectCount = objects.filter((object) => object.valid).length;
     const findings = objects.flatMap((object) => object.findings);

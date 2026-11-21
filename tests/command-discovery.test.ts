@@ -21,11 +21,13 @@ describe('dynamic command discovery', () => {
       'cli/commands/repository/info.command.ts',
       'cli/commands/stat.command.ts',
       'cli/commands/task/collection-list.command.ts',
+      'cli/commands/task/linearize.command.ts',
       'cli/commands/task/list.command.ts',
       'cli/commands/task/next.command.ts',
       'cli/commands/task/validate.command.ts',
       'cli/commands/work-item/collection-list.command.ts',
       'cli/commands/work-item/list.command.ts',
+      'cli/commands/work-item/next.command.ts',
       'cli/commands/work-item/start.command.ts',
       'cli/commands/work-item/validate.command.ts',
     ]);

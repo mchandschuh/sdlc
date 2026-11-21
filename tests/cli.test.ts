@@ -11,6 +11,7 @@ import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enu
 import { collectionDefinitions, collectionNamesForCommand, listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateTaskLifecycleTransition, validateWorkItem } from '../src/core/work-item-validation.js';
+import { buildDependencyGraph } from '../src/core/dependency-graph.js';
 import { repositoryInfo } from '../src/core/repository.js';
 import { commandContext, resolveSdlcConfig } from '../src/core/configuration.js';
 
@@ -1691,11 +1692,56 @@ describe('discovery commands', () => {
     expect(await readFile(join(workItems, 'WI-0099-20000000.yaml'), 'utf8')).toBe(selectedBytes);
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
-    output.length = 0;
-    await expect(main(['task', 'next', '--work-item', 'WI-0008', '--json'])).resolves.toBe(0);
-    const none = JSON.parse(output.join('\n')) as { selection: string; task: null };
-    expect(none.selection).toBe('none');
-    expect(none.task).toBeNull();
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      output.length = 0;
+      await expect(main(['task', 'next', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+      const selectedAgain = JSON.parse(output.join('\n')) as { schema: string; selection: string; task: { taskUid: string } };
+      expect(selectedAgain.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-task-next/v1');
+      expect(selectedAgain.selection).toBe('selected');
+      expect(selectedAgain.task.taskUid).toBe('WI-0099-10000000');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('selects dependency-aware tasks and initial non-complete work items read-only', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-next-dependency-'));
+    await execFileAsync('git', ['-C', root, 'init', '--quiet']);
+    await execFileAsync('git', ['-C', root, 'checkout', '-b', 'main']);
+    const workItemDir = join(root, '.docs', 'work-items', 'WI-0099');
+    const steps = join(workItemDir, 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(workItemDir, 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Fixture', stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    const task = (uid: string, orderKey: string, dependsOn: string[], taskStatus: string) => YAML.stringify({ schema: 'https://schemas.handschuh.dev/sdlc/task-envelope/v1', workItemId: 'WI-0099', taskUid: uid, orderKey, parentTaskUid: null, taskType: 'implementation', processingStatus: 'unprocessed', title: 'Fixture', objective: 'Fixture', references: { required: [], informational: [] }, dependsOn, task: { status: taskStatus, taskSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1', intentSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent', resultSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result', intent: {}, result: {} } });
+    const first = join(steps, 'WI-0099-10000000.yaml');
+    const second = join(steps, 'WI-0099-20000000.yaml');
+    const firstBefore = task('WI-0099-10000000', '10000000', [], 'active');
+    await writeFile(first, firstBefore);
+    await writeFile(second, task('WI-0099-20000000', '20000000', ['WI-0099-10000000'], 'planned'));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      await expect(main(['task', 'next', '--work-item', 'WI-0099', '--json'])).resolves.toBe(0);
+      const active = JSON.parse(output.join('\n')) as { schema: string; selection: string; task: { taskUid: string; taskStatus: string } };
+      expect(active.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-task-next/v1');
+      expect(active.selection).toBe('selected');
+      expect(active.task).toEqual(expect.objectContaining({ taskUid: 'WI-0099-10000000', taskStatus: 'active' }));
+      expect(await readFile(first, 'utf8')).toBe(firstBefore);
+      output.length = 0;
+      await expect(main(['work-item', 'next', '--json'])).resolves.toBe(0);
+      const workItem = JSON.parse(output.join('\n')) as { schema: string; selection: string; workItem: { workItemId: string } };
+      expect(workItem.schema).toBe('https://schemas.handschuh.dev/sdlc/cli-work-item-next/v1');
+      expect(workItem.selection).toBe('selected');
+      expect(workItem.workItem.workItemId).toBe('WI-0099');
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 
   it('rejects invalid task-next selectors', async () => {
@@ -1782,6 +1828,53 @@ describe('discovery commands', () => {
     const readme = await readFile(join(process.cwd(), 'schemas', 'README.md'), 'utf8');
     expect(metadataKeys.size).toBeGreaterThan(0);
     for (const key of metadataKeys) expect(readme).toContain(` ${key} `.replaceAll('\u0000', '`'));
+  });
+
+  it('documents the WI-0038 CLI response schema family and Phase 2 boundaries', async () => {
+    const expected = [
+      ['schemas/sdlc-cli-dependency-linearization/v1/sdlc-cli-dependency-linearization.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1'],
+      ['schemas/sdlc-cli-task-next/v1/sdlc-cli-task-next.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-task-next/v1'],
+      ['schemas/sdlc-cli-work-item-next/v1/sdlc-cli-work-item-next.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-work-item-next/v1'],
+    ] as const;
+    for (const [relativePath, id] of expected) {
+      const schema = JSON.parse(await readFile(join(process.cwd(), relativePath), 'utf8')) as { $id?: string; type?: string; additionalProperties?: boolean; examples?: unknown[] };
+      expect(schema.$id).toBe(id);
+      expect(schema.type).toBe('object');
+      expect(schema.additionalProperties).toBe(false);
+      expect(schema.examples?.length ?? 0).toBeGreaterThan(0);
+    }
+    const contract = await readFile(join(process.cwd(), '.docs/work-items/WI-0038/phase-2-dependency-graph-contract.md'), 'utf8');
+    expect(contract).toContain('only dependency source is explicit `dependsOn` data');
+    expect(contract).toContain('No graph SHA-256 or linearization SHA-256 values are required in Phase 2.');
+    expect(contract).toContain('Phase 3 must extend `task next`');
+    expect(contract).toContain('Phase 3 must extend `work-item next`');
+    const completeness = await readFile(join(process.cwd(), '.docs/agentic-completeness-phases.md'), 'utf8');
+    expect(completeness).toContain('graph from explicit `dependsOn` references only');
+    expect(completeness).toContain('initial deterministic `work-item next` selector');
+  });
+
+  it('builds explicit dependency graphs with deterministic linearization and blocking findings', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-dependency-graph-'));
+    const steps = join(root, '.docs', 'work-items', 'WI-0099', 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0099', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Graph fixture', stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    const task = (uid: string, orderKey: string, dependsOn: string[], status = 'planned') => YAML.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/task-envelope/v1', workItemId: 'WI-0099', taskUid: uid, orderKey, parentTaskUid: null, taskType: 'implementation', processingStatus: 'unprocessed', title: 'Graph fixture', objective: 'Graph fixture', references: { required: [], informational: [] }, dependsOn, task: { status, taskSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1', intentSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent', resultSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result', intent: {}, result: {} },
+    });
+    await writeFile(join(steps, 'WI-0099-10000000.yaml'), task('WI-0099-10000000', '10000000', []));
+    await writeFile(join(steps, 'WI-0099-20000000.yaml'), task('WI-0099-20000000', '20000000', ['WI-0099-10000000']));
+    const valid = await buildDependencyGraph(root, 'WI-0099');
+    expect(valid.valid).toBe(true);
+    expect(valid.linearization.map((item) => item.taskUid)).toEqual(['WI-0099-10000000', 'WI-0099-20000000']);
+    const stateChanged = await readFile(join(steps, 'WI-0099-10000000.yaml'), 'utf8');
+    await writeFile(join(steps, 'WI-0099-10000000.yaml'), stateChanged.replace('processingStatus: unprocessed', 'processingStatus: processing_completed').replace('status: planned', 'status: active'));
+    const sameStructure = await buildDependencyGraph(root, 'WI-0099');
+    expect(sameStructure.linearization.map((item) => item.taskUid)).toEqual(valid.linearization.map((item) => item.taskUid));
+    await writeFile(join(steps, 'WI-0099-30000000.yaml'), task('WI-0099-30000000', '30000000', ['WI-0099-MISSING']));
+    const missing = await buildDependencyGraph(root, 'WI-0099');
+    expect(missing.valid).toBe(false);
+    expect(missing.linearization).toEqual([]);
+    expect(missing.findings.some((item) => item.code === 'MISSING_DEPENDENCY')).toBe(true);
   });
 
   it.each([

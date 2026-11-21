@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0038-dependency-graph-linearization",
-      "created": false,
+      "created": true,
       "rationale": "The work item adds dependency graph behavior, CLI response contracts, schema naming conventions, and task/work-item selection semantics, so implementation should be processed on a dedicated context branch before returning to main for release."
     }
   },
@@ -73,36 +73,36 @@
     {
       "name": "implicit-dependency-inference",
       "description": "Do not infer dependencies from task UID, task type, orderKey, filename, directory order, or prose.",
-      "reason": "Each task must explicitly declare its dependencies before it can be considered for processing."
-      ,"forbiddenFileWrites": [],
+      "reason": "Each task must explicitly declare its dependencies before it can be considered for processing.",
+      "forbiddenFileWrites": [],
       "forbiddenFileReads": []
     },
     {
       "name": "execution-state-graph-construction",
       "description": "Do not consult processingStatus or task lifecycle status while constructing the dependency graph or full graph linearization.",
-      "reason": "Execution state is observed node data for later dependency inspection and projection, not structural graph input."
-      ,"forbiddenFileWrites": [],
+      "reason": "Execution state is observed node data for later dependency inspection and projection, not structural graph input.",
+      "forbiddenFileWrites": [],
       "forbiddenFileReads": []
     },
     {
       "name": "leases-and-readiness",
       "description": "Do not add task leases, lease expiration, task readiness reports, work-item readiness reports, or branch/worktree readiness checks.",
-      "reason": "Leases belong to the sandboxing stream and full readiness belongs to Phase 3."
-      ,"forbiddenFileWrites": [],
+      "reason": "Leases belong to the sandboxing stream and full readiness belongs to Phase 3.",
+      "forbiddenFileWrites": [],
       "forbiddenFileReads": []
     },
     {
       "name": "work-item-dependencies",
       "description": "Do not add or consume explicit work-item dependency declarations in the initial work-item next implementation.",
-      "reason": "Phase 3 must return to work-item next and add dependency-aware selection after work-item dependency representation is designed."
-      ,"forbiddenFileWrites": [],
+      "reason": "Phase 3 must return to work-item next and add dependency-aware selection after work-item dependency representation is designed.",
+      "forbiddenFileWrites": [],
       "forbiddenFileReads": []
     },
     {
       "name": "digests-and-mutation",
       "description": "Do not calculate SHA-256 graph or linearization digests, execute tasks, mutate task/work-item records, add receipts, or enforce protected repository boundaries.",
-      "reason": "This work item establishes graph structure and read-only selection only; later phases own state mutation, receipts, and merge enforcement."
-      ,"forbiddenFileWrites": [],
+      "reason": "This work item establishes graph structure and read-only selection only; later phases own state mutation, receipts, and merge enforcement.",
+      "forbiddenFileWrites": [],
       "forbiddenFileReads": []
     }
   ],

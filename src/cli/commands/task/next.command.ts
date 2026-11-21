@@ -1,9 +1,11 @@
 import type { SdlcCommandContext, SdlcCommandModule } from '../../command-types.js';
-import { DiscoveryError, discoverNextTask, type TaskSummary } from '../../../core/discovery.js';
+import { DiscoveryError } from '../../../core/discovery.js';
+import { selectNextDependencyTask } from '../../../core/dependency-graph.js';
 import { resolveOperativeRoot } from '../../../core/operative-root.js';
 
-function printNextTask(workItemId: string, task: TaskSummary | null, json: boolean): void {
-  const response = { schema: 'https://schemas.handschuh.dev/sdlc/task-next/v1', workItemId, selection: task ? 'selected' : 'none', task } as const;
+function printNextTask(workItemId: string, selection: Awaited<ReturnType<typeof selectNextDependencyTask>>, json: boolean): void {
+  const task = selection.task;
+  const response = { schema: 'https://schemas.handschuh.dev/sdlc/cli-task-next/v1', workItemId, selection: task ? 'selected' : 'none', task: task ? { taskUid: task.taskUid, taskType: task.taskType, processingStatus: task.processingStatus, taskStatus: task.taskStatus, path: task.path, dependencies: task.dependsOn } : null, findings: selection.findings.map((item) => `[${item.code}] ${item.message}`) } as const;
   if (json) {
     console.log(JSON.stringify(response, null, 2));
     return;
@@ -26,9 +28,9 @@ export default function createTaskNextCommand(_context: SdlcCommandContext): Sdl
       if (Array.isArray(argv.workItem)) throw new DiscoveryError('Duplicate --work-item option.');
       if (typeof argv.workItem !== 'string' || argv.workItem.length === 0) throw new DiscoveryError('Usage: sdlc task next --work-item <work-item> [--json]');
       if (!/^[A-Z]{1,10}-[0-9]+$/u.test(argv.workItem)) throw new DiscoveryError(`Invalid work-item ID: ${argv.workItem}`);
-      const task = await discoverNextTask(await resolveOperativeRoot(), argv.workItem);
-      printNextTask(argv.workItem, task, argv.json === true);
-      return 0;
+      const selection = await selectNextDependencyTask(await resolveOperativeRoot(), argv.workItem);
+      printNextTask(argv.workItem, selection, argv.json === true);
+      return selection.findings.length === 0 ? 0 : 1;
     },
   };
 }
