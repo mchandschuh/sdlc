@@ -74,40 +74,40 @@ task:
       - schema
     changeIntent: feature
     inputs:
-      - id: INPUT-REQ-001
+      - id: WI-0013-10000000_INPUT-REQ-001
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_001
         purpose: Define complete declared-schema validation coverage.
         required: true
-      - id: INPUT-REQ-002
+      - id: WI-0013-10000000_INPUT-REQ-002
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_002
         purpose: Define reference shape and target resolution coverage.
         required: true
-      - id: INPUT-REQ-003
+      - id: WI-0013-10000000_INPUT-REQ-003
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_003
         purpose: Define dynamic registered-reference test coverage.
         required: true
-      - id: INPUT-REQ-004
+      - id: WI-0013-10000000_INPUT-REQ-004
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_004
         purpose: Define the complete validation response contract.
         required: true
     objectives:
-      - id: OBJ-001
+      - id: WI-0013-10000000_OBJ-001
         statement: Work-item validation checks every declared object and reports per-object schema findings.
         inputRefs:
-          - INPUT-REQ-001
-          - INPUT-REQ-004
+          - WI-0013-10000000_INPUT-REQ-001
+          - WI-0013-10000000_INPUT-REQ-004
         testCaseRefs:
           - '#test-case/TC-VALIDATE-COMPLETE-OBJECTS'
           - '#test-case/TC-VALIDATE-OBJECT-FINDINGS'
-      - id: OBJ-002
+      - id: WI-0013-10000000_OBJ-002
         statement: Work-item validation resolves local references to actual documents/properties and dynamically covers all registered reference types.
         inputRefs:
-          - INPUT-REQ-002
-          - INPUT-REQ-003
+          - WI-0013-10000000_INPUT-REQ-002
+          - WI-0013-10000000_INPUT-REQ-003
         testCaseRefs:
           - '#test-case/TC-VALIDATE-REFERENCE-RESOLUTION'
           - '#test-case/TC-VALIDATE-DYNAMIC-REFERENCES'
@@ -123,25 +123,3 @@ task:
       - Extend complete work-item validation with reference discovery and local target resolution.
       - Expand the persisted validation response schema for per-reference findings and reference counts.
       - Add exhaustive tests for valid/resolvable references, missing targets, malformed references, and dynamic registry examples.
-  result:
-    status: partially-implemented
-    implementation:
-      summary: Implementation has not yet been processed.
-      changes:
-        - id: CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the bounded complete object and reference resolution implementation plan.
-          objectiveRefs:
-            - OBJ-001
-            - OBJ-002
-          paths:
-            - .docs/work-items/WI-0013/steps/WI-0013-10000000-implementation.yaml
-      testImplementations: []
-    verification:
-      status: not-run
-      objectiveRefs:
-        - OBJ-001
-        - OBJ-002
-      tests: []
-    limitations:
-      - The validate command does not yet resolve references to actual work-item objects/properties.

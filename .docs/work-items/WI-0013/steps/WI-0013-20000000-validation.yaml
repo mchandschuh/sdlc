@@ -76,33 +76,33 @@ task:
   intent:
     summary: Validate complete work-item schema and reference resolution behavior with dynamic coverage for all registered reference types.
     inputs:
-      - id: INPUT-IMPLEMENTATION-001
+      - id: WI-0013-20000000_INPUT-IMPLEMENTATION-001
         kind: implementation
         ref: WI-0013-10000000#result/R-001
         purpose: Identify the complete validation implementation result.
         required: true
-      - id: INPUT-REQ-001
+      - id: WI-0013-20000000_INPUT-REQ-001
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_001
         purpose: Identify complete object schema-validation conditions.
         required: true
-      - id: INPUT-REQ-002
+      - id: WI-0013-20000000_INPUT-REQ-002
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_002
         purpose: Identify reference target-resolution conditions.
         required: true
-      - id: INPUT-REQ-003
+      - id: WI-0013-20000000_INPUT-REQ-003
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_003
         purpose: Identify dynamic reference registry coverage conditions.
         required: true
-      - id: INPUT-REQ-004
+      - id: WI-0013-20000000_INPUT-REQ-004
         kind: requirement
         ref: WI-0013#work-item.json#requirement/WI-0013_REQ_004
         purpose: Identify response and finding conditions.
         required: true
     targets:
-      - id: TARGET-WORK-ITEM-REFERENCE-VALIDATE-001
+      - id: WI-0013-20000000_TARGET-WORK-ITEM-REFERENCE-VALIDATE-001
         kind: taskResult
         taskType: implementation
         ref: WI-0013-10000000#result/R-001
@@ -117,13 +117,13 @@ task:
       - '#test-case/TC-VALIDATE-REFERENCE-RESOLUTION'
       - '#test-case/TC-VALIDATE-DYNAMIC-REFERENCES'
     procedures:
-      - id: VAL-WORK-ITEM-REFERENCE-001
+      - id: WI-0013-20000000_VAL-WORK-ITEM-REFERENCE-001
         sequence: 1
         name: validate-work-item-objects-and-references
         description: Run package checks, complete valid/invalid object validation, reference target resolution, dynamic reference registry coverage, response-schema validation, and read-only checks.
         reason: Prove that every object is schema-valid and every reference resolves to an actual local object/property where applicable.
         targetRefs:
-          - '#target/TARGET-WORK-ITEM-REFERENCE-VALIDATE-001'
+          - '#intent/targets/WI-0013-20000000_TARGET-WORK-ITEM-REFERENCE-VALIDATE-001'
         objectiveRefs:
           - '#objective/OBJ-001'
           - '#objective/OBJ-002'
@@ -159,25 +159,3 @@ task:
     nonGoals:
       - Do not claim approval, task execution, lifecycle mutation, provider, persistence, deployment, or production evidence.
       - Do not mutate selected work-item objects or task records during validation.
-  result:
-    status: implemented-unproven
-    summary: Validation is planned and has not yet been executed.
-    executions:
-      - id: EXEC-VAL-001
-        procedureRef: '#procedure/VAL-WORK-ITEM-REFERENCE-001'
-        status: inconclusive
-        observed:
-          outcome: not-run
-          summary: Validation is deferred until the implementation task is processed.
-        evidenceTier: inspection
-        evidence:
-          - kind: record
-            source: Validation task plan
-            claim: The complete work-item object and reference validation procedure is declared but not yet executed.
-    findings: []
-    evidenceTier: inspection
-    limitations:
-      - Reference target resolution and dynamic complete-validation coverage have not yet been executed.
-    nonClaims:
-      - This planned result does not claim that the command currently exists.
-      - This result does not approve or release WI-0013.
