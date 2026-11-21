@@ -412,6 +412,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', title: '/name', text: '/purpose' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1',
+    name: 'coverage',
+    index: { collectionPath: '/task/result/coverage' },
+    display: { identifier: '/id', text: '/rationale' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-validation/v1',
+    name: 'input',
+    index: { collectionPath: '/task/intent/inputs' },
+    display: { identifier: '/id', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-validation/v1',
+    name: 'target',
+    index: { collectionPath: '/task/intent/targets' },
+    display: { identifier: '/id', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-validation/v1',
+    name: 'procedure',
+    index: { collectionPath: '/task/intent/procedures' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-validation/v1',
+    name: 'execution',
+    index: { collectionPath: '/task/result/executions' },
+    display: { identifier: '/id', text: '/observed/summary' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));

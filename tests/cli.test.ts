@@ -1448,6 +1448,43 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/strategy.yaml', schema, 'fixture')).data).toEqual([{ id: 'FIX-001', name: 'Strategy fixture', purpose: 'Supply deterministic inputs.' }]);
   });
 
+  it('indexes batch 08 test-strategy and validation collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-08-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'validation.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Define the validation input.',
+      '    targets:',
+      '      - id: TARGET-001',
+      '        purpose: Select the validation target.',
+      '    procedures:',
+      '      - id: PROC-001',
+      '        description: Run the validation.',
+      '  result:',
+      '    executions:',
+      '      - id: EXEC-001',
+      '        observed:',
+      '          summary: Validation passed.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'strategy.yaml'), [
+      'task:',
+      '  result:',
+      '    coverage:',
+      '      - id: COV-001',
+      '        rationale: Covers the required behavior.',
+      ''].join('\n'));
+    const validation = 'https://schemas.handschuh.dev/sdlc/task-validation/v1';
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Define the validation input.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'target')).data).toEqual([{ id: 'TARGET-001', purpose: 'Select the validation target.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'procedure')).data).toEqual([{ id: 'PROC-001', description: 'Run the validation.' }]);
+    expect((await listCollection(root, '.docs/tasks/validation.yaml', validation, 'execution')).data).toEqual([{ id: 'EXEC-001', observed: { summary: 'Validation passed.' } }]);
+    const strategy = 'https://schemas.handschuh.dev/sdlc/task-test-strategy/v1';
+    expect((await listCollection(root, '.docs/tasks/strategy.yaml', strategy, 'coverage')).data).toEqual([{ id: 'COV-001', rationale: 'Covers the required behavior.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

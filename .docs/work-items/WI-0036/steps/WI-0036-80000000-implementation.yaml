@@ -4,7 +4,7 @@ taskUid: WI-0036-80000000
 orderKey: "80000000"
 parentTaskUid: WI-0036-71000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 08
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 8: sdlc task coverage list --task
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -143,3 +143,45 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Added test-strategy coverage and validation input/target/procedure/execution collection definitions with fixture coverage through the shared registry.
+      changes:
+        - id: WI-0036-80000000_CHANGE-001
+          type: production-code
+          summary: Added task-test-strategy coverage and task-validation input/target/procedure/execution definitions with exact selectors.
+          objectiveRefs:
+            - WI-0036-80000000_OBJ-001
+            - WI-0036-80000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-80000000_CHANGE-002
+          type: test-code
+          summary: Added schema-shaped test-strategy and validation fixture coverage for all five batch 08 collections.
+          objectiveRefs:
+            - WI-0036-80000000_OBJ-001
+            - WI-0036-80000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-80000000_TC-VALIDATION-STRATEGY-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes coverage and validation input/target/procedure/execution collections through exact schema paths
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-80000000_OBJ-001
+        - WI-0036-80000000_OBJ-002
+      tests:
+        - id: WI-0036-80000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-80000000_TC-VALIDATION-STRATEGY-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 95 CLI tests, existing collection/reference regressions, test-strategy coverage, and validation fixture collection indexing passed.
+    limitations:
+      - This task implements batch 08 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 08 non-empty evidence uses disposable schema-shaped fixtures; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.
