@@ -1104,43 +1104,122 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "researched": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ],
         "requiredResultPaths": [
           "/result/findings",
           "/result/unresolvedQuestions",
           "/result/recommendations",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ],
         "requiredResultPaths": [
           "/result/findings",
           "/result/unresolvedQuestions",
           "/result/recommendations",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/findings",
+          "/result/unresolvedQuestions",
+          "/result/recommendations",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "researched"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "researched": [
+        "complete",
+        "blocked",
+        "deferred"
+      ],
+      "complete": [],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }

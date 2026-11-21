@@ -5045,22 +5045,83 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "drafted": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
         "requiredResultPaths": [
           "/result/summary",
           "/result/model",
@@ -5072,11 +5133,25 @@
           "/result/outputs",
           "/result/verificationObligations",
           "/result/unresolvedQuestions"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "awaiting-validation": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
         "requiredResultPaths": [
           "/result/summary",
           "/result/model",
@@ -5088,11 +5163,25 @@
           "/result/outputs",
           "/result/verificationObligations",
           "/result/unresolvedQuestions"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
         "requiredResultPaths": [
           "/result/summary",
           "/result/model",
@@ -5104,12 +5193,14 @@
           "/result/outputs",
           "/result/verificationObligations",
           "/result/unresolvedQuestions"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "superseded": {
-        "kind": "milestone",
-        "result": "required",
-        "requiredResultPaths": [
+        "kind": "superseded",
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
           "/result/summary",
           "/result/model",
           "/result/elements",
@@ -5120,12 +5211,65 @@
           "/result/outputs",
           "/result/verificationObligations",
           "/result/unresolvedQuestions"
-        ]
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/summary",
+          "/result/model",
+          "/result/elements",
+          "/result/relations",
+          "/result/views",
+          "/result/artifacts",
+          "/result/outcomes",
+          "/result/outputs",
+          "/result/verificationObligations",
+          "/result/unresolvedQuestions"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "drafted"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "drafted": [
+        "awaiting-validation",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "awaiting-validation": [
+        "complete",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "complete": [],
+      "superseded": [
+        "planned",
+        "active",
+        "blocked"
+      ],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }

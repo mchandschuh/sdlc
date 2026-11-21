@@ -2332,22 +2332,71 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "defined": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/testCases",
@@ -2356,11 +2405,22 @@
           "/result/minimumRequiredTestCaseRefs",
           "/result/recommendedTestCaseRefs",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "awaiting-review": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/testCases",
@@ -2369,11 +2429,22 @@
           "/result/minimumRequiredTestCaseRefs",
           "/result/recommendedTestCaseRefs",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/testCases",
@@ -2382,12 +2453,14 @@
           "/result/minimumRequiredTestCaseRefs",
           "/result/recommendedTestCaseRefs",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "superseded": {
-        "kind": "milestone",
-        "result": "required",
-        "requiredResultPaths": [
+        "kind": "superseded",
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
           "/result/status",
           "/result/testCases",
           "/result/fixtures",
@@ -2395,12 +2468,62 @@
           "/result/minimumRequiredTestCaseRefs",
           "/result/recommendedTestCaseRefs",
           "/result/evidenceLimitations"
-        ]
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/testCases",
+          "/result/fixtures",
+          "/result/coverage",
+          "/result/minimumRequiredTestCaseRefs",
+          "/result/recommendedTestCaseRefs",
+          "/result/evidenceLimitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "defined"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "defined": [
+        "awaiting-review",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "awaiting-review": [
+        "complete",
+        "blocked",
+        "deferred",
+        "superseded"
+      ],
+      "complete": [],
+      "superseded": [
+        "planned",
+        "active",
+        "blocked"
+      ],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }

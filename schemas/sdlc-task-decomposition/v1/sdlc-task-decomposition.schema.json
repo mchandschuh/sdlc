@@ -772,41 +772,114 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "decomposed": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/tasks",
           "/result/limitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/tasks",
           "/result/limitations"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "decomposed"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "decomposed": [
+        "complete",
+        "blocked",
+        "deferred"
+      ],
+      "complete": [],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }

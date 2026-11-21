@@ -14,9 +14,28 @@ Required metadata:
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": ["planned"],
     "statuses": {
-      "planned": {"kind": "transitional", "result": "optional"},
-      "complete": {"kind": "terminal", "result": "required"}
+      "planned": {
+        "kind": "transitional",
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": ["/result/example"]
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": ["/result/example"],
+        "requiredResultPaths": ["/result/example"],
+        "forbiddenResultPaths": []
+      }
+    },
+    "transitions": {
+      "planned": ["active", "blocked", "deferred"],
+      "complete": []
     }
   }
 }
@@ -24,14 +43,21 @@ Required metadata:
 
 - `statusProperty` and `resultProperty` are JSON Pointers within the task-specific
   payload. The current task contracts use `/status` and `/result`.
+- `initialStatuses` declares the statuses permitted for a new task record. The
+  current task contracts use only `planned`.
 - `statuses` keys must match the task schema's root `status` enum.
 - `kind` describes the lifecycle category and is not an outcome or approval.
-- `result: optional` allows incomplete results; `result: required` enables the
-  generic validator's result-presence checks.
-- Task-specific schemas may add `requiredResultPaths` arrays for milestone or
-  terminal statuses. Paths are JSON Pointers relative to the task payload; the
-  current contracts use `/result/<field>` paths derived from the result schema's
-  required fields.
+- `resultPresence` is `empty-only`, `partial`, or `required`. It controls result
+  presence without changing ordinary JSON Schema validation.
+- `allowedResultPaths`, `requiredResultPaths`, and `forbiddenResultPaths` are
+  complete, status-specific JSON Pointer policies. Every populated result field
+  must be allowed, every required path must be present, and forbidden paths must
+  be absent. The current contracts derive these paths from the top-level result
+  fields in each task schema.
+- `transitions` maps each status to its allowed next statuses. A terminal status
+  has no normal outgoing transitions. `superseded` is a distinct resumable
+  category where supported and may retain the prior result without requiring a
+  new one.
 - Unknown `x-sdlc-*` metadata is invalid until documented here and covered by the
   schema-audit tests.
 

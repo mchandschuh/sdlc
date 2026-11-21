@@ -1,12 +1,15 @@
 schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
 workItemId: WI-0037
 taskUid: WI-0037-10000000
-orderKey: '10000000'
+orderKey: "10000000"
 parentTaskUid: null
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement schema-declared lifecycle transitions and result policies
-objective: Add the generic Phase 1 lifecycle contract interpreter, task-specific transition metadata, complete per-status result-field allowlists, required and forbidden result paths, and deterministic lifecycle findings without conflating processing or outcome status.
+objective: Add the generic Phase 1 lifecycle contract interpreter, task-specific
+  transition metadata, complete per-status result-field allowlists, required and
+  forbidden result paths, and deterministic lifecycle findings without
+  conflating processing or outcome status.
 references:
   required:
     - .docs/work-items/WI-0037/work-item.json
@@ -38,31 +41,49 @@ governance:
     - schemas/
     - src/core/work-item-validation.ts
     - tests/
-  commitSubject: 'WI-0037: feat(schema): enforce lifecycle transition invariants'
+  commitSubject: "WI-0037: feat(schema): enforce lifecycle transition invariants"
   commitBody:
-    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
   validationProcedures:
     - id: typecheck
       executable: yarn
-      arguments: [typecheck]
+      arguments:
+        - typecheck
       expectedExitCode: 0
     - id: build
       executable: yarn
-      arguments: [build]
+      arguments:
+        - build
       expectedExitCode: 0
     - id: lifecycle-focused-tests
       executable: yarn
-      arguments: [test, tests/cli.test.ts, --run]
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
   intent:
-    summary: Implement generic lifecycle metadata interpretation and candidate-record validation for all ten task types.
-    changeTypes: [production-code, test-code, schema, documentation]
+    summary: Implement generic lifecycle metadata interpretation and
+      candidate-record validation for all ten task types.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+      - documentation
     changeIntent: feature
     inputs:
       - id: WI-0037-10000000_INPUT-REQ-001
@@ -87,20 +108,126 @@ task:
         required: true
     objectives:
       - id: WI-0037-10000000_OBJ-001
-        statement: Every supported task schema declares status categories, initialStatuses, transitions, resultPresence, allowedResultPaths, requiredResultPaths, and forbiddenResultPaths that match its status enum.
-        inputRefs: [WI-0037-10000000_INPUT-REQ-001, WI-0037-10000000_INPUT-REQ-002, WI-0037-10000000_INPUT-REQ-003]
-        testCaseRefs: ['#test-case/WI-0037-10000000_TC-METADATA-PARITY']
+        statement: Every supported task schema declares status categories,
+          initialStatuses, transitions, resultPresence, allowedResultPaths,
+          requiredResultPaths, and forbiddenResultPaths that match its status
+          enum.
+        inputRefs:
+          - WI-0037-10000000_INPUT-REQ-001
+          - WI-0037-10000000_INPUT-REQ-002
+          - WI-0037-10000000_INPUT-REQ-003
+        testCaseRefs:
+          - "#test-case/WI-0037-10000000_TC-METADATA-PARITY"
       - id: WI-0037-10000000_OBJ-002
-        statement: Generic lifecycle validation reports invalid transitions and status-aware result violations without task-type-specific status branches or inference from processingStatus or result.status.
-        inputRefs: [WI-0037-10000000_INPUT-REQ-002, WI-0037-10000000_INPUT-REQ-003, WI-0037-10000000_INPUT-REQ-004]
-        testCaseRefs: ['#test-case/WI-0037-10000000_TC-TRANSITIONS', '#test-case/WI-0037-10000000_TC-RESULT-POLICY']
-    ownedPaths: [schemas/, src/core/work-item-validation.ts, tests/]
+        statement: Generic lifecycle validation reports invalid transitions and
+          status-aware result violations without task-type-specific status
+          branches or inference from processingStatus or result.status.
+        inputRefs:
+          - WI-0037-10000000_INPUT-REQ-002
+          - WI-0037-10000000_INPUT-REQ-003
+          - WI-0037-10000000_INPUT-REQ-004
+        testCaseRefs:
+          - "#test-case/WI-0037-10000000_TC-TRANSITIONS"
+          - "#test-case/WI-0037-10000000_TC-RESULT-POLICY"
+    ownedPaths:
+      - schemas/
+      - src/core/work-item-validation.ts
+      - tests/
     nonGoals:
-      - Do not add task or work-item mutation commands, receipts, leases, or direct-edit enforcement.
-      - Do not implement readiness selection, requirement traceability, evidence freshness, merge gates, or completion eligibility.
-      - Do not infer implementation correctness, provider behavior, deployment safety, or production readiness from lifecycle fields.
+      - Do not add task or work-item mutation commands, receipts, leases, or
+        direct-edit enforcement.
+      - Do not implement readiness selection, requirement traceability, evidence
+        freshness, merge gates, or completion eligibility.
+      - Do not infer implementation correctness, provider behavior, deployment
+        safety, or production readiness from lifecycle fields.
     steps:
-      - Add the schema-declared lifecycle metadata extension to all ten supported task schemas.
-      - Implement generic status lookup, transition validation, result allowlist validation, required/forbidden path checks, and result-presence handling.
-      - Preserve ordinary JSON Schema precedence and the independent processingStatus/task.status/result.status boundary.
-      - Add focused valid and invalid lifecycle fixtures and deterministic finding coverage.
+      - Add the schema-declared lifecycle metadata extension to all ten
+        supported task schemas.
+      - Implement generic status lookup, transition validation, result allowlist
+        validation, required/forbidden path checks, and result-presence
+        handling.
+      - Preserve ordinary JSON Schema precedence and the independent
+        processingStatus/task.status/result.status boundary.
+      - Add focused valid and invalid lifecycle fixtures and deterministic
+        finding coverage.
+  result:
+    status: implemented
+    implementation:
+      summary: Added explicit lifecycle metadata to all ten task schemas and
+        implemented generic transition and status-aware result-policy
+        validation.
+      changes:
+        - id: WI-0037-10000000_CHANGE-001
+          type: schema
+          summary: Added initial statuses, status categories, result presence policies,
+            complete result path allowlists, required and forbidden paths, and
+            declarative transitions to every supported task schema.
+          objectiveRefs:
+            - WI-0037-10000000_OBJ-001
+          paths:
+            - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+            - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+            - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+            - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+            - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+            - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+            - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+            - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+            - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+            - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+        - id: WI-0037-10000000_CHANGE-002
+          type: production-code
+          summary: Extended the generic lifecycle interpreter with metadata parity checks,
+            result presence and path policy checks, initial-status checks, and
+            candidate transition validation without task-type-specific status
+            branches.
+          objectiveRefs:
+            - WI-0037-10000000_OBJ-002
+          paths:
+            - src/core/work-item-validation.ts
+        - id: WI-0037-10000000_CHANGE-003
+          type: documentation
+          summary: Documented the Phase 1 lifecycle metadata shape, transition graph,
+            result policy, and JSON Schema precedence.
+          objectiveRefs:
+            - WI-0037-10000000_OBJ-001
+            - WI-0037-10000000_OBJ-002
+          paths:
+            - schemas/README.md
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0037-10000000_TC-METADATA-PARITY"
+          path: tests/cli.test.ts
+          selector: covers the lifecycle vocabulary, metadata parity, result path
+            disjointness, and transition map for every task type
+        - testCaseRef: "#test-case/WI-0037-10000000_TC-TRANSITIONS"
+          path: tests/cli.test.ts
+          selector: rejects invalid initial, terminal, and implemented-unproven
+            transitions
+        - testCaseRef: "#test-case/WI-0037-10000000_TC-RESULT-POLICY"
+          path: tests/cli.test.ts
+          selector: rejects populated planned result fields through generic allowlist and
+            forbidden-path policy
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0037-10000000_OBJ-001
+        - WI-0037-10000000_OBJ-002
+      tests:
+        - id: WI-0037-10000000_EXEC-001
+          type: cli-audit
+          testCaseRefs:
+            - "#test-case/WI-0037-10000000_TC-METADATA-PARITY"
+            - "#test-case/WI-0037-10000000_TC-TRANSITIONS"
+            - "#test-case/WI-0037-10000000_TC-RESULT-POLICY"
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run
+          status: passed
+          result: Typecheck, build, and all 100 focused CLI tests passed; the schema audit
+            and WI-0037 work-item validation also passed.
+    limitations:
+      - Candidate transition validation is exposed as a generic validation
+        helper; no task or work-item mutation command, receipt, lease,
+        readiness, merge gate, or direct-edit enforcement is introduced in Phase
+        1.
+      - Result field presence and schema validity do not prove execution,
+        correctness, review, provider behavior, deployment safety, or production
+        readiness.

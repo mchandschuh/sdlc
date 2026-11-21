@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0037-task-lifecycle-invariants",
-      "created": false,
+      "created": true,
       "rationale": "The work item changes public task schema metadata, lifecycle validation, persisted task records, and the pre-1.0 package contract, so implementation should be processed on a dedicated context branch before returning to main for release."
     }
   },

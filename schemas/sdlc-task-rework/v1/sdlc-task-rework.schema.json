@@ -1185,22 +1185,67 @@
   "x-sdlc-task-lifecycle": {
     "statusProperty": "/status",
     "resultProperty": "/result",
+    "initialStatuses": [
+      "planned"
+    ],
     "statuses": {
       "planned": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "empty-only",
+        "allowedResultPaths": [],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
       },
       "active": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "blocked": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       },
       "corrected": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/summary",
@@ -1208,11 +1253,21 @@
           "/result/evidence",
           "/result/limitations",
           "/result/nonClaims"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "awaiting-review": {
         "kind": "milestone",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/summary",
@@ -1220,11 +1275,21 @@
           "/result/evidence",
           "/result/limitations",
           "/result/nonClaims"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "complete": {
         "kind": "terminal",
         "result": "required",
+        "resultPresence": "required",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
         "requiredResultPaths": [
           "/result/status",
           "/result/summary",
@@ -1232,12 +1297,53 @@
           "/result/evidence",
           "/result/limitations",
           "/result/nonClaims"
-        ]
+        ],
+        "forbiddenResultPaths": []
       },
       "deferred": {
         "kind": "transitional",
-        "result": "optional"
+        "result": "optional",
+        "resultPresence": "partial",
+        "allowedResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/corrections",
+          "/result/evidence",
+          "/result/limitations",
+          "/result/nonClaims"
+        ],
+        "requiredResultPaths": [],
+        "forbiddenResultPaths": []
       }
+    },
+    "transitions": {
+      "planned": [
+        "active",
+        "blocked",
+        "deferred"
+      ],
+      "active": [
+        "corrected"
+      ],
+      "blocked": [
+        "active"
+      ],
+      "corrected": [
+        "awaiting-review",
+        "blocked",
+        "deferred"
+      ],
+      "awaiting-review": [
+        "complete",
+        "blocked",
+        "deferred"
+      ],
+      "complete": [],
+      "deferred": [
+        "planned",
+        "active",
+        "blocked"
+      ]
     }
   }
 }
