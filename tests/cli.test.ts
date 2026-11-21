@@ -1264,6 +1264,42 @@ describe('discovery commands', () => {
     expect(source.data[0]).toEqual(expect.objectContaining({ id: 'SRC-001', sourceType: 'file', purpose: 'Explain the collection contract.' }));
   });
 
+  it('indexes batch 03 research result and decision intent collections', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-03-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'research.yaml'), [
+      'task:',
+      '  result:',
+      '    findings:',
+      '      - id: F-001',
+      '        statement: The registry is schema keyed.',
+      '    unresolvedQuestions:',
+      '      - id: Q-002',
+      '        question: Which future schemas need collection definitions?',
+      '    recommendations:',
+      '      - id: R-001',
+      '        recommendation: Keep the registry declarative.',
+      ''].join('\n'));
+    await writeFile(join(root, '.docs', 'tasks', 'decision.yaml'), [
+      'task:',
+      '  intent:',
+      '    alternatives:',
+      '      - id: ALT-001',
+      '        description: Keep command-specific collection implementations.',
+      '    criteria:',
+      '      - id: CRIT-001',
+      '        description: The registry must remain schema keyed.',
+      ''].join('\n'));
+
+    const research = 'https://schemas.handschuh.dev/sdlc/task-research/v1';
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'finding')).data).toEqual([{ id: 'F-001', statement: 'The registry is schema keyed.' }]);
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'unresolved-question')).data).toEqual([{ id: 'Q-002', question: 'Which future schemas need collection definitions?' }]);
+    expect((await listCollection(root, '.docs/tasks/research.yaml', research, 'recommendation')).data).toEqual([{ id: 'R-001', recommendation: 'Keep the registry declarative.' }]);
+    const decision = 'https://schemas.handschuh.dev/sdlc/task-decision/v1';
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'alternative')).data).toEqual([{ id: 'ALT-001', description: 'Keep command-specific collection implementations.' }]);
+    expect((await listCollection(root, '.docs/tasks/decision.yaml', decision, 'criterion')).data).toEqual([{ id: 'CRIT-001', description: 'The registry must remain schema keyed.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

@@ -4,7 +4,7 @@ taskUid: WI-0036-30000000
 orderKey: "30000000"
 parentTaskUid: WI-0036-21000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement collection-listing command batch 03
 objective: "Implement the declarative collection index, display projection, JSON
   response, and CLI behavior for command batch 3: sdlc task finding list --task
@@ -67,7 +67,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -134,3 +134,49 @@ task:
         collections.
       - Run the declared focused validation procedures and preserve failures for
         review.
+  result:
+    status: implemented
+    implementation:
+      summary: Extended the schema-backed registry for research findings, unresolved questions, recommendations, and decision alternatives/criteria with shared human/JSON collection behavior.
+      changes:
+        - id: WI-0036-30000000_CHANGE-001
+          type: production-code
+          summary: Added task-research and task-decision definitions for the five batch 03 collections with exact paths and declared identity/text selectors.
+          objectiveRefs:
+            - WI-0036-30000000_OBJ-001
+            - WI-0036-30000000_OBJ-002
+          paths:
+            - src/core/collection-list.ts
+        - id: WI-0036-30000000_CHANGE-002
+          type: test-code
+          summary: Added disposable fixture coverage for research result collections and decision intent collections while retaining complete CLI regression coverage.
+          objectiveRefs:
+            - WI-0036-30000000_OBJ-001
+            - WI-0036-30000000_OBJ-002
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/WI-0036-30000000_TC-RESEARCH-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes findings, unresolved questions, and recommendations from task-research result data
+        - testCaseRef: '#test-case/WI-0036-30000000_TC-DECISION-COLLECTIONS'
+          path: tests/cli.test.ts
+          selector: indexes alternatives and criteria from task-decision intent data
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0036-30000000_OBJ-001
+        - WI-0036-30000000_OBJ-002
+      tests:
+        - id: WI-0036-30000000_EXEC-FOCUSED-CLI
+          type: cli-audit
+          testCaseRefs:
+            - '#test-case/WI-0036-30000000_TC-RESEARCH-COLLECTIONS'
+            - '#test-case/WI-0036-30000000_TC-DECISION-COLLECTIONS'
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run --testTimeout=20000
+          status: passed
+          result: Typecheck, build, all 90 CLI tests, existing collection/reference regressions, research result fixture indexing, and decision intent fixture indexing passed.
+    limitations:
+      - This task implements batch 03 only; later collection batches remain declared in subsequent WI-0036 tasks.
+      - Batch 03 non-empty evidence uses disposable schema-shaped fixtures; no repository task records were mutated.
+      - Collection listing remains local filesystem/CLI behavior and does not establish provider, deployment, remote publication, or production evidence.

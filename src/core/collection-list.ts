@@ -227,6 +227,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', title: '/sourceType', text: '/purpose' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-research/v1',
+    name: 'finding',
+    index: { collectionPath: '/task/result/findings' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-research/v1',
+    name: 'unresolved-question',
+    index: { collectionPath: '/task/result/unresolvedQuestions' },
+    display: { identifier: '/id', text: '/question' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-research/v1',
+    name: 'recommendation',
+    index: { collectionPath: '/task/result/recommendations' },
+    display: { identifier: '/id', text: '/recommendation' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decision/v1',
+    name: 'alternative',
+    index: { collectionPath: '/task/intent/alternatives' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-decision/v1',
+    name: 'criterion',
+    index: { collectionPath: '/task/intent/criteria' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
