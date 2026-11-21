@@ -1,0 +1,124 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0035
+taskUid: WI-0035-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Implement reusable Git repository-root resolution
+objective: Add the shared Git-backed repository-root component, migrate command/context consumers, separate schema registry resolution, and remove singleton configured repository-root fallback behavior.
+references:
+  required:
+    - .docs/work-items/WI-0035/work-item.json
+    - .docs/work-items/WI-0035/repository-root-resolution-pattern.md
+    - package.json
+    - scripts/install.mjs
+    - src/core/configuration.ts
+    - src/core/operative-root.ts
+    - src/core/repository.ts
+    - src/core/work-item-validation.ts
+    - src/core/reference.ts
+    - src/cli/commands/
+    - tests/cli.test.ts
+    - tests/git-hooks.test.ts
+  informational:
+    - .cline/README.md
+    - schemas/sdlc-config/v1/sdlc-config.schema.json
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0035/steps/WI-0035-10000000-implementation.yaml
+    - src/core/
+    - src/cli/
+    - scripts/install.mjs
+    - tests/
+    - schemas/sdlc-config/
+  commitSubject: 'WI-0035: feat(repository): resolve roots through git'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: focused-root-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, tests/git-hooks.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Replace singleton configuration-based repository-root selection with a reusable Git resolver and route all repository-content operations through it.
+    changeTypes: [production-code, test-code, configuration]
+    changeIntent: refactor
+    inputs:
+      - id: WI-0035-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0035#work-item.json#requirement/WI-0035_REQ_001
+        purpose: Define Git as the repository-root authority.
+        required: true
+      - id: WI-0035-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0035#work-item.json#requirement/WI-0035_REQ_002
+        purpose: Require one shared component across commands and core code.
+        required: true
+      - id: WI-0035-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0035#work-item.json#requirement/WI-0035_REQ_003
+        purpose: Keep schema registry resolution separate from target repository content.
+        required: true
+      - id: WI-0035-10000000_INPUT-REQ-004
+        kind: requirement
+        ref: WI-0035#work-item.json#requirement/WI-0035_REQ_004
+        purpose: Remove unsafe singleton repository fallback behavior.
+        required: true
+    objectives:
+      - id: WI-0035-10000000_OBJ-001
+        statement: A reusable Git-backed component resolves and reports the nearest repository root for nested paths, files, worktrees, and explicit starting paths.
+        inputRefs: [WI-0035-10000000_INPUT-REQ-001, WI-0035-10000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/TC-GIT-ROOT', '#test-case/TC-GIT-WORKTREE']
+      - id: WI-0035-10000000_OBJ-002
+        statement: Repository-dependent commands, validation, references, migrations, branch checks, and hooks use the shared resolver without stale configured-root fallback.
+        inputRefs: [WI-0035-10000000_INPUT-REQ-002, WI-0035-10000000_INPUT-REQ-004]
+        testCaseRefs: ['#test-case/TC-MULTI-REPOSITORY', '#test-case/TC-NON-REPOSITORY', '#test-case/TC-COMMAND-CONSUMERS']
+      - id: WI-0035-10000000_OBJ-003
+        statement: schema-validate and reference-schema matching use the installed schema registry independently from repositoryRoot.
+        inputRefs: [WI-0035-10000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/TC-SCHEMA-REGISTRY-SEPARATION', '#test-case/TC-EXTERNAL-REPOSITORY']
+    ownedPaths: [src/core/, src/cli/, scripts/install.mjs, tests/, schemas/sdlc-config/]
+    nonGoals:
+      - Do not change command business semantics or JSON response schemas.
+      - Do not make repositoryRoot select schemas or invoke schema-validate.
+      - Do not introduce ambiguous automatic selection among named repositories.
+    steps:
+      - Add the reusable Git repository-root resolver and stable error/context contract.
+      - Replace commandContext repository-root fallback with Git resolution and preserve schemaRegistryRoot as a separate installed registry path.
+      - Route repository-dependent command/core operations and hooks through the shared component.
+      - Remove or migrate repositoryRoot config/installer behavior that creates a stale singleton fallback.
+      - Add isolated multi-repository, worktree, non-repository, schema-registry, and command-consumer tests.
+  result:
+    status: partially-implemented
+    implementation:
+      summary: Git-based repository-root replacement is planned but has not been processed.
+      changes:
+        - id: WI-0035-10000000_CHANGE-PLAN-001
+          type: documentation
+          summary: Recorded the Git-root authority, schema-registry separation, consumer migration, and multi-repository test plan.
+          objectiveRefs: [WI-0035-10000000_OBJ-001, WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
+          paths: [.docs/work-items/WI-0035/steps/WI-0035-10000000-implementation.yaml, .docs/work-items/WI-0035/repository-root-resolution-pattern.md]
+      testImplementations: []
+    verification:
+      status: not-run
+      objectiveRefs: [WI-0035-10000000_OBJ-001, WI-0035-10000000_OBJ-002, WI-0035-10000000_OBJ-003]
+      tests: []
+    limitations:
+      - Implementation, consumer migration, package gates, and schema-registry separation evidence do not exist yet.

@@ -1,0 +1,134 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0035
+taskUid: WI-0035-30000000
+orderKey: '30000000'
+parentTaskUid: WI-0035-20000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release Git repository-root resolution
+objective: Prepare and verify the next bounded primary-branch release after Git-root replacement, schema-registry separation, multi-repository validation, review, and package gates pass.
+references:
+  required:
+    - .docs/work-items/WI-0035/work-item.json
+    - .docs/work-items/WI-0035/repository-root-resolution-pattern.md
+    - .docs/work-items/WI-0035/steps/WI-0035-20000000-validation.yaml
+    - package.json
+    - yarn.lock
+    - scripts/install.mjs
+    - src/core/configuration.ts
+    - src/core/operative-root.ts
+    - src/core/work-item-validation.ts
+  informational:
+    - .cline/README.md
+dependsOn: [WI-0035-20000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0035/steps/WI-0035-30000000-release.yaml
+    - package.json
+  commitSubject: 'WI-0035: chore(release): complete git repository-root resolution'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0035, --json]
+      expectedExitCode: 0
+    - id: release-version
+      executable: node
+      arguments: [-p, "require('./package.json').version"]
+      expectedExitCode: 0
+    - id: release-tag
+      executable: git
+      arguments: [tag, --annotate, <computed-next-version>]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare the Git repository-root replacement as the next bounded primary-branch release.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: WI-0035-30000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0035-20000000#result/R-001
+        purpose: Confirm complete Git-root, schema-registry, package, command, and multi-repository validation passed.
+        required: true
+      - id: WI-0035-30000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the primary branch release revision.
+        required: true
+    artifacts:
+      - id: WI-0035-30000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Existing package metadata used as the sole tracked package version source.
+        required: true
+      - id: WI-0035-30000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/<computed-next-version>
+        purpose: Annotated SemVer tag created at the primary release tip.
+        required: true
+    procedures:
+      - id: WI-0035-30000000_PROC-COMPUTE-REVISION
+        sequence: 1
+        name: compute-revision-release
+        description: Derive the next revision from the highest reachable annotated SemVer tag and WI-0035 revision impact.
+        steps:
+          - Verify the context branch has been merged into main.
+          - Read the highest reachable annotated SemVer tag.
+          - Confirm WI-0035 validation passed and its versionSuggestion impact is revision or apply the repository's explicit impact policy.
+          - Update only the existing package.json version source.
+          - Build and verify the compiled CLI reports the computed version.
+        command: git tag --merged HEAD --list && node ./bin/cli.js --version
+        expected:
+          result: The computed release is recorded in package.json and the installed/compiled CLI reports the same version without adding a duplicate repository-version source.
+        required: true
+      - id: WI-0035-30000000_PROC-TAG-PRIMARY
+        sequence: 2
+        name: tag-primary-release
+        description: Create the annotated computed SemVer tag at the primary branch tip and push when a remote exists.
+        steps:
+          - Create the annotated computed tag on main.
+          - Verify the tag resolves to the primary release tip.
+          - Push main and the tag when the configured remote accepts the update.
+        command: git tag --annotate <computed-next-version> -m 'Release <computed-next-version>' HEAD
+        expected:
+          result: The primary branch contains the annotated computed release tag; remote publication is recorded only when configured and successful.
+        required: true
+    nonGoals:
+      - Do not tag the context branch.
+      - Do not publish a package registry artifact or deploy externally.
+      - Do not claim consumer migration or production readiness.
+  result:
+    status: blocked
+    summary: Release is planned but cannot execute until implementation, review, aggregate validation, merge, and primary-branch gates pass.
+    artifacts:
+      - id: WI-0035-30000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        checksum: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    executions:
+      - id: WI-0035-30000000_EXEC-RELEASE
+        procedureRef: '#procedure/WI-0035-30000000_PROC-COMPUTE-REVISION'
+        result:
+          status: blocked
+          summary: Release has not been attempted because Git-root implementation, review, validation, and primary-branch gates are not complete.
+    limitations:
+      - No release version, package checksum, annotated tag, consumer migration, publication, or deployment evidence exists yet.

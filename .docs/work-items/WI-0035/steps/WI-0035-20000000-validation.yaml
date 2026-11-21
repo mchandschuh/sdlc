@@ -1,0 +1,145 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0035
+taskUid: WI-0035-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0035-11000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate Git repository-root and schema-registry separation
+objective: Validate the complete Git-root component, multi-repository behavior, repository-dependent command migration, installer/config safety, schema-validate registry selection, package gates, and WI-0035 object tree.
+references:
+  required:
+    - .docs/work-items/WI-0035/work-item.json
+    - .docs/work-items/WI-0035/repository-root-resolution-pattern.md
+    - .docs/work-items/WI-0035/steps/WI-0035-10000000-implementation.yaml
+    - .docs/work-items/WI-0035/steps/WI-0035-11000000-review.yaml
+    - scripts/install.mjs
+    - src/core/configuration.ts
+    - src/core/operative-root.ts
+    - src/core/work-item-validation.ts
+    - src/core/reference.ts
+    - tests/cli.test.ts
+    - tests/git-hooks.test.ts
+    - schemas/sdlc-config/v1/sdlc-config.schema.json
+  informational:
+    - .cline/README.md
+dependsOn: [WI-0035-11000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0035/steps/WI-0035-20000000-validation.yaml]
+  commitSubject: 'WI-0035: test(repository): validate git root resolution'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: schema-validate
+      arguments: [--root, schemas]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0035, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Run the complete Git-root, command-consumer, configuration, schema-registry, package, and work-item validation matrix.
+    inputs:
+      - id: WI-0035-20000000_INPUT-IMPLEMENTATION-001
+        kind: implementation
+        ref: WI-0035-10000000#result/R-001
+        purpose: Identify the implementation result under validation.
+        required: true
+      - id: WI-0035-20000000_INPUT-REVIEW-001
+        kind: review
+        ref: WI-0035-11000000#result/R-001
+        purpose: Identify the independent review result.
+        required: true
+      - id: WI-0035-20000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0035#work-item.json#requirement/WI-0035_REQ_005
+        purpose: Define complete package, schema, command, and multi-repository gates.
+        required: true
+    targets:
+      - id: WI-0035-20000000_TARGET-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Validate current source, compiled output, tests, configuration, and installer behavior.
+        required: true
+      - id: WI-0035-20000000_TARGET-WORK-ITEM-001
+        kind: task
+        taskType: review
+        ref: WI-0035-11000000#result/R-001
+        purpose: Validate the review result and traceability.
+        required: true
+    objectiveRefs: []
+    testCaseRefs: ['#test-case/TC-MULTI-REPOSITORY', '#test-case/TC-SCHEMA-REGISTRY-SEPARATION', '#test-case/TC-PACKAGE-GATES', '#test-case/TC-WORK-ITEM']
+    procedures:
+      - id: WI-0035-20000000_VAL-COMPLETE-ROOT-MATRIX
+        sequence: 1
+        name: validate-git-root-and-schema-registry-matrix
+        description: Validate Git root selection, all repository-dependent consumers, stale configuration safety, installed schema registry use, package gates, and WI-0035 validation.
+        reason: Prove that repository content selection and schema selection are separate, deterministic, and safe across multiple repositories.
+        targetRefs: ['#target/WI-0035-20000000_TARGET-REPOSITORY-001', '#target/WI-0035-20000000_TARGET-WORK-ITEM-001']
+        objectiveRefs: []
+        testCaseRefs: ['#test-case/TC-MULTI-REPOSITORY', '#test-case/TC-SCHEMA-REGISTRY-SEPARATION', '#test-case/TC-PACKAGE-GATES', '#test-case/TC-WORK-ITEM']
+        method:
+          executionMode: executable
+          target: compiled sdlc CLI and disposable Git repositories
+          steps:
+            - Run yarn typecheck, yarn build, and the complete test suite.
+            - Create two disposable repositories and verify nested paths resolve to the correct Git root independently of stale user configuration.
+            - Verify non-repository paths fail with actionable errors and explicit path handling remains deterministic.
+            - Verify worktree root resolution and representative work-item, task, stat, reference, migration, branch, and hook operations use the shared root component.
+            - Validate external target work-items using the installed schema registry through schema-validate without a target schemas directory.
+            - Run the repository schema audit and validate the complete WI-0035 object tree.
+        expected:
+          outcome: passed
+          exitCode: 0
+          assertions:
+            - Git is the sole automatic repository-root authority.
+            - No stale singleton configured repositoryRoot is selected for an unrelated repository.
+            - schemaRegistryRoot remains independent and is passed to schema-validate.
+            - Complete package, test, schema, command, and work-item gates pass.
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim consumer deployment, package publication, remote operations, or production readiness.
+  result:
+    status: implemented-unproven
+    summary: Aggregate Git-root and schema-registry validation is planned but has not been executed.
+    executions:
+      - id: WI-0035-20000000_EXEC-COMPLETE-ROOT-MATRIX
+        procedureRef: '#procedure/WI-0035-20000000_VAL-COMPLETE-ROOT-MATRIX'
+        status: not-run
+        observed:
+          outcome: not-run
+          exitCode: null
+          summary: Validation is pending implementation, review, and execution on the WI-0035 context branch.
+          assertions: []
+        evidenceTier: cli-audit
+        evidence:
+          - kind: record
+            source: WI-0035-20000000 validation plan
+            claim: The complete Git-root and schema-registry validation matrix is declared but not executed.
+    findings: []
+    evidenceTier: cli-audit
+    limitations:
+      - No implementation, review, package, schema, multi-repository, or work-item validation evidence exists yet.
+    nonClaims:
+      - This planned validation does not establish consumer correctness, deployment, or production behavior.

@@ -1,0 +1,183 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0035",
+  "status": "planned",
+  "title": "Replace repository-root selection with reusable Git resolution",
+  "type": "refactor",
+  "objective": "Completely replace configuration-based repository-root selection with a reusable Git-backed repository-root component that commands and core code can consume consistently, while keeping the installed schema registry separate and continuing to resolve schemas through schema-validate.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0035-git-repository-root",
+      "created": false,
+      "rationale": "Repository-root selection affects every repository-dependent command and must be implemented, reviewed, and validated on a dedicated context branch before primary-branch release."
+    }
+  },
+  "baseline": "af9963a7dee8876bf12be45aeeadec8e2dfeca26",
+  "request": {
+    "source": "conversation",
+    "text": "sdlc should be resolving the repository root using git. Prepare a new work item to completely replace the current repository root resolution logic and replace it with using git to resolve the repository root. This should be a component that commands/code/etc can reference easily. Commit the work item.",
+    "sha256": "e2e987a345a35ff1ad72d5bdd6bb2a25e472f13f72e2d2c85283f760b6007f68"
+  },
+  "scope": [
+    {
+      "name": "git-repository-root-component",
+      "description": "Add one reusable Git-backed repository-root resolver that accepts a starting path or current working directory, invokes Git safely, normalizes the root, and exposes stable diagnostics/context for consumers.",
+      "reason": "Repository-dependent commands currently duplicate root assumptions and fall back to one global configured repository."
+    },
+    {
+      "name": "repository-context-migration",
+      "description": "Route configuration, operative-root helpers, command context, repository-dependent commands, validation, references, migrations, branch checks, and hooks through the shared Git-root component.",
+      "reason": "A reusable component is only effective when all repository-content operations use the same selection boundary."
+    },
+    {
+      "name": "schema-registry-separation",
+      "description": "Keep repositoryRoot exclusively for target repository content and Git operations; keep schemaRegistryRoot exclusively for the installed schema registry and schema-validate --root/--schema resolution.",
+      "reason": "External repositories must validate against the installed registry without requiring a schemas directory in the target repository."
+    },
+    {
+      "name": "configuration-and-installer-removal",
+      "description": "Remove the singleton ~/.sdlc/config.json repositoryRoot fallback and update install/config behavior so installing one repository cannot silently select it for unrelated repositories.",
+      "reason": "A single global repositoryRoot does not support multiple repositories on one machine and can target the wrong repository outside Git."
+    },
+    {
+      "name": "multi-repository-validation",
+      "description": "Add isolated tests for nested paths, sibling repositories, non-repository directories, explicit path overrides, worktrees, Git errors, schema registry separation, installer behavior, and every migrated command family.",
+      "reason": "The reported failure is a cross-repository selection defect and requires end-to-end evidence."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "schema-registry-relocation",
+      "description": "Do not move or duplicate the installed schema registry into target repositories and do not make repositoryRoot determine schema-validate resolution.",
+      "reason": "schemaRegistryRoot and schema-validate are separate package-owned schema concerns.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "arbitrary-repository-selection",
+      "description": "Do not silently select a configured or unrelated repository when Git cannot resolve a root; require an explicit path/profile mechanism for outside-repository operation.",
+      "reason": "Ambiguous repository selection is unsafe on machines containing multiple repositories.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "command-business-semantics",
+      "description": "Do not change command business behavior, output schemas, reference syntax, migration semantics, task identifiers, or schema contract meaning beyond root-selection diagnostics and wiring.",
+      "reason": "This work item changes repository context resolution rather than domain command semantics.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "remote-publication",
+      "description": "Do not publish packages, deploy, or push remote branches/tags as part of implementation or validation; release remains a bounded local primary-branch task.",
+      "reason": "Local repository-root evidence does not establish external deployment or publication.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0035_REQ_001",
+        "name": "git-root-authority",
+        "description": "The authoritative repository-root resolver must use Git to resolve the nearest repository root from an explicit starting path or current working directory and must not use ~/.sdlc/config.json repositoryRoot as a content-root fallback.",
+        "reason": "Git defines repository membership and handles nested directories, worktrees, and repository layout more reliably than a singleton user configuration value.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0035_REQ_001_AC_001",
+            "description": "A path inside a Git repository resolves to the normalized Git top-level root, including from nested directories and files."
+          },
+          {
+            "id": "WI-0035_REQ_001_AC_002",
+            "description": "A non-repository path returns a stable actionable error and never silently selects another configured repository."
+          },
+          {
+            "id": "WI-0035_REQ_001_AC_003",
+            "description": "The resolver supports explicit path input, current-working-directory fallback, Git worktrees, and safe Git command failure handling."
+          }
+        ]
+      },
+      {
+        "id": "WI-0035_REQ_002",
+        "name": "shared-repository-context",
+        "description": "Commands and core code must consume one reusable repository-root/context component instead of independently resolving or inferring repository roots.",
+        "reason": "One policy boundary is required for consistent behavior across CLI commands, validation, references, migrations, branch checks, and hooks.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0035_REQ_002_AC_001",
+            "description": "Repository-dependent command modules receive or call the shared resolver and no longer use a singleton configured repositoryRoot fallback."
+          },
+          {
+            "id": "WI-0035_REQ_002_AC_002",
+            "description": "Repository content operations, Git operations, relative-path calculations, and target reports use the same resolved root and preserve existing output contracts."
+          }
+        ]
+      },
+      {
+        "id": "WI-0035_REQ_003",
+        "name": "schema-registry-separation",
+        "description": "Schema validation must use the installed schema registry through schema-validate, with schemaRegistryRoot independent of repositoryRoot.",
+        "reason": "Target repositories may not contain schemas; schema-validate must resolve registered schemas from the installed registry rather than the target repository.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0035_REQ_003_AC_001",
+            "description": "schema-validate invocations receive schemaRegistryRoot as --root and schema paths are resolved within that registry."
+          },
+          {
+            "id": "WI-0035_REQ_003_AC_002",
+            "description": "Reference-schema discovery and validation do not read repositoryRoot/schemas when validating an external target repository."
+          },
+          {
+            "id": "WI-0035_REQ_003_AC_003",
+            "description": "Reports continue to identify target repository paths separately from schema registry paths."
+          }
+        ]
+      },
+      {
+        "id": "WI-0035_REQ_004",
+        "name": "installer-configuration-safety",
+        "description": "scripts/install.mjs and configuration resolution must stop treating one ~/.sdlc/config.json repositoryRoot value as the universal repository selection mechanism.",
+        "reason": "Installing repository B must not leave repository A as an implicit fallback for outside-repository commands.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0035_REQ_004_AC_001",
+            "description": "Installer behavior is idempotent and multi-repository-safe: installing one repository cannot silently overwrite or claim to register a different repository selection."
+          },
+          {
+            "id": "WI-0035_REQ_004_AC_002",
+            "description": "Outside-repository invocation requires an explicit target/profile or fails with actionable guidance rather than selecting a stale singleton repositoryRoot."
+          }
+        ]
+      },
+      {
+        "id": "WI-0035_REQ_005",
+        "name": "complete-root-resolution-evidence",
+        "description": "The change must have focused implementation/review tests, full package gates, external-repository validation, and a bounded release record before consumer adoption is considered.",
+        "reason": "Repository-root selection is a cross-cutting infrastructure boundary whose regression can affect every command.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0035_REQ_005_AC_001",
+            "description": "Tests cover at least two repositories, nested CWDs, non-repository paths, explicit selection, worktrees, stale config, installed registry schemas, and representative repository-dependent commands."
+          },
+          {
+            "id": "WI-0035_REQ_005_AC_002",
+            "description": "Typecheck, build, complete tests, schema audit, work-item validation, and release gates pass with no unresolved references."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0035/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Replaces public repository-root selection and configuration behavior with a reusable Git-backed component while preserving command semantics and separately retaining schema-registry resolution.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes introduce breaking command behavior or alter the public configuration contract beyond the planned replacement."
+  }
+}
