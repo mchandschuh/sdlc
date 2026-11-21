@@ -1341,6 +1341,38 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/design.yaml', design, 'element')).data).toEqual([{ id: 'ELEM-001', description: 'A versioned collection response.' }]);
   });
 
+  it('indexes batch 05 design result collections through the shared registry', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-05-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'design.yaml'), [
+      'task:',
+      '  result:',
+      '    relations:',
+      '      - id: REL-001',
+      '        description: Relates the registry to the CLI.',
+      '    views:',
+      '      - id: VIEW-001',
+      '        name: Human view',
+      '        description: Shows identifiers and text.',
+      '    artifacts:',
+      '      - id: ART-001',
+      '        name: Response schema',
+      '        description: Defines the JSON envelope.',
+      '    outcomes:',
+      '      - id: OUT-001',
+      '        statement: Complete objects are preserved.',
+      '    verificationObligations:',
+      '      - id: VO-001',
+      '        description: Verify lossless JSON output.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-design/v1';
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'relation')).data).toEqual([{ id: 'REL-001', description: 'Relates the registry to the CLI.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'view')).data).toEqual([{ id: 'VIEW-001', name: 'Human view', description: 'Shows identifiers and text.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'artifact')).data).toEqual([{ id: 'ART-001', name: 'Response schema', description: 'Defines the JSON envelope.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'outcome')).data).toEqual([{ id: 'OUT-001', statement: 'Complete objects are preserved.' }]);
+    expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'verification-obligation')).data).toEqual([{ id: 'VO-001', description: 'Verify lossless JSON output.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

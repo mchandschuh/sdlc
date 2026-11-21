@@ -10,6 +10,12 @@ export interface CollectionDefinition {
   readonly name: string;
   readonly index: {
     readonly collectionPath: string;
+    readonly argument?: string;
+    readonly variants?: Readonly<Record<string, string>>;
+    readonly filter?: {
+      readonly argument: string;
+      readonly path: string;
+    };
     readonly parent?: {
       readonly argument: string;
       readonly identifierPath: string;
@@ -297,6 +303,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', text: '/description' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'relation',
+    index: { collectionPath: '/task/result/relations' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'view',
+    index: { collectionPath: '/task/result/views' },
+    display: { identifier: '/id', title: '/name', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'artifact',
+    index: { collectionPath: '/task/result/artifacts' },
+    display: { identifier: '/id', title: '/name', text: '/description' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'outcome',
+    index: { collectionPath: '/task/result/outcomes' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-design/v1',
+    name: 'verification-obligation',
+    index: { collectionPath: '/task/result/verificationObligations' },
+    display: { identifier: '/id', text: '/description' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
@@ -310,20 +351,35 @@ export function collectionDefinitions(): readonly CollectionDefinition[] {
 }
 
 function selectCollection(document: unknown, definition: CollectionDefinition, arguments_: Readonly<Record<string, string>>): readonly unknown[] {
-  let selected = readCollectionPath(document, definition.index.collectionPath);
-  if (selected === undefined) throw new DiscoveryError(`Collection path not found: ${definition.index.collectionPath}`);
+  const collectionPath = definition.index.variants
+    ? definition.index.variants[arguments_[definition.index.argument ?? ''] ?? '']
+    : definition.index.collectionPath;
+  if (!collectionPath) throw new DiscoveryError(`Collection ${definition.name} requires --${definition.index.argument ?? 'selector'} <value>.`);
+  let selected = readCollectionPath(document, collectionPath);
+  if (selected === undefined) throw new DiscoveryError(`Collection path not found: ${collectionPath}`);
   if (definition.index.parent) {
     if (definition.index.childPath === undefined) throw new DiscoveryError(`Collection ${definition.name} has no child path.`);
     const parentId = arguments_[definition.index.parent.argument];
     if (!parentId) throw new DiscoveryError(`Collection ${definition.name} requires --${definition.index.parent.argument} <identifier>.`);
-    if (!Array.isArray(selected)) throw new DiscoveryError(`Collection path is not an array: ${definition.index.collectionPath}`);
+    if (!Array.isArray(selected)) throw new DiscoveryError(`Collection path is not an array: ${collectionPath}`);
     const matches = selected.filter((item) => selectorValue(item, definition.index.parent!.identifierPath) === parentId);
     if (matches.length === 0) throw new DiscoveryError(`Parent ${definition.index.parent.argument} not found: ${parentId}`);
     if (matches.length > 1) throw new DiscoveryError(`Parent ${definition.index.parent.argument} is ambiguous: ${parentId}`);
     selected = readCollectionPath(matches[0], definition.index.childPath);
   }
-  if (!Array.isArray(selected)) throw new DiscoveryError(`Collection path is not an array: ${definition.index.childPath ?? definition.index.collectionPath}`);
-  return selected;
+  if (!Array.isArray(selected)) throw new DiscoveryError(`Collection path is not an array: ${definition.index.childPath ?? collectionPath}`);
+  let items: readonly unknown[] = selected;
+  if (definition.index.filter) {
+    const filterValue = arguments_[definition.index.filter.argument];
+    if (!filterValue) throw new DiscoveryError(`Collection ${definition.name} requires --${definition.index.filter.argument} <value>.`);
+    items = selected.filter((item) => selectorValue(item, definition.index.filter!.path) === filterValue);
+  }
+  return items;
+}
+
+function collectionIndexExpression(definition: CollectionDefinition, arguments_: Readonly<Record<string, string>>): string {
+  if (!definition.index.variants) return definition.index.childPath ?? definition.index.collectionPath;
+  return definition.index.variants[arguments_[definition.index.argument ?? ''] ?? ''] ?? definition.index.collectionPath;
 }
 
 function validateIdentity(items: readonly unknown[], definition: CollectionDefinition): void {
@@ -355,7 +411,7 @@ export async function listCollection(
   arguments_: Readonly<Record<string, string>> = {},
 ): Promise<CollectionListReport> {
   const definition = resolveCollectionDefinition(documentType, collection);
-  const indexExpression = definition?.index.childPath ?? definition?.index.collectionPath ?? '';
+  const indexExpression = definition ? collectionIndexExpression(definition, arguments_) : '';
   if (!definition) return report(documentType, collection, indexExpression, null, [], [`Unknown collection definition: ${documentType} / ${collection}`]);
   let document: ParsedDocument | undefined;
   try {
