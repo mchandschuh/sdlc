@@ -1784,6 +1784,29 @@ describe('discovery commands', () => {
     for (const key of metadataKeys) expect(readme).toContain(` ${key} `.replaceAll('\u0000', '`'));
   });
 
+  it('documents the WI-0038 CLI response schema family and Phase 2 boundaries', async () => {
+    const expected = [
+      ['schemas/sdlc-cli-dependency-linearization/v1/sdlc-cli-dependency-linearization.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-dependency-linearization/v1'],
+      ['schemas/sdlc-cli-task-next/v1/sdlc-cli-task-next.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-task-next/v1'],
+      ['schemas/sdlc-cli-work-item-next/v1/sdlc-cli-work-item-next.schema.json', 'https://schemas.handschuh.dev/sdlc/cli-work-item-next/v1'],
+    ] as const;
+    for (const [relativePath, id] of expected) {
+      const schema = JSON.parse(await readFile(join(process.cwd(), relativePath), 'utf8')) as { $id?: string; type?: string; additionalProperties?: boolean; examples?: unknown[] };
+      expect(schema.$id).toBe(id);
+      expect(schema.type).toBe('object');
+      expect(schema.additionalProperties).toBe(false);
+      expect(schema.examples?.length ?? 0).toBeGreaterThan(0);
+    }
+    const contract = await readFile(join(process.cwd(), '.docs/work-items/WI-0038/phase-2-dependency-graph-contract.md'), 'utf8');
+    expect(contract).toContain('only dependency source is explicit `dependsOn` data');
+    expect(contract).toContain('No graph SHA-256 or linearization SHA-256 values are required in Phase 2.');
+    expect(contract).toContain('Phase 3 must extend `task next`');
+    expect(contract).toContain('Phase 3 must extend `work-item next`');
+    const completeness = await readFile(join(process.cwd(), '.docs/agentic-completeness-phases.md'), 'utf8');
+    expect(completeness).toContain('graph from explicit `dependsOn` references only');
+    expect(completeness).toContain('initial deterministic `work-item next` selector');
+  });
+
   it.each([
     ['planned', 'omitted'],
     ['active', 'null'],

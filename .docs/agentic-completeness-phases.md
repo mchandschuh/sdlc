@@ -176,22 +176,22 @@ order while preserving reproducible selection.
 
 ### Deterministic mechanisms
 
-- add `sdlc task linearize`;
-- build a graph from `dependsOn` and `parentTaskUid`;
+- build a graph from explicit `dependsOn` references only;
 - detect missing nodes and cycles;
 - produce stable topological order;
-- include graph and linearization digests; and
-- make `task next` consume the linearization.
+- make `task next` consume the linearization; and
+- add an initial deterministic `work-item next` selector.
 
 ### Recommended future work item
 
 **Title:** Add deterministic dependency-aware task linearization
 
 **Scope:** Implement graph construction, validation, cycle detection, stable
-topological ordering, a versioned linearization report, graph digests, and
-linearization-aware `task next` tests.
+topological ordering, versioned CLI response contracts, dependency-aware `task
+next`, initial `work-item next`, and representative tests.
 
 **Non-goals:** Do not decide task readiness, execute tasks, mutate task records,
+add leases, infer work-item dependencies, require graph or linearization digests,
 or infer dependencies from prose.
 
 ## Phase 3 — Work-item and task readiness
