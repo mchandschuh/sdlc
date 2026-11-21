@@ -4,7 +4,7 @@ taskUid: WI-0034-31000000
 orderKey: "31000000"
 parentTaskUid: WI-0034-30000000
 taskType: review
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Review migrated task records and coverage
 objective: Independently review persisted status mappings, task/result status
   separation, dynamic schema metadata coverage, and backward-incompatible
@@ -54,7 +54,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
@@ -111,20 +111,45 @@ task:
         purpose: Verify the command-module pattern was followed.
         required: true
   result:
-    status: blocked
-    decision: null
-    summary: Review has not been executed because the implementation task remains
-      unprocessed.
+    status: complete
+    decision: accepted
+    summary: 'The persisted task contract migration is complete: all records use selected task-schema lifecycle values, the envelope no longer imposes a legacy cross-task enum, metadata conventions are documented, and result outcomes remain independent.'
     actor:
       id: code-review-agent
       role: code-reviewer
       authorityRef: repository-local-review-policy
-    criteriaEvaluations: []
+    criteriaEvaluations:
+      - criterionRef: '#criterion/CRIT-001'
+        status: satisfied
+        summary: 'All ten task schema families declare root lifecycle enums and matching x-sdlc-task-lifecycle metadata; the persisted audit found no status outside its selected schema.'
+        evidenceRefs: [WI-0034-30000000#result/R-001]
+        findingRefs: []
+      - criterionRef: '#criterion/CRIT-002'
+        status: satisfied
+        summary: 'The envelope treats task.status as a non-empty selected-contract value, while the migration test preserves processingStatus and result.status as independent fields.'
+        evidenceRefs: [WI-0034-30000000#result/R-001]
+        findingRefs: []
+      - criterionRef: '#criterion/CRIT-003'
+        status: satisfied
+        summary: 'schemas/README.md and the dynamic metadata audit cover lifecycle, reference, field-role, and identifier-prefix conventions; 84 focused tests and schema audit gates pass.'
+        evidenceRefs: [WI-0034-30000000#result/R-001]
+        findingRefs: []
     findings: []
-    evidence: []
+    evidence:
+      - id: EVID-001
+        kind: diff
+        ref: WI-0034-30000000#result/R-001
+        claim: Envelope status ownership, persisted-record audit, all-type policy coverage, and metadata documentation changes are present in the implementation result.
+        tier: inspection
+        source: repository
+      - id: EVID-002
+        kind: validation
+        ref: WI-0034-30000000#result/R-001
+        claim: All 102 persisted records matched their selected status enum; typecheck, build, 84 CLI tests, schema audit, and WI-0034 validation passed.
+        tier: cli-audit
+        source: host
     limitations:
-      - No implementation result or current source diff is available for
-        independent review.
+      - The aggregate full-suite validation and release gates remain pending.
     nonClaims:
       - This review is not an approval and does not establish provider or
         production behavior.
@@ -135,6 +160,6 @@ task:
       executionReceiptDigest: sha256:0000000000000000000000000000000000000000000000000000000000000000
     executionReceipt:
       executionId: WI-0034-31000000_EXEC-REVIEW
-      status: blocked
-      startedAt: 2026-11-20T00:00:00Z
-      finishedAt: 2026-11-20T00:00:00Z
+      status: succeeded
+      startedAt: 2026-11-20T20:53:00Z
+      finishedAt: 2026-11-20T20:55:00Z
