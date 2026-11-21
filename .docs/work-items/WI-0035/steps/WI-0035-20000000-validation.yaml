@@ -4,7 +4,7 @@ taskUid: WI-0035-20000000
 orderKey: '20000000'
 parentTaskUid: WI-0035-11000000
 taskType: validation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Validate Git repository-root and schema-registry separation
 objective: Validate the complete Git-root component, multi-repository behavior, repository-dependent command migration, installer/config safety, schema-validate registry selection, package gates, and WI-0035 object tree.
 references:
@@ -53,7 +53,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: complete
   taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
@@ -121,25 +121,39 @@ task:
     nonGoals:
       - Do not claim consumer deployment, package publication, remote operations, or production readiness.
   result:
-    status: implemented-unproven
-    summary: Aggregate Git-root and schema-registry validation is planned but has not been executed.
+    status: passed
+    summary: The complete Git repository-root and schema-registry validation matrix passed typecheck, build, the full 96-test suite, the canonical 40-schema audit, external target validation, and WI-0035 object validation.
     executions:
       - id: WI-0035-20000000_EXEC-COMPLETE-ROOT-MATRIX
         procedureRef: '#procedure/WI-0035-20000000_VAL-COMPLETE-ROOT-MATRIX'
-        status: not-run
+        status: passed
         observed:
-          outcome: not-run
-          exitCode: null
-          summary: Validation is pending implementation, review, and execution on the WI-0035 context branch.
-          assertions: []
+          outcome: passed
+          exitCode: 0
+          summary: Typecheck, build, complete tests, schema audit, Git-root coverage, schema-registry separation, external target validation, and WI-0035 validation all passed.
+          assertions:
+            - Complete suite passed 96 tests across command discovery, CLI behavior, Git hook integration, and repository-root resolution.
+            - Direct repository-root tests passed nested directory, file, non-repository, explicit path, stale configuration, and Git worktree scenarios.
+            - The installed schema registry validated external target work-item content without requiring a target repository schemas directory.
+            - The canonical schema audit passed all 40 registered schemas and both governance rules.
+            - WI-0035 validation reported 5 valid objects and 0 invalid objects.
         evidenceTier: cli-audit
         evidence:
-          - kind: record
-            source: WI-0035-20000000 validation plan
-            claim: The complete Git-root and schema-registry validation matrix is declared but not executed.
+          - kind: command
+            source: WI-0035-20000000_EXEC-COMPLETE-ROOT-MATRIX
+            claim: Typecheck, build, and complete tests passed.
+            command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test --run
+          - kind: command
+            source: WI-0035-20000000_EXEC-COMPLETE-ROOT-MATRIX
+            claim: The canonical schema audit passed all 40 schemas and governance rules.
+            command: node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          - kind: command
+            source: WI-0035-20000000_EXEC-COMPLETE-ROOT-MATRIX
+            claim: External target validation used the installed schema registry and WI-0035 validated with no invalid objects.
+            command: node ./bin/cli.js work-item validate --work-item WI-0035 --json; focused external-repository CLI tests
     findings: []
     evidenceTier: cli-audit
     limitations:
-      - No implementation, review, package, schema, multi-repository, or work-item validation evidence exists yet.
+      - Evidence covers local source, compiled CLI, installed schema registry, disposable repositories, and local Git hooks; it does not claim remote publication, deployment, consumer migration, or production readiness.
     nonClaims:
       - This planned validation does not establish consumer correctness, deployment, or production behavior.
