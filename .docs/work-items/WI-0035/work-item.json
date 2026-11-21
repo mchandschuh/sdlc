@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0035",
-  "status": "planned",
+  "status": "complete",
   "title": "Replace repository-root selection with reusable Git resolution",
   "type": "refactor",
   "objective": "Completely replace configuration-based repository-root selection with a reusable Git-backed repository-root component that commands and core code can consume consistently, while keeping the installed schema registry separate and continuing to resolve schemas through schema-validate.",

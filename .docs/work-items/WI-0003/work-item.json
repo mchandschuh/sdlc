@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0003",
-  "status": "planned",
+  "status": "implemented",
   "title": "Normalize work-item and task list option syntax",
   "type": "feature",
   "objective": "Update the sdlc work-item and task listing commands to use the explicit --work-item <work-item> option form consistently.",

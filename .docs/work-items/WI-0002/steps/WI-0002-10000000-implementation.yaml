@@ -55,7 +55,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result

@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0004",
-  "status": "planned",
+  "status": "implemented",
   "title": "Add sdlc stat path inspection command",
   "type": "feature",
   "objective": "Add a read-only sdlc stat --path <file-path> command that returns one stable JSON structure for any tracked file path regardless of object type.",

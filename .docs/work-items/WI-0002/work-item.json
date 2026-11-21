@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v2",
   "workItemId": "WI-0002",
-  "status": "planned",
+  "status": "implemented",
   "title": "Add sdlc work-item and task listing commands",
   "type": "feature",
   "objective": "Add read-only sdlc work-item list and sdlc task list <work-item-id> commands that enumerate canonical work-item and task records deterministically.",
