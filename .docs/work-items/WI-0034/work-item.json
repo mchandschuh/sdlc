@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0034-task-lifecycle-status",
-      "created": false,
+      "created": true,
       "rationale": "The task contract and validator changes are breaking schema changes and must be processed on a dedicated context branch before the pre-1.0 minor release is prepared on the primary branch."
     }
   },
