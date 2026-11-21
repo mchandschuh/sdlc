@@ -15,7 +15,7 @@
     },
     "branch": {
       "name": "WI-0036-declarative-collection-listing",
-      "created": false,
+      "created": true,
       "rationale": "The feature adds public collection-listing commands and a response contract, so implementation and review should be processed on a dedicated work-item branch before returning to the primary branch for release."
     }
   },
