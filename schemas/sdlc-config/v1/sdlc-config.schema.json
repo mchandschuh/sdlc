@@ -4,13 +4,13 @@
   "title": "SDLC Configuration v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "repositoryRoot"],
+  "required": ["schema"],
   "properties": {
     "schema": {"const": "https://schemas.handschuh.dev/sdlc/config/v1"},
     "repositoryRoot": {"type": "string", "pattern": "^/.+$", "description": "Absolute default target repository root."},
     "schemaRegistryRoot": {"type": "string", "pattern": "^/.+$", "description": "Optional absolute root containing the sdlc schemas directory."}
   },
   "examples": [
-    {"schema": "https://schemas.handschuh.dev/sdlc/config/v1", "repositoryRoot": "/home/michael/src/algorithms/coinbase-btcusd"}
+    {"schema": "https://schemas.handschuh.dev/sdlc/config/v1"}
   ]
 }

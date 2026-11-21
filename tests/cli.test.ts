@@ -88,7 +88,7 @@ describe('CLI interface', () => {
     expect(errors.at(-1)).toContain('No Git repository found from path');
   });
 
-  it('resolves application, home, and SDLC_CONFIG layers with source provenance and configured-root fallback', async () => {
+  it('resolves configuration provenance without using a configured repository root fallback', async () => {
     const root = await mkdtemp(join(tmpdir(), 'sdlc-config-precedence-'));
     const application = join(root, 'application');
     const home = join(root, 'home');
@@ -114,13 +114,11 @@ describe('CLI interface', () => {
       source: 'environment',
       sourcePath: join(environmentRoot, 'config.json'),
     }));
+    await execFileAsync('git', ['-C', applicationRepository, 'init', '--quiet']);
     const originalCwd = process.cwd();
     try {
       process.chdir(root);
-      await expect(commandContext(undefined, options)).resolves.toEqual(expect.objectContaining({
-        repositoryRoot: environmentRepository,
-        configSource: 'environment',
-      }));
+      await expect(commandContext(undefined, options)).rejects.toThrow('No Git repository found from path');
       await expect(commandContext(applicationRepository, options)).resolves.toEqual(expect.objectContaining({ repositoryRoot: applicationRepository }));
     } finally {
       process.chdir(originalCwd);

@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
 import { stat as statFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { promisify } from 'node:util';
+import { resolveRepositoryRoot } from './repository-root.js';
 
 const execFileAsync = promisify(execFile);
 export const REPOSITORY_INFO_SCHEMA = 'https://schemas.handschuh.dev/sdlc/repository/info/v1';
@@ -20,40 +21,26 @@ async function gitValue(repositoryRoot: string, args: readonly string[]): Promis
   return result.stdout.trim();
 }
 
-async function isGitBoundary(directory: string): Promise<boolean> {
-  try {
-    await statFile(resolve(directory, '.git'));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function repositoryInfo(repositoryPath: string): Promise<RepositoryInfoReport> {
   if (!repositoryPath || repositoryPath.startsWith('-')) throw new Error('--path requires a path.');
   const fullPath = resolve(repositoryPath);
-  let current = fullPath;
   try {
-    if (!(await statFile(current)).isDirectory()) current = dirname(current);
+    if (!(await statFile(fullPath)).isDirectory()) {
+      await statFile(fullPath);
+    }
   } catch {
     throw new Error(`Path not found: ${repositoryPath}`);
   }
-  while (!(await isGitBoundary(current))) {
-    const parent = dirname(current);
-    if (parent === current) throw new Error(`No Git repository found from path: ${repositoryPath}`);
-    current = parent;
-  }
-  const [repositoryRoot, gitDir, bare, origin] = await Promise.all([
-    gitValue(current, ['rev-parse', '--show-toplevel']),
-    gitValue(current, ['rev-parse', '--git-dir']),
-    gitValue(current, ['rev-parse', '--is-bare-repository']),
-    gitValue(current, ['config', '--get', 'remote.origin.url']).catch(() => ''),
+  const resolved = await resolveRepositoryRoot({ startingPath: fullPath });
+  const [bare, origin] = await Promise.all([
+    gitValue(resolved.repositoryRoot, ['rev-parse', '--is-bare-repository']),
+    gitValue(resolved.repositoryRoot, ['config', '--get', 'remote.origin.url']).catch(() => ''),
   ]);
   return {
     schema: REPOSITORY_INFO_SCHEMA,
     fullPath,
-    repositoryRoot: resolve(repositoryRoot),
-    gitDir: resolve(current, gitDir),
+    repositoryRoot: resolved.repositoryRoot,
+    gitDir: resolved.gitDirectory,
     isBare: bare === 'true',
     origin: origin || null,
   };

@@ -168,6 +168,8 @@ describe('unified Git hook dispatcher', () => {
     expect(first.every((content, index) => content.includes(`git_hooks.mjs" dispatch "${HOOKS[index]}" "$@"`))).toBe(true);
     const normalized = first.map((content, index) => content.match(/# >>> sdlc managed hook >>>[\s\S]*?# <<< sdlc managed hook <<</u)?.[0]?.replace(`dispatch \"${HOOKS[index]}\"`, 'dispatch \"<hook>\"'));
     expect(new Set(normalized).size).toBe(1);
+    const installedConfig = JSON.parse(await readFile(join(repository.root, 'home/.sdlc/config.json'), 'utf8')) as Record<string, unknown>;
+    expect(installedConfig.repositoryRoot).toBeUndefined();
   });
 
   it('executes every actual installed hook wrapper and forwards the wrapper boundary', async () => {

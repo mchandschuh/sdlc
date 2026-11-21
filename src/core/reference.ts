@@ -44,16 +44,16 @@ async function schemaFiles(directory: string): Promise<string[]> {
   return files;
 }
 
-export async function discoverReferenceSchemas(repositoryRoot: string): Promise<ReferenceSchema[]> {
-  const cached = schemaCache.get(repositoryRoot);
+export async function discoverReferenceSchemas(schemaRegistryRoot: string): Promise<ReferenceSchema[]> {
+  const cached = schemaCache.get(schemaRegistryRoot);
   if (cached) return cached;
-  const pending = discoverReferenceSchemasUncached(repositoryRoot);
-  schemaCache.set(repositoryRoot, pending);
+  const pending = discoverReferenceSchemasUncached(schemaRegistryRoot);
+  schemaCache.set(schemaRegistryRoot, pending);
   return pending;
 }
 
-async function discoverReferenceSchemasUncached(repositoryRoot: string): Promise<ReferenceSchema[]> {
-  const root = join(repositoryRoot, 'schemas');
+async function discoverReferenceSchemasUncached(schemaRegistryRoot: string): Promise<ReferenceSchema[]> {
+  const root = join(schemaRegistryRoot, 'schemas');
   const schemas: ReferenceSchema[] = [];
   for (const path of await schemaFiles(root)) {
     const schema = objectValue(JSON.parse(await readFile(path, 'utf8')));
@@ -64,7 +64,7 @@ async function discoverReferenceSchemasUncached(repositoryRoot: string): Promise
     }
     schemas.push({
       id: schema.$id,
-      path: relative(repositoryRoot, path).split('\\').join('/'),
+      path: relative(schemaRegistryRoot, path).split('\\').join('/'),
       examples: schema.examples as string[],
       schema,
     });
@@ -84,8 +84,8 @@ function matchesSchema(schema: unknown, value: string): boolean {
   return Array.isArray(allOf) && allOf.every((alternative) => matchesSchema(alternative, value));
 }
 
-export async function validateReference(repositoryRoot: string, ref: string): Promise<ReferenceValidationReport> {
-  const schemas = await discoverReferenceSchemas(repositoryRoot);
+export async function validateReference(schemaRegistryRoot: string, ref: string): Promise<ReferenceValidationReport> {
+  const schemas = await discoverReferenceSchemas(schemaRegistryRoot);
   const matches = schemas
     .filter((candidate) => matchesSchema(candidate.schema, ref))
     .map(({ id, path }) => ({ schemaId: id, path }));

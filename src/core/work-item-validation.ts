@@ -286,7 +286,7 @@ async function validateTask(repositoryRoot: string, schemaRoot: string, temporar
   };
 }
 
-export async function validateWorkItem(repositoryRoot: string, workItemId: string, selectedTaskUid?: string, schemaRoot = resolve(repositoryRoot, 'schemas')): Promise<WorkItemValidationReport> {
+export async function validateWorkItem(repositoryRoot: string, workItemId: string, selectedTaskUid?: string, schemaRoot = packageRoot): Promise<WorkItemValidationReport> {
   if (!WORK_ITEM_ID.test(workItemId)) throw new DiscoveryError(`Invalid work-item ID: ${workItemId}`);
   const workItemPath = resolve(repositoryRoot, `.docs/work-items/${workItemId}/work-item.json`);
   const temporaryDirectory = await mkdtemp(join('/tmp', 'sdlc-work-item-validation-'));
