@@ -4,7 +4,7 @@ taskUid: WI-0034-30000000
 orderKey: "30000000"
 parentTaskUid: WI-0034-21000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Migrate task records and add status contract coverage
 objective: Migrate all persisted task envelopes and examples to type-specific
   task statuses, add dynamic metadata/documentation coverage, and test every
@@ -65,7 +65,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -120,25 +120,51 @@ task:
         x-sdlc-* lifecycle metadata generically.
       - Run focused tests and the complete repository validation gates.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The reference command migration is planned but has not been processed.
+      summary: Migrated the task contract boundary from the legacy envelope-wide lifecycle enum to selected task-schema ownership, audited all 102 persisted task envelopes, and added dynamic status/result separation and all-type lifecycle coverage.
       changes:
-        - id: WI-0034-30000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the reference command migration plan.
+        - id: WI-0034-30000000_CHANGE-001
+          type: schema
+          summary: Removed the obsolete envelope-wide task.status enum, retained a non-empty selected-contract status value, and preserved nullable/omittable result support for transitional statuses.
           objectiveRefs:
             - WI-0034-30000000_OBJ-001
             - WI-0034-30000000_OBJ-002
           paths:
-            - .docs/work-items/WI-0034/steps/WI-0034-30000000-implementation.yaml
-      testImplementations: []
+            - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+        - id: WI-0034-30000000_CHANGE-002
+          type: migration
+          summary: Audited every persisted YAML task envelope and confirmed each task.status is valid for its selected taskSchema; existing records already use valid type-specific lifecycle values and required no speculative result-status rewrites.
+          objectiveRefs: [WI-0034-30000000_OBJ-001, WI-0034-30000000_OBJ-002]
+          paths: [.docs/work-items/]
+        - id: WI-0034-30000000_CHANGE-003
+          type: test-code
+          summary: Added dynamic persisted-record status audit and all-ten-task-type lifecycle vocabulary/result-policy coverage, including explicit processingStatus and result.status separation assertions.
+          objectiveRefs: [WI-0034-30000000_OBJ-001, WI-0034-30000000_OBJ-002]
+          paths: [tests/cli.test.ts]
+        - id: WI-0034-30000000_CHANGE-004
+          type: documentation
+          summary: Documented x-identifier-prefix-conventions alongside lifecycle, reference, and field-role metadata in schemas/README.md and retained the dynamic metadata documentation audit.
+          objectiveRefs: [WI-0034-30000000_OBJ-002]
+          paths: [schemas/README.md]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-PERSISTED-STATUS-AUDIT'
+          path: tests/cli.test.ts
+          selector: audits every persisted task status against its selected task contract
+        - testCaseRef: '#test-case/TC-ALL-TASK-TYPES'
+          path: tests/cli.test.ts
+          selector: covers the declared lifecycle vocabulary and result policy for every task type
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - WI-0034-30000000_OBJ-001
         - WI-0034-30000000_OBJ-002
-      tests: []
+      tests:
+        - id: WI-0034-30000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-PERSISTED-STATUS-AUDIT', '#test-case/TC-ALL-TASK-TYPES']
+          command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test tests/cli.test.ts --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate && node ./bin/cli.js work-item validate --work-item WI-0034 --json
+          status: passed
+          result: All 102 persisted task envelopes matched their selected task schema status enum; all ten lifecycle vocabularies and result policies were covered; 84 CLI tests, schema audit, and WI-0034 validation passed.
     limitations:
-      - Implementation has not been processed; no reference command evidence
-        exists yet.
+      - Existing persisted records required no value rewrite because their current statuses already conform; future task types must declare and audit their own lifecycle values. Aggregate validation, final review, and release remain pending.

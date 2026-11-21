@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -129,6 +130,20 @@
           }
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "awaiting-approval",
+        "decided",
+        "complete",
+        "superseded",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a decision task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1533,7 +1548,78 @@
           "reviewTaskRef": null,
           "approvalRefs": []
         }
+      },
+      "status": "decided"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "awaiting-approval": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
+      },
+      "decided": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
+      },
+      "superseded": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/selected",
+          "/result/consequences",
+          "/result/reversibility",
+          "/result/affectedRefs",
+          "/result/status",
+          "/result/approval"
+        ]
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

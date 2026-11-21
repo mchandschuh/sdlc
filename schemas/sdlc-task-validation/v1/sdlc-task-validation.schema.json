@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -130,6 +131,19 @@
           ]
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "validated",
+        "inconclusive",
+        "complete",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a validation task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1768,7 +1782,69 @@
           "This result does not claim that the design has been implemented.",
           "This result does not claim production readiness."
         ]
+      },
+      "status": "validated"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "validated": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
+      },
+      "inconclusive": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/summary",
+          "/result/executions",
+          "/result/findings",
+          "/result/evidenceTier",
+          "/result/limitations",
+          "/result/nonClaims"
+        ]
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

@@ -4,7 +4,7 @@ taskUid: WI-0034-20000000
 orderKey: "20000000"
 parentTaskUid: WI-0034-11000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement declarative conditional task result validation
 objective: Project task.status into task-specific validation, interpret
   x-sdlc-task-lifecycle metadata generically, and allow incomplete results while
@@ -65,7 +65,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -121,26 +121,57 @@ task:
         x-sdlc-* lifecycle metadata generically.
       - Run focused tests and the complete repository validation gates.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The work-item and task command migration is planned but has not been
-        processed.
+      summary: Implemented generic lifecycle metadata interpretation with transitional-result relaxation, milestone and terminal required-result path checks, and read-only coverage for omitted, null, partial, invalid, and complete result states.
       changes:
-        - id: WI-0034-20000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the work-item and task command migration plan.
+        - id: WI-0034-20000000_CHANGE-001
+          type: production-code
+          summary: Added generic x-sdlc-task-lifecycle policy loading, JSON Pointer traversal, lifecycle status lookup, required result path findings, and temporary relaxed-schema validation for optional transitional results without task-type branches.
           objectiveRefs:
             - WI-0034-20000000_OBJ-001
             - WI-0034-20000000_OBJ-002
           paths:
-            - .docs/work-items/WI-0034/steps/WI-0034-20000000-implementation.yaml
-      testImplementations: []
+            - src/core/work-item-validation.ts
+        - id: WI-0034-20000000_CHANGE-002
+          type: schema
+          summary: Made envelope results nullable or omittable and declared task-specific milestone and terminal requiredResultPaths from each result contract's required fields.
+          objectiveRefs: [WI-0034-20000000_OBJ-001]
+          paths:
+            - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+            - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+            - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+            - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+            - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+            - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+            - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+            - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+            - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+            - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+            - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+        - id: WI-0034-20000000_CHANGE-003
+          type: test-code
+          summary: Added dynamic metadata documentation audit and lifecycle result matrix tests covering omitted, null, partial, invalid, and valid result states.
+          objectiveRefs: [WI-0034-20000000_OBJ-001, WI-0034-20000000_OBJ-002]
+          paths: [tests/cli.test.ts, schemas/README.md]
+      testImplementations:
+        - testCaseRef: '#test-case/TC-LIFECYCLE-MATRIX'
+          path: tests/cli.test.ts
+          selector: allows planned task lifecycle records with omitted results; allows active task lifecycle records with null results; allows blocked task lifecycle records with partial results; requires complete task results for milestone lifecycle statuses
+        - testCaseRef: '#test-case/TC-METADATA-DOCUMENTATION'
+          path: tests/cli.test.ts
+          selector: audits every x-sdlc metadata convention against schemas README coverage
     verification:
-      status: not-run
+      status: passed
       objectiveRefs:
         - WI-0034-20000000_OBJ-001
         - WI-0034-20000000_OBJ-002
-      tests: []
+      tests:
+        - id: WI-0034-20000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-LIFECYCLE-MATRIX', '#test-case/TC-METADATA-DOCUMENTATION']
+          command: yarn typecheck && yarn build && HOME=$(mktemp -d) yarn test tests/cli.test.ts --run && node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: Generic lifecycle validation passed for transitional and milestone matrix cases; metadata documentation audit, typecheck, build, 82 CLI tests, and the 40-schema audit passed.
     limitations:
-      - Implementation has not been processed; no command-specific help or
-        dispatch evidence exists yet.
+      - Persisted task records still use the legacy task-type-independent status distribution until WI-0034-30000000 migration; independent review, aggregate validation, and release remain pending.

@@ -195,23 +195,14 @@
         "taskSchema",
         "intentSchema",
         "resultSchema",
-        "intent",
-        "result"
+        "intent"
       ],
-      "description": "The task workflow wrapper. status is the task's workflow/lifecycle state; taskSchema is the canonical selector for the complete task contract; intent and result are the only task payload roots; intentSchema and resultSchema identify the corresponding subschemas. This wrapper is not the same as the envelope processing state.",
+      "description": "The task workflow wrapper. status is the selected task type's lifecycle state; taskSchema is the canonical selector for the complete task contract; intent and result are the task payload roots; intentSchema and resultSchema identify the corresponding subschemas. This wrapper is not the same as the envelope processing state.",
       "properties": {
         "status": {
           "type": "string",
-          "enum": [
-            "planned",
-            "active",
-            "blocked",
-            "implemented",
-            "implemented-unproven",
-            "complete",
-            "deferred"
-          ],
-          "description": "Current workflow state of the task action. The selected task contract may add more specific result statuses, decisions, evidence, review, rework, or delivery states inside result; this status is the host-controlled task lifecycle and is not envelope processing state.",
+          "minLength": 1,
+          "description": "Current lifecycle state of the selected task type. The selected task contract owns the allowed values and lifecycle meaning; this status is distinct from envelope processing state and task-specific result status.",
           "examples": [
             "planned",
             "active",
@@ -253,8 +244,11 @@
           ]
         },
         "result": {
-          "type": "object",
-          "description": "The observed task output, validated against resultSchema. A result may record a task-specific status, decision, evidence, findings, limitations, or non-claims; it does not directly mutate the envelope or work-item lifecycle.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "The observed task output, validated against resultSchema when the task lifecycle status requires a result. Transitional statuses may omit, null, or partially populate this value; a result does not directly mutate the envelope or work-item lifecycle.",
           "additionalProperties": true,
           "examples": [
             {

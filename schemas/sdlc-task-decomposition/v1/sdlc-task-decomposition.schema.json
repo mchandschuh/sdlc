@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -93,6 +94,18 @@
           "limitations": []
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "decomposed",
+        "complete",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a decomposition task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -752,7 +765,48 @@
           }
         ],
         "limitations": []
+      },
+      "status": "decomposed"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "decomposed": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ]
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/tasks",
+          "/result/limitations"
+        ]
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }

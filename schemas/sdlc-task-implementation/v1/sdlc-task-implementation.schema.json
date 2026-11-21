@@ -7,6 +7,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
     "intent",
     "result"
   ],
@@ -59,6 +60,19 @@
           ]
         }
       ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "implemented",
+        "implemented-unproven",
+        "complete",
+        "deferred"
+      ],
+      "description": "Lifecycle status for a implementation task. This is distinct from envelope processingStatus and task-specific result status."
     }
   },
   "$defs": {
@@ -1386,7 +1400,60 @@
         "limitations": [
           "No provider-backed or production deployment behavior was established."
         ]
+      },
+      "status": "implemented"
+    }
+  ],
+  "x-sdlc-task-lifecycle": {
+    "statusProperty": "/status",
+    "resultProperty": "/result",
+    "statuses": {
+      "planned": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "active": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "blocked": {
+        "kind": "transitional",
+        "result": "optional"
+      },
+      "implemented": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
+      },
+      "implemented-unproven": {
+        "kind": "milestone",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
+      },
+      "complete": {
+        "kind": "terminal",
+        "result": "required",
+        "requiredResultPaths": [
+          "/result/status",
+          "/result/implementation",
+          "/result/verification",
+          "/result/limitations"
+        ]
+      },
+      "deferred": {
+        "kind": "transitional",
+        "result": "optional"
       }
     }
-  ]
+  }
 }
