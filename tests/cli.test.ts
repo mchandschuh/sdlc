@@ -1373,6 +1373,39 @@ describe('discovery commands', () => {
     expect((await listCollection(root, '.docs/tasks/design.yaml', schema, 'verification-obligation')).data).toEqual([{ id: 'VO-001', description: 'Verify lossless JSON output.' }]);
   });
 
+  it('indexes batch 06 implementation collections through task-implementation paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-collection-batch-06-'));
+    await mkdir(join(root, '.docs', 'tasks'), { recursive: true });
+    await writeFile(join(root, '.docs', 'tasks', 'implementation.yaml'), [
+      'task:',
+      '  intent:',
+      '    inputs:',
+      '      - id: INPUT-001',
+      '        purpose: Define the implementation boundary.',
+      '    objectives:',
+      '      - id: OBJ-001',
+      '        statement: Preserve selected objects.',
+      '  result:',
+      '    implementation:',
+      '      changes:',
+      '        - id: CHANGE-001',
+      '          summary: Add the indexer.',
+      '      testImplementations:',
+      '        - testCaseRef: "#test-case/TC-001"',
+      '          selector: indexes the collection',
+      '    verification:',
+      '      tests:',
+      '        - id: EXEC-001',
+      '          result: The test passed.',
+      ''].join('\n'));
+    const schema = 'https://schemas.handschuh.dev/sdlc/task-implementation/v1';
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'input')).data).toEqual([{ id: 'INPUT-001', purpose: 'Define the implementation boundary.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'objective')).data).toEqual([{ id: 'OBJ-001', statement: 'Preserve selected objects.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'change')).data).toEqual([{ id: 'CHANGE-001', summary: 'Add the indexer.' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'test-implementation')).data).toEqual([{ testCaseRef: '#test-case/TC-001', selector: 'indexes the collection' }]);
+    expect((await listCollection(root, '.docs/tasks/implementation.yaml', schema, 'verification-test')).data).toEqual([{ id: 'EXEC-001', result: 'The test passed.' }]);
+  });
+
   it('reports collection selection failures without fabricating items', async () => {
     const output: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));

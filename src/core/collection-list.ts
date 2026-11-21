@@ -338,6 +338,41 @@ const definitions: readonly CollectionDefinition[] = [
     display: { identifier: '/id', text: '/description' },
     identity: { mode: 'field' },
   },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+    name: 'input',
+    index: { collectionPath: '/task/intent/inputs' },
+    display: { identifier: '/id', text: '/purpose' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+    name: 'objective',
+    index: { collectionPath: '/task/intent/objectives' },
+    display: { identifier: '/id', text: '/statement' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+    name: 'change',
+    index: { collectionPath: '/task/result/implementation/changes' },
+    display: { identifier: '/id', text: '/summary' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+    name: 'test-implementation',
+    index: { collectionPath: '/task/result/implementation/testImplementations' },
+    display: { identifier: '/testCaseRef', text: '/selector' },
+    identity: { mode: 'field' },
+  },
+  {
+    documentType: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1',
+    name: 'verification-test',
+    index: { collectionPath: '/task/result/verification/tests' },
+    display: { identifier: '/id', text: '/result' },
+    identity: { mode: 'field' },
+  },
 ];
 
 const registry = new Map(definitions.map((definition) => [definitionKey(definition.documentType, definition.name), definition]));
