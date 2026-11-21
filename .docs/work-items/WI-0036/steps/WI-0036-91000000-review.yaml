@@ -1,0 +1,131 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0036
+taskUid: WI-0036-91000000
+orderKey: "91000000"
+parentTaskUid: WI-0036-90000000
+taskType: review
+processingStatus: unprocessed
+title: Review collection-listing command batch 09
+objective: "Independently review the implementation result for command batch 9:
+  sdlc task finding list --task <task-id>; sdlc task criterion list --task
+  <task-id>; sdlc task evidence-requirement list --task <task-id>; sdlc task
+  criterion-evaluation list --task <task-id>; sdlc task finding list --task
+  <task-id>"
+references:
+  required:
+    - .docs/work-items/WI-0036/work-item.json
+    - .docs/work-items/WI-0036/collection-listing-table.md
+    - .docs/work-items/WI-0036/cli-and-indexing-design.md
+    - .docs/work-items/WI-0036/reference-implementation.md
+    - schemas/work-item/v3/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - src/core/reference-resolution.ts
+    - src/cli/command-discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0036/steps/WI-0036-91000000-review.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0036-90000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0036/steps/WI-0036-91000000-review.yaml
+    - schemas/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: "WI-0036: review(cli): inspect declarative collection listing"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: focused-review-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review the exact implementation result for collection-listing command
+      batch 9.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0036-90000000
+      result:
+        ref: WI-0036-90000000#result/R-001
+        sha256: null
+    gateId: implementation-result
+    policyRef:
+      ref: repository-local-review-policy
+      sha256: null
+    criteria:
+      - id: CRIT-001
+        statement: The batch remains within the declared collection registry, indexer,
+          display, JSON, and CLI scope.
+        purpose: Prevent command-specific duplication, arbitrary selectors, and
+          unrelated behavior changes.
+        required: true
+        evidenceRefs:
+          - WI-0036-90000000#result/R-001
+      - id: CRIT-002
+        statement: Each command in the batch selects the correct schema-backed
+          collection and shows the authoritative identifier and declared textual
+          description in human mode.
+        purpose: Verify the user-facing collection contract.
+        required: true
+        evidenceRefs:
+          - WI-0036-90000000#result/R-001
+      - id: CRIT-003
+        statement: JSON mode preserves complete indexed objects and failures remain
+          structured and honest.
+        purpose: Verify the machine-readable response boundary and error behavior.
+        required: true
+        evidenceRefs:
+          - WI-0036-90000000#result/R-001
+    evidenceRequirements:
+      - id: EVID-001
+        kind: target-result
+        ref: WI-0036-90000000#result/R-001
+        purpose: Provide the exact implementation result under review.
+        required: true
+        minimumTier: inspection
+      - id: EVID-002
+        kind: diff
+        ref: WI-0036
+        purpose: Provide the reviewed command inventory and display contract.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment, remote publication, or
+          production readiness.
+      - id: NON-002
+        statement: This review does not mutate the work-item or task lifecycle state.
+    context:
+      - id: CTX-001
+        kind: contract
+        ref: .docs/work-items/WI-0036/cli-and-indexing-design.md
+        purpose: Confirm the declarative indexing and human/JSON projection contract.
+        required: true
+      - id: CTX-002
+        kind: contract
+        ref: .docs/work-items/WI-0036/reference-implementation.md
+        purpose: Confirm the intended generic function boundary and safety constraints.
+        required: true

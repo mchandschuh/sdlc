@@ -1,0 +1,126 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0036
+taskUid: WI-0036-97000000
+orderKey: "97000000"
+parentTaskUid: WI-0036-96000000
+taskType: delivery
+processingStatus: unprocessed
+title: Release declarative collection listing
+objective: Prepare and verify the local release boundary for WI-0036 after
+  aggregate validation passes; do not publish or deploy.
+references:
+  required:
+    - .docs/work-items/WI-0036/work-item.json
+    - .docs/work-items/WI-0036/collection-listing-table.md
+    - .docs/work-items/WI-0036/cli-and-indexing-design.md
+    - .docs/work-items/WI-0036/reference-implementation.md
+    - schemas/work-item/v3/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - src/core/reference-resolution.ts
+    - src/cli/command-discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0036/steps/WI-0036-97000000-delivery.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0036-96000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0036/steps/WI-0036-97000000-delivery.yaml
+    - package.json
+    - schemas/
+    - src/
+    - tests/
+  commitSubject: "WI-0036: chore(release): release declarative collection listing"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: build-release-candidate
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: smoke-release-candidate
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - --help
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare a local release candidate for declarative schema-backed
+      collection listing after all implementation, review, and validation gates
+      pass.
+    deliveryTypes:
+      - package
+      - release
+    inputs:
+      - id: WI-0036-97000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0036-96000000#result/R-001
+        purpose: Confirm aggregate WI-0036 validation passed.
+        required: true
+      - id: WI-0036-97000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: "#repository-state/HEAD"
+        purpose: Identify the committed repository revision used for the local release
+          candidate.
+        required: true
+    artifacts:
+      - id: WI-0036-97000000_ART-001
+        kind: manifest
+        path: package.json
+        purpose: Record the package version selected for the additive collection-listing
+          release.
+        required: true
+      - id: WI-0036-97000000_ART-002
+        kind: binary
+        path: dist/cli/main.js
+        purpose: Compiled CLI used for representative list-command smoke checks.
+        required: true
+    procedures:
+      - id: WI-0036-97000000_PROC-001
+        sequence: 1
+        name: build-release-candidate
+        description: Build the compiled CLI and verify the package metadata.
+        steps:
+          - Confirm validation and review dependencies are complete.
+          - Run yarn build.
+          - Confirm the compiled CLI exists.
+        command: yarn build
+        expected:
+          result: The compiled CLI is produced from the validated WI-0036 source tree.
+        required: true
+      - id: WI-0036-97000000_PROC-002
+        sequence: 2
+        name: smoke-release-candidate
+        description: Run representative collection-list help and JSON commands against
+          the release candidate.
+        steps:
+          - Run node ./bin/cli.js --help.
+          - Run representative work-item and task list commands with --json.
+          - Confirm no publication or deployment is attempted.
+        command: node ./bin/cli.js --help
+        expected:
+          result: The release candidate exposes the validated collection-listing command
+            surface.
+        required: true
+    nonGoals:
+      - Do not publish packages or push branches or tags.
+      - Do not deploy or install into production.
+      - Do not approve the release or mutate work-item lifecycle state directly.

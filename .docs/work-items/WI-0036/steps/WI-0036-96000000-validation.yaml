@@ -1,0 +1,159 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0036
+taskUid: WI-0036-96000000
+orderKey: "96000000"
+parentTaskUid: WI-0036-95000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate declarative collection listing
+objective: Run complete typecheck, build, tests, schema audit, collection-list
+  response validation, representative human/JSON CLI checks, and WI-0036
+  work-item validation.
+references:
+  required:
+    - .docs/work-items/WI-0036/work-item.json
+    - .docs/work-items/WI-0036/collection-listing-table.md
+    - .docs/work-items/WI-0036/cli-and-indexing-design.md
+    - .docs/work-items/WI-0036/reference-implementation.md
+    - schemas/work-item/v3/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - src/core/reference-resolution.ts
+    - src/cli/command-discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0036/steps/WI-0036-96000000-validation.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0036-95000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0036/steps/WI-0036-96000000-validation.yaml
+    - schemas/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: "WI-0036: test(cli): validate declarative collection listing"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments:
+        - test
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments:
+        - /home/michael/.cline/skills/sdlc/bin/dev.js
+        - schema
+        - validate
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments:
+        - ./bin/cli.js
+        - work-item
+        - validate
+        - --work-item
+        - WI-0036
+        - --json
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the complete WI-0036 collection registry, indexer, CLI
+      surface, response envelope, task graph, and compatibility boundary.
+    inputs:
+      - id: WI-0036-96000000_INPUT-WORK-ITEM-001
+        kind: requirement
+        ref: WI-0036#work-item.json#requirement/WI-0036_REQ_005
+        purpose: Provide the WI-0036 requirement governing complete package, schema,
+          command, and work-item validation gates.
+        required: true
+      - id: WI-0036-96000000_INPUT-LAST-REVIEW-001
+        kind: review
+        ref: WI-0036-95000000#result/R-001
+        purpose: Provide the final planned review dependency before aggregate
+          validation.
+        required: true
+    targets:
+      - id: WI-0036-96000000_TARGET-WORK-ITEM-001
+        kind: record
+        ref: WI-0036#work-item.json#requirement/WI-0036_REQ_005
+        purpose: Provide a resolvable work-item requirement target while the command
+          validates the complete work-item record and all discovered task objects.
+        required: true
+      - id: WI-0036-96000000_TARGET-LAST-REVIEW-001
+        kind: taskResult
+        taskType: review
+        ref: WI-0036-95000000#result/R-001
+        purpose: Validate the final review result and command-batch coverage.
+        required: true
+    objectiveRefs: []
+    testCaseRefs: []
+    procedures:
+      - id: WI-0036-96000000_VAL-001
+        sequence: 1
+        name: validate-collection-listing
+        description: Run complete package, schema, CLI, response, compatibility, and
+          work-item validation checks.
+        reason: Establish the aggregate evidence gate for the declarative
+          collection-listing feature.
+        targetRefs:
+          - "#target/WI-0036-96000000_TARGET-WORK-ITEM-001"
+          - "#target/WI-0036-96000000_TARGET-LAST-REVIEW-001"
+        objectiveRefs: []
+        testCaseRefs: []
+        method:
+          executionMode: executable
+          target: WI-0036 repository and CLI
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run yarn test.
+            - Run the complete schema audit.
+            - Validate representative collection-list response fixtures.
+            - Run human-readable and --json requirement/objective list commands.
+            - Run existing reference-resolution regression tests.
+            - Run node ./bin/cli.js work-item validate --work-item WI-0036
+              --json.
+          command: yarn test
+          paths:
+            - schemas/
+            - src/core/
+            - src/cli/
+            - tests/
+            - .docs/work-items/WI-0036/
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim provider, deployment, remote publication, or production
+        evidence.
+      - Do not mutate the work-item lifecycle as a side effect of validation.

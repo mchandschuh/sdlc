@@ -1,0 +1,206 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0036",
+  "status": "planned",
+  "title": "Add declarative schema-backed collection listing",
+  "type": "feature",
+  "objective": "Add a declarative schema-backed collection listing capability that maps each supported document schema and collection name to a constrained index expression, stable identifier selector, and human-readable text selector. Expose generic work-item and task list commands that show identifiers and textual descriptions in terminal output while preserving complete indexed objects in a versioned JSON response envelope.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0036-declarative-collection-listing",
+      "created": false,
+      "rationale": "The feature adds public collection-listing commands and a response contract, so implementation and review should be processed on a dedicated work-item branch before returning to the primary branch for release."
+    }
+  },
+  "baseline": "a46dbc0b54b55d28b4bb9b6cbac1b079ded93618",
+  "request": {
+    "source": "conversation",
+    "text": "Create a new work item for declarative schema-backed collection listing. Define a registry that maps document schema and collection name to a constrained index expression, stable identifier selector, and human-readable text selector. Add generic work-item and task collection list commands. Human-readable output must show each item identifier and textual description; --json output must preserve the complete indexed objects in a versioned response envelope.",
+    "sha256": "9a4f9e52fd23180bb18d0874a73d56eeefb45eaf30d1c856ea3bcc442285864d"
+  },
+  "scope": [
+    {
+      "name": "declarative-collection-registry",
+      "description": "Define one versioned, schema-aware registry that maps a document schema and collection name to a constrained index expression, optional parent selection, stable identifier selector, and human-readable title/text selectors.",
+      "reason": "Collection-specific command implementations would duplicate path, identity, and display knowledge and would drift as the schema set grows."
+    },
+    {
+      "name": "generic-document-indexing",
+      "description": "Implement a deterministic indexer that loads the existing JSON/YAML document representation, resolves exact constrained paths, supports nested parent collections, preserves document order, and returns the selected complete objects.",
+      "reason": "The collection commands need one safe selection mechanism instead of arbitrary JSONPath, executable expressions, or recursive document-wide ID searches."
+    },
+    {
+      "name": "human-and-json-projections",
+      "description": "Render identifier plus declared textual description, with optional declared title, in human-readable mode and return complete indexed objects with source metadata in JSON mode.",
+      "reason": "Terminal output should be concise and useful while machine consumers must not lose fields from the selected document objects."
+    },
+    {
+      "name": "work-item-and-task-cli",
+      "description": "Expose schema-aware collection list commands for work-item and task documents, including requirements, acceptance criteria, implementation objectives, and the other supported object-backed collections selected by the registry.",
+      "reason": "Users need a consistent command surface such as `sdlc work-item requirement list --work-item <id>` and `sdlc task objective list --task <id>`."
+    },
+    {
+      "name": "versioned-response-and-validation",
+      "description": "Persist and validate a closed versioned response envelope for collection lists, test registry completeness and path failures, and preserve the existing single-reference resolution behavior.",
+      "reason": "The feature introduces a new output object and must provide durable contract and regression evidence without changing existing reference semantics."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "arbitrary-jsonpath",
+      "description": "Do not add arbitrary JSONPath, recursive descent, filter expressions, eval-based selectors, or user-supplied executable indexing expressions.",
+      "reason": "The registry must remain deterministic, auditable, safe, and easy to validate.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "invented-identifiers",
+      "description": "Do not invent stable domain identifiers for collections whose schema items are plain strings or otherwise lack an authoritative identifier.",
+      "reason": "Array positions are not equivalent to schema-owned entity identity; such collections may remain JSON-only or use explicitly documented positional display without entity references.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "document-model-redesign",
+      "description": "Do not redesign existing work-item or task payload schemas, rename existing fields, or duplicate task-specific collections into a common payload shape merely to support listing.",
+      "reason": "The feature should index the current schema-backed documents declaratively rather than change their domain contracts.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "reference-resolution-semantic-change",
+      "description": "Do not change existing reference syntax, single-reference resolution semantics, global resource identity rules, or depth expansion behavior.",
+      "reason": "Collection listing may reuse document loading and envelope infrastructure but must remain a separate collection projection capability.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "remote-publication",
+      "description": "Do not publish packages, deploy, or push branches or tags as part of implementation or validation; release remains a bounded local primary-branch operation.",
+      "reason": "Local CLI and schema evidence does not establish external publication or deployment readiness.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0036_REQ_001",
+        "name": "declarative-collection-indexes",
+        "description": "The collection-listing implementation must use a versioned declarative registry keyed by effective document schema and collection name, with constrained exact-path indexing and optional parent-item selection.",
+        "reason": "A single declarative mapping is the reusable boundary for supporting many schema-defined arrays without one bespoke command implementation per collection.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0036_REQ_001_AC_001",
+            "description": "Each supported collection definition declares its document schema selector, collection name, exact index path, and whether nested selection requires a parent identifier argument."
+          },
+          {
+            "id": "WI-0036_REQ_001_AC_002",
+            "description": "The indexer rejects unknown document-schema and collection combinations, missing paths, non-array paths, missing required parent selectors, and missing parent identifiers with structured findings rather than silently returning an unrelated value."
+          },
+          {
+            "id": "WI-0036_REQ_001_AC_003",
+            "description": "Indexing preserves source document order and does not use recursive document-wide identifier searches or arbitrary executable expressions."
+          }
+        ]
+      },
+      {
+        "id": "WI-0036_REQ_002",
+        "name": "declared-human-display",
+        "description": "Every human-listable object-backed collection must declare how its item identifier and textual description are selected, with an optional title or name selector.",
+        "reason": "The terminal view must consistently show meaningful identity and content without guessing between fields such as statement, description, question, summary, or name.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0036_REQ_002_AC_001",
+            "description": "Human-readable list output shows each item’s authoritative unique identifier and declared textual description, and includes a declared title or name when the collection provides one."
+          },
+          {
+            "id": "WI-0036_REQ_002_AC_002",
+            "description": "A registry entry without a valid identifier or textual selector is rejected for human-list mode unless the collection is explicitly marked as lacking stable domain identity and excluded from entity-style listing."
+          },
+          {
+            "id": "WI-0036_REQ_002_AC_003",
+            "description": "Requirements, acceptance criteria, implementation objectives, research questions, findings, test cases, and representative task-specific collections display their schema-defined identifiers and textual fields without field-name-specific command code."
+          }
+        ]
+      },
+      {
+        "id": "WI-0036_REQ_003",
+        "name": "lossless-json-response",
+        "description": "JSON mode must return a closed versioned collection response envelope containing source document metadata and the complete indexed objects without applying the human display projection.",
+        "reason": "Automation and downstream consumers need every field from each selected object, not only the identifier and summary shown in terminal output.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0036_REQ_003_AC_001",
+            "description": "A successful JSON response identifies its response schema, document schema, collection name, index expression, source document path and format, and returns every selected object unchanged under the collection data field."
+          },
+          {
+            "id": "WI-0036_REQ_003_AC_002",
+            "description": "An empty but valid collection returns a successful envelope with an empty data array, while selection and document failures return a valid envelope with structured findings and no fabricated items."
+          },
+          {
+            "id": "WI-0036_REQ_003_AC_003",
+            "description": "The collection response contract is persisted under schemas/, included in the schema audit, and has representative valid and invalid fixtures or equivalent instance-validation coverage."
+          }
+        ]
+      },
+      {
+        "id": "WI-0036_REQ_004",
+        "name": "schema-aware-cli-commands",
+        "description": "The CLI must expose consistent schema-aware list commands for work-item and task collections while retaining the requested ergonomic command forms.",
+        "reason": "Users should be able to list work-item requirements and task objectives through the same generic implementation boundary.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0036_REQ_004_AC_001",
+            "description": "The CLI supports `sdlc work-item requirement list --work-item <work-item-id>` and `sdlc task objective list --task <task-id>` with human-readable identifier and text output."
+          },
+          {
+            "id": "WI-0036_REQ_004_AC_002",
+            "description": "The CLI supports `--json` for the collection commands and emits the complete versioned collection response envelope rather than the human display projection."
+          },
+          {
+            "id": "WI-0036_REQ_004_AC_003",
+            "description": "Nested collections such as work-item acceptance criteria require and honor an explicit parent selector, and task collection resolution selects definitions from the task’s declared task schema rather than from a hard-coded task-type branch table."
+          },
+          {
+            "id": "WI-0036_REQ_004_AC_004",
+            "description": "Unknown collection names, invalid identifiers, duplicate options, missing required selectors, and unresolved documents fail with actionable command errors and non-zero exit status."
+          }
+        ]
+      },
+      {
+        "id": "WI-0036_REQ_005",
+        "name": "compatibility-and-regression-evidence",
+        "description": "The feature must be covered by focused indexer and CLI tests and must preserve existing reference-resolution behavior and repository-root boundaries.",
+        "reason": "The implementation reuses document loading and response infrastructure that is already used by reference resolution, so regressions must be bounded explicitly.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0036_REQ_005_AC_001",
+            "description": "Tests cover top-level and nested collections, schema-specific collection selection, identifier and text extraction, complete JSON object preservation, empty collections, invalid paths, duplicate identifiers, missing parents, and plain-string collections."
+          },
+          {
+            "id": "WI-0036_REQ_005_AC_002",
+            "description": "Existing single-reference resolution tests continue to pass with unchanged reference syntax, selected data semantics, global resource identity, and depth expansion behavior."
+          },
+          {
+            "id": "WI-0036_REQ_005_AC_003",
+            "description": "Typecheck, build, complete tests, schema audit, representative CLI list commands, and WI-0036 work-item validation pass before implementation is considered ready for review."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0036/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Adds schema-backed collection-listing commands and a versioned response envelope while preserving existing document and reference semantics.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes introduce breaking command, schema, or reference behavior beyond the planned additive feature."
+  }
+}

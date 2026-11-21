@@ -1,0 +1,135 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0036
+taskUid: WI-0036-20000000
+orderKey: "20000000"
+parentTaskUid: WI-0036-11000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement collection-listing command batch 02
+objective: "Implement the declarative collection index, display projection, JSON
+  response, and CLI behavior for command batch 2: sdlc task validation-procedure
+  list --task <task-id>; sdlc task child list --task <task-id>; sdlc task
+  subrange list --task <task-id>; sdlc task question list --task <task-id>; sdlc
+  task source list --task <task-id>"
+references:
+  required:
+    - .docs/work-items/WI-0036/work-item.json
+    - .docs/work-items/WI-0036/collection-listing-table.md
+    - .docs/work-items/WI-0036/cli-and-indexing-design.md
+    - .docs/work-items/WI-0036/reference-implementation.md
+    - schemas/work-item/v3/work-item.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - src/core/reference-resolution.ts
+    - src/cli/command-discovery.ts
+    - tests/cli.test.ts
+    - .docs/work-items/WI-0036/steps/WI-0036-20000000-implementation.yaml
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn:
+  - WI-0036-11000000
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0036/steps/WI-0036-20000000-implementation.yaml
+    - schemas/
+    - src/core/
+    - src/cli/
+    - tests/
+  commitSubject: "WI-0036: feat(cli): implement declarative collection listing"
+  commitBody:
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments:
+        - typecheck
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments:
+        - build
+      expectedExitCode: 0
+    - id: focused-tests
+      executable: yarn
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: "Implement declarative collection-listing support for command batch 2:
+      sdlc task validation-procedure list --task <task-id>; sdlc task child list
+      --task <task-id>; sdlc task subrange list --task <task-id>; sdlc task
+      question list --task <task-id>; sdlc task source list --task <task-id>"
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
+      - documentation
+    changeIntent: feature
+    inputs:
+      - id: WI-0036-20000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0036#work-item.json#requirement/WI-0036_REQ_001
+        purpose: Apply the WI-0036 requirement governing command batch 2.
+        required: true
+      - id: WI-0036-20000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0036#work-item.json#requirement/WI-0036_REQ_002
+        purpose: Apply the WI-0036 requirement governing command batch 2.
+        required: true
+      - id: WI-0036-20000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0036#work-item.json#requirement/WI-0036_REQ_003
+        purpose: Apply the WI-0036 requirement governing command batch 2.
+        required: true
+    objectives:
+      - id: WI-0036-20000000_OBJ-001
+        statement: The registry and indexer support the five-command batch 2 with exact
+          paths, schema-aware selection, and complete item preservation.
+        inputRefs:
+          - WI-0036-20000000_INPUT-REQ-001
+          - WI-0036-20000000_INPUT-REQ-002
+        testCaseRefs: []
+      - id: WI-0036-20000000_OBJ-002
+        statement: Human output for batch 2 shows declared identifiers and textual
+          descriptions while JSON output retains complete selected objects.
+        inputRefs:
+          - WI-0036-20000000_INPUT-REQ-002
+          - WI-0036-20000000_INPUT-REQ-003
+        testCaseRefs: []
+    ownedPaths:
+      - schemas/
+      - src/core/
+      - src/cli/
+      - tests/
+    nonGoals:
+      - Do not change existing single-reference resolution semantics.
+      - Do not introduce arbitrary JSONPath or invented identifiers.
+      - Do not publish or deploy the package.
+    steps:
+      - Resolve the exact WI-0036 requirements and design documents before
+        editing.
+      - Add or extend declarative registry definitions for the five commands in
+        batch 2.
+      - Implement and test exact-path indexing, identity extraction, human
+        projection, and lossless JSON output.
+      - Add focused tests for valid, empty, invalid, nested, and schema-specific
+        collections.
+      - Run the declared focused validation procedures and preserve failures for
+        review.
