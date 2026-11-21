@@ -1,0 +1,136 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-40000000
+orderKey: '40000000'
+parentTaskUid: WI-0038-31000000
+taskType: validation
+processingStatus: unprocessed
+title: Validate dependency graph linearization and next-item selection
+objective: Run complete typecheck, build, tests, schema audit, graph structure fixtures, dependency-state selection fixtures, task-next response validation, work-item-next response validation, and WI-0038 work-item validation.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/work-items/WI-0038/steps/WI-0038-10000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-20000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-21000000-review.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-30000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-31000000-review.yaml
+    - .docs/agentic-completeness-phases.md
+    - .cline/skills/schemas/SKILL.md
+    - src/core/discovery.ts
+    - src/cli/commands/task/next.command.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn: [WI-0038-11000000, WI-0038-21000000, WI-0038-31000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0038/steps/WI-0038-40000000-validation.yaml]
+  commitSubject: 'WI-0038: test(validate): validate dependency graph selection'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0038, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-validation/v1#/properties/result
+  intent:
+    summary: Validate the complete Phase 2 dependency graph, linearization, terminal dependency satisfaction, CLI responses, schema conventions, and Phase 3 follow-up documentation.
+    inputs:
+      - id: WI-0038-40000000_INPUT-GRAPH-001
+        kind: implementation
+        ref: WI-0038-20000000#result/R-001
+        purpose: Identify the graph implementation result.
+        required: true
+      - id: WI-0038-40000000_INPUT-SELECTION-001
+        kind: implementation
+        ref: WI-0038-30000000#result/R-001
+        purpose: Identify task-next and work-item-next implementation result.
+        required: true
+      - id: WI-0038-40000000_INPUT-REVIEW-001
+        kind: task
+        ref: WI-0038-31000000#result/R-001
+        purpose: Identify the final selection review gate.
+        required: true
+      - id: WI-0038-40000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_007
+        purpose: Define Phase 3 follow-up documentation validation.
+        required: true
+    targets:
+      - id: WI-0038-40000000_TARGET-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Validate source, schemas, tests, and documentation.
+        required: true
+      - id: WI-0038-40000000_TARGET-GRAPH-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0038-20000000#result/R-001
+        purpose: Validate complete graph construction and linearization.
+        required: true
+      - id: WI-0038-40000000_TARGET-SELECTION-001
+        kind: taskResult
+        taskType: implementation
+        ref: WI-0038-30000000#result/R-001
+        purpose: Validate task-next and work-item-next selection.
+        required: true
+    objectiveRefs: ['#objective/WI-0038-40000000_OBJ-001', '#objective/WI-0038-40000000_OBJ-002']
+    testCaseRefs: ['#test-case/WI-0038-40000000_TC-GRAPH-STRUCTURE', '#test-case/WI-0038-40000000_TC-NEXT-SELECTION', '#test-case/WI-0038-40000000_TC-RESPONSE-SCHEMAS']
+    procedures:
+      - id: WI-0038-40000000_VAL-COMPLETE-PHASE-2
+        sequence: 1
+        name: validate-complete-phase-2
+        description: Run package, schema, graph, selection, response, documentation, and work-item validation gates.
+        reason: Establish the aggregate evidence boundary for Phase 2.
+        targetRefs: ['#target/WI-0038-40000000_TARGET-REPOSITORY-001', '#target/WI-0038-40000000_TARGET-GRAPH-001', '#target/WI-0038-40000000_TARGET-SELECTION-001']
+        objectiveRefs: ['#objective/WI-0038-40000000_OBJ-001', '#objective/WI-0038-40000000_OBJ-002']
+        testCaseRefs: ['#test-case/WI-0038-40000000_TC-GRAPH-STRUCTURE', '#test-case/WI-0038-40000000_TC-NEXT-SELECTION', '#test-case/WI-0038-40000000_TC-RESPONSE-SCHEMAS']
+        method:
+          executionMode: executable
+          target: WI-0038 repository, dependency graph, and CLI selection commands
+          steps:
+            - Run yarn typecheck.
+            - Run yarn build.
+            - Run the complete test suite.
+            - Run the complete schema audit.
+            - Validate duplicate order keys, missing dependencies, self-dependencies, and cycle fixtures.
+            - Validate dependency satisfaction requiring task.status complete.
+            - Validate active and other non-terminal task retention by task next.
+            - Validate initial first-non-terminal work-item next selection.
+            - Validate cli-prefixed response instances.
+            - Run node ./bin/cli.js work-item validate --work-item WI-0038 --json.
+          command: yarn test
+          paths: [schemas/, src/core/, src/cli/, tests/, .docs/agentic-completeness-phases.md, .docs/work-items/WI-0038/, .cline/skills/schemas/]
+        expected:
+          outcome: passed
+          exitCode: 0
+        evidenceTier: cli-audit
+        required: true
+    nonGoals:
+      - Do not claim task or work-item readiness, leases, work-item dependency support, provider behavior, deployment, or production evidence.
+      - Do not mutate task or work-item lifecycle state during validation.

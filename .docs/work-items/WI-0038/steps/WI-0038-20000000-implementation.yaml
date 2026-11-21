@@ -1,0 +1,101 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-20000000
+orderKey: '20000000'
+parentTaskUid: WI-0038-11000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement explicit dependency graph and deterministic linearization
+objective: Build the complete dependency graph from explicit dependsOn references, reject duplicate order keys and invalid dependency structure, produce deterministic topological order, and expose observed execution state without consulting it during graph construction.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/work-items/WI-0038/steps/WI-0038-10000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-11000000-review.yaml
+    - src/core/discovery.ts
+    - src/core/work-item-validation.ts
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-cli-dependency-linearization/v1/sdlc-cli-dependency-linearization.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - README.md
+dependsOn: [WI-0038-11000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0038/steps/WI-0038-20000000-implementation.yaml
+    - src/core/
+    - schemas/sdlc-cli-dependency-linearization/
+    - tests/
+  commitSubject: 'WI-0038: feat(graph): linearize explicit dependencies'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: graph-focused-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Implement explicit dependsOn graph construction, structural validation, deterministic cycle diagnostics, and full-graph topological linearization.
+    changeTypes: [production-code, test-code, schema]
+    changeIntent: feature
+    inputs:
+      - id: WI-0038-20000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_001
+        purpose: Define explicit dependency graph semantics.
+        required: true
+      - id: WI-0038-20000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_002
+        purpose: Define structural validation and cycle behavior.
+        required: true
+      - id: WI-0038-20000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_003
+        purpose: Define deterministic full-graph linearization.
+        required: true
+      - id: WI-0038-20000000_INPUT-REVIEW-001
+        kind: task
+        ref: WI-0038-11000000#result/R-001
+        purpose: Provide the independent contract review gate.
+        required: true
+    objectives:
+      - id: WI-0038-20000000_OBJ-001
+        statement: The graph builder creates edges only from explicit dependsOn and returns complete nodes with observed execution state without using that state to construct the graph.
+        inputRefs: [WI-0038-20000000_INPUT-REQ-001, WI-0038-20000000_INPUT-REVIEW-001]
+        testCaseRefs: ['#test-case/WI-0038-20000000_TC-EXPLICIT-EDGES']
+      - id: WI-0038-20000000_OBJ-002
+        statement: Invalid duplicate identifiers, duplicate order keys, missing dependencies, self-dependencies, and cycles produce stable blocking findings and no partial linearization.
+        inputRefs: [WI-0038-20000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0038-20000000_TC-STRUCTURAL-FINDINGS']
+      - id: WI-0038-20000000_OBJ-003
+        statement: Valid graphs produce a deterministic complete topological ordering using orderKey and taskUid only as tie-breakers and without graph or linearization digests.
+        inputRefs: [WI-0038-20000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/WI-0038-20000000_TC-LINEARIZATION']
+    ownedPaths: [src/core/, schemas/sdlc-cli-dependency-linearization/, tests/]
+    nonGoals:
+      - Do not use parentTaskUid, task UID, task type, orderKey, filename, directory order, or prose as dependency edges.
+      - Do not consult processingStatus or task lifecycle status while constructing the graph or full linearization.
+      - Do not add readiness, leases, work-item dependencies, mutation, receipts, or graph/linearization digests.
+    steps:
+      - Add reusable dependency graph types and explicit dependsOn edge construction.
+      - Add duplicate, missing-node, self-dependency, order-key, and cycle validation with deterministic findings.
+      - Add deterministic topological sorting and complete graph-node response serialization.
+      - Add valid and invalid graph fixtures, including execution-state changes that leave structural output unchanged.

@@ -1,0 +1,104 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Define dependency graph and CLI response contracts
+objective: Define the explicit-dependsOn dependency graph model, deterministic linearization contract, terminal dependency-satisfaction rule, cli-prefixed response schemas, schema naming skill, and Phase 3 follow-up documentation.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/agentic-completeness-phases.md
+    - .cline/README.md
+    - schemas/README.md
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+    - src/core/discovery.ts
+    - src/cli/commands/task/next.command.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0038/steps/WI-0038-10000000-implementation.yaml
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/agentic-completeness-phases.md
+    - .cline/skills/schemas/
+    - schemas/sdlc-cli-dependency-linearization/
+    - schemas/sdlc-cli-task-next/
+    - schemas/sdlc-cli-work-item-next/
+    - schemas/README.md
+    - tests/
+  commitSubject: 'WI-0038: feat(schema): define dependency graph contracts'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: focused-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Define the structural dependency graph, CLI response naming, schema authoring guidance, and Phase 3 follow-up required for WI-0038.
+    changeTypes: [schema, documentation, test-code]
+    changeIntent: feature
+    inputs:
+      - id: WI-0038-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_001
+        purpose: Define explicit dependsOn-only graph construction.
+        required: true
+      - id: WI-0038-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_002
+        purpose: Define structural validation and deterministic findings.
+        required: true
+      - id: WI-0038-10000000_INPUT-REQ-003
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_003
+        purpose: Define full graph linearization without digests.
+        required: true
+      - id: WI-0038-10000000_INPUT-REQ-006
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_006
+        purpose: Define CLI response and schema naming conventions.
+        required: true
+      - id: WI-0038-10000000_INPUT-REQ-007
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_007
+        purpose: Define Phase 3 follow-up for both selection commands.
+        required: true
+    objectives:
+      - id: WI-0038-10000000_OBJ-001
+        statement: The Phase 2 design and response contracts define explicit dependsOn-only graph construction, observed node execution state, deterministic topological ordering, stable structural findings, and no graph or linearization digests.
+        inputRefs: [WI-0038-10000000_INPUT-REQ-001, WI-0038-10000000_INPUT-REQ-002, WI-0038-10000000_INPUT-REQ-003]
+        testCaseRefs: ['#test-case/WI-0038-10000000_TC-CONTRACT-DOCUMENTATION']
+      - id: WI-0038-10000000_OBJ-002
+        statement: The repository documents cli-prefixed response schema naming and records the Phase 3 dependency-aware readiness follow-up for task next and work-item next.
+        inputRefs: [WI-0038-10000000_INPUT-REQ-006, WI-0038-10000000_INPUT-REQ-007]
+        testCaseRefs: ['#test-case/WI-0038-10000000_TC-SCHEMA-NAMING', '#test-case/WI-0038-10000000_TC-PHASE-3-FOLLOW-UP']
+    ownedPaths: [.docs/agentic-completeness-phases.md, .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md, .cline/skills/schemas/, schemas/sdlc-cli-dependency-linearization/, schemas/sdlc-cli-task-next/, schemas/sdlc-cli-work-item-next/, tests/]
+    nonGoals:
+      - Do not implement graph construction, task next, work-item next, readiness, leases, mutation, or work-item dependencies in this design task.
+      - Do not add graph or linearization SHA-256 digests.
+      - Do not use parentTaskUid, orderKey, task UID, task type, filenames, directory order, or prose as dependency indicators.
+    steps:
+      - Finalize the Phase 2 dependency graph and selection contract.
+      - Define the three cli-prefixed response schema families and representative instances.
+      - Add the repository schema naming skill.
+      - Update Phase 2 and Phase 3 completeness documentation with the agreed boundaries and follow-up.

@@ -1,0 +1,231 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0038",
+  "status": "planned",
+  "title": "Add deterministic dependency graph linearization and next-item selection",
+  "type": "feature",
+  "objective": "Implement Phase 2 of the agentic completeness improvement plan by building a deterministic dependency graph from explicit dependsOn references, producing a stable topological linearization, rejecting duplicate order keys and invalid dependency structure, making task next require terminal completion of explicit dependencies, adding initial work-item next selection, establishing cli-prefixed response schema naming, documenting repository schema conventions, and recording Phase 3 follow-up for dependency-aware readiness without adding leases, readiness, work-item dependencies, mutation, or graph digests.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0038-dependency-graph-linearization",
+      "created": false,
+      "rationale": "The work item adds dependency graph behavior, CLI response contracts, schema naming conventions, and task/work-item selection semantics, so implementation should be processed on a dedicated context branch before returning to main for release."
+    }
+  },
+  "baseline": "ec07eedf3c60d03e63e3feed1beb4fea8298ddca",
+  "request": {
+    "source": "conversation",
+    "text": "Create the next completeness-effort work item WI-0038. Plan and later implement deterministic dependency graph linearization using explicit dependsOn edges only. Ignore parentTaskUid, orderKey, task UID, and task type as dependency indicators. Graph nodes may include execution state, but graph construction must not consult it. For task next, dependencies are met only when each dependency task has task lifecycle status complete; select the first non-terminal task in linearized order whose dependencies are met, including active or partially completed tasks. Add work-item next with initial first non-terminal work-item selection. Use cli-prefixed response schema names, add schema naming skill documentation, and update completeness documentation with Phase 3 follow-up for dependency-aware task next and work-item next. Leases, readiness, work-item dependencies, mutation, and SHA-256 graph/linearization digests are non-goals. Commit the new work-item documents.",
+    "sha256": "d76797115df9f3e91b57c7383300513e3ba08b0738113317d879f8b4906c9cb9"
+  },
+  "scope": [
+    {
+      "name": "explicit-dependency-graph",
+      "description": "Build a complete structural dependency graph from explicit task dependsOn references only, while allowing graph nodes to carry observed execution state for later inspection.",
+      "reason": "Task identity, task type, order key, filename, and parent container structure do not express execution dependencies; every task must declare what it depends on."
+    },
+    {
+      "name": "deterministic-linearization",
+      "description": "Validate graph structure and produce a stable topological ordering using orderKey and taskUid only as deterministic tie-breakers.",
+      "reason": "Directory order and historical order-key dependency semantics are insufficient for explicit dependency-aware execution."
+    },
+    {
+      "name": "dependency-structure-findings",
+      "description": "Reject duplicate task UIDs, duplicate order keys, missing dependencies, self-dependencies, and cycles with stable deterministic finding codes and cycle witnesses.",
+      "reason": "A partial or ambiguous graph must fail closed rather than allowing task selection to fall back to an untrusted order."
+    },
+    {
+      "name": "dependency-aware-task-next",
+      "description": "Make task next scan the full linearized order and select the first non-terminal task whose explicit dependencies all have task lifecycle status complete.",
+      "reason": "An active or partially completed task remains the next task until its own lifecycle reaches complete; completed tasks should not be selected again."
+    },
+    {
+      "name": "initial-work-item-next",
+      "description": "Add read-only work-item next selection that returns the first deterministically enumerated work item whose status is not complete.",
+      "reason": "The CLI needs an initial work-item selection boundary before Phase 3 adds dependency-aware and readiness-aware work-item selection."
+    },
+    {
+      "name": "cli-response-and-schema-conventions",
+      "description": "Add cli-prefixed response schemas for dependency linearization, task next, and work-item next, and document repository schema naming conventions in .cline/skills/schemas/SKILL.md.",
+      "reason": "CLI response contracts must be distinguishable from task-type contracts and the naming convention must be durable and discoverable."
+    },
+    {
+      "name": "phase-3-follow-up",
+      "description": "Update the completeness documentation to require Phase 3 follow-up for task next and work-item next dependency-aware readiness and explicit work-item dependency support.",
+      "reason": "The initial selection behavior is intentionally incomplete and must later incorporate readiness, work-item dependencies, branch state, and completion eligibility."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "task-parentage-dependency",
+      "description": "Do not use parentTaskUid for graph edges, dependency satisfaction, ordering, cycle detection, diagnostics, projections, or selection.",
+      "reason": "Parent tasks are structural containers in the existing order-key model and are being removed from dependency behavior in a later work item.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "implicit-dependency-inference",
+      "description": "Do not infer dependencies from task UID, task type, orderKey, filename, directory order, or prose.",
+      "reason": "Each task must explicitly declare its dependencies before it can be considered for processing."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "execution-state-graph-construction",
+      "description": "Do not consult processingStatus or task lifecycle status while constructing the dependency graph or full graph linearization.",
+      "reason": "Execution state is observed node data for later dependency inspection and projection, not structural graph input."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "leases-and-readiness",
+      "description": "Do not add task leases, lease expiration, task readiness reports, work-item readiness reports, or branch/worktree readiness checks.",
+      "reason": "Leases belong to the sandboxing stream and full readiness belongs to Phase 3."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "work-item-dependencies",
+      "description": "Do not add or consume explicit work-item dependency declarations in the initial work-item next implementation.",
+      "reason": "Phase 3 must return to work-item next and add dependency-aware selection after work-item dependency representation is designed."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "digests-and-mutation",
+      "description": "Do not calculate SHA-256 graph or linearization digests, execute tasks, mutate task/work-item records, add receipts, or enforce protected repository boundaries.",
+      "reason": "This work item establishes graph structure and read-only selection only; later phases own state mutation, receipts, and merge enforcement."
+      ,"forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0038_REQ_001",
+        "name": "explicit-dependency-graph",
+        "description": "The dependency graph must use explicit dependsOn references as its only dependency source and may include observed execution state on nodes without consulting that state during graph construction.",
+        "reason": "Every task must declare what it depends on; task identity, type, order, and parent container structure are not dependency declarations.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_001_AC_001",
+            "description": "Graph construction creates edges only for explicit dependsOn references and ignores parentTaskUid, orderKey, taskUid, taskType, filename, directory order, and prose."
+          },
+          {
+            "id": "WI-0038_REQ_001_AC_002",
+            "description": "Graph nodes can expose processingStatus and task lifecycle status as observed data, but changing those values does not alter graph construction or full-graph linearization."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_002",
+        "name": "deterministic-graph-validation",
+        "description": "The graph builder must reject duplicate task UIDs, duplicate order keys, missing dependencies, self-dependencies, and dependency cycles with stable deterministic findings.",
+        "reason": "Task selection must fail closed when the explicit dependency graph is structurally invalid.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_002_AC_001",
+            "description": "Duplicate order keys fail work-item validation and cannot be committed through the existing pre-commit validation path."
+          },
+          {
+            "id": "WI-0038_REQ_002_AC_002",
+            "description": "Cycle diagnostics report one deterministic witness per strongly connected component, no partial linearization is returned, and task next never falls back to directory order."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_003",
+        "name": "stable-dependency-linearization",
+        "description": "A valid complete dependency graph must produce a deterministic topological linearization whose tie-breakers are orderKey and then taskUid, without graph or linearization SHA-256 digests.",
+        "reason": "The system needs one reproducible structural order while avoiding historical implicit dependency semantics and unnecessary digest coupling.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_003_AC_001",
+            "description": "The linearization includes every graph node exactly once, places every dependency before its dependent, and remains stable across repeated runs and task execution-state changes."
+          },
+          {
+            "id": "WI-0038_REQ_003_AC_002",
+            "description": "sdlc task linearize emits the versioned cli-dependency-linearization/v1 response and does not include graphSha256 or linearizationSha256 fields."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_004",
+        "name": "dependency-aware-task-next",
+        "description": "Task next must scan linearized tasks and select the first non-terminal task whose explicit dependencies all have task lifecycle status complete.",
+        "reason": "A task with active or partial work remains the next task until it reaches complete, while downstream tasks wait for terminal dependency completion.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_004_AC_001",
+            "description": "A dependency is met only when the referenced dependency task has task.status equal to complete; processingStatus and result.status do not satisfy the dependency by themselves."
+          },
+          {
+            "id": "WI-0038_REQ_004_AC_002",
+            "description": "Task next skips complete tasks, retains an active or other non-terminal task as the selected next task until it becomes complete, and skips later tasks whose dependencies are not complete."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_005",
+        "name": "initial-work-item-next",
+        "description": "Work-item next must select the first deterministically enumerated work item whose work-item status is not complete and return a versioned CLI response.",
+        "reason": "The CLI needs an initial read-only work-item selection surface before Phase 3 adds dependency-aware work-item readiness.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_005_AC_001",
+            "description": "sdlc work-item next returns the first non-complete work item in deterministic order and returns a stable none response when every discovered work item is complete."
+          },
+          {
+            "id": "WI-0038_REQ_005_AC_002",
+            "description": "The initial command does not infer work-item dependencies, readiness, branch state, evidence, or completion eligibility and does not mutate records."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_006",
+        "name": "cli-response-schema-conventions",
+        "description": "CLI response contracts must use the cli-prefixed schema naming convention, and the repository must document schema naming and validation rules in .cline/skills/schemas/SKILL.md.",
+        "reason": "Task-type schemas and CLI response schemas are different contract families and must not be confused by naming.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_006_AC_001",
+            "description": "Dependency linearization, task-next, and work-item-next responses use persisted schemas under schemas/sdlc-cli-*/v1/ with IDs under https://schemas.handschuh.dev/sdlc/cli-*/v1."
+          },
+          {
+            "id": "WI-0038_REQ_006_AC_002",
+            "description": ".cline/skills/schemas/SKILL.md documents task-type versus CLI-response naming, versioned paths, stable IDs, closed contracts, schema audit inclusion, and representative-instance validation."
+          }
+        ]
+      },
+      {
+        "id": "WI-0038_REQ_007",
+        "name": "phase-3-dependency-follow-up",
+        "description": "The completeness documentation must record that Phase 3 revisits task next and work-item next for readiness and explicit work-item dependency support.",
+        "reason": "The initial selectors intentionally provide structural dependency behavior only and must not become the final readiness model.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0038_REQ_007_AC_001",
+            "description": "Phase 3 documentation requires task next to incorporate task readiness, branch/context state, required inputs, and dependency-state explanations."
+          },
+          {
+            "id": "WI-0038_REQ_007_AC_002",
+            "description": "Phase 3 documentation requires work-item next to incorporate explicit work-item dependency representation, work-item readiness, branch/context state, completion eligibility, and release eligibility."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0038/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Adds dependency-aware graph validation, CLI response contracts, task/work-item next behavior, and schema naming conventions to the pre-1.0 package.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if the final response-schema migration or CLI behavior changes compatibility beyond the planned additive contract."
+  }
+}

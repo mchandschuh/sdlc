@@ -1,0 +1,91 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-11000000
+orderKey: '11000000'
+parentTaskUid: WI-0038-10000000
+taskType: review
+processingStatus: unprocessed
+title: Review dependency graph and CLI response contracts
+objective: Independently review the explicit-dependsOn graph model, non-use of parentTaskUid, structural findings, terminal dependency rule, CLI response naming, schema skill, and Phase 3 follow-up.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/work-items/WI-0038/steps/WI-0038-10000000-implementation.yaml
+    - .docs/agentic-completeness-phases.md
+    - .cline/skills/schemas/SKILL.md
+    - schemas/README.md
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+    - src/core/discovery.ts
+    - src/cli/commands/task/next.command.ts
+    - tests/cli.test.ts
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn: [WI-0038-10000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0038/steps/WI-0038-11000000-review.yaml]
+  commitSubject: 'WI-0038: review(graph): inspect dependency contracts'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: review-contract-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review the exact WI-0038 graph, selection, response-schema, schema-skill, and Phase 3 follow-up contracts.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0038-10000000
+      result: {ref: WI-0038-10000000#result/R-001, sha256: null}
+    gateId: implementation-result
+    policyRef: {ref: repository-local-review-policy, sha256: null}
+    criteria:
+      - id: CRIT-001
+        statement: Explicit dependsOn is the only dependency source, and parentTaskUid, orderKey, task UID, task type, filename, directory order, and prose are explicitly excluded.
+        purpose: Prevent recurrence of implicit historical dependency semantics.
+        required: true
+        evidenceRefs: [WI-0038-10000000#result/R-001]
+      - id: CRIT-002
+        statement: Graph nodes may carry execution state, but graph construction and full linearization do not consult execution state and no graph or linearization digest is required.
+        purpose: Preserve structural graph stability while allowing later projections.
+        required: true
+        evidenceRefs: [WI-0038-10000000#result/R-001]
+      - id: CRIT-003
+        statement: Task next dependency satisfaction requires dependency task.status complete, while active or other non-terminal tasks remain eligible until complete.
+        purpose: Verify the initial selection semantics.
+        required: true
+        evidenceRefs: [WI-0038-10000000#result/R-001]
+      - id: CRIT-004
+        statement: CLI response schemas use cli-prefixed naming, schema conventions are documented, and Phase 3 follow-up covers dependency-aware task next and work-item next readiness.
+        purpose: Keep the response contract and future boundary explicit.
+        required: true
+        evidenceRefs: [WI-0038-10000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: target-result
+        ref: WI-0038-10000000#result/R-001
+        purpose: Inspect the exact Phase 2 design and contract changes.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment, remote publication, or production readiness.
+      - id: NON-002
+        statement: This review does not mutate task or work-item lifecycle state.
+    context:
+      - id: CTX-001
+        kind: contract
+        ref: .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+        purpose: Apply the finalized Phase 2 contract.
+        required: true

@@ -1,0 +1,87 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-21000000
+orderKey: '21000000'
+parentTaskUid: WI-0038-20000000
+taskType: review
+processingStatus: unprocessed
+title: Review explicit dependency graph implementation
+objective: Independently review graph edges, structural findings, deterministic cycle witnesses, topological ordering, execution-state handling, and the absence of implicit parent or order dependencies.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/work-items/WI-0038/steps/WI-0038-20000000-implementation.yaml
+    - schemas/sdlc-cli-dependency-linearization/v1/sdlc-cli-dependency-linearization.schema.json
+    - src/core/discovery.ts
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - README.md
+dependsOn: [WI-0038-20000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0038/steps/WI-0038-21000000-review.yaml]
+  commitSubject: 'WI-0038: review(graph): inspect explicit dependency linearization'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: graph-review-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review the exact explicit dependency graph and deterministic linearization implementation.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0038-20000000
+      result: {ref: WI-0038-20000000#result/R-001, sha256: null}
+    gateId: implementation-result
+    policyRef: {ref: repository-local-review-policy, sha256: null}
+    criteria:
+      - id: CRIT-001
+        statement: Every graph edge originates from explicit dependsOn and parentTaskUid, orderKey, task UID, task type, filenames, directory order, and prose are not treated as dependency indicators.
+        purpose: Verify explicit dependency semantics.
+        required: true
+        evidenceRefs: [WI-0038-20000000#result/R-001]
+      - id: CRIT-002
+        statement: Duplicate order keys, missing dependencies, self-dependencies, and cycles fail closed with deterministic findings and no partial order.
+        purpose: Verify structural safety and commit-validation compatibility.
+        required: true
+        evidenceRefs: [WI-0038-20000000#result/R-001]
+      - id: CRIT-003
+        statement: Execution-state fields are exposed as node observations but do not affect graph construction or full-graph linearization.
+        purpose: Preserve structural graph stability.
+        required: true
+        evidenceRefs: [WI-0038-20000000#result/R-001]
+      - id: CRIT-004
+        statement: Topological ordering is deterministic and includes every valid graph node exactly once without requiring SHA-256 graph or linearization digests.
+        purpose: Verify reproducible ordering without unnecessary digest coupling.
+        required: true
+        evidenceRefs: [WI-0038-20000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: target-result
+        ref: WI-0038-20000000#result/R-001
+        purpose: Inspect graph implementation and test evidence.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment, remote publication, or production readiness.
+      - id: NON-002
+        statement: This review does not mutate task or work-item lifecycle state.
+    context:
+      - id: CTX-001
+        kind: contract
+        ref: .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+        purpose: Verify adherence to the Phase 2 graph contract.
+        required: true

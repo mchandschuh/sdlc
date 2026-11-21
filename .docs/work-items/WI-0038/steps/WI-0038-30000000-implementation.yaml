@@ -1,0 +1,100 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0038
+taskUid: WI-0038-30000000
+orderKey: '30000000'
+parentTaskUid: WI-0038-21000000
+taskType: implementation
+processingStatus: unprocessed
+title: Implement dependency-aware task and work-item next commands
+objective: Add cli-prefixed task-next and work-item-next response contracts, make task next select the first non-terminal task with terminal-complete explicit dependencies, and add initial first-non-terminal work-item selection without readiness or work-item dependency inference.
+references:
+  required:
+    - .docs/work-items/WI-0038/work-item.json
+    - .docs/work-items/WI-0038/phase-2-dependency-graph-contract.md
+    - .docs/work-items/WI-0038/steps/WI-0038-10000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-20000000-implementation.yaml
+    - .docs/work-items/WI-0038/steps/WI-0038-21000000-review.yaml
+    - src/core/discovery.ts
+    - src/cli/commands/task/next.command.ts
+    - src/cli/commands/work-item/list.command.ts
+    - schemas/sdlc-task-next/v1/sdlc-task-next.schema.json
+    - tests/cli.test.ts
+  informational:
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - README.md
+dependsOn: [WI-0038-21000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0038/steps/WI-0038-30000000-implementation.yaml
+    - src/core/
+    - src/cli/
+    - schemas/sdlc-cli-dependency-linearization/
+    - schemas/sdlc-cli-task-next/
+    - schemas/sdlc-cli-work-item-next/
+    - tests/
+  commitSubject: 'WI-0038: feat(cli): select dependency-ready next work'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: selection-focused-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Integrate full dependency linearization into task next and add initial non-terminal work-item next selection with CLI-prefixed response contracts.
+    changeTypes: [production-code, test-code, schema, documentation]
+    changeIntent: feature
+    inputs:
+      - id: WI-0038-30000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_004
+        purpose: Define terminal-complete dependency satisfaction and active-task retention.
+        required: true
+      - id: WI-0038-30000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0038#work-item.json#requirement/WI-0038_REQ_005
+        purpose: Define initial work-item next behavior.
+        required: true
+      - id: WI-0038-30000000_INPUT-REVIEW-001
+        kind: task
+        ref: WI-0038-21000000#result/R-001
+        purpose: Provide the graph implementation review gate.
+        required: true
+    objectives:
+      - id: WI-0038-30000000_OBJ-001
+        statement: Task next scans the full dependency linearization, skips complete tasks, requires every explicit dependency to have task.status complete, and retains active or other non-terminal tasks until complete.
+        inputRefs: [WI-0038-30000000_INPUT-REQ-001, WI-0038-30000000_INPUT-REVIEW-001]
+        testCaseRefs: ['#test-case/WI-0038-30000000_TC-TASK-NEXT-DEPENDENCIES']
+      - id: WI-0038-30000000_OBJ-002
+        statement: Work-item next selects the first deterministically enumerated work item whose status is not complete and returns a stable none response when all work items are complete.
+        inputRefs: [WI-0038-30000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0038-30000000_TC-WORK-ITEM-NEXT']
+      - id: WI-0038-30000000_OBJ-003
+        statement: Task-next and work-item-next JSON outputs validate against cli-prefixed response schemas and both commands remain read-only.
+        inputRefs: [WI-0038-30000000_INPUT-REQ-001, WI-0038-30000000_INPUT-REQ-002]
+        testCaseRefs: ['#test-case/WI-0038-30000000_TC-CLI-RESPONSES']
+    ownedPaths: [src/core/, src/cli/, schemas/sdlc-cli-dependency-linearization/, schemas/sdlc-cli-task-next/, schemas/sdlc-cli-work-item-next/, tests/]
+    nonGoals:
+      - Do not evaluate full task or work-item readiness.
+      - Do not infer work-item dependencies or use parentTaskUid, orderKey, task UID, task type, filenames, directory order, or prose as dependencies.
+      - Do not add leases, mutation, receipts, graph/linearization digests, or automatic execution.
+    steps:
+      - Integrate dependency graph linearization with task next.
+      - Implement terminal task-status dependency satisfaction and non-terminal task retention.
+      - Add work-item next and its cli-prefixed response schema.
+      - Migrate task-next response naming to the cli-prefixed schema family and add representative response validation.
