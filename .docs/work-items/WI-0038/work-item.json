@@ -1,7 +1,7 @@
 {
   "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
   "workItemId": "WI-0038",
-  "status": "planned",
+  "status": "complete",
   "title": "Add deterministic dependency graph linearization and next-item selection",
   "type": "feature",
   "objective": "Implement Phase 2 of the agentic completeness improvement plan by building a deterministic dependency graph from explicit dependsOn references, producing a stable topological linearization, rejecting duplicate order keys and invalid dependency structure, making task next require terminal completion of explicit dependencies, adding initial work-item next selection, establishing cli-prefixed response schema naming, documenting repository schema conventions, and recording Phase 3 follow-up for dependency-aware readiness without adding leases, readiness, work-item dependencies, mutation, or graph digests.",
