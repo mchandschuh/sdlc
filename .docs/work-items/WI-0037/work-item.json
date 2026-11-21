@@ -1,0 +1,203 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0037",
+  "status": "planned",
+  "title": "Enforce type-specific task lifecycle transition invariants",
+  "type": "feature",
+  "objective": "Implement Phase 1 of the agentic completeness improvement plan by making task lifecycle states type-specific, transitions schema-declared and deterministic, result fields status-aware through complete allowlists plus required and forbidden paths, and lifecycle validation independent from processing and outcome status. Audit persisted records, add lifecycle matrix coverage, document the contract, and prepare the bounded pre-1.0 release without adding readiness, traceability, mutation receipts, merge enforcement, or derived work-item completion.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0037-task-lifecycle-invariants",
+      "created": false,
+      "rationale": "The work item changes public task schema metadata, lifecycle validation, persisted task records, and the pre-1.0 package contract, so implementation should be processed on a dedicated context branch before returning to main for release."
+    }
+  },
+  "baseline": "7b7e71e8839a5ffb7def8986db7af2ae05dc1858",
+  "request": {
+    "source": "conversation",
+    "text": "Create WI-0037 for Phase 1 of the agentic completeness improvement plan. Finalize and implement type-specific task lifecycle states, transition invariants, complete per-status result-field allowlists, required and forbidden result paths, generic lifecycle validation, persisted-record audits, lifecycle matrix tests, and the schema/documentation contract. Do not add readiness selection, traceability completeness, receipt-backed mutation enforcement, merge enforcement, or derived work-item completion in this work item. Commit the new work-item documents.",
+    "sha256": "20cafebe13b243a3f884b2c52846db20724810ca487e3a9b3a42461531bbed5e"
+  },
+  "scope": [
+    {
+      "name": "type-specific-lifecycle-contracts",
+      "description": "Declare lifecycle status vocabularies, status categories, initial status, forward milestone paths, terminal behavior, and resumable exception behavior separately for each supported task type.",
+      "reason": "Decomposition, research, decision, design, implementation, testing, validation, review, rework, and delivery tasks reach different milestones and cannot safely share one lifecycle enum or implicit transition graph."
+    },
+    {
+      "name": "schema-declared-transitions",
+      "description": "Extend x-sdlc-task-lifecycle metadata with initialStatuses and task-specific transitions interpreted by generic validation code.",
+      "reason": "The lifecycle contract must be inspectable beside the status enum and must not require task-type-specific branches in the validator."
+    },
+    {
+      "name": "status-aware-result-fields",
+      "description": "Add complete per-status result-field allowlists with required and forbidden result paths and result-presence policy.",
+      "reason": "Planned tasks must not contain premature result fields, while active, blocked, and deferred tasks may retain partial work and milestone or terminal states must provide complete declared results."
+    },
+    {
+      "name": "generic-lifecycle-validation",
+      "description": "Validate candidate task records against selected task metadata while preserving ordinary JSON Schema rules and keeping processingStatus and result.status independent.",
+      "reason": "Lifecycle state, host processing, and observed outcomes are separate facts that must not be inferred from one another."
+    },
+    {
+      "name": "persisted-record-audit",
+      "description": "Audit persisted task envelopes and fixtures against their selected task contracts and add representative lifecycle, transition, and result-policy matrix coverage.",
+      "reason": "A schema contract is incomplete if existing records, examples, and future task-type additions can silently violate it."
+    },
+    {
+      "name": "contract-documentation-and-release",
+      "description": "Document lifecycle metadata conventions, result-field semantics, transition rules, enforcement boundaries, limitations, and the pre-1.0 release impact.",
+      "reason": "Lifecycle metadata is executable contract information and the breaking contract boundary needs durable authoring and release guidance."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "readiness-selection",
+      "description": "Do not implement work-item readiness, task readiness, leases, dependency-aware task selection, or none-ready reporting.",
+      "reason": "Those controls belong to later completeness phases and must consume, not redefine, this lifecycle contract.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "traceability-completeness",
+      "description": "Do not implement requirement-to-evidence traceability, orphan detection, completeness reports, or semantic evidence equivalence.",
+      "reason": "Lifecycle field presence does not prove requirement coverage or evidence truth; those are later phase concerns.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "receipt-backed-mutation",
+      "description": "Do not add task start, task record, task block, task complete, work-item complete, mutation receipts, leases, or controller-owned mutation APIs.",
+      "reason": "This work item defines and validates the lifecycle contract; controlled mutation and receipt authority are Phase 4 concerns.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "merge-and-filesystem-enforcement",
+      "description": "Do not prevent direct edits through hooks, protected branches, merge manifests, filesystem ownership, or agent/task-controller isolation.",
+      "reason": "Later sandboxing and merge phases will enforce the contract at repository boundaries; Phase 1 must not claim tamper resistance.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "completion-and-production-claims",
+      "description": "Do not derive work-item completion, release eligibility, provider correctness, deployment safety, or production readiness from task lifecycle status or schema validation.",
+      "reason": "A complete task action is not equivalent to complete work-item evidence or production readiness.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0037_REQ_001",
+        "name": "task-specific-lifecycle-vocabularies",
+        "description": "Every supported task schema must declare its own lifecycle status vocabulary, status category, initial status, milestone meaning, terminal behavior, and supported superseded behavior where applicable.",
+        "reason": "Task kinds have different intermediate outputs and gates, so lifecycle status must be owned by the selected task contract.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_001_AC_001",
+            "description": "All ten supported task types declare lifecycle metadata whose statuses match the task schema enum and whose only initial status is planned."
+          },
+          {
+            "id": "WI-0037_REQ_001_AC_002",
+            "description": "Metadata distinguishes transitional, milestone, and terminal statuses; complete is terminal for every task type; non-terminal superseded statuses are limited to the task types that support them."
+          }
+        ]
+      },
+      {
+        "id": "WI-0037_REQ_002",
+        "name": "deterministic-transition-invariants",
+        "description": "Each task type must declare an explicit transition graph with common resumable states, forward-only milestones, terminal closure, and no direct reopening of complete tasks.",
+        "reason": "Implicit transitions permit invalid lifecycle changes and make later controlled mutation and merge enforcement nondeterministic.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_002_AC_001",
+            "description": "The generic lifecycle contract enforces planned -> active|blocked|deferred, blocked -> active, deferred -> planned|active|blocked, task-specific forward milestone paths, and no normal outgoing transition from complete."
+          },
+          {
+            "id": "WI-0037_REQ_002_AC_002",
+            "description": "Superseded is enterable only from a task-specific milestone, may resume to planned|active|blocked, and implemented-unproven must progress through implemented before complete."
+          }
+        ]
+      },
+      {
+        "id": "WI-0037_REQ_003",
+        "name": "status-aware-result-policy",
+        "description": "Every task status must declare a complete result-field allowlist, required result paths, forbidden result paths, and result-presence policy interpreted generically.",
+        "reason": "Planned tasks must not contain premature output, partial work must be retainable after processing begins, and milestone or terminal records must expose the fields needed for their claims.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_003_AC_001",
+            "description": "Planned allows no result fields; active, blocked, and deferred allow partial task-specific result fields without requiring them; milestone and complete statuses require their full declared result contract."
+          },
+          {
+            "id": "WI-0037_REQ_003_AC_002",
+            "description": "Validation rejects populated paths outside the status allowlist, missing required paths, present forbidden paths, incompatible result shapes, and planned-to-blocked or planned-to-deferred transitions that introduce result fields."
+          }
+        ]
+      },
+      {
+        "id": "WI-0037_REQ_004",
+        "name": "independent-lifecycle-facts",
+        "description": "Lifecycle validation must preserve the independence of envelope processingStatus, task lifecycle status, result status, review decisions, validation outcomes, and work-item status.",
+        "reason": "Processing completion, task completion, result outcome, review closure, validation outcome, and work-item completion are distinct facts.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_004_AC_001",
+            "description": "Representative records prove that processing_completed does not imply a passed task, result status does not imply independent review, task complete does not imply work-item complete, and work-item validation does not prove implementation or provider execution."
+          },
+          {
+            "id": "WI-0037_REQ_004_AC_002",
+            "description": "Generic lifecycle validation resolves the selected task schema and metadata without task-type-specific status branches or inference from processingStatus or result.status."
+          }
+        ]
+      },
+      {
+        "id": "WI-0037_REQ_005",
+        "name": "persisted-record-and-matrix-coverage",
+        "description": "All persisted task envelopes, fixtures, examples, and selected task contracts must be audited, with lifecycle and result-policy matrix tests covering valid and invalid combinations.",
+        "reason": "The lifecycle contract must remain true for the existing repository corpus and future schema additions.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_005_AC_001",
+            "description": "Every persisted task envelope has a status accepted by its selected task schema and lifecycle metadata, and no speculative result-status rewrite is performed merely to satisfy lifecycle validation."
+          },
+          {
+            "id": "WI-0037_REQ_005_AC_002",
+            "description": "Tests cover all ten task types, planned empty results, partial transitional results, milestone and terminal required fields, forbidden fields, invalid transitions, superseded reopening, terminal closure, and independence of processing/result status."
+          }
+        ]
+      },
+      {
+        "id": "WI-0037_REQ_006",
+        "name": "documentation-and-release-boundary",
+        "description": "The schema convention guide and Phase 1 design record must document metadata shape, field-role precedence, generic interpretation, direct-edit limitations, later enforcement boundaries, and the pre-1.0 release impact.",
+        "reason": "Future task types and later enforcement phases need one durable contract rather than undocumented assumptions.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0037_REQ_006_AC_001",
+            "description": "schemas/README.md and the Phase 1 design document describe initialStatuses, transitions, resultPresence, allowedResultPaths, requiredResultPaths, forbiddenResultPaths, status categories, and ordinary JSON Schema precedence."
+          },
+          {
+            "id": "WI-0037_REQ_006_AC_002",
+            "description": "Typecheck, build, complete tests, schema audit, representative lifecycle CLI validation, and WI-0037 work-item validation pass before the pre-1.0 minor release is prepared."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0037/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Adds schema-declared transition metadata, status-aware result-field policy, generic lifecycle enforcement, persisted-record audits, and lifecycle matrix coverage to the pre-1.0 public task contract.",
+    "disclaimer": "This is an inferred recommendation; retain minor impact unless implementation changes the compatibility policy or introduces a larger package contract break."
+  }
+}

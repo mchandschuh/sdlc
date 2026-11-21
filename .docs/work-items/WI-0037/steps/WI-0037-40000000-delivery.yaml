@@ -1,0 +1,120 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0037
+taskUid: WI-0037-40000000
+orderKey: '40000000'
+parentTaskUid: WI-0037-30000000
+taskType: delivery
+processingStatus: unprocessed
+title: Prepare the pre-1.0 lifecycle-contract release
+objective: Prepare and verify the bounded pre-1.0 minor release for the Phase 1 lifecycle contract after implementation, independent review, aggregate validation, schema audit, and persisted-record gates pass.
+references:
+  required:
+    - .docs/work-items/WI-0037/work-item.json
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - .docs/work-items/WI-0037/steps/WI-0037-30000000-validation.yaml
+    - package.json
+    - yarn.lock
+    - schemas/README.md
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn: [WI-0037-30000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0037/steps/WI-0037-40000000-delivery.yaml, package.json]
+  commitSubject: 'WI-0037: chore(release): release lifecycle transition invariants'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: complete-tests
+      executable: yarn
+      arguments: [test]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0037, --json]
+      expectedExitCode: 0
+    - id: release-version
+      executable: node
+      arguments: [-p, "require('./package.json').version"]
+      expectedExitCode: 0
+    - id: release-tag
+      executable: git
+      arguments: [tag, --annotate, <computed-next-version>]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-delivery/v1#/properties/result
+  intent:
+    summary: Prepare the Phase 1 lifecycle transition and result-policy contract as a bounded pre-1.0 minor release.
+    deliveryTypes: [package, release]
+    inputs:
+      - id: WI-0037-40000000_INPUT-VALIDATION-001
+        kind: validation
+        ref: WI-0037-30000000#result/R-001
+        purpose: Confirm aggregate Phase 1 validation passed.
+        required: true
+      - id: WI-0037-40000000_INPUT-REPOSITORY-001
+        kind: repositoryState
+        ref: '#repository-state/HEAD'
+        purpose: Identify the primary-branch release revision.
+        required: true
+    artifacts:
+      - id: WI-0037-40000000_ART-MANIFEST
+        kind: manifest
+        path: package.json
+        purpose: Existing package metadata used as the tracked version source.
+        required: true
+      - id: WI-0037-40000000_ART-DESIGN
+        kind: manifest
+        path: .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+        purpose: Durable Phase 1 lifecycle contract released with the schema and validator changes.
+        required: true
+      - id: WI-0037-40000000_ART-TAG
+        kind: releaseRecord
+        path: .git/refs/tags/<computed-next-version>
+        purpose: Annotated SemVer tag created at the primary release tip.
+        required: true
+    procedures:
+      - id: WI-0037-40000000_PROC-COMPUTE-MINOR
+        sequence: 1
+        name: compute-minor-release
+        description: Derive the next pre-1.0 minor version after the validated lifecycle contract is merged into main.
+        steps:
+          - Verify the context branch has been merged into main.
+          - Read the highest reachable annotated SemVer tag.
+          - Confirm WI-0037 validation passed and its versionSuggestion impact is minor.
+          - Update only the existing package.json version source.
+          - Build and verify the compiled CLI reports the computed version.
+        command: git tag --merged HEAD --list && node ./bin/cli.js --version
+        expected:
+          result: The computed pre-1.0 minor release is recorded in package.json and the compiled CLI reports the same version.
+        required: true
+      - id: WI-0037-40000000_PROC-TAG-PRIMARY
+        sequence: 2
+        name: tag-primary-release
+        description: Create the annotated computed SemVer tag at the primary branch tip and push only when explicitly configured and authorized.
+        steps:
+          - Create the annotated computed tag on main.
+          - Verify the tag resolves to the primary release tip.
+          - Record remote publication only if separately authorized and successful.
+        command: git tag --annotate <computed-next-version> -m 'Release <computed-next-version>' HEAD
+        expected:
+          result: The primary branch contains the annotated computed release tag; no context-branch tag is created.
+        required: true
+    nonGoals:
+      - Do not tag the context branch.
+      - Do not publish a package registry artifact or deploy externally.
+      - Do not claim provider correctness, production readiness, or derived work-item completion.

@@ -1,0 +1,90 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0037
+taskUid: WI-0037-21000000
+orderKey: '21000000'
+parentTaskUid: WI-0037-20000000
+taskType: review
+processingStatus: unprocessed
+title: Review persisted lifecycle audit and matrix coverage
+objective: Independently review the persisted-record audit, all-task-type lifecycle matrix, transition edge coverage, and separation assertions added for Phase 1.
+references:
+  required:
+    - .docs/work-items/WI-0037/work-item.json
+    - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+    - .docs/work-items/WI-0037/steps/WI-0037-20000000-implementation.yaml
+    - .docs/work-items/WI-0037/steps/WI-0037-10000000-implementation.yaml
+    - .docs/work-items/WI-0037/steps/WI-0037-11000000-review.yaml
+    - schemas/README.md
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - src/core/work-item-validation.ts
+    - tests/cli.test.ts
+    - .docs/work-items/
+  informational:
+    - .cline/README.md
+    - README.md
+dependsOn: [WI-0037-20000000]
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths: [.docs/work-items/WI-0037/steps/WI-0037-21000000-review.yaml]
+  commitSubject: 'WI-0037: review(schema): inspect lifecycle audit coverage'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: lifecycle-audit-review-tests
+      executable: yarn
+      arguments: [test, tests/cli.test.ts, --run]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-review/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-review/v1#/properties/result
+  intent:
+    summary: Review the exact persisted-record audit and lifecycle matrix result against all Phase 1 requirements.
+    reviewKind: code
+    target:
+      taskType: implementation
+      taskRef: WI-0037-20000000
+      result: {ref: WI-0037-20000000#result/R-001, sha256: null}
+    gateId: implementation-result
+    policyRef: {ref: repository-local-review-policy, sha256: null}
+    criteria:
+      - id: CRIT-001
+        statement: The persisted-record audit covers every task envelope and distinguishes confirmed lifecycle violations from valid historical result values.
+        purpose: Prevent speculative or incomplete migration of the repository corpus.
+        required: true
+        evidenceRefs: [WI-0037-20000000#result/R-001]
+      - id: CRIT-002
+        statement: Matrix tests cover all ten task types, planned empty results, partial transitional results, milestone and terminal requirements, forbidden fields, and invalid transitions.
+        purpose: Verify that lifecycle behavior is tested rather than represented only by metadata.
+        required: true
+        evidenceRefs: [WI-0037-20000000#result/R-001]
+      - id: CRIT-003
+        statement: Tests explicitly preserve independence between processingStatus, task lifecycle status, result status, review decision, validation outcome, and work-item status.
+        purpose: Prevent false completion or approval inference.
+        required: true
+        evidenceRefs: [WI-0037-20000000#result/R-001]
+      - id: CRIT-004
+        statement: The audit and tests remain within Phase 1 and do not introduce readiness, traceability, receipts, merge authority, or derived completion.
+        purpose: Prevent scope leakage into later phases.
+        required: true
+        evidenceRefs: [WI-0037-20000000#result/R-001]
+    evidenceRequirements:
+      - id: EVID-001
+        kind: target-result
+        ref: WI-0037-20000000#result/R-001
+        purpose: Inspect the persisted audit and matrix test implementation result.
+        required: true
+        minimumTier: inspection
+    nonGoals:
+      - id: NON-001
+        statement: This review does not approve deployment, remote publication, or production readiness.
+      - id: NON-002
+        statement: This review does not mutate task or work-item lifecycle state.
+    context:
+      - id: CTX-001
+        kind: contract
+        ref: .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
+        purpose: Verify the audit and test matrix follows the finalized Phase 1 rules.
+        required: true
