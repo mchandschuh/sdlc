@@ -14,6 +14,10 @@ describe('dynamic command discovery', () => {
   it('enumerates current command modules deterministically', async () => {
     const files = await enumerateCommandFiles(new URL('../src/cli/main.ts', import.meta.url).href);
     expect(files.map((file) => file.replaceAll('\\', '/').split('/src/').at(-1))).toEqual([
+      'cli/commands/ref/migrate-task-local-up.command.ts',
+      'cli/commands/ref/migrate-work-item-up.command.ts',
+      'cli/commands/ref/resolve.command.ts',
+      'cli/commands/ref/validate.command.ts',
       'cli/commands/repository/info.command.ts',
       'cli/commands/task/list.command.ts',
       'cli/commands/task/next.command.ts',

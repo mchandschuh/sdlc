@@ -21,7 +21,8 @@ export async function runDiscoveredCommands(
   // dedicated command-module tasks move them into the discovered registry.
   const dynamicFamily = (args[0] === 'work-item' && ['list', 'start', 'validate'].includes(args[1] ?? ''))
     || (args[0] === 'task' && ['list', 'validate', 'next'].includes(args[1] ?? ''))
-    || (args[0] === 'repository' && args[1] === 'info');
+    || (args[0] === 'repository' && args[1] === 'info')
+    || (args[0] === 'ref' && ['validate', 'resolve', 'migrate-task-local-up', 'migrate-work-item-up'].includes(args[1] ?? ''));
   if (!rootHelpOrVersion(args) && !dynamicFamily) return undefined;
   const context: SdlcCommandContext = { schemaRegistryRoot };
   const commands = await discoverCommands(moduleUrl, context);
@@ -33,6 +34,7 @@ export async function runDiscoveredCommands(
     .scriptName('sdlc')
     .exitProcess(false)
     .usage('Usage: sdlc [options]')
+    .wrap(160)
     .help()
     .alias('h', 'help')
     .version(version)
@@ -40,7 +42,11 @@ export async function runDiscoveredCommands(
     .strict()
     .fail((message, error) => {
       const normalized = message?.replace(/^Unknown argument:/u, 'Unknown option:');
-      throw error ?? new Error(normalized ?? 'Invalid command invocation.');
+      const restored = normalized?.replace(/Unknown option: ([A-Za-z0-9_-]+)/u, (_match, name: string) => {
+        const original = args.find((argument) => argument === `--${name}` || argument === `-${name}`);
+        return `Unknown option: ${original ?? name}`;
+      });
+      throw error ?? new Error(restored ?? 'Invalid command invocation.');
     });
   const groups = new Map<string, readonly SdlcCommandModule[]>();
   for (const command of commands) {

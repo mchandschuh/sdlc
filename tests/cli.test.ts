@@ -186,6 +186,18 @@ describe('CLI interface', () => {
   });
 
   it.each([
+    ['ref resolve', 'Usage: sdlc ref resolve --ref <reference> [--depth [positive-integer]] [--json]'],
+    ['ref migrate-task-local-up', 'Usage: sdlc ref migrate-task-local-up [--path <path> | --work-item <work-item-id>] [--json]'],
+  ])('exposes generated help for %s', async (command, usage) => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((...values: unknown[]) => output.push(values.join(' ')));
+
+    await expect(main([...command.split(' '), '--help'])).resolves.toBe(0);
+
+    expect(output.join('\n')).toContain(usage);
+  });
+
+  it.each([
     ['WI-0001', 'https://schemas.handschuh.dev/sdlc/work-item-id/v1'],
     ['WI-0001-80000000', 'https://schemas.handschuh.dev/sdlc/task-uid/v1'],
     ['WI-0001_REQ_001', 'https://schemas.handschuh.dev/sdlc/requirement-identifier/v1'],

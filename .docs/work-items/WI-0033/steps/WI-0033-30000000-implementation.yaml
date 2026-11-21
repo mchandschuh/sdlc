@@ -4,7 +4,7 @@ taskUid: WI-0033-30000000
 orderKey: '30000000'
 parentTaskUid: WI-0033-20000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement reference command modules
 objective: Migrate ref validate, ref resolve, ref migrate-task-local-up, and ref migrate-work-item-up into dynamically discovered yargs modules while preserving reference and migration boundaries.
 references:
@@ -42,7 +42,7 @@ governance:
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
@@ -79,19 +79,52 @@ task:
       - Implement ref/migrate-task-local-up.command.ts and ref/migrate-work-item-up.command.ts.
       - Add help, dispatch, depth, exclusivity, and migration safety regression tests.
   result:
-    status: partially-implemented
+    status: implemented
     implementation:
-      summary: The reference command migration is planned but has not been processed.
+      summary: Migrated all four reference commands into dynamically discovered yargs modules, removed the migrated reference business logic from main.ts, and added focused help and discovery coverage.
       changes:
-        - id: WI-0033-30000000_CHANGE-PLAN-001
-          type: documentation
-          summary: Recorded the reference command migration plan.
+        - id: WI-0033-30000000_CHANGE-001
+          type: production-code
+          summary: Added dynamically discovered reference validation, resolution, task-local migration, and work-item migration command descriptors with local builders and handlers.
           objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
-          paths: [.docs/work-items/WI-0033/steps/WI-0033-30000000-implementation.yaml]
-      testImplementations: []
+          paths:
+            - src/cli/commands/ref/validate.command.ts
+            - src/cli/commands/ref/resolve.command.ts
+            - src/cli/commands/ref/migrate-task-local-up.command.ts
+            - src/cli/commands/ref/migrate-work-item-up.command.ts
+        - id: WI-0033-30000000_CHANGE-002
+          type: production-code
+          summary: Routed the reference family through the shared registry and removed the migrated reference dispatch and business logic from main.ts.
+          objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
+          paths:
+            - src/cli/command-runner.ts
+            - src/cli/main.ts
+        - id: WI-0033-30000000_CHANGE-003
+          type: test-code
+          summary: Updated deterministic discovery coverage and added generated-help assertions while retaining reference dispatch, depth, exclusivity, and migration safety regression coverage.
+          objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
+          paths:
+            - tests/command-discovery.test.ts
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: '#test-case/TC-REFERENCE-HELP'
+          path: tests/cli.test.ts
+          selector: exposes generated help for ref resolve and ref migrate-task-local-up
+        - testCaseRef: '#test-case/TC-REFERENCE-DISPATCH'
+          path: tests/cli.test.ts
+          selector: validates every root example from every marked reference schema
+        - testCaseRef: '#test-case/TC-REFERENCE-BOUNDARIES'
+          path: tests/cli.test.ts
+          selector: reports migrate-work-item-up help and rejects unsafe selections without writes
     verification:
-      status: not-run
+      status: passed
       objectiveRefs: [WI-0033-30000000_OBJ-001, WI-0033-30000000_OBJ-002]
-      tests: []
+      tests:
+        - id: WI-0033-30000000_EXEC-001
+          type: cli-audit
+          testCaseRefs: ['#test-case/TC-REFERENCE-HELP', '#test-case/TC-REFERENCE-DISPATCH', '#test-case/TC-REFERENCE-BOUNDARIES']
+          command: HOME=$(mktemp -d) yarn typecheck && HOME=$(mktemp -d) yarn build && HOME=$(mktemp -d) yarn test tests/cli.test.ts tests/command-discovery.test.ts --run
+          status: passed
+          result: Typecheck, build, 79 focused CLI/discovery tests, generated reference help, reference dispatch, depth, exclusivity, migration safety, and deterministic discovery checks passed in an isolated HOME.
     limitations:
-      - Implementation has not been processed; no reference command evidence exists yet.
+      - The complete twelve-command integration, installed executable, aggregate work-item validation, and release remain pending later WI-0033 tasks.
