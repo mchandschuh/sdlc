@@ -1,12 +1,15 @@
 schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
 workItemId: WI-0038
 taskUid: WI-0038-20000000
-orderKey: '20000000'
+orderKey: "20000000"
 parentTaskUid: WI-0038-11000000
 taskType: implementation
-processingStatus: unprocessed
+processingStatus: processing_completed
 title: Implement explicit dependency graph and deterministic linearization
-objective: Build the complete dependency graph from explicit dependsOn references, reject duplicate order keys and invalid dependency structure, produce deterministic topological order, and expose observed execution state without consulting it during graph construction.
+objective: Build the complete dependency graph from explicit dependsOn
+  references, reject duplicate order keys and invalid dependency structure,
+  produce deterministic topological order, and expose observed execution state
+  without consulting it during graph construction.
 references:
   required:
     - .docs/work-items/WI-0038/work-item.json
@@ -21,7 +24,8 @@ references:
   informational:
     - .docs/work-items/WI-0037/phase-1-lifecycle-contract.md
     - README.md
-dependsOn: [WI-0038-11000000]
+dependsOn:
+  - WI-0038-11000000
 governance:
   schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
   ownedPaths:
@@ -29,31 +33,48 @@ governance:
     - src/core/
     - schemas/sdlc-cli-dependency-linearization/
     - tests/
-  commitSubject: 'WI-0038: feat(graph): linearize explicit dependencies'
+  commitSubject: "WI-0038: feat(graph): linearize explicit dependencies"
   commitBody:
-    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+    requiredSections:
+      - Why
+      - What
+      - How
+      - Decisions
+      - Validation
+      - Evidence
+      - Refs
+      - Next
   validationProcedures:
     - id: typecheck
       executable: yarn
-      arguments: [typecheck]
+      arguments:
+        - typecheck
       expectedExitCode: 0
     - id: build
       executable: yarn
-      arguments: [build]
+      arguments:
+        - build
       expectedExitCode: 0
     - id: graph-focused-tests
       executable: yarn
-      arguments: [test, tests/cli.test.ts, --run]
+      arguments:
+        - test
+        - tests/cli.test.ts
+        - --run
       expectedExitCode: 0
   requiredForExecution: true
 task:
-  status: planned
+  status: implemented
   taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
   intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
   resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
   intent:
-    summary: Implement explicit dependsOn graph construction, structural validation, deterministic cycle diagnostics, and full-graph topological linearization.
-    changeTypes: [production-code, test-code, schema]
+    summary: Implement explicit dependsOn graph construction, structural validation,
+      deterministic cycle diagnostics, and full-graph topological linearization.
+    changeTypes:
+      - production-code
+      - test-code
+      - schema
     changeIntent: feature
     inputs:
       - id: WI-0038-20000000_INPUT-REQ-001
@@ -78,24 +99,125 @@ task:
         required: true
     objectives:
       - id: WI-0038-20000000_OBJ-001
-        statement: The graph builder creates edges only from explicit dependsOn and returns complete nodes with observed execution state without using that state to construct the graph.
-        inputRefs: [WI-0038-20000000_INPUT-REQ-001, WI-0038-20000000_INPUT-REVIEW-001]
-        testCaseRefs: ['#test-case/WI-0038-20000000_TC-EXPLICIT-EDGES']
+        statement: The graph builder creates edges only from explicit dependsOn and
+          returns complete nodes with observed execution state without using
+          that state to construct the graph.
+        inputRefs:
+          - WI-0038-20000000_INPUT-REQ-001
+          - WI-0038-20000000_INPUT-REVIEW-001
+        testCaseRefs:
+          - "#test-case/WI-0038-20000000_TC-EXPLICIT-EDGES"
       - id: WI-0038-20000000_OBJ-002
-        statement: Invalid duplicate identifiers, duplicate order keys, missing dependencies, self-dependencies, and cycles produce stable blocking findings and no partial linearization.
-        inputRefs: [WI-0038-20000000_INPUT-REQ-002]
-        testCaseRefs: ['#test-case/WI-0038-20000000_TC-STRUCTURAL-FINDINGS']
+        statement: Invalid duplicate identifiers, duplicate order keys, missing
+          dependencies, self-dependencies, and cycles produce stable blocking
+          findings and no partial linearization.
+        inputRefs:
+          - WI-0038-20000000_INPUT-REQ-002
+        testCaseRefs:
+          - "#test-case/WI-0038-20000000_TC-STRUCTURAL-FINDINGS"
       - id: WI-0038-20000000_OBJ-003
-        statement: Valid graphs produce a deterministic complete topological ordering using orderKey and taskUid only as tie-breakers and without graph or linearization digests.
-        inputRefs: [WI-0038-20000000_INPUT-REQ-003]
-        testCaseRefs: ['#test-case/WI-0038-20000000_TC-LINEARIZATION']
-    ownedPaths: [src/core/, schemas/sdlc-cli-dependency-linearization/, tests/]
+        statement: Valid graphs produce a deterministic complete topological ordering
+          using orderKey and taskUid only as tie-breakers and without graph or
+          linearization digests.
+        inputRefs:
+          - WI-0038-20000000_INPUT-REQ-003
+        testCaseRefs:
+          - "#test-case/WI-0038-20000000_TC-LINEARIZATION"
+    ownedPaths:
+      - src/core/
+      - schemas/sdlc-cli-dependency-linearization/
+      - tests/
     nonGoals:
-      - Do not use parentTaskUid, task UID, task type, orderKey, filename, directory order, or prose as dependency edges.
-      - Do not consult processingStatus or task lifecycle status while constructing the graph or full linearization.
-      - Do not add readiness, leases, work-item dependencies, mutation, receipts, or graph/linearization digests.
+      - Do not use parentTaskUid, task UID, task type, orderKey, filename,
+        directory order, or prose as dependency edges.
+      - Do not consult processingStatus or task lifecycle status while
+        constructing the graph or full linearization.
+      - Do not add readiness, leases, work-item dependencies, mutation,
+        receipts, or graph/linearization digests.
     steps:
-      - Add reusable dependency graph types and explicit dependsOn edge construction.
-      - Add duplicate, missing-node, self-dependency, order-key, and cycle validation with deterministic findings.
-      - Add deterministic topological sorting and complete graph-node response serialization.
-      - Add valid and invalid graph fixtures, including execution-state changes that leave structural output unchanged.
+      - Add reusable dependency graph types and explicit dependsOn edge
+        construction.
+      - Add duplicate, missing-node, self-dependency, order-key, and cycle
+        validation with deterministic findings.
+      - Add deterministic topological sorting and complete graph-node response
+        serialization.
+      - Add valid and invalid graph fixtures, including execution-state changes
+        that leave structural output unchanged.
+  result:
+    status: implemented
+    implementation:
+      summary: Implemented explicit dependsOn dependency graph construction,
+        deterministic topological linearization, structural findings, and task
+        linearize JSON/human output.
+      changes:
+        - id: WI-0038-20000000_CHANGE-001
+          type: production-code
+          summary: Added reusable dependency graph construction with explicit dependsOn
+            edges, observed execution state, duplicate/missing/self dependency
+            checks, cycle witnesses, and deterministic topological sorting.
+          objectiveRefs:
+            - WI-0038-20000000_OBJ-001
+            - WI-0038-20000000_OBJ-002
+            - WI-0038-20000000_OBJ-003
+          paths:
+            - src/core/dependency-graph.ts
+        - id: WI-0038-20000000_CHANGE-002
+          type: production-code
+          summary: Added task linearize command output backed by the
+            cli-dependency-linearization response contract.
+          objectiveRefs:
+            - WI-0038-20000000_OBJ-003
+          paths:
+            - src/cli/commands/task/linearize.command.ts
+        - id: WI-0038-20000000_CHANGE-003
+          type: production-code
+          summary: Integrated blocking dependency graph findings into complete work-item
+            validation.
+          objectiveRefs:
+            - WI-0038-20000000_OBJ-002
+          paths:
+            - src/core/work-item-validation.ts
+        - id: WI-0038-20000000_CHANGE-004
+          type: test-code
+          summary: Added valid, execution-state-stability, and missing-dependency graph
+            fixture coverage.
+          objectiveRefs:
+            - WI-0038-20000000_OBJ-001
+            - WI-0038-20000000_OBJ-002
+            - WI-0038-20000000_OBJ-003
+          paths:
+            - tests/cli.test.ts
+      testImplementations:
+        - testCaseRef: "#test-case/WI-0038-20000000_TC-EXPLICIT-EDGES"
+          path: tests/cli.test.ts
+          selector: builds explicit dependency graphs with deterministic linearization and
+            blocking findings
+        - testCaseRef: "#test-case/WI-0038-20000000_TC-STRUCTURAL-FINDINGS"
+          path: tests/cli.test.ts
+          selector: missing dependency produces no partial linearization
+        - testCaseRef: "#test-case/WI-0038-20000000_TC-LINEARIZATION"
+          path: tests/cli.test.ts
+          selector: deterministic two-node topological order
+    verification:
+      status: passed
+      objectiveRefs:
+        - WI-0038-20000000_OBJ-001
+        - WI-0038-20000000_OBJ-002
+        - WI-0038-20000000_OBJ-003
+      tests:
+        - id: WI-0038-20000000_EXEC-001
+          type: cli-audit
+          testCaseRefs:
+            - "#test-case/WI-0038-20000000_TC-EXPLICIT-EDGES"
+            - "#test-case/WI-0038-20000000_TC-STRUCTURAL-FINDINGS"
+            - "#test-case/WI-0038-20000000_TC-LINEARIZATION"
+          command: yarn typecheck && yarn build && yarn test tests/cli.test.ts --run &&
+            node /home/michael/.cline/skills/sdlc/bin/dev.js schema validate
+          status: passed
+          result: Typecheck, build, 104 focused CLI tests, schema audit, task
+            linearization smoke check, task validation, and WI-0038 validation
+            passed.
+    limitations:
+      - This task implements structural graph and linearization only;
+        dependency-aware task selection, work-item next, readiness, mutation,
+        leases, and work-item dependencies remain pending.

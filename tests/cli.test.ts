@@ -11,6 +11,7 @@ import { discoverNextTask, discoverTasks, discoverWorkItems, DiscoveryError, enu
 import { collectionDefinitions, collectionNamesForCommand, listCollection, listWorkItemCollection } from '../src/core/collection-list.js';
 import { discoverReferenceSchemas } from '../src/core/reference.js';
 import { validateTaskLifecycleTransition, validateWorkItem } from '../src/core/work-item-validation.js';
+import { buildDependencyGraph } from '../src/core/dependency-graph.js';
 import { repositoryInfo } from '../src/core/repository.js';
 import { commandContext, resolveSdlcConfig } from '../src/core/configuration.js';
 
@@ -1805,6 +1806,30 @@ describe('discovery commands', () => {
     const completeness = await readFile(join(process.cwd(), '.docs/agentic-completeness-phases.md'), 'utf8');
     expect(completeness).toContain('graph from explicit `dependsOn` references only');
     expect(completeness).toContain('initial deterministic `work-item next` selector');
+  });
+
+  it('builds explicit dependency graphs with deterministic linearization and blocking findings', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'sdlc-dependency-graph-'));
+    const steps = join(root, '.docs', 'work-items', 'WI-0099', 'steps');
+    await mkdir(steps, { recursive: true });
+    await writeFile(join(root, '.docs', 'work-items', 'WI-0099', 'work-item.json'), JSON.stringify({ workItemId: 'WI-0099', status: 'planned', title: 'Graph fixture', stepsPath: '.docs/work-items/WI-0099/steps/' }));
+    const task = (uid: string, orderKey: string, dependsOn: string[], status = 'planned') => YAML.stringify({
+      schema: 'https://schemas.handschuh.dev/sdlc/task-envelope/v1', workItemId: 'WI-0099', taskUid: uid, orderKey, parentTaskUid: null, taskType: 'implementation', processingStatus: 'unprocessed', title: 'Graph fixture', objective: 'Graph fixture', references: { required: [], informational: [] }, dependsOn, task: { status, taskSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1', intentSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent', resultSchema: 'https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result', intent: {}, result: {} },
+    });
+    await writeFile(join(steps, 'WI-0099-10000000.yaml'), task('WI-0099-10000000', '10000000', []));
+    await writeFile(join(steps, 'WI-0099-20000000.yaml'), task('WI-0099-20000000', '20000000', ['WI-0099-10000000']));
+    const valid = await buildDependencyGraph(root, 'WI-0099');
+    expect(valid.valid).toBe(true);
+    expect(valid.linearization.map((item) => item.taskUid)).toEqual(['WI-0099-10000000', 'WI-0099-20000000']);
+    const stateChanged = await readFile(join(steps, 'WI-0099-10000000.yaml'), 'utf8');
+    await writeFile(join(steps, 'WI-0099-10000000.yaml'), stateChanged.replace('processingStatus: unprocessed', 'processingStatus: processing_completed').replace('status: planned', 'status: active'));
+    const sameStructure = await buildDependencyGraph(root, 'WI-0099');
+    expect(sameStructure.linearization.map((item) => item.taskUid)).toEqual(valid.linearization.map((item) => item.taskUid));
+    await writeFile(join(steps, 'WI-0099-30000000.yaml'), task('WI-0099-30000000', '30000000', ['WI-0099-MISSING']));
+    const missing = await buildDependencyGraph(root, 'WI-0099');
+    expect(missing.valid).toBe(false);
+    expect(missing.linearization).toEqual([]);
+    expect(missing.findings.some((item) => item.code === 'MISSING_DEPENDENCY')).toBe(true);
   });
 
   it.each([
