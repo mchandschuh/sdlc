@@ -275,7 +275,14 @@ async function validateTaskPayload(
 
 async function validateDocument(schemaRoot: string, schemaPath: string, documentPath: string, cwd: string): Promise<string[]> {
   try {
-    await execFileAsync(validatorExecutable(), ['--root', schemaRoot, '--schema', join(schemaRoot, schemaPath), '--document', documentPath], { cwd, encoding: 'utf8' });
+    const environment = { ...process.env };
+    delete environment.SDLC_CONFIG;
+    environment.HOME = join(dirname(documentPath), '.schema-validate-home');
+    await execFileAsync(validatorExecutable(), ['--root', schemaRoot, '--schema', join(schemaRoot, schemaPath), '--document', documentPath], {
+      cwd,
+      env: environment,
+      encoding: 'utf8',
+    });
     return [];
   } catch (error) {
     const result = error as { stdout?: string; stderr?: string };
