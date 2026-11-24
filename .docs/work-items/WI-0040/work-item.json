@@ -1,0 +1,105 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0040",
+  "status": "planned",
+  "title": "Fix failing unit tests",
+  "type": "bugfix-coordination",
+  "objective": "Correct the failing unit-test behavior and leave the repository with zero failing tests, with implementation and validation evidence recorded separately.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0040-fix-failing-unit-tests",
+      "created": false,
+      "rationale": "The work item changes repository test behavior and must be isolated from the main branch during implementation and validation."
+    }
+  },
+  "baseline": "5f784bb430bcc19353908e687a64b0cc2b56b212",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/WI-0040 to fix failing unit tests. Include a single implementation and a single validation task. Implementation objective is zero failing tests and the validation task objective is to verify zero failing tests.\n\nCommit the completed work item.",
+    "sha256": "588bbdfab3069c205035ceb171de61ae1cb8042027071d5260451d0957b04f13"
+  },
+  "scope": [
+    {
+      "name": "failing-test-repair",
+      "description": "Identify and correct the implementation, test fixture, or test-environment defect responsible for the current failing unit test.",
+      "reason": "The repository currently has a failing unit test that must be repaired without weakening the test gate."
+    },
+    {
+      "name": "zero-failure-test-gate",
+      "description": "Run the complete repository unit-test command and record evidence that it reports zero failing tests.",
+      "reason": "A passing implementation requires an executable proof that no unit tests remain failing."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "test-removal-or-weakening",
+      "description": "Do not delete, skip, quarantine, weaken, or rewrite a failing test solely to make the test command pass.",
+      "reason": "The objective is to fix the underlying defect while preserving meaningful regression coverage.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "unrelated-refactoring",
+      "description": "Do not expand the change into unrelated feature work, broad refactoring, dependency upgrades, deployment, or production operations.",
+      "reason": "The work item is limited to the smallest repair needed for zero failing unit tests.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "false-validation-claim",
+      "description": "Do not claim zero failing tests from static inspection, a focused subset, or an unexecuted command; the complete configured test suite must run.",
+      "reason": "Validation evidence must reflect the repository-wide unit-test gate rather than a partial or inferred result.",
+      "forbiddenFileWrites": [],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0040_REQ_001",
+        "name": "zero-failing-tests",
+        "description": "The implementation must correct the cause of the currently failing unit test or tests while preserving the intended test assertions and leave the complete configured unit-test suite with zero failing tests.",
+        "reason": "The requested bugfix is complete only when the repository test gate passes without suppressing coverage.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0040_REQ_001_AC_001",
+            "description": "The implementation task identifies and repairs the underlying cause of the failing unit test or tests without deleting, skipping, quarantining, or weakening the affected assertions."
+          },
+          {
+            "id": "WI-0040_REQ_001_AC_002",
+            "description": "The complete configured unit-test command exits with code 0 and reports zero failing tests after the implementation change."
+          }
+        ]
+      },
+      {
+        "id": "WI-0040_REQ_002",
+        "name": "independent-zero-failure-validation",
+        "description": "The validation task must independently execute the complete configured unit-test suite and verify zero failing tests after the implementation task.",
+        "reason": "Implementation-owned checks and final validation are separate evidence responsibilities.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0040_REQ_002_AC_001",
+            "description": "The validation task runs the complete configured unit-test command after the implementation task and records exit code 0 with zero failing tests."
+          },
+          {
+            "id": "WI-0040_REQ_002_AC_002",
+            "description": "The validation result reports no unresolved test failures and does not infer success from a partial test selection or static inspection."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0040/steps/",
+  "versionSuggestion": {
+    "impact": "revision",
+    "rationale": "The requested change is a bounded bugfix intended to restore the existing unit-test contract without adding a new feature.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if the final repair changes a public contract or exceeds the bounded test-fix scope."
+  }
+}
