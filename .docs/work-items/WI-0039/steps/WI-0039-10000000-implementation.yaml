@@ -1,0 +1,115 @@
+schema: https://schemas.handschuh.dev/sdlc/task-envelope/v1
+workItemId: WI-0039
+taskUid: WI-0039-10000000
+orderKey: '10000000'
+parentTaskUid: null
+taskType: implementation
+processingStatus: unprocessed
+title: Allow null results in task-specific schemas
+objective: Update only the ten task-specific payload schemas so their result
+  property accepts null or the existing task-specific result object.
+references:
+  required:
+    - .docs/work-items/WI-0039/work-item.json
+    - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+    - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+    - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+    - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+    - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+    - schemas/sdlc-task-envelope/v1/sdlc-task-envelope.schema.json
+    - schemas/common/v1/sdlc-task-type.schema.json
+  informational:
+    - .cline/README.md
+    - schemas/README.md
+dependsOn: []
+governance:
+  schema: https://schemas.handschuh.dev/sdlc/task-governance/v1
+  ownedPaths:
+    - .docs/work-items/WI-0039/steps/WI-0039-10000000-implementation.yaml
+    - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+    - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+    - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+    - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+    - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+    - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+    - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+    - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+    - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+    - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+  commitSubject: 'WI-0039: fix(schema): allow null task results'
+  commitBody:
+    requiredSections: [Why, What, How, Decisions, Validation, Evidence, Refs, Next]
+  validationProcedures:
+    - id: typecheck
+      executable: yarn
+      arguments: [typecheck]
+      expectedExitCode: 0
+    - id: build
+      executable: yarn
+      arguments: [build]
+      expectedExitCode: 0
+    - id: schema-audit
+      executable: node
+      arguments: [/home/michael/.cline/skills/sdlc/bin/dev.js, schema, validate]
+      expectedExitCode: 0
+    - id: work-item-validation
+      executable: node
+      arguments: [./bin/cli.js, work-item, validate, --work-item, WI-0039, --json]
+      expectedExitCode: 0
+  requiredForExecution: true
+task:
+  status: planned
+  taskSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1
+  intentSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/intent
+  resultSchema: https://schemas.handschuh.dev/sdlc/task-implementation/v1#/properties/result
+  intent:
+    summary: Add a null alternative to the result property of each supported task-specific payload schema while preserving the existing result object branch exactly.
+    changeTypes:
+      - schema
+    changeIntent: compatibility
+    inputs:
+      - id: WI-0039-10000000_INPUT-REQ-001
+        kind: requirement
+        ref: WI-0039#work-item.json#requirement/WI-0039_REQ_001
+        purpose: Define the nullable result contract and preservation of the existing object result schema.
+        required: true
+      - id: WI-0039-10000000_INPUT-REQ-002
+        kind: requirement
+        ref: WI-0039#work-item.json#requirement/WI-0039_REQ_002
+        purpose: Enforce the schema-only file boundary.
+        required: true
+    objectives:
+      - id: WI-0039-10000000_OBJ-NULL-RESULT
+        statement: All ten task-specific payload schemas accept a task.result value of null or the existing task-specific result object.
+        inputRefs: [WI-0039-10000000_INPUT-REQ-001]
+        testCaseRefs: []
+      - id: WI-0039-10000000_OBJ-SCOPE-BOUNDARY
+        statement: The change is limited to the ten task-specific schema result properties, with no envelope, runtime, response-schema, common-schema, or persisted-record changes.
+        inputRefs: [WI-0039-10000000_INPUT-REQ-002]
+        testCaseRefs: []
+    ownedPaths:
+      - schemas/sdlc-task-decomposition/v1/sdlc-task-decomposition.schema.json
+      - schemas/sdlc-task-research/v1/sdlc-task-research.schema.json
+      - schemas/sdlc-task-decision/v1/sdlc-task-decision.schema.json
+      - schemas/sdlc-task-design/v1/sdlc-task-design.schema.json
+      - schemas/sdlc-task-implementation/v1/sdlc-task-implementation.schema.json
+      - schemas/sdlc-task-test-strategy/v1/sdlc-task-test-strategy.schema.json
+      - schemas/sdlc-task-validation/v1/sdlc-task-validation.schema.json
+      - schemas/sdlc-task-review/v1/sdlc-task-review.schema.json
+      - schemas/sdlc-task-rework/v1/sdlc-task-rework.schema.json
+      - schemas/sdlc-task-delivery/v1/sdlc-task-delivery.schema.json
+    nonGoals:
+      - Do not modify sdlc-task-envelope/v1; its task.result wrapper already accepts object or null.
+      - Do not modify CLI commands, runtime validators, lifecycle policy logic, tests, response schemas, common schemas, design-validation reports, task-next responses, or persisted task records.
+      - Do not change any existing non-null result object properties, required fields, lifecycle metadata, or examples except where a null example is needed to document the new alternative.
+    steps:
+      - Update each of the ten task-specific payload schemas by wrapping its existing result object schema in a oneOf with a type-null alternative.
+      - Preserve each existing result object branch and its task-specific required fields and properties unchanged.
+      - Keep the change limited to the ten owned schema files and review the diff for out-of-scope paths.
+      - Validate the schema documents and representative null and non-null result instances through the repository schema validation workflow.
+  result: null

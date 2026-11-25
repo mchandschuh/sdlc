@@ -1,0 +1,121 @@
+{
+  "schema": "https://schemas.handschuh.dev/sdlc/work-item/v3",
+  "workItemId": "WI-0039",
+  "status": "planned",
+  "title": "Allow null results in task schemas",
+  "type": "feature",
+  "objective": "Update the ten task-specific payload schemas so task.result accepts either null or the existing task-specific result object, preserving the existing non-null result contract and changing no unrelated schema or runtime behavior.",
+  "repository": {
+    "root": "/home/michael/src/github/sdlc",
+    "authority": "local"
+  },
+  "context": {
+    "mergeTarget": {
+      "branch": "main"
+    },
+    "branch": {
+      "name": "WI-0039-null-task-results",
+      "created": false,
+      "rationale": "The work item changes the result property contract in the ten task-specific schemas and must be reviewed as a bounded schema-only change."
+    }
+  },
+  "baseline": "a4541fcb9caf1934df6ce7d24a5ecc231f53d2ad",
+  "request": {
+    "source": "conversation",
+    "text": "Prepare a new .docs/work-items/WI-0039/* (work-item.json and implementation task file) in order to update our schemas to allow a null result.\n\nReview the generated work-item.json and then generated implementation task file to ensure they're scope bound to only update the task schemas to allow a null result.\n\nCommit the new work item.",
+    "sha256": "15a56b567c4882cda3bfb2e9ec130bbbb5b10ef1fdefab6f501a6db3a49b5d4b"
+  },
+  "scope": [
+    {
+      "name": "nullable-task-results",
+      "description": "Change the result property in each of the ten task-specific payload schemas to accept null in addition to its existing task-specific result object schema.",
+      "reason": "Planned and transitional task envelopes need to represent an absent result as null while retaining the existing result contract for populated task results."
+    }
+  ],
+  "nonGoals": [
+    {
+      "name": "envelope-schema-change",
+      "description": "Do not modify sdlc-task-envelope/v1 or its task wrapper result property.",
+      "reason": "The envelope already accepts an object or null; this change belongs only in task-specific payload schemas.",
+      "forbiddenFileWrites": [
+        "schemas/sdlc-task-envelope/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "runtime-validation-change",
+      "description": "Do not modify CLI commands, runtime validators, lifecycle policy code, or result-field interpretation.",
+      "reason": "The requested change is limited to schema contracts; existing host validation should consume the updated contracts without behavioral changes.",
+      "forbiddenFileWrites": [
+        "src/",
+        "bin/",
+        "scripts/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "unrelated-schema-change",
+      "description": "Do not modify CLI response schemas, design-validation reports, task-next responses, common reference schemas, or any schema outside the ten task-specific payload schemas.",
+      "reason": "The result nullability contract must remain narrowly scoped to schemas selected by taskType.",
+      "forbiddenFileWrites": [
+        "schemas/sdlc-cli-*/",
+        "schemas/sdlc-task-envelope/",
+        "schemas/sdlc-task-design-validation/",
+        "schemas/sdlc-task-next/",
+        "schemas/common/"
+      ],
+      "forbiddenFileReads": []
+    },
+    {
+      "name": "task-record-migration",
+      "description": "Do not rewrite existing task records, add result fields, or change lifecycle statuses merely because null becomes schema-valid.",
+      "reason": "The work item changes the reusable schema contract and does not migrate persisted task data.",
+      "forbiddenFileWrites": [
+        ".docs/work-items/"
+      ],
+      "forbiddenFileReads": []
+    }
+  ],
+  "requirements": {
+    "items": [
+      {
+        "id": "WI-0039_REQ_001",
+        "name": "nullable-task-result-contract",
+        "description": "Each supported task-specific payload schema must define its result property as oneOf null and the existing task-specific result object schema.",
+        "reason": "The host validator must be able to validate a planned or transitional task payload whose result is explicitly null without weakening the populated result contract.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0039_REQ_001_AC_001",
+            "description": "The result property in task-decomposition, task-research, task-decision, task-design, task-implementation, task-test-strategy, task-validation, task-review, task-rework, and task-delivery is a oneOf containing type null and the existing result object schema."
+          },
+          {
+            "id": "WI-0039_REQ_001_AC_002",
+            "description": "The existing non-null result object schema remains the unchanged object alternative, including its required fields, properties, lifecycle metadata, and result-specific validation rules."
+          }
+        ]
+      },
+      {
+        "id": "WI-0039_REQ_002",
+        "name": "schema-only-boundary",
+        "description": "The implementation must modify only the ten task-specific payload schema files and must not change envelope, runtime, response, common-reference, design-validation, task-next, or persisted task artifacts.",
+        "reason": "The requested repair addresses task-specific result validation only and must not expand into runtime or data migration work.",
+        "acceptanceCriteria": [
+          {
+            "id": "WI-0039_REQ_002_AC_001",
+            "description": "The implementation task owned paths contain exactly the ten task-specific schema families and no source, test, CLI response, envelope, common-schema, or work-item artifact paths."
+          },
+          {
+            "id": "WI-0039_REQ_002_AC_002",
+            "description": "Schema validation confirms representative null-result and existing object-result instances against the updated task-specific contracts without requiring runtime code changes."
+          }
+        ]
+      }
+    ]
+  },
+  "stepsPath": ".docs/work-items/WI-0039/steps/",
+  "versionSuggestion": {
+    "impact": "minor",
+    "rationale": "Adds an accepted null alternative to existing task-specific result contracts without changing the populated result object shapes.",
+    "disclaimer": "This is an inferred recommendation; increase the impact if final changes are larger or more breaking than expected."
+  }
+}
